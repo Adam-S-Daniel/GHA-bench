@@ -910,7 +910,12 @@ def run_single_task(
         "--mcp-config", '{"mcpServers":{}}',
         "--strict-mcp-config",
     ]
-    if effort:
+    # `ultracode` is not a valid value for the `--effort` CLI flag (the flag
+    # rejects it with a warning and falls back to the default). It is a
+    # session-level effort setting (xhigh + standing dynamic-workflow
+    # orchestration) enabled via the CLAUDE_CODE_EFFORT_LEVEL env var below.
+    # The 5 standard levels (low/medium/high/xhigh/max) go through the flag.
+    if effort and effort != "ultracode":
         cmd.extend(["--effort", effort])
 
     # Record timing
@@ -936,6 +941,16 @@ def run_single_task(
         env["CLAUDE_CODE_USE_POWERSHELL_TOOL"] = "1"
     elif mode == "powershell":
         env["CLAUDE_CODE_USE_POWERSHELL_TOOL"] = "0"
+
+    # The `ultracode` effort level is a session feature, not a `--effort` flag
+    # value: it pins the session to xhigh effort plus standing dynamic-workflow
+    # orchestration (requires a workflow-capable model). Enable it the same way
+    # the interactive `/effort ultracode` command does — via the session effort
+    # env var — and make sure the Workflow tool is available so the agent can
+    # actually orchestrate.
+    if effort == "ultracode":
+        env["CLAUDE_CODE_EFFORT_LEVEL"] = "ultracode"
+        env["CLAUDE_CODE_WORKFLOWS"] = "1"
 
     # Execute with real-time line timestamping
     timestamped_lines: list[tuple[int, str]] = []  # (epoch_ms, line)
@@ -1365,8 +1380,8 @@ def main():
         help="Resume a previous run by providing its timestamp directory name (e.g., 2026-04-02_181500). Skips runs that already have metrics.json."
     )
     parser.add_argument(
-        "--effort", default=None, choices=["low", "medium", "high", "xhigh", "max"],
-        help="Reasoning effort level passed to claude CLI (default: not set, uses CLI default)"
+        "--effort", default=None, choices=["low", "medium", "high", "xhigh", "max", "ultracode"],
+        help="Reasoning effort level (default: not set, uses CLI default). low/medium/high/xhigh/max are passed via the --effort CLI flag; ultracode (xhigh + dynamic-workflow orchestration) is enabled via CLAUDE_CODE_EFFORT_LEVEL since the flag does not accept it."
     )
     parser.add_argument(
         "--timeout", default=30, type=int,
