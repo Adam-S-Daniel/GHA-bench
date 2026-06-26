@@ -1,0 +1,80 @@
+name: Environment Matrix Generator
+
+# Real CI/CD pipeline:
+#   1. `generate` builds the strategy matrix from the declarative fixture
+#      configs using matrix_generator.py, runs a negative (max-size) test,
+#      and exports the primary matrix as a job output.
+#   2. `build` consumes that output via `fromJSON` and fans out one job per
+#      generated combination -- proving the matrix is a valid GitHub Actions
+#      strategy.matrix in practice.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'  # weekly Monday 06:00 UTC sanity run
+
+# Least-privilege: this pipeline only needs to read the repository contents.
+permissions:
+  contents: read
+
+env:
+  PRIMARY_FIXTURE: fixtures/primary.json
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.primary.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ubuntu-latest ships a current Python 3 (3.12) preinstalled and the
+      # generator has zero third-party dependencies, so the system interpreter
+      # is sufficient -- no setup-python download required.
+      - name: Show Python version
+        run: python3 --version
+
+      - name: Generate matrices from all success fixtures
+        run: |
+          set -euo pipefail
+          for cfg in fixtures/primary.json fixtures/exclude.json \
+                     fixtures/include.json fixtures/features.json; do
+            name="$(basename "$cfg" .json)"
+            echo "===FIXTURE: ${name}==="
+            python3 matrix_generator.py "$cfg"
+            echo "===END FIXTURE: ${name}==="
+          done
+
+      - name: Negative test - max-size guard rejects oversized matrix
+        run: |
+          set -uo pipefail
+          echo "===FIXTURE: error_maxsize==="
+          if python3 matrix_generator.py fixtures/error_maxsize.json; then
+            echo "ERROR: expected non-zero exit for oversized matrix" >&2
+            exit 1
+          fi
+          echo "max-size guard rejected the oversized matrix as expected"
+          echo "===END FIXTURE: error_maxsize==="
+
+      - name: Export primary matrix as job output
+        id: primary
+        run: |
+          set -euo pipefail
+          full="$(python3 matrix_generator.py "${PRIMARY_FIXTURE}")"
+          # Extract just the `.matrix` object for strategy consumption.
+          matrix="$(python3 -c 'import json,sys;print(json.dumps(json.load(sys.stdin)["matrix"]))' <<<"${full}")"
+          echo "matrix=${matrix}" >> "${GITHUB_OUTPUT}"
+          echo "Exported matrix: ${matrix}"
+
+  build:
+    needs: generate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate.outputs.matrix) }}
+    steps:
+      - name: Show this combination
+        run: |
+          echo "Building os=${{ matrix.os }} language=${{ matrix.language }}"
