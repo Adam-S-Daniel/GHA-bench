@@ -1,0 +1,84 @@
+name: Semantic Version Bumper
+
+# Trigger on pushes/PRs to run the bumper, on a weekly schedule for housekeeping,
+# and via manual dispatch so it can be exercised on demand (and by `act`).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      version_file:
+        description: 'Path to the version file (version.txt or package.json)'
+        required: false
+        default: 'version.txt'
+
+# Least-privilege: the job only needs to read the checked-out repository.
+permissions:
+  contents: read
+
+# Defaults shared by the test fixtures; workflow_dispatch can override the
+# version file path. These can be overridden per run via env on `act`.
+env:
+  VERSION_FILE: ${{ github.event.inputs.version_file || 'version.txt' }}
+  COMMIT_LOG: commits.txt
+  CHANGELOG: CHANGELOG.md
+  BUMP_DATE: '2026-06-26'
+
+jobs:
+  bump:
+    name: Compute and apply version bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify required project files exist
+        shell: pwsh
+        run: |
+          foreach ($f in @('SemanticVersionBumper.psm1', 'Invoke-VersionBump.ps1')) {
+            if (-not (Test-Path $f)) {
+              Write-Error "Required script file missing: $f"
+              exit 1
+            }
+          }
+          Write-Host "All required script files are present."
+
+      - name: Run unit tests (Pester)
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./tests -Output Detailed -PassThru
+          if ($result.FailedCount -gt 0) {
+            Write-Error "$($result.FailedCount) Pester test(s) failed."
+            exit 1
+          }
+
+      - name: Run semantic version bumper
+        id: bump
+        shell: pwsh
+        run: |
+          # Auto-detect the version file: prefer the configured path, but fall
+          # back to package.json when version.txt is absent. This lets the same
+          # workflow handle both fixture styles on a plain push event.
+          $vf = $env:VERSION_FILE
+          if (-not (Test-Path $vf) -and (Test-Path 'package.json')) {
+            $vf = 'package.json'
+          }
+          ./Invoke-VersionBump.ps1 `
+            -VersionFilePath $vf `
+            -CommitLogPath $env:COMMIT_LOG `
+            -ChangelogPath $env:CHANGELOG
+
+      - name: Show results
+        shell: pwsh
+        run: |
+          Write-Host "old_version=${{ steps.bump.outputs.old_version }}"
+          Write-Host "Bumped to: ${{ steps.bump.outputs.new_version }}"
+          Write-Host "Bump type: ${{ steps.bump.outputs.bump_type }}"
+          if (Test-Path $env:CHANGELOG) {
+            Write-Host "----- CHANGELOG (top) -----"
+            Get-Content $env:CHANGELOG -TotalCount 20 | ForEach-Object { Write-Host $_ }
+          }
