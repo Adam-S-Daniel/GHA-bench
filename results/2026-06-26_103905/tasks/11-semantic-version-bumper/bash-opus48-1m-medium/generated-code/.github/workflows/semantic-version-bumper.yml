@@ -1,0 +1,86 @@
+name: Semantic Version Bumper
+
+# Trigger on pushes and PRs (so the version is computed for every change),
+# on a weekly schedule (to catch drift), and on manual dispatch.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      commits_file:
+        description: "Path to the commit-messages fixture file"
+        required: false
+        default: "commits.txt"
+
+# Read-only by default; the bump itself only writes files inside the workspace.
+permissions:
+  contents: read
+
+# Default fixture locations, overridable from the environment.
+env:
+  VERSION_FILE: VERSION
+  COMMITS_FILE: ${{ github.event.inputs.commits_file || 'commits.txt' }}
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  # Fast structural gate: make sure the script is syntactically valid before we
+  # spend time running it. Keeps a broken script from reaching the bump job.
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate script syntax
+        run: bash -n bump-version.sh
+
+  # Compute the next version from the commit fixtures and emit it.
+  bump:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run semantic version bumper
+        id: bump
+        run: |
+          set -euo pipefail
+          chmod +x bump-version.sh
+
+          # Auto-detect the version source: a plain VERSION file takes
+          # precedence; otherwise fall back to package.json.
+          if [ -f "${VERSION_FILE}" ]; then
+            new_version="$(./bump-version.sh \
+              --version-file "${VERSION_FILE}" \
+              --commits "${COMMITS_FILE}" \
+              --changelog "${CHANGELOG_FILE}")"
+          elif [ -f package.json ]; then
+            new_version="$(./bump-version.sh \
+              --package-json package.json \
+              --commits "${COMMITS_FILE}" \
+              --changelog "${CHANGELOG_FILE}")"
+          else
+            echo "error: no VERSION file or package.json found" >&2
+            exit 1
+          fi
+
+          # Expose the result both as a step output and on stdout so the
+          # test harness can assert on an exact value.
+          echo "new_version=${new_version}" >> "$GITHUB_OUTPUT"
+          echo "NEW_VERSION=${new_version}"
+
+      - name: Show generated changelog
+        run: |
+          echo "Computed version: ${{ steps.bump.outputs.new_version }}"
+          if [ -f "${CHANGELOG_FILE}" ]; then
+            echo "----- ${CHANGELOG_FILE} -----"
+            cat "${CHANGELOG_FILE}"
+          fi
