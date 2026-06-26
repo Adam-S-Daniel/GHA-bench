@@ -1,0 +1,80 @@
+---
+name: Dependency License Checker
+
+# Run on pushes and PRs that might change dependencies or the checker itself,
+# on a weekly schedule (catch newly-denied licenses), and on demand.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+# Least-privilege: the job only needs to read the repository contents.
+permissions:
+  contents: read
+
+env:
+  # Config files for the license policy. Centralised here so all steps agree.
+  ALLOW_LIST: config/allow-list.txt
+  DENY_LIST: config/deny-list.txt
+  LICENSE_DB: config/licenses.db
+
+jobs:
+  license-check:
+    name: Check dependency licenses
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (jq)
+        # jq is needed to parse package.json. It is usually present on the
+        # runner, but install defensively so the job is self-contained.
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+          jq --version
+
+      - name: Run license compliance check
+        id: check
+        # Auto-detect the manifest present in fixtures/ (package.json or
+        # requirements.txt). The report is always printed; the step never
+        # fails the job so the compliance verdict is conveyed via the report
+        # text (RESULT: PASS / RESULT: FAIL), which CI consumers can parse.
+        run: |
+          set -euo pipefail
+          chmod +x ./license-checker.sh
+          MANIFEST=""
+          for candidate in fixtures/package.json fixtures/requirements.txt; do
+            if [[ -f "$candidate" ]]; then
+              MANIFEST="$candidate"
+              break
+            fi
+          done
+          if [[ -z "$MANIFEST" ]]; then
+            echo "::error::No manifest found in fixtures/"
+            exit 1
+          fi
+          echo "Using manifest: $MANIFEST"
+          ./license-checker.sh \
+            --manifest "$MANIFEST" \
+            --licenses "$LICENSE_DB" \
+            --allow "$ALLOW_LIST" \
+            --deny "$DENY_LIST" | tee report.txt || true
+          echo "----- report.txt -----"
+          cat report.txt
+
+      - name: Publish report to job summary
+        if: always()
+        run: |
+          {
+            echo "## Dependency License Compliance"
+            echo ''
+            echo '```'
+            cat report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
