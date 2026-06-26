@@ -1,0 +1,73 @@
+name: Test Results Aggregator
+
+# Runs the aggregator in CI. On every push / PR we run the unit tests, then a
+# dependent job aggregates the sample matrix-shard fixtures into a markdown
+# job summary. Also schedulable and manually dispatchable.
+on:
+  push:
+  pull_request:
+  schedule:
+    # Daily at 06:00 UTC — catch flakiness drift over time.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+# Least-privilege: we only read the repo contents.
+permissions:
+  contents: read
+
+env:
+  # Centralize the fixture set so both the job and humans see the matrix shards.
+  FIXTURES: "fixtures/shard-1.xml fixtures/shard-2.json fixtures/shard-3.xml"
+
+jobs:
+  unit-tests:
+    name: Unit tests (bun test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Run unit tests
+        run: bun test
+
+  aggregate:
+    name: Aggregate test results
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Aggregate fixtures into the job summary
+        # --no-fail so reporting never fails this job; stdout carries the
+        # markdown for verification, and the summary is also appended to the
+        # GitHub Actions job summary page.
+        run: |
+          bun run src/cli.ts ${{ env.FIXTURES }} --no-fail --out "$GITHUB_STEP_SUMMARY" | tee aggregate-output.md
+
+      - name: Verify aggregated output against expected snapshot
+        # Assert the known-good values for the current fixtures so a regression
+        # in the aggregator fails CI loudly rather than silently producing bad
+        # numbers. Each non-empty line of fixtures/expected.txt must appear
+        # verbatim in the rendered summary.
+        run: |
+          set -euo pipefail
+          out="aggregate-output.md"
+          while IFS= read -r line || [ -n "$line" ]; do
+            [ -z "$line" ] && continue
+            if ! grep -qF -- "$line" "$out"; then
+              echo "MISSING expected line: $line"
+              exit 1
+            fi
+          done < fixtures/expected.txt
+          echo "All expected lines matched the aggregated output."
