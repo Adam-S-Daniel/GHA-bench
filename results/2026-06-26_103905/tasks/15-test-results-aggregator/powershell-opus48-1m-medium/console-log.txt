@@ -1,0 +1,275 @@
+[Tool: Bash] pwd && ls -la && echo "---ACTRC---" && cat .actrc 2>/dev/null && echo "---tools---" && which act actionlint pwsh docker && pwsh --version
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100
+[Result] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium
+total 44
+drwxr-xr-x 4 passp passp  4096 Jun 26 12:52 .
+drwxr-xr-x 4 passp passp  4096 Jun 26 12:52 ..
+-rw-r--r-- 1 passp passp    40 Jun 26 12:52 .actrc
+drwxr-xr-x 2 passp passp  4096 Jun 26 12:52 .claude
+drwxr-xr-x 6 passp passp  4096 Jun 26 12:52 .git
+-rw-r--r-- 1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---tools---
+/home/passp/.local/bin/act
+/home/passp/.local/bin/actionlint
+/snap/bin/pwsh
+/usr/bin/docker
+PowerShell 7.6.3
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Tool: Bash] pwsh -NoProfile -Command '(Get-Module -ListAvailable Pester | Select-Object -First 1).Version; $PSVersionTable.PSVersion'
+[Tool: Bash] docker images | grep -i act-ubuntu-pwsh; echo "---"; git log --oneline -3 2>/dev/null; git remote -v
+[Result] [32;1mMajor [0m[32;1m Minor [0m[32;1m Build [0m[32;1m Revision[0m
+[32;1m----- [0m [32;1m----- [0m [32;1m----- [0m [32;1m--------[0m
+5      7      1      -1
+
+[32;1mMajor           : [0m7
+[32;1mMinor           : [0m6
+[32;1mPatch           : [0m3
+[32;1mPreReleaseLabel : [0m
+[32;1mBuildLabel      : [0m
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+---
+[Assistant] I have everything I need. Let me build the solution with TDD. Starting with the module structure and first test.
+[Tool: Bash] mkdir -p src tests fixtures .github/workflows && ls
+[Result] benchmark-instructions-v4.md
+fixtures
+src
+tests
+[Assistant] Let me write the first failing test (RED) for parsing JUnit XML.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/TestResultsAggregator.Tests.ps1", "c
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/TestResultsAggregator.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now run the tests to confirm they fail (RED):
+[Tool: Bash] cd "$PWD" && pwsh -NoProfile -Command "Invoke-Pester -Path tests/TestResultsAggregator.Tests.ps1 -Output Minimal" 2>&1 | tail -15
+[Result] [91m CommandNotFoundException: The term 'Invoke-TestResultsAggregation' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91m Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/TestResultsAggregator.Tests.ps1:155[0m
+[91m[-] Invoke-TestResultsAggregation (end-to-end).throws when the input path contains no supported result files[0m[90m 2.24s (2.21s|33ms)[0m
+[91m Expected an exception with message like '*No supported test result files*' to be thrown, but the message was 'The term 'Invoke-TestResultsAggregation' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91m Check the spelling of the name, or if a path was included, verify that the path is correct and try again.'. from /home/
+[Assistant] RED confirmed (18 failing, module/functions don't exist). Now write the module (GREEN) and fixtures.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/src/TestResultsAggregator.psm1", "content"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/src/TestResultsAggregator.psm1 (file state is current in your context — no need to Read it back)
+[Assistant] Now the fixtures. Test_Checkout is the flaky one (fails in run1 XML, passes in run2 JSON):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/fixtures/run1-junit.xml", "content": "<?xm
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/fixtures/run1-junit.xml (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/fixtures/run2-results.json", "content": "{
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/fixtures/run2-results.json (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && pwsh -NoProfile -Command "Invoke-Pester -Path tests/TestResultsAggregator.Tests.ps1 -Output Minimal" 2>&1 | tail -20
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 18 tests in 935ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/TestResultsAggregator.Tests.ps1[0m[90m 4.57s (2.15s|1.63s)[0m
+[97mTests completed in 4.61s[0m
+[32mTests Passed: 18, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] GREEN — all 18 pass. Now the CLI entry script used by the workflow:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/Invoke-Aggregation.ps1", "content": "<#\n.
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/Invoke-Aggregation.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now the GitHub Actions workflow:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/.github/workflows/test-results-aggregator.
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/.github/workflows/test-results-aggregator.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && actionlint .github/workflows/test-results-aggregator.yml && echo "ACTIONLINT_EXIT=$?"
+[Result] ACTIONLINT_EXIT=0
+[Assistant] actionlint passes (exit 0). Now the workflow-structure tests and the act harness. Let me check for a YAML parser:
+[Tool: Bash] pwsh -NoProfile -Command "Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue | Select Name; (Get-Module -ListAvailable powershell-yaml | Select -First 1).Version"
+[Result] [32;1mName[0m
+[32;1m----[0m
+ConvertFrom-Yaml
+[Assistant] GREEN module done. Now I need to separate unit-test fixtures (fixed) from the workflow's swappable input dir, so swapping per-case data doesn't break the unit-test job. Let me create a `results-input/` dir as the workflow's default input:
+[Tool: Bash] cd "$PWD" && mkdir -p results-input && cp fixtures/run1-junit.xml results-input/ && cp fixtures/run2-results.json results-input/ && ls results-input
+[Result] run1-junit.xml
+run2-results.json
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/.github/workflows/te
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/.github/workflows/test-results-aggregator.yml has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now the workflow-structure tests (run on host: YAML parse + path checks + actionlint):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/Workflow.Tests.ps1", "content": "# W
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/Workflow.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && pwsh -NoProfile -Command "Invoke-Pester -Path tests/Workflow.Tests.ps1 -Output Minimal" 2>&1 | tail -20
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 11 tests in 324ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/Workflow.Tests.ps1[0m[90m 1.47s (836ms|371ms)[0m
+[97mTests completed in 1.5s[0m
+[32mTests Passed: 11, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 11 structure tests pass. Now the act harness (3 cases, ≤3 `act push` runs):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/Run-ActHarness.ps1", "content": "<#\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/Run-ActHarness.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Before the expensive act runs, let me sanity-check the exact values locally for all 3 cases:
+[Tool: Bash] cd "$PWD" && pwsh -NoProfile -Command "
+./Invoke-Aggregation.ps1 -InputPath ./results-input -OutputPath /tmp/s.md | Select-String 'AGG_'
+" 2>&1
+[Result] AGG_TOTAL=8
+AGG_PASSED=5
+AGG_FAILED=1
+AGG_SKIPPED=2
+AGG_FLAKY_COUNT=1
+AGG_FLAKY=ShopSuite.Test_Checkout
+Summary written to /tmp/s.md
+[Assistant] Case 1 matches. Now run the act harness (validating all 3 cases through the real pipeline):
+[Tool: Bash] cd "$PWD" && pwsh -NoProfile -File tests/Run-ActHarness.ps1 2>&1 | tail -40
+[Result] === Running act case: default-flaky ===
+  FAIL: act exited 1 (expected 0)
+  FAIL: expected >=2 'Job succeeded' (got 0)
+  FAIL: output contains 'Job failed'
+  FAIL: AGG_TOTAL: expected '8', got ''
+  FAIL: AGG_PASSED: expected '5', got ''
+  FAIL: AGG_FAILED: expected '1', got ''
+  FAIL: AGG_SKIPPED: expected '2', got ''
+  FAIL: AGG_FLAKY_COUNT: expected '1', got ''
+  FAIL: AGG_FLAKY: expected 'ShopSuite.Test_Checkout', got ''
+=== Running act case: all-green ===
+  FAIL: act exited 1 (expected 0)
+  FAIL: expected >=2 'Job succeeded' (got 0)
+  FAIL: output contains 'Job failed'
+  FAIL: AGG_TOTAL: expected '4', got ''
+  FAIL: AGG_PASSED: expected '4', got ''
+  FAIL: AGG_FAILED: expected '0', got ''
+  FAIL: AGG_SKIPPED: expected '0', got ''
+  FAIL: AGG_FLAKY_COUNT: expected '0', got ''
+  FAIL: AGG_FLAKY: expected '', got ''
+=== Running act case: consistent-failure ===
+  FAIL: act exited 1 (expected 0)
+  FAIL: expected >=2 'Job succeeded' (got 0)
+  FAIL: output contains 'Job failed'
+  FAIL: AG
+[Assistant] All failed at act level. Let me diagnose from the output before re-running:
+[Tool: Bash] cd "$PWD" && head -60 act-result.txt
+[Result] # act harness results
+
+
+========================================
+=== CASE: default-flaky (act exit 1) ===
+========================================
+time="2026-06-26T12:58:43-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[Test Results Aggregator/Pester unit tests] ⭐ Run Set up job
+[Test Results Aggregator/Pester unit tests] 🚀  Start image=act-ubuntu-pwsh:latest
+[Test Results Aggregator/Pester unit tests]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=true
+[Test Results Aggregator/Pester unit tests] using DockerAuthConfig authentication for docker pull
+[Test Results Aggregator/Pester unit tests] Error response from daemon: pull access denied for act-ubuntu-pwsh, repository does not exist or may require 'docker login'
+Error: Error response from daemon: pull access denied for act-ubuntu-pwsh, repository does not exist or may require 'docker login'
+[Test Results Aggregator/Pester unit test
+[Assistant] Root cause: act uses `forcePull=true` and tries to pull the local-only image. Fix: add `--pull=false`. Let me update the harness:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/Run-ActHarness
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/Run-ActHarness.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && pwsh -NoProfile -File tests/Run-ActHarness.ps1 2>&1 | tail -45
+[Result] === Running act case: default-flaky ===
+  PASS: default-flaky
+=== Running act case: all-green ===
+  PASS: all-green
+=== Running act case: consistent-failure ===
+  PASS: consistent-failure
+
+ALL ACT CASES PASSED
+[Assistant] All 3 act cases pass through the real pipeline. Let me verify the artifact contains the expected values and run the full Pester suite once more:
+[Tool: Bash] cd "$PWD" && echo "=== act-result.txt size ===" && wc -l act-result.txt && echo "=== AGG + Job succeeded lines ===" && grep -E "AGG_|Job succeeded|Job failed" act-result.txt | sed 's/\[Test Results Aggregator[^]]*\]//' | sort | uniq -c
+[Result] === act-result.txt size ===
+381 act-result.txt
+=== AGG + Job succeeded lines ===
+      1    | AGG_FAILED=0
+      1    | AGG_FAILED=1
+      1    | AGG_FAILED=2
+      2    | AGG_FLAKY=
+      1    | AGG_FLAKY=ShopSuite.Test_Checkout
+      2    | AGG_FLAKY_COUNT=0
+      1    | AGG_FLAKY_COUNT=1
+      1    | AGG_PASSED=0
+      1    | AGG_PASSED=4
+      1    | AGG_PASSED=5
+      2    | AGG_SKIPPED=0
+      1    | AGG_SKIPPED=2
+      1    | AGG_TOTAL=2
+      1    | AGG_TOTAL=4
+      1    | AGG_TOTAL=8
+      6  🏁  Job succeeded
+[Assistant] 6 "Job succeeded" (2 jobs × 3 cases), no failures, all AGG values correct. Now the full Pester suite to confirm everything passes together:
+[Tool: Bash] cd "$PWD" && pwsh -NoProfile -Command "Invoke-Pester -Path tests/TestResultsAggregator.Tests.ps1,tests/Workflow.Tests.ps1 -Output Minimal" 2>&1 | tail -6 && echo "=== actionlint ===" && actionlint .github/workflows/test-results-aggregator.yml && echo "actionlint OK exit=$?"
+[Result] [95mDiscovery found 29 tests in 276ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/TestResultsAggregator.Tests.ps1[0m[90m 1.17s (498ms|459ms)[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/tests/Workflow.Tests.ps1[0m[90m 847ms (743ms|85ms)[0m
+[97mTests completed in 2.05s[0m
+[32mTests Passed: 29, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+=== actionlint ===
+actionlint OK exit=0
+[Assistant] All 29 Pester tests pass and actionlint is clean. Let me add a brief README documenting the solution and show a sample summary output:
+[Tool: Bash] cd "$PWD" && cat test-summary.md 2>/dev/null || pwsh -NoProfile -Command "./Invoke-Aggregation.ps1 -InputPath ./fixtures -OutputPath ./test-summary.md | Out-Null; Get-Content ./test-summary.md -Raw"
+[Result] AGG_TOTAL=8
+AGG_PASSED=5
+AGG_FAILED=1
+AGG_SKIPPED=2
+AGG_FLAKY_COUNT=1
+AGG_FLAKY=ShopSuite.Test_Checkout
+Summary written to ./test-summary.md
+# Test Results Summary
+
+**Overall status: FAILED**
+
+| Metric | Count |
+| --- | --- |
+| Total | 8 |
+| Passed | 5 |
+| Failed | 1 |
+| Skipped | 2 |
+| Duration (s) | 5 |
+
+## Flaky Tests
+
+Detected 1 flaky test(s) (passed in some runs, failed in others):
+
+- `ShopSuite.Test_Checkout`
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/README.md", "content": "# Test Results Agg
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-medium/README.md (file state is current in your context — no need to Read it back)
+[Assistant] The solution is complete and fully verified. Summary of what was built:
+
+## Solution overview
+
+**Core module** (`src/TestResultsAggregator.psm1`) — built test-first with red/green TDD:
+- `Import-JUnitResult` / `Import-JsonResult` — parse each format into a canonical `{Name, Suite, Status, Duration}` shape
+- `Import-TestResultFile` — dispatches by extension
+- `Get-TestAggregate` — totals (passed/failed/skipped/duration) + **flaky detection** (a test keyed by `Suite.Name` is flaky when its statuses across runs contain both `Passed` and `Failed`)
+- `New-MarkdownSummary` — GitHub-flavored markdown
+- `Invoke-TestResultsAggregation` — end-to-end directory → markdown
+- Graceful, meaningful errors for missing files, malformed XML/JSON, unsupported extensions, and empty input
+
+**TDD evidence:** First Pester run showed 18 failing tests (RED, functions didn't exist); after writing the module + fixtures, all 18 passed (GREEN).
+
+**Fixtures:** `fixtures/run1-junit.xml` (Test_Checkout fails) and `fixtures/run2-results.json` (Test_Checkout passes) — making `ShopSuite.Test_Checkout` the demonstrably flaky test.
+
+**Workflow** (`.github/workflows/test-results-aggregator.yml`): triggers on push/PR/schedule/workflow_dispatch, `permissions: contents: read`, two jobs with `aggregate` gated on `needs: unit-tests`, `actions/checkout@v4`, all run-steps use `shell: pwsh`. **actionlint passes (exit 0).**
+
+## Verification results
+- **29 Pester tests pass** (18 module + 11 workflow-structure, including the actionlint assertion)
+- **act harness: all 3 cases PASS** through the real pipeline (`default-flaky`, `all-green`, `consistent-failure`), each asserting **exact** AGG values — e.g. case 1: Total=8, Passed=5, Failed=1, Skipped=2, Flaky=`ShopSuite.Test_Checkout`
+- **`act-result.txt` written** (381 lines): 6 "Job succeeded", 0 "Job failed", all exact totals present
+
+The one diagnostic re-run was the `--pull=false` fix (the initial attempts failed instantly on an image-pull error before executing any workflow steps), so the workflow itself ran successfully on its first real execution.

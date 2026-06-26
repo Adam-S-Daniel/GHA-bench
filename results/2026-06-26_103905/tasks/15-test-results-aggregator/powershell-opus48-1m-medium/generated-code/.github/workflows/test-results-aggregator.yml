@@ -1,0 +1,61 @@
+name: Test Results Aggregator
+
+# Run on pushes and PRs, on a nightly schedule (to catch flaky tests over time),
+# and on manual dispatch.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      input_path:
+        description: 'Directory or file containing test result files'
+        required: false
+        default: './results-input'
+
+# Least privilege: the job only needs to read the repository contents.
+permissions:
+  contents: read
+
+env:
+  # Location of the result files to aggregate; overridable via dispatch input.
+  # The act harness swaps the contents of ./results-input per test case.
+  INPUT_PATH: ${{ github.event.inputs.input_path || './results-input' }}
+  OUTPUT_PATH: ./test-summary.md
+
+jobs:
+  unit-tests:
+    name: Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          # pwsh + Pester are pre-installed in the container image.
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests/TestResultsAggregator.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    # Only aggregate once the unit tests for the aggregator itself pass.
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Aggregate results and build job summary
+        shell: pwsh
+        run: |
+          ./Invoke-Aggregation.ps1 -InputPath "$env:INPUT_PATH" -OutputPath "$env:OUTPUT_PATH"
+
+      - name: Show generated summary
+        shell: pwsh
+        run: Get-Content -LiteralPath "$env:OUTPUT_PATH" -Raw
