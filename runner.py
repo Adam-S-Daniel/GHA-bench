@@ -371,7 +371,15 @@ WORKFLOW STRUCTURE TESTS (also required):
 # Helpers
 # ---------------------------------------------------------------------------
 
-PUSH_INTERVAL = 60  # seconds between incremental git pushes
+# The pusher thread wakes every PUSH_CHECK_INTERVAL seconds but only commits
+# when at least one new cell has *completed* since the last commit. That makes
+# the trigger "a cell finished" rather than a fixed wall-clock timer, so there
+# is roughly one commit per result instead of a commit every minute that also
+# captures in-progress workspace-before.txt noise. Each commit is still pushed
+# immediately. (Was: commit + push unconditionally every 60s — an absurd number
+# of near-empty commits, a holdover from when commits were the remote-monitoring
+# channel; monitor.py now serves that purpose without touching git.)
+PUSH_CHECK_INTERVAL = 90  # seconds between checks for newly-completed cells
 INCREMENTAL_PREFIX = "Incremental benchmark results:"
 
 # Directories to skip in workspace walkers (noise that inflates metrics)
@@ -461,12 +469,16 @@ class PeriodicPusher:
         self._thread.join(timeout=120)
 
     def _run(self):
-        while not self._stop.wait(PUSH_INTERVAL):
+        last_pushed = 0
+        while not self._stop.wait(PUSH_CHECK_INTERVAL):
+            if self.run_count <= last_pushed:
+                continue  # no new completed cell since last commit — don't churn git
             try:
                 generate_results_md(self.run_dir, self.all_metrics, self.total_runs, self.run_count)
             except Exception as e:
                 log(f"  [push] Warning: results.md generation failed: {e}")
             git_push_results(self.repo_root, self.branch, self.run_count, self.total_runs)
+            last_pushed = self.run_count
 
 
 def capture_workspace_listing(workspace: Path) -> str:
@@ -1500,7 +1512,7 @@ def main():
     pusher = PeriodicPusher(repo_root, git_branch, total_runs_for_report, run_dir)
     pusher.update(len(all_metrics), all_metrics)
     pusher.start()
-    log(f"Periodic git push enabled every {PUSH_INTERVAL}s to branch {git_branch}")
+    log(f"Git commit+push on each newly-completed cell (checked every {PUSH_CHECK_INTERVAL}s) to branch {git_branch}")
 
     for task in selected_tasks:
         for model_short, model_id in selected_models:

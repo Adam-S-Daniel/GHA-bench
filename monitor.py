@@ -9,42 +9,44 @@ distinct from the other run-adjacent tools:
   - `watchdog.sh` supervises the *process* (restarts a crashed runner); this
     reports the *numbers* and never touches the run.
 
-It groups the completed cells by their `variant` (e.g. `opus48-1m-medium`) and
-prints, per variant: run-health (duration, cost, turns, errors, actionlint,
-hooks, test-exec time), the structural code metrics (impl files/lines, workflow
-files/lines, total lines — all non-LLM), the structural test metrics (test
-files/lines, tests, assertions, assertions/test, test:code ratio — all
-non-LLM), and the time-wasting traps detected live from each cell's event
-stream. With `--baseline` it adds a matched task+language head-to-head against a
-prior run (use this for re-runs of the same matrix; for cross-model rollups use
-`combine_results.py` post-run).
+It groups completed cells by `variant` and prints, per variant: run-health
+(duration, cost, turns, errors, actionlint, hooks, test-exec time), structural
+code metrics (impl files/lines, workflow files/lines, total lines — all
+non-LLM), structural test metrics (test files/lines, tests, assertions,
+assertions/test, test:code ratio — all non-LLM), and live-detected traps.
+
+HEAD-TO-HEAD is automatic and always strongest-vs-strongest: the **most
+powerful model+version in the current run** vs the **most powerful in the
+previous report** (the newest completed run), matched by task+language at each
+shared effort level. Power ranks by family (opus>sonnet>haiku), then version
+(4.8>4.7>…), then context window (1m>200k). It also breaks the comparison down
+**per scripting language** and flags the languages whose deltas differ
+markedly from the cross-language norm.
+
+Override the auto-selection with `--baseline DIR` (which prior run) and/or
+`--pair RUNVAR=BASEVAR` (exact variant pairing). For full cross-model rollups
+use `combine_results.py` post-run.
 
 Usage:
   python3 monitor.py [RUN_DIR] [options]
 
-    RUN_DIR                  results/<timestamp> dir. Default: the newest dir
-                             under results/ (the in-flight run).
-    --baseline DIR           a prior run dir for a matched head-to-head.
-    --pair RUNVAR=BASEVAR    compare RUN's variant RUNVAR against the baseline's
-                             BASEVAR (repeatable). Use for cross-model pairs
-                             like opus48-1m-medium=opus47-1m-medium. Without it,
-                             variants present in both dirs are paired by name.
-    --total N                expected total cell count -> enables % and an ETA
-                             (pace-based: remaining / current cells-per-hour).
+    RUN_DIR                  results/<timestamp> (default: newest run dir).
+    --baseline DIR           prior run dir (default: newest *completed* run
+                             before RUN_DIR; pass "none" to skip head-to-head).
+    --pair RUNVAR=BASEVAR    force an exact variant pairing (repeatable);
+                             disables the automatic strongest-vs-strongest pick.
+    --total N                expected total cell count -> %% + pace-based ETA.
     --watch SECS             refresh every SECS until Ctrl-C.
 
 Examples:
-  python3 monitor.py
-  python3 monitor.py results/2026-06-26_103905 --total 140 --watch 30
-  python3 monitor.py results/2026-06-26_103905 --baseline results/2026-05-06_173435 \
-      --pair opus48-1m-medium=opus47-1m-medium
+  python3 monitor.py --total 140 --watch 30
+  python3 monitor.py results/2026-06-26_103905 --total 140
+  python3 monitor.py results/2026-06-26_103905 --baseline results/2026-05-06_173435
 """
 from __future__ import annotations
-import argparse, glob, json, os, statistics, sys, time, datetime, collections
+import argparse, glob, json, os, re, statistics, sys, time, datetime, collections
 from pathlib import Path
 
-# Optional, best-effort imports. The metric-dict aggregation works without
-# these; only the structural and trap sections degrade gracefully if absent.
 try:
     from test_quality import compute_structural_metrics
 except Exception:
@@ -54,6 +56,9 @@ try:
 except Exception:
     _detect_traps = None
 
+LANG_OUTLIER_PP = 25.0  # a per-language delta is "notable" if it deviates from
+                        # the cross-language mean by at least this many points.
+
 
 # ── loading ────────────────────────────────────────────────────────────────
 def newest_run_dir(results_root: Path) -> Path | None:
@@ -61,8 +66,14 @@ def newest_run_dir(results_root: Path) -> Path | None:
     return max(dirs, key=lambda p: p.name) if dirs else None
 
 
+def previous_report_dir(results_root: Path, current: Path) -> Path | None:
+    """Newest *completed* run (has summary.json) older than `current`."""
+    done = [p for p in results_root.glob("*")
+            if p.is_dir() and (p / "summary.json").exists() and p.name < current.name]
+    return max(done, key=lambda p: p.name) if done else None
+
+
 def load_cells(run_dir: Path) -> list[dict]:
-    """Every completed cell's metrics, each tagged with `_dir` (its cell dir)."""
     out = []
     for mf in run_dir.glob("tasks/*/*/metrics.json"):
         try:
@@ -81,11 +92,51 @@ def group_by_variant(cells: list[dict]) -> dict[str, list[dict]]:
     return dict(sorted(g.items()))
 
 
+# ── model power ranking (unit-tested) ────────────────────────────────────────
+def model_power(model_id: str) -> tuple:
+    """Rank a model id by (family, version, context-window). Higher = stronger.
+
+    e.g. claude-opus-4-8[1m] -> (3, 4.8, 2);  claude-opus-4-7 -> (3, 4.7, 1);
+         claude-sonnet-4-6[1m] -> (2, 4.6, 2);  claude-haiku-4-5 -> (1, 4.5, 1).
+    """
+    s = (model_id or "").lower()
+    fam = 3 if "opus" in s else 2 if "sonnet" in s else 1 if "haiku" in s else 0
+    m = re.search(r"(\d+)-(\d+)", s)          # "4-8" -> 4.8
+    ver = float(f"{m.group(1)}.{m.group(2)}") if m else 0.0
+    ctx = 2 if "[1m]" in s else 1
+    return (fam, ver, ctx)
+
+
+def strongest_model_short(cells: list[dict]) -> str | None:
+    """The model_short of the most powerful model present in `cells`."""
+    best = None
+    for d in cells:
+        ms = d.get("model_short")
+        if not ms:
+            continue
+        p = model_power(d.get("model", ""))
+        if best is None or p > best[1]:
+            best = (ms, p)
+    return best[0] if best else None
+
+
+def select(cells: list[dict], model_short: str, effort=None) -> list[dict]:
+    return [d for d in cells if d.get("model_short") == model_short
+            and (effort is None or d.get("effort_level") == effort)]
+
+
+def efforts_of(cells: list[dict], model_short: str) -> list[str]:
+    es = {d.get("effort_level") for d in select(cells, model_short)}
+    order = {"low": 0, "medium": 1, "high": 2, "xhigh": 3, "max": 4, "ultracode": 5, None: 9}
+    return sorted((e for e in es), key=lambda e: order.get(e, 9))
+
+
 # ── pure aggregation (unit-tested) ───────────────────────────────────────────
 def _dur(d): return d.get("timing", {}).get("grand_total_duration_ms", 0) / 60000
 def _cost(d): return d.get("cost", {}).get("total_cost_usd", 0)
 def _turns(d): return d.get("timing", {}).get("num_turns", 0)
 def _testsec(d): return d.get("tool_use_timing", {}).get("test_duration_ms", 0) / 1000
+def _errs(d): return d.get("quality", {}).get("error_count", 0)
 
 
 def _mean(vals):
@@ -94,7 +145,6 @@ def _mean(vals):
 
 
 def aggregate(cells: list[dict]) -> dict:
-    """Run-health aggregates over a list of cell metrics. Pure; no file I/O."""
     if not cells:
         return {"n": 0}
     h = lambda k: sum(d.get("hooks", {}).get(k, 0) for d in cells)
@@ -106,7 +156,7 @@ def aggregate(cells: list[dict]) -> dict:
         "cost": _mean([_cost(d) for d in cells]),
         "turns": _mean([_turns(d) for d in cells]),
         "testsec": _mean([_testsec(d) for d in cells]),
-        "errors": sum(d.get("quality", {}).get("error_count", 0) for d in cells),
+        "errors": sum(_errs(d) for d in cells),
         "actionlint_pass": sum(1 for d in cells if d.get("quality", {}).get("actionlint_pass") is True),
         "hook_fires": h("hook_fires"),
         "hook_errs_caught": h("hook_errors_caught"),
@@ -114,20 +164,37 @@ def aggregate(cells: list[dict]) -> dict:
     }
 
 
-def match_pairs(run_cells: list[dict], base_cells: list[dict]) -> list[tuple[dict, dict]]:
-    """Pair cells across two runs by (task_id, language_mode). Pure."""
-    base = {(d.get("task_id"), d.get("language_mode")): d for d in base_cells}
-    pairs = []
-    for d in run_cells:
-        k = (d.get("task_id"), d.get("language_mode"))
-        if k in base:
-            pairs.append((d, base[k]))
-    return pairs
+def match_pairs(run_cells, base_cells, key=("task_id", "language_mode")):
+    """Pair cells across two runs by the given key tuple. Pure."""
+    def k(d): return tuple(d.get(f) for f in key)
+    base = {k(d): d for d in base_cells}
+    return [(d, base[k(d)]) for d in run_cells if k(d) in base]
+
+
+def flag_outliers(by_lang: dict[str, float], z=1.5, min_pp=LANG_OUTLIER_PP):
+    """Languages whose value differs *significantly* from the cross-language norm.
+
+    A language is flagged when its deviation from the mean is at least both
+    `z` population-standard-deviations AND `min_pp` absolute points — so we
+    don't flag a tight cluster (large z but tiny absolute spread) or a single
+    modest gap in a noisy set. Needs >=3 languages for a meaningful spread.
+
+    Returns [(lang, value, mean)] sorted by absolute deviation, biggest first.
+    """
+    vals = [v for v in by_lang.values() if v is not None]
+    if len(vals) < 3:
+        return []
+    mu = statistics.mean(vals)
+    sd = statistics.pstdev(vals)
+    if sd == 0:
+        return []
+    cut = max(z * sd, min_pp)
+    out = [(L, v, mu) for L, v in by_lang.items() if v is not None and abs(v - mu) >= cut]
+    return sorted(out, key=lambda t: -abs(t[1] - t[2]))
 
 
 # ── file-based stats (best-effort) ───────────────────────────────────────────
 def structural(cell: dict) -> dict:
-    """Structural code + test metrics for one cell (needs generated-code/)."""
     out = {"impl_files": None, "impl_lines": None, "test_files": None,
            "test_lines": None, "tests": None, "asserts": None, "apt": None,
            "tc": None, "wf_files": 0, "wf_lines": 0,
@@ -150,7 +217,6 @@ def structural(cell: dict) -> dict:
 
 
 def traps(cells: list[dict]):
-    """(cells_with_traps, total_minutes_wasted, Counter(names))."""
     cw = 0; tot = 0.0; names = collections.Counter()
     if _detect_traps is None:
         return cw, 0.0, names
@@ -173,19 +239,17 @@ def traps(cells: list[dict]):
 
 # ── rendering ────────────────────────────────────────────────────────────────
 def _pct(a, b): return f"{100*(a-b)/b:+.0f}%" if b else "n/a"
+def _num(s):
+    m = re.search(r"-?\d+(?:\.\d+)?", str(s)); return float(m.group()) if m else 0.0
 
 
-def render(run_dir: Path, baseline_dir: Path | None, pairs_map: dict,
-           total: int | None) -> str:
+def render(run_dir, baseline_dir, pairs_map, total):
     cells = load_cells(run_dir)
     groups = group_by_variant(cells)
     done = len(cells)
-    lines = []
+    out = [f"GHA-bench monitor · run {run_dir.name} · {datetime.datetime.now():%Y-%m-%d %H:%M}"]
     now = datetime.datetime.now()
-    head = f"GHA-bench monitor · run {run_dir.name} · {now:%Y-%m-%d %H:%M}"
-    lines.append(head)
 
-    # progress / pace / ETA
     starts = [d.get("timestamp_start") for d in cells if d.get("timestamp_start")]
     elapsed_h = 0.0
     if starts:
@@ -194,77 +258,84 @@ def render(run_dir: Path, baseline_dir: Path | None, pairs_map: dict,
     pace = done / elapsed_h if elapsed_h else 0
     spend = sum(_cost(d) for d in cells)
     if total:
-        pctc = 100 * done / total
         eta = ""
         if pace > 0 and done < total:
             eta_dt = now + datetime.timedelta(hours=(total - done) / pace)
-            eta = f" · ETA ~{eta_dt:%a %b %d %H:%M} (at current pace)"
-        lines.append(f"Progress  {done}/{total} ({pctc:.0f}%) · ~{pace:.1f} cells/hr · elapsed {elapsed_h:.1f}h{eta}")
+            eta = f" · ETA ~{eta_dt:%a %b %d %H:%M} (at current pace; a floor — later tranches run slower)"
+        out.append(f"Progress  {done}/{total} ({100*done/total:.0f}%) · ~{pace:.1f} cells/hr · elapsed {elapsed_h:.1f}h{eta}")
     else:
-        lines.append(f"Progress  {done} cells done · ~{pace:.1f} cells/hr · elapsed {elapsed_h:.1f}h")
-    lines.append(f"Spend     ${spend:.0f} so far")
+        out.append(f"Progress  {done} cells · ~{pace:.1f} cells/hr · elapsed {elapsed_h:.1f}h")
+    out.append(f"Spend     ${spend:.0f} so far")
 
-    # per-variant summary
-    lines.append("\nPER-VARIANT SUMMARY (per-cell averages)")
-    lines.append(f"  {'variant':<22}{'done':>5}{'ok':>4}{'dur':>7}{'cost':>8}{'turns':>6}"
-                 f"{'tests':>6}{'tst:cd':>7}{'impl_ln':>8}{'wf_ln':>6}{'alint':>7}{'traps':>7}")
+    out.append("\nPER-VARIANT SUMMARY (per-cell averages)")
+    out.append(f"  {'variant':<22}{'done':>5}{'ok':>4}{'dur':>7}{'cost':>8}{'turns':>6}"
+               f"{'tests':>6}{'tst:cd':>7}{'impl_ln':>8}{'wf_ln':>6}{'alint':>7}{'traps':>7}")
     for var, gc in groups.items():
-        a = aggregate(gc)
-        ss = [structural(d) for d in gc]
-        cw, _, _ = traps(gc)
-        alint_s = f"{a['actionlint_pass']}/{a['n']}"
-        traps_s = f"{cw}/{a['n']}"
-        lines.append(f"  {var:<22}{a['n']:>5}{a['ok']:>4}{a['dur']:>6.1f}m${a['cost']:>6.2f}"
-                     f"{a['turns']:>6.0f}{_mean([s['tests'] for s in ss]):>6.0f}"
-                     f"{_mean([s['tc'] for s in ss]):>7.1f}{_mean([s['impl_lines'] for s in ss]):>8.0f}"
-                     f"{_mean([s['wf_lines'] for s in ss]):>6.0f}{alint_s:>7}{traps_s:>7}")
+        a = aggregate(gc); ss = [structural(d) for d in gc]; cw, _, _ = traps(gc)
+        alint_s = f"{a['actionlint_pass']}/{a['n']}"; traps_s = f"{cw}/{a['n']}"
+        out.append(f"  {var:<22}{a['n']:>5}{a['ok']:>4}{a['dur']:>6.1f}m${a['cost']:>6.2f}"
+                   f"{a['turns']:>6.0f}{_mean([s['tests'] for s in ss]):>6.0f}"
+                   f"{_mean([s['tc'] for s in ss]):>7.1f}{_mean([s['impl_lines'] for s in ss]):>8.0f}"
+                   f"{_mean([s['wf_lines'] for s in ss]):>6.0f}{alint_s:>7}{traps_s:>7}")
 
-    # detailed head-to-head
-    if baseline_dir:
-        base_cells = load_cells(baseline_dir)
-        base_groups = group_by_variant(base_cells)
-        # decide which (run_variant, base_variant) pairs to show
-        todo = []
-        if pairs_map:
-            todo = [(rv, bv) for rv, bv in pairs_map.items() if rv in groups and bv in base_groups]
-        else:
-            todo = [(v, v) for v in groups if v in base_groups]
-        for rv, bv in todo:
-            lines.append(_h2h_block(rv, bv, groups[rv], base_groups[bv]))
-    return "\n".join(lines)
+    if baseline_dir is None:
+        return "\n".join(out)
+    base_cells = load_cells(baseline_dir)
+
+    if pairs_map:                       # manual override
+        bg = group_by_variant(base_cells)
+        for rv, bv in pairs_map.items():
+            if rv in groups and bv in bg:
+                out.append(_h2h_block(rv, bv, groups[rv], bg[bv]))
+        return "\n".join(out)
+
+    # automatic strongest-vs-strongest
+    scur = strongest_model_short(cells)
+    sbase = strongest_model_short(base_cells)
+    if not scur or not sbase:
+        return "\n".join(out)
+    cur_model = next((d.get("model") for d in cells if d.get("model_short") == scur), scur)
+    base_model = next((d.get("model") for d in base_cells if d.get("model_short") == sbase), sbase)
+    out.append(f"\nHEAD-TO-HEAD  strongest vs strongest  ·  {scur} ({cur_model})  vs  "
+               f"{sbase} ({base_model})  [baseline {baseline_dir.name}]")
+    shared = [e for e in efforts_of(cells, scur) if e in set(efforts_of(base_cells, sbase))]
+    cur_only = [e for e in efforts_of(cells, scur) if e not in set(efforts_of(base_cells, sbase))]
+    for eff in shared:
+        out.append(_h2h_block(f"{scur}-{eff}", f"{sbase}-{eff}",
+                              select(cells, scur, eff), select(base_cells, sbase, eff)))
+    if cur_only:
+        out.append(f"\n  (current-only efforts with no {sbase} counterpart: {', '.join(str(e) for e in cur_only)} — shown in PER-VARIANT SUMMARY only)")
+    out.append(_per_language_block(scur, sbase, select(cells, scur), select(base_cells, sbase)))
+    return "\n".join(out)
 
 
-def _h2h_block(run_var, base_var, run_cells, base_cells) -> str:
+def _h2h_block(run_var, base_var, run_cells, base_cells):
     pairs = match_pairs(run_cells, base_cells)
     if not pairs:
         return f"\n{run_var} vs {base_var}: no matched task+language pairs yet"
     L = [f"\n{run_var} vs {base_var} — matched task+language pairs (n={len(pairs)})"]
-    def row(label, na, ba):
-        L.append(f"    {label:<16}{na:>9}{ba:>9}{_pct(_num(na), _num(ba)):>8}")
-    def avg(fn, side):
-        return _mean([fn(p[0] if side == 0 else p[1]) for p in pairs])
+    def row(label, na, ba): L.append(f"    {label:<16}{na:>9}{ba:>9}{_pct(_num(na), _num(ba)):>8}")
+    avg = lambda fn, i: _mean([fn(p[i]) for p in pairs])
     rs = [structural(p[0]) for p in pairs]; bs = [structural(p[1]) for p in pairs]
-    savg = lambda lst, k: _mean([x[k] for x in lst])
+    sa = lambda lst, k: _mean([x[k] for x in lst])
     L.append("    EFFORT / COST")
     row("duration", f"{avg(_dur,0):.1f}m", f"{avg(_dur,1):.1f}m")
     row("cost", f"${avg(_cost,0):.2f}", f"${avg(_cost,1):.2f}")
     row("turns", f"{avg(_turns,0):.0f}", f"{avg(_turns,1):.0f}")
     L.append("    CODE (non-test)")
-    row("impl files", f"{savg(rs,'impl_files'):.1f}", f"{savg(bs,'impl_files'):.1f}")
-    row("impl lines", f"{savg(rs,'impl_lines'):.0f}", f"{savg(bs,'impl_lines'):.0f}")
-    row("workflow lines", f"{savg(rs,'wf_lines'):.0f}", f"{savg(bs,'wf_lines'):.0f}")
-    row("total lines", f"{savg(rs,'total_lines'):.0f}", f"{savg(bs,'total_lines'):.0f}")
+    row("impl files", f"{sa(rs,'impl_files'):.1f}", f"{sa(bs,'impl_files'):.1f}")
+    row("impl lines", f"{sa(rs,'impl_lines'):.0f}", f"{sa(bs,'impl_lines'):.0f}")
+    row("workflow lines", f"{sa(rs,'wf_lines'):.0f}", f"{sa(bs,'wf_lines'):.0f}")
+    row("total lines", f"{sa(rs,'total_lines'):.0f}", f"{sa(bs,'total_lines'):.0f}")
     L.append("    TESTS")
-    row("test files", f"{savg(rs,'test_files'):.1f}", f"{savg(bs,'test_files'):.1f}")
-    row("test lines", f"{savg(rs,'test_lines'):.0f}", f"{savg(bs,'test_lines'):.0f}")
-    row("tests", f"{savg(rs,'tests'):.0f}", f"{savg(bs,'tests'):.0f}")
-    row("assertions", f"{savg(rs,'asserts'):.0f}", f"{savg(bs,'asserts'):.0f}")
-    row("assert/test", f"{savg(rs,'apt'):.1f}", f"{savg(bs,'apt'):.1f}")
-    row("test:code", f"{savg(rs,'tc'):.1f}", f"{savg(bs,'tc'):.1f}")
+    row("test files", f"{sa(rs,'test_files'):.1f}", f"{sa(bs,'test_files'):.1f}")
+    row("test lines", f"{sa(rs,'test_lines'):.0f}", f"{sa(bs,'test_lines'):.0f}")
+    row("tests", f"{sa(rs,'tests'):.0f}", f"{sa(bs,'tests'):.0f}")
+    row("assertions", f"{sa(rs,'asserts'):.0f}", f"{sa(bs,'asserts'):.0f}")
+    row("assert/test", f"{sa(rs,'apt'):.1f}", f"{sa(bs,'apt'):.1f}")
+    row("test:code", f"{sa(rs,'tc'):.1f}", f"{sa(bs,'tc'):.1f}")
     L.append("    RELIABILITY")
-    ne = _mean([p[0].get('quality',{}).get('error_count',0) for p in pairs])
-    be = _mean([p[1].get('quality',{}).get('error_count',0) for p in pairs])
-    row("run errors/cell", f"{ne:.1f}", f"{be:.1f}")
+    row("run errors/cell", f"{avg(_errs,0):.1f}", f"{avg(_errs,1):.1f}")
     row("test-exec sec", f"{avg(_testsec,0):.0f}s", f"{avg(_testsec,1):.0f}s")
     cw, mins, names = traps(run_cells)
     L.append(f"    traps: {cw}/{len(run_cells)} cells, ~{mins:.0f}min wasted | "
@@ -272,44 +343,100 @@ def _h2h_block(run_var, base_var, run_cells, base_cells) -> str:
     return "\n".join(L)
 
 
-def _num(s):
-    """Pull the leading number out of a rendered cell like '8.3m' or '$2.00'."""
-    import re
-    m = re.search(r"-?\d+(?:\.\d+)?", str(s))
-    return float(m.group()) if m else 0.0
+# metric -> (extractor, is_structural, fmt) for the per-language table
+_LANG_METRICS = [
+    ("dur%",  _dur,    False),
+    ("cost%", _cost,   False),
+    ("turns%", _turns, False),
+    ("tests%", "tests", True),
+    ("tst:cd%", "tc",  True),
+    ("implln%", "impl_lines", True),
+]
+
+
+def per_language_deltas(cur_cells, base_cells):
+    """Per-language % deltas (cur vs base) matched by (task, effort). Pure-ish
+    (reads structural via structural()). Returns {metric: {lang: pct}}, {lang: n}."""
+    langs = sorted({d.get("language_mode") for d in cur_cells} |
+                   {d.get("language_mode") for d in base_cells})
+    deltas = {m[0]: {} for m in _LANG_METRICS}
+    counts = {}
+    for L in langs:
+        cur_L = [d for d in cur_cells if d.get("language_mode") == L]
+        base_L = [d for d in base_cells if d.get("language_mode") == L]
+        pairs = match_pairs(cur_L, base_L, key=("task_id", "effort_level"))
+        counts[L] = len(pairs)
+        if not pairs:
+            continue
+        rs = [structural(p[0]) for p in pairs]; bs = [structural(p[1]) for p in pairs]
+        for name, ex, is_struct in _LANG_METRICS:
+            if is_struct:
+                a = _mean([r[ex] for r in rs]); b = _mean([r[ex] for r in bs])
+            else:
+                a = _mean([ex(p[0]) for p in pairs]); b = _mean([ex(p[1]) for p in pairs])
+            deltas[name][L] = (100 * (a - b) / b) if b else None
+    return deltas, counts
+
+
+def _per_language_block(scur, sbase, cur_cells, base_cells):
+    deltas, counts = per_language_deltas(cur_cells, base_cells)
+    langs = [L for L in sorted(counts) if counts[L] > 0]
+    if not langs:
+        return f"\nPER-LANGUAGE ({scur} vs {sbase}): no matched pairs yet"
+    L = [f"\nPER-LANGUAGE  {scur} vs {sbase}  (% delta, matched by task+effort, pooled across shared efforts)"]
+    hdr = f"  {'language':<16}{'n':>3}" + "".join(f"{m[0]:>9}" for m in _LANG_METRICS)
+    L.append(hdr)
+    for lg in langs:
+        cells_s = f"{counts[lg]}"
+        row = f"  {lg:<16}{cells_s:>3}"
+        for name, _, _ in _LANG_METRICS:
+            v = deltas[name].get(lg)
+            row += f"{(f'{v:+.0f}%' if v is not None else '—'):>9}"
+        L.append(row)
+    # significant per-language differences
+    notes = []
+    for name, _, _ in _LANG_METRICS:
+        for lg, v, mu in flag_outliers(deltas[name]):
+            notes.append(f"{lg} {name} {v:+.0f}% (cross-lang avg {mu:+.0f}%)")
+    if notes:
+        L.append(f"  Notable per-language differences (≥1.5σ and ≥{int(LANG_OUTLIER_PP)} pts from the cross-language average):")
+        for npt in notes[:8]:
+            L.append(f"    - {npt}")
+    else:
+        L.append(f"  No language differs significantly (≥1.5σ, ≥{int(LANG_OUTLIER_PP)} pts) from the cross-language average yet.")
+    return "\n".join(L)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Live progress + stats for an in-flight benchmark run.")
-    ap.add_argument("run_dir", nargs="?", default=None, help="results/<timestamp> (default: newest)")
-    ap.add_argument("--baseline", default=None, help="prior run dir for matched head-to-head")
-    ap.add_argument("--pair", action="append", default=[], metavar="RUNVAR=BASEVAR",
-                    help="explicit variant pairing (repeatable)")
-    ap.add_argument("--total", type=int, default=None, help="expected total cells (enables %% + ETA)")
-    ap.add_argument("--watch", type=int, default=None, help="refresh every N seconds")
+    ap.add_argument("run_dir", nargs="?", default=None)
+    ap.add_argument("--baseline", default=None, help='prior run dir (default: newest completed; "none" to skip)')
+    ap.add_argument("--pair", action="append", default=[], metavar="RUNVAR=BASEVAR")
+    ap.add_argument("--total", type=int, default=None)
+    ap.add_argument("--watch", type=int, default=None)
     args = ap.parse_args(argv)
 
     repo = Path(__file__).parent.resolve()
     run_dir = Path(args.run_dir) if args.run_dir else newest_run_dir(repo / "results")
     if not run_dir or not run_dir.exists():
-        print("No run directory found under results/.", file=sys.stderr)
-        return 1
-    baseline_dir = Path(args.baseline) if args.baseline else None
+        print("No run directory found under results/.", file=sys.stderr); return 1
+    if args.baseline == "none":
+        baseline_dir = None
+    elif args.baseline:
+        baseline_dir = Path(args.baseline)
+    else:
+        baseline_dir = previous_report_dir(repo / "results", run_dir)
     pairs_map = dict(p.split("=", 1) for p in args.pair if "=" in p)
 
-    def once():
-        return render(run_dir, baseline_dir, pairs_map, args.total)
+    def once(): return render(run_dir, baseline_dir, pairs_map, args.total)
 
     if args.watch:
         try:
             while True:
-                print("\033[2J\033[H" + once(), flush=True)
-                time.sleep(args.watch)
+                print("\033[2J\033[H" + once(), flush=True); time.sleep(args.watch)
         except KeyboardInterrupt:
             return 0
-    else:
-        print(once())
-    return 0
+    print(once()); return 0
 
 
 if __name__ == "__main__":

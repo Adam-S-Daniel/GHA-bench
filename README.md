@@ -49,7 +49,7 @@ Each benchmark version defines a set of scripting tasks, language modes, and mod
 | `runner.py` | Benchmark harness — invokes `claude -p`, collects metrics |
 | `generate_results.py` | Generates `results.md` reports from metrics; updates this README |
 | `combine_results.py` | Combines metrics from multiple run directories into a single comparison report (with pooled aggregates + per-CLI legend) |
-| `monitor.py` | Live progress + comparative stats for an *in-flight* run (read-only; reads whatever `metrics.json` files exist so far). Complements the post-run `generate_results.py` report and the `watchdog.sh` process supervisor |
+| `monitor.py` | Live, read-only dashboard for an *in-flight* run: per-variant run-health + structural code/test metrics + live traps, plus an **automatic strongest-model-vs-strongest-model** head-to-head (current run's most powerful model+version vs the previous report's), broken down **per scripting language**. Complements the post-run `generate_results.py` and the `watchdog.sh` process supervisor |
 | `judge_consistency_report.py` | Produces the `Judge Consistency` panel summary from per-judge score caches |
 | `conclusions_report.py` | Produces the combined Conclusions prose using a max-effort Claude CLI call |
 | `results/analysis/` | Dated follow-up analyses (e.g. judge-disagreement spot-checks) referenced from the main reports |
@@ -96,16 +96,16 @@ To resume a crashed/interrupted run:
 ./run-benchmark.sh --resume 2026-04-02_181500
 ```
 
-To watch a run while it is still in progress (read-only live dashboard — per
-variant run-health, structural code/test metrics, and live-detected traps):
+To watch a run while it is still in progress (read-only live dashboard):
 ```bash
 python3 monitor.py --total 140 --watch 30        # newest run; refresh every 30s
-# optional matched head-to-head against a prior run:
-python3 monitor.py --baseline results/2026-05-06_173435 \
-    --pair opus48-1m-medium=opus47-1m-medium
 ```
-The ETA is pace-based ("at current pace"); it does not know that later, higher-effort
-tranches run slower, so treat it as a floor.
+It prints per-variant run-health + structural code/test metrics + live traps, and an
+automatic head-to-head between the **strongest model+version in this run** and the
+**strongest in the previous report** (the newest completed run), broken down **per
+scripting language** with the significant per-language differences called out.
+Override the auto-selection with `--baseline DIR` and/or `--pair RUNVAR=BASEVAR`.
+The ETA is pace-based (a floor — later, higher-effort tranches run slower).
 
 To regenerate all results reports:
 ```bash
