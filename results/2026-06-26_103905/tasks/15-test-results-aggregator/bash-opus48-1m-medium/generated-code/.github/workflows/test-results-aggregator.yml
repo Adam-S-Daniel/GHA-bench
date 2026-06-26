@@ -1,0 +1,107 @@
+---
+name: Test Results Aggregator
+
+# Triggers: run on pushes and PRs that touch the aggregator, on a daily
+# schedule (to catch flaky tests over time), and on demand.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+# Least-privilege: the workflow only needs to read the repo contents.
+permissions:
+  contents: read
+
+# Shared configuration. FIXTURES lists the matrix-build result files to merge.
+env:
+  FIXTURES: "fixtures/run1.xml fixtures/run2.json"
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    outputs:
+      passed: ${{ steps.agg.outputs.passed }}
+      failed: ${{ steps.agg.outputs.failed }}
+      skipped: ${{ steps.agg.outputs.skipped }}
+      total: ${{ steps.agg.outputs.total }}
+      duration: ${{ steps.agg.outputs.duration }}
+      flaky: ${{ steps.agg.outputs.flaky }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          # jq is required by the JSON parser; install only if missing so the
+          # step is fast on runners/images that already provide it.
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+          jq --version
+
+      - name: Aggregate results and write job summary
+        id: agg
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./aggregate.sh
+
+          # Render the Markdown summary and publish it to the job summary.
+          # FIXTURES is an intentional space-separated list of files, so we
+          # rely on word splitting here.
+          # shellcheck disable=SC2086
+          summary="$(./aggregate.sh summary ${FIXTURES})"
+          printf '%s\n' "$summary"
+          printf '%s\n' "$summary" >> "$GITHUB_STEP_SUMMARY"
+
+          # Emit machine-readable totals as step outputs for downstream jobs.
+          # shellcheck disable=SC2086
+          ./aggregate.sh totals ${FIXTURES} >> "$GITHUB_OUTPUT"
+
+  verify:
+    name: Verify aggregated totals
+    runs-on: ubuntu-latest
+    needs: aggregate
+    permissions:
+      contents: read
+    env:
+      EXPECTED_PASSED: "5"
+      EXPECTED_FAILED: "2"
+      EXPECTED_SKIPPED: "1"
+      EXPECTED_TOTAL: "8"
+      EXPECTED_DURATION: "4.20"
+      EXPECTED_FLAKY: "test_logout,test_payment"
+    steps:
+      - name: Assert totals match known-good values
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+          check() {
+            local label="$1" got="$2" want="$3"
+            if [ "$got" = "$want" ]; then
+              echo "OK   $label: $got"
+            else
+              echo "FAIL $label: got '$got' want '$want'"
+              fail=1
+            fi
+          }
+          check "passed"   "${{ needs.aggregate.outputs.passed }}"   "$EXPECTED_PASSED"
+          check "failed"   "${{ needs.aggregate.outputs.failed }}"   "$EXPECTED_FAILED"
+          check "skipped"  "${{ needs.aggregate.outputs.skipped }}"  "$EXPECTED_SKIPPED"
+          check "total"    "${{ needs.aggregate.outputs.total }}"    "$EXPECTED_TOTAL"
+          check "duration" "${{ needs.aggregate.outputs.duration }}" "$EXPECTED_DURATION"
+          check "flaky"    "${{ needs.aggregate.outputs.flaky }}"    "$EXPECTED_FLAKY"
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Aggregated totals did not match expected values"
+            exit 1
+          fi
+          echo "All aggregated totals verified."
