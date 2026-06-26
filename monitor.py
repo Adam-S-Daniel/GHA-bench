@@ -433,9 +433,14 @@ def _h2h_block(run_var, base_var, run_cells, base_cells):
     L.append("    RELIABILITY")
     row("run errors/cell", f"{avg(_errs,0):.1f}", f"{avg(_errs,1):.1f}")
     row("test-exec sec", f"{avg(_testsec,0):.0f}s", f"{avg(_testsec,1):.0f}s")
-    cw, mins, names = traps(run_cells)
-    L.append(f"    traps: {cw}/{len(run_cells)} cells, ~{mins:.0f}min wasted | "
-             f"top: {', '.join(f'{k}x{v}' for k, v in names.most_common(3)) or 'none'}")
+    # traps for BOTH models over the same matched cells (apples-to-apples)
+    rc, rm, rn = traps([p[0] for p in pairs])
+    bc, bm, bn = traps([p[1] for p in pairs])
+    def _t(c, m, n): return (f"{c}/{len(pairs)} cells, ~{m:.0f}min | "
+                             f"top: {', '.join(f'{k}x{v}' for k, v in n.most_common(3)) or 'none'}")
+    L.append("    TRAPS (matched cells; detectors are the 16 static ones in generate_results._detect_traps)")
+    L.append(f"      {run_var:<22}{_t(rc, rm, rn)}")
+    L.append(f"      {base_var:<22}{_t(bc, bm, bn)}")
     return "\n".join(L)
 
 
