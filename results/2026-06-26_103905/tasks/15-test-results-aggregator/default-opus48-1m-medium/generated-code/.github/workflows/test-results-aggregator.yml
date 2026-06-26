@@ -1,0 +1,49 @@
+name: Test Results Aggregator
+
+# Triggers: run on pushes and PRs, on a nightly schedule to catch flaky tests
+# over time, and on manual dispatch.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+# Least-privilege: the job only reads the repo contents.
+permissions:
+  contents: read
+
+env:
+  SUMMARY_FILE: test-summary.md
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python3 -m pip install --upgrade pip pytest
+
+      - name: Run unit tests
+        run: python3 -m pytest tests/ -v
+
+      - name: Aggregate fixture results into a summary
+        run: |
+          python3 aggregator.py \
+            --output "$SUMMARY_FILE" \
+            fixtures/run1-junit.xml \
+            fixtures/run2-results.json
+
+      - name: Publish summary to job summary
+        run: cat "$SUMMARY_FILE" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Print summary to log
+        run: cat "$SUMMARY_FILE"
