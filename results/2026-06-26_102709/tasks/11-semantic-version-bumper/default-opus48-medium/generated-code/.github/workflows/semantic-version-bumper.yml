@@ -1,0 +1,61 @@
+name: Semantic Version Bumper
+
+# Trigger on code changes and allow manual / scheduled runs. The bumper is a
+# read-and-report step in CI: it computes the next version from the commit log
+# fixture checked into the repo and surfaces it as a job output.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Release date to stamp into the changelog (YYYY-MM-DD)"
+        required: false
+        default: "2026-06-26"
+  schedule:
+    # Weekly dry-run every Monday at 06:00 UTC.
+    - cron: "0 6 * * 1"
+
+# The job only needs to read the repository contents.
+permissions:
+  contents: read
+
+env:
+  # Files the bumper operates on. Kept here so a fork can override paths.
+  VERSION_FILE: VERSION
+  COMMITS_FILE: commits.log
+  CHANGELOG_FILE: CHANGELOG.md
+  RELEASE_DATE: "2026-06-26"
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bumped: ${{ steps.bump.outputs.bumped }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run semantic version bumper
+        id: bump
+        run: |
+          python3 bump_version.py \
+            --version-file "$VERSION_FILE" \
+            --commits "$COMMITS_FILE" \
+            --changelog "$CHANGELOG_FILE" \
+            --date "${RELEASE_DATE}"
+
+      - name: Show resulting version and changelog
+        run: |
+          echo "Computed version: ${{ steps.bump.outputs.new_version }}"
+          echo "Bumped: ${{ steps.bump.outputs.bumped }}"
+          if [ -f "$CHANGELOG_FILE" ]; then
+            echo "----- CHANGELOG -----"
+            cat "$CHANGELOG_FILE"
+          fi
