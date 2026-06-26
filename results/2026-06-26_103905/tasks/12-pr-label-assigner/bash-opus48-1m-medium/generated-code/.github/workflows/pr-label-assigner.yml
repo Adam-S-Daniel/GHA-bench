@@ -1,0 +1,89 @@
+---
+# PR Label Assigner
+# -----------------
+# Runs the label-assigner.sh script in CI. For a real pull_request event it
+# would label the PR from its changed files; here (and under `act`) it runs
+# against committed fixture file lists via a matrix so each case is verifiable.
+name: PR Label Assigner
+
+# Trigger on pushes and PRs (real use), plus manual/dispatch runs. `act push`
+# exercises the push trigger locally.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+# Least-privilege defaults; pull-requests:write is what a real labeler needs.
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  RULES_FILE: rules.conf
+
+jobs:
+  # Job 1: validate the script syntactically before we run it.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bash syntax check
+        run: bash -n label-assigner.sh
+
+      - name: Shellcheck (when available)
+        run: |
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck label-assigner.sh
+          else
+            echo "shellcheck not present in container; skipping (validated in repo CI)"
+          fi
+
+  # Job 2: run the assigner against each fixture and assert the exact label set.
+  assign:
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - fixture: mixed
+            expected: "tests,documentation,api,backend"
+          - fixture: docs-only
+            expected: "documentation"
+          - fixture: none
+            expected: ""
+    env:
+      FIXTURE: ${{ matrix.fixture }}
+      EXPECTED: ${{ matrix.expected }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make script executable
+        run: chmod +x label-assigner.sh
+
+      - name: Assign labels for fixture
+        id: assign
+        run: |
+          set -euo pipefail
+          echo "::group::Running assigner for fixture '${FIXTURE}'"
+          out="$(./label-assigner.sh --rules "${RULES_FILE}" --files "fixtures/${FIXTURE}.txt")"
+          echo "${out}"
+          echo "::endgroup::"
+          # Extract the compact summary line produced by the script.
+          actual="$(printf '%s\n' "${out}" | grep '^LABELS:' || true)"
+          if [ -n "${EXPECTED}" ]; then
+            want="LABELS: ${EXPECTED}"
+          else
+            want="LABELS:"
+          fi
+          # Emit clearly delimited markers for the external test harness.
+          echo "RESULT fixture=${FIXTURE} got=[${actual}] want=[${want}]"
+          if [ "${actual}" != "${want}" ]; then
+            echo "ASSERT-FAIL fixture=${FIXTURE}: expected '${want}' but got '${actual}'" >&2
+            exit 1
+          fi
+          echo "ASSERT-OK fixture=${FIXTURE}"

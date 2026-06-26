@@ -1,0 +1,222 @@
+[Assistant] I'll start by understanding the environment and project context.
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100; echo "---ACTRC---"; cat .actrc 2>/dev/null; echo "---PWD---"; pwd; echo "---LS---"; ls -la
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Tool: Bash] which bats shellcheck actionlint act docker bash 2>/dev/null; echo "---versions---"; bats --version 2>/dev/null; actionlint --version 2>/dev/null; act --version 2>/dev/null; docker --version 2>/dev/null
+[Result] /home/passp/.npm-global/bin/bats
+/home/passp/.local/bin/shellcheck
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/usr/bin/docker
+/usr/bin/bash
+---versions---
+Bats 1.13.0
+1.7.12
+installed by downloading from release page
+built with go1.26.1 compiler for linux/amd64
+act version 0.2.87
+Docker version 29.4.3, build 055a478
+[Assistant] Tools are ready. Now let me design the solution with TDD. I'll start by writing the project structure and my first failing test.
+
+Let me first create the core script and rules, then build the bats test that drives everything through `act`.
+[Tool: Bash] docker images | grep -i act-ubuntu-pwsh; echo "---"; ls -la .claude 2>/dev/null; cat .claude/settings*.json 2>/dev/null
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+---
+total 12
+drwxr-xr-x 2 passp passp 4096 Jun 26 11:37 .
+drwxr-xr-x 4 passp passp 4096 Jun 26 11:37 ..
+-rw-r--r-- 1 passp passp  321 Jun 26 11:37 settings.json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/hooks/syntax-check.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
+[Assistant] Now I'll build the solution following TDD. Let me write the core script first.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/label-assigner.sh", "content": "#!/usr/bin/env bash\n#
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/label-assigner.sh (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/rules.conf", "content": "# Path-to-label rules for the
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/rules.conf (file state is current in your context — no need to Read it back)
+[Assistant] Now the test fixtures (mock PR file lists):
+[Tool: Bash] cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"; mkdir -p /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/fixtures
+echo ok
+[Result] ok
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/fixtures/mixed.txt", "content": "docs/intro.md\nsrc/ap
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/fixtures/mixed.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/fixtures/docs-only.txt", "content": "docs/guide.md\ndo
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/fixtures/docs-only.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/fixtures/none.txt", "content": "LICENSE\nMakefile\nbui
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/fixtures/none.txt (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium
+chmod +x label-assigner.sh
+echo "=== bash -n ==="; bash -n label-assigner.sh && echo OK
+echo "=== shellcheck ==="; shellcheck label-assigner.sh && echo CLEAN
+echo "=== mixed ==="; ./label-assigner.sh --rules rules.conf --files fixtures/mixed.txt
+echo "=== docs-only ==="; ./label-assigner.sh --rules rules.conf --files fixtures/docs-only.txt
+echo "=== none ==="; ./label-assigner.sh --rules rules.conf --files fixtures/none.txt
+echo "=== stdin ==="; printf 'src/api/x.js\n' | ./label-assigner.sh --rules rules.conf --files -
+[Result] === bash -n ===
+OK
+=== shellcheck ===
+CLEAN
+=== mixed ===
+LABELS: tests,documentation,api,backend
+LABEL tests
+LABEL documentation
+LABEL api
+LABEL backend
+=== docs-only ===
+LABELS: documentation
+LABEL documentation
+=== none ===
+LABELS:
+=== stdin ===
+LABELS: api,backend
+LABEL api
+LABEL backend
+[Assistant] Core logic works and matches expected values. Now the GitHub Actions workflow with a fixture matrix and built-in assertions:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium
+mkdir -p .github/workflows test && echo created
+[Result] created
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/.github/workflows/pr-label-assigner.yml", "content": "
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/.github/workflows/pr-label-assigner.yml (file state is current in your context — no need to Read it back)
+[Assistant] Now validate with actionlint (instant) before any `act` run:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium
+actionlint .github/workflows/pr-label-assigner.yml && echo "ACTIONLINT-CLEAN (exit $?)"
+[Result] ACTIONLINT-CLEAN (exit 0)
+[Assistant] actionlint passes. Now the bats test harness that drives everything through `act`. I'll run `act` once in `setup_file` (covers all 3 fixtures via the matrix) to respect the 3-run budget, then assert per-case on the captured output.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/test/workflow.bats", "content": "#!/usr/bin/env bats\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/test/workflow.bats (file state is current in your context — no need to Read it back)
+[Assistant] Now the workflow-structure tests (no `act` needed — pure parsing/validation):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/test/structure.bats", "content": "#!/usr/bin/env bats\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium/test/structure.bats (file state is current in your context — no need to Read it back)
+[Assistant] First, run the fast structure tests (no `act`), then do the single `act`-driven run:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium
+bats test/structure.bats
+[Result] 1..11
+ok 1 workflow file exists
+ok 2 workflow is valid YAML
+ok 3 actionlint passes with exit code 0
+ok 4 workflow declares push, pull_request and workflow_dispatch triggers
+ok 5 workflow declares lint and assign jobs with a dependency
+ok 6 workflow sets least-privilege permissions
+ok 7 workflow uses actions/checkout@v4
+ok 8 workflow references the label-assigner.sh script which exists
+ok 9 workflow references the rules file which exists
+ok 10 every fixture referenced by the matrix exists on disk
+ok 11 the script itself passes bash -n and shellcheck
+[Assistant] Structure tests pass. Now the single `act`-driven run (act run #1 of my budget). Clearing any stale artifact first:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium
+rm -f act-result.txt
+bats test/workflow.bats
+[Result] 1..7
+ok 1 act exited with code 0
+ok 2 every job reports Job succeeded (lint + 3 matrix jobs = 4)
+ok 3 lint job ran (bash syntax check)
+ok 4 fixture 'mixed' yields exactly tests,documentation,api,backend
+ok 5 fixture 'docs-only' yields exactly documentation
+ok 6 fixture 'none' yields an empty label set
+ok 7 no fixture produced an assertion failure
+[Assistant] All tests pass on the first `act` run (1 of 3 used). Let me verify the required artifact and run the full suite together:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium
+echo "=== act-result.txt exists? ==="; ls -la act-result.txt
+echo "=== Job succeeded count ==="; grep -c 'Job succeeded' act-result.txt
+echo "=== RESULT lines ==="; grep -oE 'RESULT fixture=[a-z-]+ got=\[[^]]*\] want=\[[^]]*\]' act-result.txt
+echo "=== ASSERT-OK lines ==="; grep -oE 'ASSERT-OK fixture=[a-z-]+' act-result.txt
+[Result] === act-result.txt exists? ===
+-rw-r--r-- 1 passp passp 8764 Jun 26 11:41 act-result.txt
+=== Job succeeded count ===
+4
+=== RESULT lines ===
+RESULT fixture=docs-only got=[LABELS: documentation] want=[LABELS: documentation]
+RESULT fixture=mixed got=[LABELS: tests,documentation,api,backend] want=[LABELS: tests,documentation,api,backend]
+RESULT fixture=none got=[LABELS:] want=[LABELS:]
+=== ASSERT-OK lines ===
+ASSERT-OK fixture=docs-only
+ASSERT-OK fixture=mixed
+ASSERT-OK fixture=none
+[Assistant] Everything is green. Let me run the complete bats suite once more together to confirm the final state, plus the validation gates:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-medium
+echo "=== shellcheck ==="; shellcheck label-assigner.sh && echo CLEAN
+echo "=== bash -n ==="; bash -n label-assigner.sh && echo OK
+echo "=== actionlint ==="; actionlint .github/workflows/pr-label-assigner.yml && echo "CLEAN exit=$?"
+echo "=== structure.bats (no act) ==="; bats test/structure.bats | tail -3
+[Result] === shellcheck ===
+CLEAN
+=== bash -n ===
+OK
+=== actionlint ===
+CLEAN exit=0
+=== structure.bats (no act) ===
+ok 9 workflow references the rules file which exists
+ok 10 every fixture referenced by the matrix exists on disk
+ok 11 the script itself passes bash -n and shellcheck
+[Assistant] All gates pass. The solution is complete. Here's a summary.
+
+## What I built
+
+A PR label assigner in **Bash**, developed TDD-style and validated entirely through a GitHub Actions pipeline run by `act`.
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `label-assigner.sh` | Core script. Reads a changed-file list + rule config, emits the final label set. |
+| `rules.conf` | Configurable `glob\|label\|priority` rules. |
+| `fixtures/{mixed,docs-only,none}.txt` | Mock PR file lists (test fixtures). |
+| `.github/workflows/pr-label-assigner.yml` | CI pipeline: `lint` job → `assign` job (fixture matrix). |
+| `test/workflow.bats` | End-to-end tests — every assertion runs through `act`. |
+| `test/structure.bats` | Static workflow-structure + lint assertions. |
+| `act-result.txt` | Required artifact: full captured `act` output. |
+
+### How the requirements are met
+
+- **Glob patterns** via bash `[[ $path == $pattern ]]` (where `*` spans `/`, so `docs/**`, `src/api/**`, `*.test.*` all work intuitively).
+- **Multiple labels per file** — a file matches every applicable rule.
+- **Priority ordering / conflict resolution** — each rule carries an integer priority; the same label from several rules keeps the lowest (strongest) number; output is sorted by priority then name (`tests,documentation,api,backend`).
+- **Errors handled gracefully** — missing args/files, malformed/non-integer rule lines (warn + skip), empty rule set.
+- **Quality gates**: `shellcheck` clean, `bash -n` passes, `#!/usr/bin/env bash` shebang.
+
+### Testing through the pipeline
+- `actionlint` passes (exit 0) — validated **before** running `act`.
+- All testing flows through the workflow via `act push --rm`. The workflow uses a **fixture matrix**, so one `act` run exercises all three cases — I used **1 of the 3** allowed `act` runs.
+- The workflow self-asserts exact label sets and exits non-zero on mismatch; the bats harness additionally asserts **act exit 0**, **exact expected values** (e.g. `LABELS: tests,documentation,api,backend`), and **4× "Job succeeded"** (lint + 3 matrix jobs).
+
+**Final results:** structure.bats 11/11, workflow.bats 7/7, all lint gates clean.
