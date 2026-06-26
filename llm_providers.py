@@ -382,6 +382,75 @@ class GeminiCLIProvider(LLMProvider):
         }
 
 
+# The Antigravity CLI (`agy`) — Google's successor for individuals after Gemini
+# Code Assist for individuals was retired (the `gemini` CLI now returns
+# IneligibleTierError: UNSUPPORTED_CLIENT). Like the gemini-cli provider it runs
+# one prompt non-interactively, but `agy -p` prints the model's response text
+# directly (there is no `-o json` envelope), so stdout *is* the response. We run
+# from a fresh temp dir so no local workspace/config is loaded, and
+# --dangerously-skip-permissions so the headless call never blocks on a prompt
+# (the judge prompt is self-contained, so no tools are actually invoked). `agy
+# --print` does not report token stats, so cost/tokens are 0 here — the run's
+# authoritative cost is the Claude CLI's, and judge cost is informational only.
+
+class AgyCLIProvider(LLMProvider):
+    """LLM provider using the pre-authenticated Antigravity CLI (`agy`).
+
+    Drop-in replacement for GeminiCLIProvider. The default model
+    "Gemini 3.1 Pro (High)" matches the model and (high) thinking depth the
+    previous report's `gemini-3.1-pro-preview` judge used — agy exposes Gemini
+    3.1 Pro as explicit (Low)/(High) effort tiers; (High) corresponds to the
+    preview's default full-thinking behaviour.
+    """
+
+    name = "agy"
+
+    def is_available(self) -> bool:
+        return shutil.which("agy") is not None
+
+    def judge(self, system_prompt: str, user_message: str,
+              model: str = "Gemini 3.1 Pro (High)",
+              timeout_s: int | None = None) -> dict | None:
+        if timeout_s is None:
+            timeout_s = int(os.environ.get("AGY_TIMEOUT_S", "300"))
+        combined = f"{system_prompt}\n\n---\n\n{user_message}"
+        judge_dir = tempfile.mkdtemp(prefix="agy-judge-")
+        try:
+            result = subprocess.run(
+                ["agy", "-p", combined, "--model", model,
+                 "--dangerously-skip-permissions"],
+                capture_output=True, text=True, timeout=timeout_s, cwd=judge_dir,
+            )
+        except subprocess.TimeoutExpired:
+            print(f"  [{self.name}] timed out ({timeout_s}s)", file=sys.stderr)
+            return None
+        except Exception as e:
+            print(f"  [{self.name}] subprocess error: {e}", file=sys.stderr)
+            return None
+        finally:
+            shutil.rmtree(judge_dir, ignore_errors=True)
+
+        if result.returncode != 0:
+            snippet = result.stderr[:200] if result.stderr else "(no stderr)"
+            print(f"  [{self.name}] CLI failed (exit {result.returncode}): {snippet}",
+                  file=sys.stderr)
+            return None
+
+        raw = result.stdout.strip()
+        # Strip any markdown fences the model added despite the instruction.
+        text = re.sub(r"^```(?:json)?\s*\n?", "", raw)
+        text = re.sub(r"\n?```\s*$", "", text).strip()
+        if not text:
+            print(f"  [{self.name}] empty response", file=sys.stderr)
+            return None
+        return {
+            "text": text,
+            "cost_usd": 0.0,      # agy --print does not report token stats
+            "input_tokens": 0,
+            "output_tokens": 0,
+        }
+
+
 # ---------------------------------------------------------------------------
 # Provider registry
 # ---------------------------------------------------------------------------
@@ -390,6 +459,7 @@ PROVIDERS: dict[str, type[LLMProvider]] = {
     "claude-cli": ClaudeCLIProvider,
     "gemini-api": GeminiAPIProvider,
     "gemini-cli": GeminiCLIProvider,
+    "agy": AgyCLIProvider,
 }
 
 DEFAULT_PROVIDER = "claude-cli"

@@ -373,11 +373,15 @@ JUDGES: dict[str, dict] = {
                         "do not assume it is missing solely because you "
                         "did not see its contents in this prompt."
                     )},
-    # Gemini is invoked via the OAuth-authenticated `gemini` CLI (no API
-    # key needed, no free-tier billing gate). Preview tag on the model
-    # name reflects the current actual model ID exposed by the CLI as of
-    # April 2026; CLI's reported stats give us the usage/cost numbers.
-    "gemini31pro": {"provider": "gemini-cli", "model": "gemini-3.1-pro-preview"},
+    # Gemini 3.1 Pro is invoked via the OAuth-authenticated Antigravity CLI
+    # (`agy`). Google retired Gemini Code Assist for individuals, so the old
+    # `gemini` CLI now returns IneligibleTierError (UNSUPPORTED_CLIENT); `agy`
+    # is its successor. The model "Gemini 3.1 Pro (High)" matches the model and
+    # (high) thinking depth the previous report's `gemini-3.1-pro-preview` judge
+    # used, so the panel stays comparable across reports. (To reproduce a
+    # pre-agy report exactly, switch this back to {"provider": "gemini-cli",
+    # "model": "gemini-3.1-pro-preview"} on a host where that CLI still works.)
+    "gemini31pro": {"provider": "agy", "model": "Gemini 3.1 Pro (High)"},
 }
 DEFAULT_JUDGES = ("haiku45", "gemini31pro")
 

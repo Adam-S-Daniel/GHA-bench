@@ -142,7 +142,8 @@ The LLM-as-judge uses a pluggable provider system (`llm_providers.py`). The benc
 
 **Current providers:**
 - `claude-cli` — pre-authenticated Claude Code CLI. No API key or secrets needed.
-- `gemini-cli` — pre-authenticated Gemini CLI; bypasses billing gate.
+- `agy` — pre-authenticated Antigravity CLI (`agy`). The Gemini path used by the panel's `gemini31pro` seat (default model `Gemini 3.1 Pro (High)`). No API key needed.
+- `gemini-cli` — pre-authenticated Gemini CLI. **Deprecated:** Google retired Gemini Code Assist for individuals, so this now fails with `IneligibleTierError` (`UNSUPPORTED_CLIENT`); use `agy` instead. Kept for hosts where the old CLI still works / to reproduce pre-`agy` reports.
 - `gemini-api` — `google-genai` SDK; requires `GEMINI_API_KEY` and a paid-tier Google AI Studio account.
 
 **To add a new provider** (e.g., Anthropic API with key, OpenAI, Codex CLI):
