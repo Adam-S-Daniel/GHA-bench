@@ -27,6 +27,13 @@ python3 generate_results.py --all
 # a wrapper script (see run-fresh-matrix-2026-05-06.sh).
 python3 runner.py --tasks 11,12,13,15,16,17,18 --modes default,powershell,powershell-tool,bash,typescript-bun --models opus,sonnet
 
+# Watch a run while it is still in progress (read-only live dashboard). Reads
+# whatever metrics.json files exist so far; never touches the run. Distinct from
+# generate_results.py (post-run report) and watchdog.sh (process supervisor).
+python3 monitor.py --total 140 --watch 30                 # newest run, refresh 30s
+python3 monitor.py results/<run-dir> --baseline results/<prior-dir> \
+    --pair opus48-1m-medium=opus47-1m-medium              # matched head-to-head
+
 # Build per-CC-version reference docs in each run dir (system prompt +
 # tool descriptions + sliced changelog). Idempotent; caches under
 # .cache/cc-versions/.
@@ -85,6 +92,7 @@ execution modes; "language" is the concept readers expect.
 - `runner.py` — benchmark harness. Runs agents via `claude -p`, collects metrics, pushes results. Imports from `models.py` and `generate_results.py`.
 - `generate_results.py` — generates `results.md` reports and updates `README.md`. Can run standalone: `python3 generate_results.py --all`. Each results.md opens with a "Claude Code versions used" line linking to the per-version docs (see `version_docs.py`).
 - `combine_results.py` — produces cross-run combined reports `results/results_<dirA>__<dirB>[__<dirC>...].md`. Same table layout as per-run reports plus a CLI Version Legend; uses `judge_consistency_report.py` for the JCS section and `conclusions_report.py` for the Opus-max Conclusions prose. Standalone: `python3 combine_results.py <dirA> <dirB> [<dirC> ...]`.
+- `monitor.py` — read-only **live** dashboard for an in-flight run. Groups completed cells by `variant` and prints per-variant run-health (duration, cost, turns, errors, actionlint, hooks, test-exec time), structural code metrics (impl files/lines, workflow files/lines, total lines — all non-LLM), structural test metrics (test files/lines, tests, assertions, assertions/test, test:code ratio — all non-LLM), and live-detected traps. `--baseline DIR` + `--pair RUNVAR=BASEVAR` add a matched task+language head-to-head (use for cross-model pairs like opus48-1m vs opus47-1m; for full rollups use `combine_results.py` post-run). `--total N` enables a pace-based ETA, `--watch SECS` refreshes. Pure aggregation (`aggregate`, `match_pairs`, `group_by_variant`) is unit-tested in `tests/test_monitor.py`; structural/trap helpers reuse `test_quality.compute_structural_metrics` and `generate_results._detect_traps`. Distinct from `watchdog.sh` (process supervision) and `generate_results.py` (post-run report).
 - `test_quality.py` — test + deliverable quality evaluation. Structural metrics (always) + panel-of-judges LLM evaluation (`--llm-judge` for test-quality judge, `--deliverable-judge` for workflow+scripts judge). The default panel is Haiku 4.5 + Gemini 3.1 Pro (configured in the module-level `JUDGES` dict). Each judge writes its own per-run cache file; `load_panel_scores(variant_dir, kind)` reads them and returns a mean-aggregated score dict for the reporting layer. Legacy single-Sonnet `*-llm.json` caches still read for backward compat. Imported by `generate_results.py` for the "Test Quality Evaluation" section.
 - `llm_providers.py` — pluggable LLM provider abstraction for evaluation tasks (see "Adding LLM providers" below). Currently registered: `claude-cli` (pre-authenticated Claude Code CLI), `gemini-cli` (pre-authenticated Gemini CLI, bypasses billing gate), `gemini-api` (google-genai SDK, requires `GEMINI_API_KEY` and a paid-tier Google AI Studio account).
 - `version_docs.py` — for each unique Claude Code version observed in a run dir's `metrics.json` files, writes `claude-code-<version>.md` with the full system prompt (concatenated from `Piebald-AI/claude-code-system-prompts` at tag `v<version>`), every default-tool description sorted alphabetically, and the slice of `anthropics/claude-code` `CHANGELOG.md` from the lowest CC version observed in any benchmark in this repo through that version. Standalone: `python3 version_docs.py [<run-dir>]`. Caches upstream content under `.cache/cc-versions/` (gitignored). Output files are referenced by name in each `results.md`'s prominent "Claude Code versions used" line.
