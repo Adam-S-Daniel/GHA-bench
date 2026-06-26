@@ -49,7 +49,7 @@ Each benchmark version defines a set of scripting tasks, language modes, and mod
 | `runner.py` | Benchmark harness — invokes `claude -p`, collects metrics |
 | `generate_results.py` | Generates `results.md` reports from metrics; updates this README |
 | `combine_results.py` | Combines metrics from multiple run directories into a single comparison report (with pooled aggregates + per-CLI legend) |
-| `monitor.py` | Live, read-only dashboard for an *in-flight* run: per-variant run-health + structural code/test metrics + live traps, plus an **automatic strongest-model-vs-strongest-model** head-to-head (current run's most powerful model+version vs the previous report's), broken down **per scripting language**. Complements the post-run `generate_results.py` and the `watchdog.sh` process supervisor |
+| `monitor.py` | Live, read-only dashboard for an *in-flight* run: per-variant run-health + structural code/test metrics + live traps, an **automatic strongest-model-vs-strongest-model** head-to-head (current run's most powerful model+version vs the previous report's) broken down **per scripting language**, and (on subscription auth) the **weekly subscription allowance** (same data as `/usage`). Complements the post-run `generate_results.py` and the `watchdog.sh` process supervisor |
 | `judge_consistency_report.py` | Produces the `Judge Consistency` panel summary from per-judge score caches |
 | `conclusions_report.py` | Produces the combined Conclusions prose using a max-effort Claude CLI call |
 | `results/analysis/` | Dated follow-up analyses (e.g. judge-disagreement spot-checks) referenced from the main reports |
@@ -105,7 +105,10 @@ automatic head-to-head between the **strongest model+version in this run** and t
 **strongest in the previous report** (the newest completed run), broken down **per
 scripting language** with the significant per-language differences called out.
 Override the auto-selection with `--baseline DIR` and/or `--pair RUNVAR=BASEVAR`.
-The ETA is pace-based (a floor — later, higher-effort tranches run slower).
+The ETA is pace-based (a floor — later, higher-effort tranches run slower). When the
+session uses Claude-subscription auth (not an API key), it also reports the **weekly
+subscription allowance** (the same five-hour + weekly limits as `/usage`); pass
+`--no-usage` to skip that lookup.
 
 To regenerate all results reports:
 ```bash

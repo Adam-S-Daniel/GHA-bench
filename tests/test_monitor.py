@@ -7,7 +7,8 @@ The structural()/traps() helpers are best-effort file readers exercised by the
 live tool, not unit-tested here.
 """
 from monitor import (aggregate, match_pairs, group_by_variant,
-                     model_power, strongest_model_short, flag_outliers)
+                     model_power, strongest_model_short, flag_outliers,
+                     format_usage)
 
 
 def _mk(task_id, mode="default", variant="opus48-1m-medium",
@@ -110,3 +111,52 @@ def test_flag_outliers_significance():
     assert res and res[0][0] == "d"
     # need >=3 languages for a meaningful spread
     assert flag_outliers({"a": 10, "b": 200}) == []
+
+
+# mirrors the real GET /api/oauth/usage response shape
+_USAGE = {
+    "subscription": "max",
+    "five_hour": {"utilization": 33.0, "resets_at": "2026-06-26T18:10:00+00:00"},
+    "seven_day": {"utilization": 12.0, "resets_at": "2026-06-29T17:00:00+00:00"},
+    "seven_day_opus": None,
+    "limits": [
+        {"kind": "session", "group": "session", "percent": 33, "severity": "normal",
+         "resets_at": "2026-06-26T18:10:00+00:00", "scope": None},
+        {"kind": "weekly_all", "group": "weekly", "percent": 12, "severity": "normal",
+         "resets_at": "2026-06-29T17:00:00+00:00", "scope": None},
+        {"kind": "weekly_scoped", "group": "weekly", "percent": 0, "severity": "normal",
+         "resets_at": "2026-06-29T16:59:59+00:00",
+         "scope": {"model": {"id": None, "display_name": "Sonnet"}}},
+    ],
+    "extra_usage": {"is_enabled": True, "monthly_limit": 18000, "used_credits": 0.0,
+                    "currency": "USD", "decimal_places": 2},
+}
+
+
+def test_format_usage_not_applicable():
+    assert format_usage(None) == []
+    assert format_usage({}) == []
+
+
+def test_format_usage_error():
+    out = format_usage({"error": "HTTP 401", "subscription": "max"})
+    assert len(out) == 1 and "unavailable" in out[0] and "401" in out[0]
+
+
+def test_format_usage_weekly_and_extra():
+    out = "\n".join(format_usage(_USAGE))
+    assert "Subscription allowance (max)" in out
+    # the all-models weekly cap is shown with its percent and annotated
+    assert "weekly_all" in out and "12%" in out and "all models" in out
+    # the Sonnet-scoped weekly is labeled as scoped, not as the run's cap
+    assert "scoped: Sonnet" in out
+    # extra-usage budget converts minor units via decimal_places (18000 -> 180.00)
+    assert "180.00" in out and "USD" in out
+
+
+def test_format_usage_fallback_without_limits():
+    raw = {"subscription": "pro",
+           "five_hour": {"utilization": 50.0, "resets_at": "2026-06-26T18:10:00+00:00"},
+           "seven_day": {"utilization": 20.0, "resets_at": "2026-06-29T17:00:00+00:00"}}
+    out = "\n".join(format_usage(raw))
+    assert "weekly (all)" in out and "20%" in out and "5-hour" in out

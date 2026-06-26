@@ -15,6 +15,13 @@ code metrics (impl files/lines, workflow files/lines, total lines — all
 non-LLM), structural test metrics (test files/lines, tests, assertions,
 assertions/test, test:code ratio — all non-LLM), and live-detected traps.
 
+When the session is authenticated by a Claude subscription (not an API key) it
+also shows the **weekly subscription allowance** — the same five-hour + weekly
+limits as the CLI's `/usage` command (via GET /api/oauth/usage), annotating
+which weekly cap an Opus run draws from. Skipped automatically when no OAuth
+credentials are present (API-key auth has no weekly cap); disable with
+`--no-usage`. The access token is read locally and never logged.
+
 HEAD-TO-HEAD is automatic and always strongest-vs-strongest: the **most
 powerful model+version in the current run** vs the **most powerful in the
 previous report** (the newest completed run), matched by task+language at each
@@ -37,6 +44,7 @@ Usage:
                              disables the automatic strongest-vs-strongest pick.
     --total N                expected total cell count -> %% + pace-based ETA.
     --watch SECS             refresh every SECS until Ctrl-C.
+    --no-usage               skip the subscription weekly-allowance lookup.
 
 Examples:
   python3 monitor.py --total 140 --watch 30
@@ -45,7 +53,12 @@ Examples:
 """
 from __future__ import annotations
 import argparse, glob, json, os, re, statistics, sys, time, datetime, collections
+import urllib.request, urllib.error
 from pathlib import Path
+
+# Claude Code subscription credentials + the endpoint the `/usage` command uses.
+DEFAULT_CREDS = Path.home() / ".claude" / ".credentials.json"
+USAGE_PATH = "/api/oauth/usage"
 
 try:
     from test_quality import compute_structural_metrics
@@ -237,13 +250,94 @@ def traps(cells: list[dict]):
     return cw, tot / 60.0, names
 
 
+# ── subscription weekly allowance (best-effort) ──────────────────────────────
+def fetch_usage(creds_path: Path = DEFAULT_CREDS, base_url: str | None = None,
+                timeout: float = 5.0) -> dict | None:
+    """Best-effort subscription usage via GET /api/oauth/usage (the same endpoint
+    the CLI's `/usage` command uses). Returns the parsed JSON (with a
+    `subscription` key added), `{"error": ...}` on a failed call, or None when
+    not applicable (no OAuth credentials -> e.g. API-key auth, no weekly cap).
+    Never returns or logs the access token.
+    """
+    try:
+        oauth = json.loads(creds_path.read_text()).get("claudeAiOauth", {})
+    except Exception:
+        return None
+    tok = oauth.get("accessToken")
+    if not tok:
+        return None
+    base = (base_url or os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com")).rstrip("/")
+    req = urllib.request.Request(base + USAGE_PATH, headers={
+        "Authorization": f"Bearer {tok}",
+        "anthropic-beta": "oauth-2025-04-20",
+        "anthropic-version": "2023-06-01",
+        "User-Agent": "gha-bench-monitor",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            data = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        hint = " (token expired — run any `claude` command to refresh)" if e.code == 401 else ""
+        return {"error": f"HTTP {e.code}{hint}", "subscription": oauth.get("subscriptionType")}
+    except Exception as e:
+        return {"error": str(e)[:80], "subscription": oauth.get("subscriptionType")}
+    data["subscription"] = oauth.get("subscriptionType")
+    return data
+
+
+def _short_ts(ts):
+    try:
+        return datetime.datetime.fromisoformat(str(ts).replace("Z", "+00:00")).strftime("%a %b %d %H:%M UTC")
+    except Exception:
+        return str(ts) if ts else "?"
+
+
+def format_usage(raw: dict | None) -> list[str]:
+    """Render the subscription weekly/5h allowance. Pure (no I/O). [] if N/A."""
+    if not raw or not isinstance(raw, dict):
+        return []
+    sub = raw.get("subscription")
+    head = f"Subscription allowance{f' ({sub})' if sub else ''}:"
+    if raw.get("error"):
+        return [f"{head} unavailable — {raw['error']}"]
+    lines = [head]
+    limits = raw.get("limits") or []
+    if limits:
+        for lim in limits:
+            grp, kind, pct = lim.get("group"), lim.get("kind"), lim.get("percent")
+            scope = (lim.get("scope") or {}).get("model") or {}
+            mdl = scope.get("display_name")
+            sev = lim.get("severity")
+            tag = ""
+            if grp == "weekly":
+                tag = f"  (scoped: {mdl})" if mdl else "  (all models — the weekly cap an Opus run draws from)"
+            sevtag = f"  [{sev}]" if sev and sev != "normal" else ""
+            label = f"{kind}{f'/{mdl}' if mdl else ''}"
+            lines.append(f"  {label:<22}{pct:>3}%  resets {_short_ts(lim.get('resets_at'))}{tag}{sevtag}")
+    else:  # fallback to typed fields if `limits` absent
+        for key, label in [("five_hour", "5-hour"), ("seven_day", "weekly (all)"),
+                           ("seven_day_opus", "weekly (Opus)"), ("seven_day_sonnet", "weekly (Sonnet)")]:
+            v = raw.get(key)
+            if isinstance(v, dict) and v.get("utilization") is not None:
+                lines.append(f"  {label:<22}{v['utilization']:>3.0f}%  resets {_short_ts(v.get('resets_at'))}")
+    eu = raw.get("extra_usage")
+    if isinstance(eu, dict) and eu.get("is_enabled"):
+        dp = eu.get("decimal_places", 2) or 0
+        div = 10 ** dp
+        lim = (eu.get("monthly_limit") or 0) / div
+        used = eu.get("used_credits") or 0
+        cur = eu.get("currency", "USD")
+        lines.append(f"  {'extra-usage':<22}      {cur} {used:.2f} / {lim:.2f} monthly (enabled)")
+    return lines
+
+
 # ── rendering ────────────────────────────────────────────────────────────────
 def _pct(a, b): return f"{100*(a-b)/b:+.0f}%" if b else "n/a"
 def _num(s):
     m = re.search(r"-?\d+(?:\.\d+)?", str(s)); return float(m.group()) if m else 0.0
 
 
-def render(run_dir, baseline_dir, pairs_map, total):
+def render(run_dir, baseline_dir, pairs_map, total, show_usage=True):
     cells = load_cells(run_dir)
     groups = group_by_variant(cells)
     done = len(cells)
@@ -266,6 +360,8 @@ def render(run_dir, baseline_dir, pairs_map, total):
     else:
         out.append(f"Progress  {done} cells · ~{pace:.1f} cells/hr · elapsed {elapsed_h:.1f}h")
     out.append(f"Spend     ${spend:.0f} so far")
+    if show_usage:
+        out.extend(format_usage(fetch_usage()))
 
     out.append("\nPER-VARIANT SUMMARY (per-cell averages)")
     out.append(f"  {'variant':<22}{'done':>5}{'ok':>4}{'dur':>7}{'cost':>8}{'turns':>6}"
@@ -414,6 +510,8 @@ def main(argv=None):
     ap.add_argument("--pair", action="append", default=[], metavar="RUNVAR=BASEVAR")
     ap.add_argument("--total", type=int, default=None)
     ap.add_argument("--watch", type=int, default=None)
+    ap.add_argument("--no-usage", action="store_true",
+                    help="skip the subscription weekly-allowance lookup (GET /api/oauth/usage)")
     args = ap.parse_args(argv)
 
     repo = Path(__file__).parent.resolve()
@@ -428,7 +526,7 @@ def main(argv=None):
         baseline_dir = previous_report_dir(repo / "results", run_dir)
     pairs_map = dict(p.split("=", 1) for p in args.pair if "=" in p)
 
-    def once(): return render(run_dir, baseline_dir, pairs_map, args.total)
+    def once(): return render(run_dir, baseline_dir, pairs_map, args.total, show_usage=not args.no_usage)
 
     if args.watch:
         try:
