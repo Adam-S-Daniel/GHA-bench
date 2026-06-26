@@ -378,9 +378,9 @@ JUDGES: dict[str, dict] = {
     # `gemini` CLI now returns IneligibleTierError (UNSUPPORTED_CLIENT); `agy`
     # is its successor. The model "Gemini 3.1 Pro (High)" matches the model and
     # (high) thinking depth the previous report's `gemini-3.1-pro-preview` judge
-    # used, so the panel stays comparable across reports. (To reproduce a
-    # pre-agy report exactly, switch this back to {"provider": "gemini-cli",
-    # "model": "gemini-3.1-pro-preview"} on a host where that CLI still works.)
+    # used, so the panel stays comparable across reports. (The pre-agy
+    # gemini-cli provider was removed on 2026-06-26 — see the removal note in
+    # llm_providers.py; restore it from git history to reproduce a pre-agy run.)
     "gemini31pro": {"provider": "agy", "model": "Gemini 3.1 Pro (High)"},
 }
 DEFAULT_JUDGES = ("haiku45", "gemini31pro")
