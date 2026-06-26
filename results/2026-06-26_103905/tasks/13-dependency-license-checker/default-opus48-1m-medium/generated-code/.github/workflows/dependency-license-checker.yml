@@ -1,0 +1,78 @@
+name: Dependency License Checker
+
+# Run on code changes, PRs, a weekly schedule (catch newly-flagged licenses),
+# and on-demand via the Actions UI.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+# Only read access is needed; the job reads the repo and prints a report.
+permissions:
+  contents: read
+
+env:
+  CONFIG_FILE: license-config.json
+  LICENSE_DB: license-db.json
+  REPORT_FILE: license-report.json
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run TDD unit suite
+        shell: bash
+        run: |
+          python3 -m unittest discover -s tests -v
+
+  license-compliance:
+    name: License compliance report
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Select manifest under test
+        id: manifest
+        shell: bash
+        run: |
+          # Prefer requirements.txt when present (the test harness injects one
+          # for pip cases); otherwise fall back to package.json.
+          if [ -f requirements.txt ]; then
+            echo "path=requirements.txt" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=package.json" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Using manifest: $(cat "$GITHUB_OUTPUT")"
+
+      - name: Run dependency license checker
+        id: check
+        shell: bash
+        run: |
+          # The checker exits non-zero on violations. We capture that exit code
+          # so the report is always produced and the job stays green, while the
+          # compliance status is surfaced in the output for assertions.
+          set +e
+          python3 license_checker.py \
+            --manifest "${{ steps.manifest.outputs.path }}" \
+            --config "$CONFIG_FILE" \
+            --license-db "$LICENSE_DB" \
+            --output "$REPORT_FILE"
+          code=$?
+          set -e
+          echo "CHECKER_EXIT=$code"
+          echo "checker_exit=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Emit report summary
+        shell: bash
+        run: |
+          echo "----- license-report.json -----"
+          cat "$REPORT_FILE"
+          echo "----- end license-report.json -----"
