@@ -391,6 +391,24 @@ def log(msg: str) -> None:
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", file=sys.stderr, flush=True)
 
 
+def _metrics_valid(path: Path) -> bool:
+    """True only if `path` is a non-empty, parseable metrics.json.
+
+    `--resume` treats a completed cell as one whose metrics.json exists. A bare
+    existence check is unsafe: a write interrupted mid-flush (e.g. a session
+    teardown killing the runner) leaves a 0-byte/corrupt metrics.json that would
+    then be SKIPPED forever, silently leaving a hole in the matrix. Requiring a
+    valid file means such a cell is re-run instead.
+    """
+    try:
+        if not path.exists() or path.stat().st_size == 0:
+            return False
+        json.loads(path.read_text())
+        return True
+    except Exception:
+        return False
+
+
 # Lock protects all git operations so the PeriodicPusher background thread
 # and any foreground git work never overlap.
 _git_lock = threading.Lock()
@@ -1503,7 +1521,7 @@ def main():
                 for mode in selected_modes:
                     variant = f"{model_short}-{args.effort}" if args.effort else model_short
                     existing = run_dir / "tasks" / task["id"] / f"{mode}-{variant}" / "metrics.json"
-                    if not existing.exists():
+                    if not _metrics_valid(existing):
                         runs_to_do += 1
         total_runs_for_report = len(all_metrics) + runs_to_do
 
@@ -1531,7 +1549,7 @@ def main():
                 # as run_single_task's result_dir construction.
                 variant = f"{model_short}-{args.effort}" if args.effort else model_short
                 existing_metrics = run_dir / "tasks" / task["id"] / f"{mode}-{variant}" / "metrics.json"
-                if existing_metrics.exists():
+                if _metrics_valid(existing_metrics):
                     log(f"Run {run_count}/{total_runs} — SKIPPED (already completed): {task['id']} | {mode} | {model_short}")
                     pusher.update(run_count, all_metrics)
                     continue

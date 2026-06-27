@@ -1,11 +1,41 @@
 """Unit tests for runner.select_tasks — --tasks CLI argument resolution."""
 
+import json
 import subprocess
 import sys
 import threading
 import time
 
-from runner import TASKS, PROMPT_TEMPLATES, select_tasks
+from runner import TASKS, PROMPT_TEMPLATES, select_tasks, _metrics_valid
+
+
+class TestMetricsValid:
+    """A resumed run must re-run cells whose metrics.json is missing/empty/corrupt
+    (e.g. a write interrupted by a teardown), not skip them forever."""
+
+    def test_missing_file(self, tmp_path):
+        assert _metrics_valid(tmp_path / "metrics.json") is False
+
+    def test_empty_file(self, tmp_path):
+        p = tmp_path / "metrics.json"
+        p.write_text("")
+        assert _metrics_valid(p) is False
+
+    def test_corrupt_json(self, tmp_path):
+        p = tmp_path / "metrics.json"
+        p.write_text("{not valid json")
+        assert _metrics_valid(p) is False
+
+    def test_valid_json(self, tmp_path):
+        p = tmp_path / "metrics.json"
+        p.write_text(json.dumps({"run_success": True}))
+        assert _metrics_valid(p) is True
+
+    def test_valid_even_when_run_failed(self, tmp_path):
+        # a recorded timeout/failure is still a completed cell — keep it as data
+        p = tmp_path / "metrics.json"
+        p.write_text(json.dumps({"run_success": False, "failure_reason": "timeout"}))
+        assert _metrics_valid(p) is True
 
 
 class TestSelectTasks:
