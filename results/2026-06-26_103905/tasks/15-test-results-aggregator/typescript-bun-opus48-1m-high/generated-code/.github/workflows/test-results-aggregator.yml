@@ -1,0 +1,65 @@
+name: Test Results Aggregator
+
+# Triggers: run on pushes and PRs (to validate the aggregator and its tests),
+# on a weekly schedule (to catch drift), and on-demand via the Actions UI.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+# Least-privilege: the aggregator only reads the repo contents.
+permissions:
+  contents: read
+
+# Directory the aggregate job reads result files from. The test harness writes
+# each case's fixtures here; standalone runs fall back to the committed
+# fixtures/ directory (see the aggregate step).
+env:
+  RESULTS_DIR: ci-results
+
+jobs:
+  # Job 1: run the unit test suite (bun's built-in runner, no external deps).
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.11'
+
+      - name: Run unit tests
+        run: bun test
+
+  # Job 2: aggregate result files into a markdown job summary. Depends on the
+  # unit tests passing first so we never publish a summary from broken code.
+  aggregate:
+    name: Aggregate results
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.11'
+
+      - name: Aggregate test results
+        # Prefer the harness-provided results dir; fall back to committed
+        # fixtures so the workflow is also runnable on a clean checkout.
+        run: |
+          DIR="${RESULTS_DIR}"
+          if [ ! -d "${DIR}" ]; then
+            echo "No '${DIR}' directory found; using committed fixtures/."
+            DIR="fixtures"
+          fi
+          echo "Aggregating result files from: ${DIR}"
+          bun run src/index.ts "${DIR}"
