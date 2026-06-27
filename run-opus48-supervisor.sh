@@ -12,6 +12,14 @@
 
 set -uo pipefail
 cd "$(dirname "$0")"
+
+# Single-supervisor guard: if another supervisor already holds the lock, exit
+# rather than spawn a second resume-wrapper/runner chain. (Defense in depth —
+# runner.py also takes its own single-runner lock; concurrent cells confound
+# timing. A double-supervisor once caused exactly that.)
+exec 200>".supervisor.lock"
+flock -n 200 || { echo "[supervisor $(date -Iseconds)] another supervisor holds the lock; exiting"; exit 0; }
+
 RUN_DIR="2026-06-26_103905"
 LOG="logs/opus48-run-2026-06-26.log"
 TOTAL=140

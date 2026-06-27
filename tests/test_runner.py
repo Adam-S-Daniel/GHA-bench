@@ -38,6 +38,58 @@ class TestMetricsValid:
         assert _metrics_valid(p) is True
 
 
+class TestSingleRunnerLock:
+    """Two runners must never run concurrently — concurrent cells compete for
+    CPU/Docker and confound each other's timing/cost. acquire_single_runner_lock
+    must let the first holder proceed and make any second runner exit(2)."""
+
+    def test_second_runner_refused(self, tmp_path):
+        import os
+        import runner as runner_mod
+        repo = os.path.dirname(os.path.abspath(runner_mod.__file__))
+        prog = (
+            "import sys, time\n"
+            f"sys.path.insert(0, {repo!r})\n"
+            "from pathlib import Path\n"
+            "from runner import acquire_single_runner_lock\n"
+            f"acquire_single_runner_lock(Path({str(tmp_path)!r}))\n"
+            "print('LOCKED', flush=True)\n"
+            "time.sleep(5)\n"
+        )
+        holder = subprocess.Popen([sys.executable, "-c", prog],
+                                  stdout=subprocess.PIPE, text=True)
+        try:
+            assert holder.stdout.readline().strip() == "LOCKED"  # first acquired
+            second = subprocess.run([sys.executable, "-c", prog],
+                                    capture_output=True, text=True, timeout=20)
+            assert second.returncode == 2
+            assert "already holds" in second.stderr
+        finally:
+            holder.terminate()
+            try:
+                holder.wait(timeout=5)
+            except Exception:
+                holder.kill()
+
+    def test_lock_released_allows_next(self, tmp_path):
+        # after the holder exits, a fresh runner can acquire the lock
+        import os
+        import runner as runner_mod
+        repo = os.path.dirname(os.path.abspath(runner_mod.__file__))
+        prog = (
+            "import sys\n"
+            f"sys.path.insert(0, {repo!r})\n"
+            "from pathlib import Path\n"
+            "from runner import acquire_single_runner_lock\n"
+            f"acquire_single_runner_lock(Path({str(tmp_path)!r}))\n"
+            "print('OK')\n"
+        )
+        first = subprocess.run([sys.executable, "-c", prog], capture_output=True, text=True, timeout=20)
+        assert first.returncode == 0
+        second = subprocess.run([sys.executable, "-c", prog], capture_output=True, text=True, timeout=20)
+        assert second.returncode == 0  # lock freed on first's exit
+
+
 class TestSelectTasks:
     def test_all_returns_full_task_list(self):
         result = select_tasks("all")

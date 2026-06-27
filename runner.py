@@ -5,6 +5,7 @@ Invokes Claude Code CLI subagents on scripting tasks under different language co
 """
 
 import argparse
+import fcntl
 import json
 import os
 import re
@@ -407,6 +408,39 @@ def _metrics_valid(path: Path) -> bool:
         return True
     except Exception:
         return False
+
+
+# Held for the process lifetime so the advisory lock is released automatically
+# on exit (even on SIGKILL) — no stale-lock cleanup needed.
+_RUNNER_LOCK_FD = None
+
+
+def acquire_single_runner_lock(repo_root: Path) -> None:
+    """Guarantee only ONE runner.py runs at a time on this machine/repo.
+
+    Two concurrent runners would execute benchmark cells simultaneously, and
+    cells competing for CPU/Docker/PowerShell inflate each other's timing and
+    cost — silently confounding the results. This happened once when a watchdog
+    and a manual launch both started a runner. We take an exclusive, non-blocking
+    advisory lock (flock) on a repo-level lockfile; a second runner refuses to
+    start rather than corrupt the timing data. The lock auto-releases when the
+    holder exits.
+    """
+    global _RUNNER_LOCK_FD
+    lock_path = repo_root / ".runner.lock"
+    _RUNNER_LOCK_FD = open(lock_path, "w")
+    try:
+        fcntl.flock(_RUNNER_LOCK_FD, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print(
+            f"ERROR: another runner.py already holds {lock_path}. Refusing to "
+            "start a second concurrent runner — concurrent cells would confound "
+            "timing/cost. Exiting.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    _RUNNER_LOCK_FD.write(f"{os.getpid()}\n")
+    _RUNNER_LOCK_FD.flush()
 
 
 # Lock protects all git operations so the PeriodicPusher background thread
@@ -1442,6 +1476,9 @@ def main():
 
     # Create or resume run directory
     repo_root = Path(__file__).parent.resolve()
+    # Single-runner guard: never let two runners execute cells concurrently
+    # (concurrent cells confound timing/cost). Released automatically on exit.
+    acquire_single_runner_lock(repo_root)
     if args.resume:
         run_timestamp = args.resume
         run_dir = repo_root / "results" / run_timestamp
