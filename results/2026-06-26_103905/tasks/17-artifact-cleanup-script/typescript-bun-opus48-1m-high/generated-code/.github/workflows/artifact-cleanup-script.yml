@@ -1,0 +1,74 @@
+name: Artifact Cleanup
+
+# Triggers:
+#   - push / pull_request: validate the tool on every change.
+#   - schedule: run the retention sweep weekly (Sundays 03:00 UTC).
+#   - workflow_dispatch: let a human run it on demand, choosing dry-run or live.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Plan only, do not delete (recommended)"
+        type: boolean
+        default: true
+
+# The tool only reads mock data and prints a plan, so read-only is sufficient.
+permissions:
+  contents: read
+
+# Fixed fixture path the cleanup job reads. The CI test harness overwrites this
+# file per test case so each case drives the script with known input.
+env:
+  FIXTURE_FILE: fixtures/ci-input.json
+
+jobs:
+  # Job 1: run the unit-test suite (red/green TDD coverage of the planner).
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Run unit tests
+        run: bun test
+
+  # Job 2: generate the deletion plan. Depends on the test job passing first.
+  plan:
+    name: Generate deletion plan
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      # Default to dry-run for safety; workflow_dispatch can override to live.
+      DRY_RUN: ${{ github.event.inputs.dry_run == 'false' && 'false' || 'true' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Verify fixture exists
+        run: |
+          if [ ! -f "$FIXTURE_FILE" ]; then
+            echo "Fixture file '$FIXTURE_FILE' not found" >&2
+            exit 1
+          fi
+          echo "Using fixture: $FIXTURE_FILE"
+
+      - name: Generate deletion plan
+        run: bun run src/cli.ts --fixture "$FIXTURE_FILE"
