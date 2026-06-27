@@ -1,0 +1,66 @@
+name: Artifact Cleanup
+
+# Triggers: run on code changes, on PRs, on a daily schedule (the natural cadence
+# for an artifact-retention sweep), and on manual dispatch for ad-hoc runs.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      fixture:
+        description: 'Path to the artifact metadata JSON fixture'
+        required: false
+        default: 'fixtures/ci-input.json'
+
+# Least-privilege: the cleanup planner only needs to read the repo.
+permissions:
+  contents: read
+
+env:
+  # Fixture consumed by the cleanup run. The test harness writes each case's
+  # data here before invoking `act`. workflow_dispatch can override it.
+  FIXTURE_FILE: ${{ github.event.inputs.fixture || 'fixtures/ci-input.json' }}
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          # pwsh + Pester are pre-installed in the runner image.
+          $config = New-PesterConfiguration
+          $config.Run.Path = './ArtifactCleanup.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  cleanup-plan:
+    name: Generate cleanup plan
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify script files exist
+        shell: pwsh
+        run: |
+          foreach ($f in 'ArtifactCleanup.psm1', 'Invoke-Cleanup.ps1', $env:FIXTURE_FILE) {
+            if (-not (Test-Path -LiteralPath $f)) {
+              throw "Required file missing: $f"
+            }
+            Write-Host "Found $f"
+          }
+
+      - name: Run artifact cleanup (dry-run)
+        shell: pwsh
+        run: |
+          # Dry-run is the default: prints the plan, deletes nothing.
+          ./Invoke-Cleanup.ps1 -FixturePath $env:FIXTURE_FILE
