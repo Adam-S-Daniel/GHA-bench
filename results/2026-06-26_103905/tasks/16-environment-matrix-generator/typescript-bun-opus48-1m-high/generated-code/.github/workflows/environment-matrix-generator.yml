@@ -1,0 +1,72 @@
+name: Environment Matrix Generator
+
+# Trigger on pushes and PRs (so the matrix is validated on every change),
+# on a weekly schedule (catch drift in pinned versions), and on demand.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+# Least-privilege: the workflow only needs to read the checked-out repo.
+permissions:
+  contents: read
+
+# Where the build-matrix fixtures live (used by the generate job below).
+env:
+  FIXTURES_DIR: fixtures
+
+jobs:
+  # Job 1: run the unit test suite for the generator itself.
+  validate:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      # Only the generator's own unit tests. The workflow-structure and act
+      # harness suites need actionlint/act on the host and must NOT run inside
+      # the container.
+      - name: Run unit tests
+        run: bun test matrix-generator.test.ts cli.test.ts
+
+  # Job 2: generate a build matrix from each fixture and print the result.
+  # Depends on `validate` so we only generate matrices once the generator
+  # itself is known-good.
+  generate:
+    name: Generate matrices
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Generate build matrices from fixtures
+        run: |
+          shopt -s nullglob
+          found=0
+          for fixture in "${FIXTURES_DIR}"/*.json; do
+            found=1
+            name="$(basename "$fixture")"
+            echo "FIXTURE_START ${name}"
+            bun run cli.ts "$fixture"
+            echo "FIXTURE_END ${name}"
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "No fixtures found in ${FIXTURES_DIR}" >&2
+            exit 1
+          fi
