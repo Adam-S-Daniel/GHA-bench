@@ -1,0 +1,81 @@
+name: Artifact Cleanup
+
+# Triggers:
+#   - push / pull_request : validate the script and exercise the cleanup plan
+#                           on every change.
+#   - schedule            : run the retention plan on a regular cadence, which
+#                           is how an artifact-cleanup job would run in reality.
+#   - workflow_dispatch   : let a maintainer run it on demand, optionally
+#                           forcing dry-run rendering.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Render plans as dry-run only"
+        type: boolean
+        default: true
+
+# Least-privilege: the workflow only reads the repository contents.
+permissions:
+  contents: read
+
+env:
+  CLEANUP_SCRIPT: artifact-cleanup.sh
+  DRIVER_SCRIPT: ci/run-cases.sh
+  PLAN_FILE: cleanup-plan.txt
+
+jobs:
+  lint:
+    name: Lint scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate bash syntax
+        run: |
+          bash -n "${CLEANUP_SCRIPT}"
+          bash -n "${DRIVER_SCRIPT}"
+          echo "bash -n passed for both scripts"
+
+      - name: Shellcheck (best effort)
+        run: |
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck "${CLEANUP_SCRIPT}" "${DRIVER_SCRIPT}"
+            echo "shellcheck passed"
+          else
+            echo "shellcheck not installed in runner image; skipping"
+          fi
+
+  cleanup-plan:
+    name: Generate cleanup plan
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show invocation mode
+        run: echo "workflow_dispatch dry_run input = ${{ inputs.dry_run }}"
+
+      - name: Run artifact cleanup over all fixtures
+        run: |
+          chmod +x "${CLEANUP_SCRIPT}" "${DRIVER_SCRIPT}"
+          bash "${DRIVER_SCRIPT}" | tee "${PLAN_FILE}"
+
+      - name: Verify expected plan output
+        run: |
+          # Assert the exact, known-good summary for each fixture case. If any
+          # policy regressed, these greps fail and the job fails.
+          grep -q "SUMMARY total=4 retained=1 deleted=3 reclaimed_bytes=15000" "${PLAN_FILE}"
+          grep -q "SUMMARY total=2 retained=1 deleted=1 reclaimed_bytes=1000" "${PLAN_FILE}"
+          grep -q "SUMMARY total=3 retained=2 deleted=1 reclaimed_bytes=100" "${PLAN_FILE}"
+          grep -q "DELETE a-old size=5000 run=100 reason=age+keep-latest" "${PLAN_FILE}"
+          echo "All fixture plans verified."
