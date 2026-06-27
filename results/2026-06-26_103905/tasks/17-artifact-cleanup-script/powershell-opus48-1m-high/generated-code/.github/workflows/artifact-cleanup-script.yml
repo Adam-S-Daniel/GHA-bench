@@ -1,0 +1,80 @@
+name: Artifact Cleanup
+
+# Triggers: run on pushes/PRs that may touch the policy, on a weekly schedule
+# (the typical cadence for real artifact pruning), and on manual dispatch.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run the cleanup in dry-run mode (no deletions executed)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+# Least-privilege: the planner only reads repo content.
+permissions:
+  contents: read
+
+env:
+  FIXTURE_DIR: fixtures
+
+jobs:
+  cleanup:
+    name: Plan cleanup (${{ matrix.fixture }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each fixture is a self-contained policy + artifact dataset.
+        fixture: [max-age, keep-latest, max-size, combined-dryrun]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure PowerShell is available
+        shell: bash
+        run: |
+          if command -v pwsh >/dev/null 2>&1; then
+            echo "pwsh present: $(pwsh --version)"
+          else
+            echo "Installing PowerShell..."
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          fi
+
+      - name: Run artifact cleanup planner
+        shell: pwsh
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          $fixture = Join-Path $env:FIXTURE_DIR "$($env:FIXTURE).json"
+          Write-Output "Processing fixture: $fixture"
+          if (-not (Test-Path $fixture)) {
+              throw "Fixture not found: $fixture"
+          }
+          ./ArtifactCleanup.ps1 -InputPath $fixture -Format Text
+
+  report:
+    name: Aggregate report
+    needs: cleanup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Summarise
+        shell: pwsh
+        run: |
+          Write-Output "All cleanup matrix jobs completed successfully."
+          $count = (Get-ChildItem -Path $env:FIXTURE_DIR -Filter *.json).Count
+          Write-Output "Processed $count fixture dataset(s)."
