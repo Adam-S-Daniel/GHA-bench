@@ -1,0 +1,563 @@
+[Assistant] I'll start by exploring the environment and understanding the task setup.
+[Tool: Bash] ls -la && echo "---ACTRC---" && cat .actrc 2>/dev/null && echo "---PESTER---" && pwsh -c '(Get-Module -ListAvailable Pester).Version' 2>/dev/null && echo "---ACT---" && which act actionlint docker pwsh
+[Result] total 44
+drwxr-xr-x 4 passp passp  4096 Jun 27 08:07 .
+drwxr-xr-x 7 passp passp  4096 Jun 27 08:07 ..
+-rw-r--r-- 1 passp passp    40 Jun 27 08:07 .actrc
+drwxr-xr-x 2 passp passp  4096 Jun 27 08:07 .claude
+drwxr-xr-x 6 passp passp  4096 Jun 27 08:07 .git
+-rw-r--r-- 1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---PESTER---
+
+[32;1mMajor [0m[32;1m Minor [0m[32;1m Build [0m[32;1m Revision[0m
+[32;1m----- [0m [32;1m----- [0m [32;1m----- [0m [32;1m--------[0m
+5      7      1      -1
+
+---ACT---
+/home/passp/.local/bin/act
+/home/passp/.local/bin/actionlint
+/usr/bin/docker
+/snap/bin/pwsh
+[Assistant] Pester 5.7.1, act, actionlint, docker, pwsh all present. Let me check the act image and AGENTS.md for conventions.
+[Tool: Bash] docker images | grep -i pwsh; echo "---"; sed -n '1,60p' /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -60
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+ghcr.io/catthehacker/ubuntu:pwsh-latest         6841ce5337da       2.87GB          670MB        
+---
+# Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_re
+[Assistant] Environment is ready. Now let me begin TDD. First, the failing test (RED).
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/BuildMatrix.Tests.ps1", "c
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/BuildMatrix.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now run the test to confirm it fails (RED — no module yet):
+[Tool: Bash] cd "$PWD" && pwsh -c "Invoke-Pester ./tests/BuildMatrix.Tests.ps1 -Output Minimal" 2>&1 | tail -15
+[Result] [91m Expected an exception with message like '*Configuration file not found*' to be thrown, but the message was 'The term 'Invoke-MatrixGenerator' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91m Check the spelling of the name, or if a path was included, verify that the path is correct and try again.'. from /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/BuildMatrix.Tests.ps1:133 char:11
+[91m     +         { Invoke-MatrixGenerator -ConfigPath '/nonexistent/does-not-e …
+[91m     +           ~~~~~~~~~~~~~~~~~~~~~~
+[91m at Should -Throw -ExpectedMessage '*Configuration file not found*', /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/BuildMatrix.Tests.ps1:134
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/workt
+[Assistant] RED confirmed (13 failing). Now implement the module (GREEN):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1", "content"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && pwsh -c "Invoke-Pester ./tests/BuildMatrix.Tests.ps1 -Output Minimal" 2>&1 | tail -20
+[Result] [91m Expected an exception with message like '*exceeds the maximum allowed size*' to be thrown, but the message was 'The property 'Keys' cannot be found on this object. Verify that the property exists.'. from /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1:118 char:31
+[91m     +         $combos = @($combos | Where-Object {
+[91m     +                               ~~~~~~~~~~~~~~
+[91m at Should -Throw -ExpectedMessage '*exceeds the maximum allowed size*', /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/BuildMatrix.Tests.ps1:102
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/BuildMatrix.Tests.ps1:101[0m
+[91m[-] New-B
+[Assistant] The bug: piping an empty array `@()` into a `process` block yields `$null`, making `@($null)` have count 1. Fix the normalization of Exclude/Include:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildM
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && pwsh -c "Invoke-Pester ./tests/BuildMatrix.Tests.ps1 -Output Minimal" 2>&1 | tail -8
+[Result] [91m PropertyNotFoundException: The property 'Keys' cannot be found on this object. Verify that the property exists.
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1:125
+[91m at Get-MatrixCombination, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1:120
+[91m at New-BuildMatrix, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1:200
+[91m at Invoke-MatrixGenerator, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1:262
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.cl
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1", "offset":
+[Result] 115	    if ($dimensionKeys.Count -eq 0) { $combos = @() }
+116	
+117	    # 2. Apply exclude rules: drop any combination that matches ALL key/value
+118	    #    pairs of an exclude entry (unspecified keys act as wildcards).
+119	    if ($Exclude.Count -gt 0) {
+120	        $combos = @($combos | Where-Object {
+121	            $combo = $_
+122	            $matchesAnyExclude = $false
+123	            foreach ($ex in $Exclude) {
+124	                $allMatch = $true
+125	                foreach ($k in $ex.Keys) {
+126	                    if (-not $combo.Contains($k) -or ("$($combo[$k])" -ne "$($ex[$k])")) {
+127	                        $allMatch = $false
+128	                        break
+129	                    }
+130	                }
+131	                if ($allMatch) { $matchesAnyExclude = $true; break }
+132	            }
+133	            -not $matchesAnyExclude
+134	        })
+135	    }
+136	
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+$m = [ordered]@{ os=@("linux","windows"); version=@("18") }
+try { $c = Get-MatrixCombination -Matrix $m -Include @() -Exclude @(); "OK count=$($c.Count)" } catch { "ERR: $($_.Exception.Message)" }
+$e = @(); "empty exclude normalized:"; (@(@($e) | ForEach-Object { ConvertTo-Hashtable $_ })).Count
+'
+[Result] OK count=2
+empty exclude normalized:
+0
+[Assistant] Direct call works. Let me repro the JSON path:
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+$tmp = New-TemporaryFile
+@{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | Set-Content $tmp
+try { Invoke-MatrixGenerator -ConfigPath $tmp } catch { "ERR: $($_.Exception.Message)"; $_.ScriptStackTrace }
+Remove-Item $tmp
+'
+[Result] ERR: The property 'Keys' cannot be found on this object. Verify that the property exists.
+at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1: line 125
+at Get-MatrixCombination, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1: line 120
+at New-BuildMatrix, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1: line 200
+at Invoke-MatrixGenerator, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1: line 262
+at <ScriptBlock>, <No file>: line 5
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+$h = ConvertTo-Hashtable $cfg
+"keys: $($h.Keys -join ",")"
+"contains exclude: $($h.Contains("exclude"))"
+"contains include: $($h.Contains("include"))"
+$inc = if ($h.Contains("include")) { @($h["include"]) } else { @() }
+"inc count: $($inc.Count); inc[0] type: $($inc[0].GetType().Name)"
+'
+[Result] keys: matrix,fail-fast
+contains exclude: False
+contains include: False
+[31;1mInvalidOperation: [0m
+[31;1m[36;1mLine |[0m
+[31;1m[36;1m[36;1m   9 | [0m "inc count: $($inc.Count); inc[0] type: $([36;1m$inc[0].GetType().Name[0m)"[0m
+[31;1m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m                                           ~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mCannot index into a null array.[0m
+inc count: 0; inc[0] type:
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+$h = ConvertTo-Hashtable $cfg
+$m = $h["matrix"]
+"matrix type: $($m.GetType().Name); keys: $($m.Keys -join ",")"
+try { $c = Get-MatrixCombination -Matrix $m -Include @() -Exclude @(); "OK $($c.Count)" } catch { "ERR $($_.Exception.Message)" }
+try { $c = New-BuildMatrix -Config $h; "NB OK $($c.jobCount)" } catch { "NB ERR $($_.Exception.Message)" }
+'
+[Result] matrix type: OrderedDictionary; keys: os,version
+OK 2
+NB ERR The property 'Keys' cannot be found on this object. Verify that the property exists.
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+$h = ConvertTo-Hashtable $cfg
+$m = $h["matrix"]
+$inc = if ($h.Contains("include")) { @($h["include"]) } else { @() }
+$exc = if ($h.Contains("exclude")) { @($h["exclude"]) } else { @() }
+"inc=$($inc.Count) exc=$($exc.Count)"
+try { $c = Get-MatrixCombination -Matrix $m -Include $inc -Exclude $exc; "OK $($c.Count)" } catch { "ERR $($_.Exception.Message)" }
+'
+[Result] inc=0 exc=0
+ERR The property 'Keys' cannot be found on this object. Verify that the property exists.
+[Tool: Bash] cd "$PWD" && pwsh -c '
+$exc = @()
+function f { param($Exclude=@()); "inside: null=$($null -eq $Exclude) count=$(@($Exclude).Count)"; $n=@(@($Exclude)|ForEach-Object{$_}); "norm count=$($n.Count)" }
+f -Exclude @()
+f -Exclude $exc
+'
+[Result] inside: null=False count=0
+norm count=0
+inside: null=False count=0
+norm count=0
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+$h = ConvertTo-Hashtable $cfg
+$m = $h["matrix"]
+$exc = @()
+"A:"; try { Get-MatrixCombination -Matrix $m -Exclude $exc | Out-Null; "ok" } catch { $_.Exception.Message }
+"B:"; try { Get-MatrixCombination -Matrix $m -Exclude @() | Out-Null; "ok" } catch { $_.Exception.Message }
+"C:"; try { Get-MatrixCombination -Matrix $m | Out-Null; "ok" } catch { $_.Exception.Message }
+'
+[Result] A:
+ok
+B:
+ok
+C:
+ok
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+$h = ConvertTo-Hashtable $cfg
+$m = $h["matrix"]
+$inc=@(); $exc=@()
+"D both vars:"; try { Get-MatrixCombination -Matrix $m -Include $inc -Exclude $exc | Out-Null; "ok" } catch { $_.Exception.Message }
+"E inc only:"; try { Get-MatrixCombination -Matrix $m -Include $inc | Out-Null; "ok" } catch { $_.Exception.Message }
+"types: inc=$($inc.GetType().Name) exc=$($exc.GetType().Name)"
+'
+[Result] D both vars:
+ok
+E inc only:
+ok
+types: inc=Object[] exc=Object[]
+[Assistant] This is confusing — standalone works now. Let me re-test the actual `New-BuildMatrix` path and the full suite:
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+try { $r = New-BuildMatrix -Config $cfg; "OK $($r.jobCount)" } catch { "ERR $($_.Exception.Message)"; $_.ScriptStackTrace }
+'
+[Result] ERR The property 'Keys' cannot be found on this object. Verify that the property exists.
+at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1: line 125
+at Get-MatrixCombination, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1: line 120
+at New-BuildMatrix, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1: line 200
+at <ScriptBlock>, <No file>: line 4
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1", "offset":
+[Result] 185	    $Config = ConvertTo-Hashtable $Config
+186	
+187	    if (-not $Config.Contains('matrix')) {
+188	        throw "Invalid configuration: required 'matrix' section is missing."
+189	    }
+190	
+191	    $matrix = $Config['matrix']
+192	    if ($null -eq $matrix -or @($matrix.Keys).Count -eq 0) {
+193	        throw "Invalid configuration: 'matrix' section must define at least one dimension."
+194	    }
+195	
+196	    $include = if ($Config.Contains('include')) { @($Config['include']) } else { @() }
+197	    $exclude = if ($Config.Contains('exclude')) { @($Config['exclude']) } else { @() }
+198	
+199	    # Expand to validate the resulting job count.
+200	    $combos = Get-MatrixCombination -Matrix $matrix -Include $include -Exclude $exclude
+201	    $jobCount = @($combos).Count
+202	
+203	    if ($jobCount -eq 0) {
+204	        throw "Invalid configuration: the matrix expanded to zero jobs (check your exclude rules)."
+[Assistant] Let me instrument inside the function directly:
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+$Config = ConvertTo-Hashtable $cfg
+$matrix = $Config["matrix"]
+$include = if ($Config.Contains("include")) { @($Config["include"]) } else { @() }
+$exclude = if ($Config.Contains("exclude")) { @($Config["exclude"]) } else { @() }
+"include count=$($include.Count) exclude count=$($exclude.Count)"
+"include[0] null? " + ($null -eq $include[0])
+"exclude[0] null? " + ($null -eq $exclude[0])
+'
+[Result ERROR] Exit code 1
+include count=0 exclude count=0
+[31;1mInvalidOperation: [0m
+[31;1m[36;1mLine |[0m
+[31;1m[36;1m[36;1m   9 | [0m [36;1m"include[0] null? " + ($null -eq $include[0])[0m
+[31;1m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mCannot index into a null array.[0m
+[31;1mInvalidOperation: [0m
+[31;1m[36;1mLine |[0m
+[31;1m[36;1m[36;1m  10 | [0m [36;1m"exclude[0] null? " + ($null -eq $exclude[0])[0m
+[31;1m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mCannot index into a null array.[0m
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Set-StrictMode -Version Latest
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+$Config = ConvertTo-Hashtable $cfg
+$matrix = $Config["matrix"]
+$include = if ($Config.Contains("include")) { @($Config["include"]) } else { @() }
+$exclude = if ($Config.Contains("exclude")) { @($Config["exclude"]) } else { @() }
+try { Get-MatrixCombination -Matrix $matrix -Include $include -Exclude $exclude | Out-Null; "ok" } catch { $_.Exception.Message }
+'
+[Result] The property 'Keys' cannot be found on this object. Verify that the property exists.
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Set-StrictMode -Version Latest
+Import-Module ./src/BuildMatrix.psm1 -Force
+$exclude=@()
+$n = @(@($exclude) | ForEach-Object { ConvertTo-Hashtable $_ })
+"n.Count=$($n.Count)"
+foreach ($x in $n) { "elem null=$($null -eq $x)" }
+'
+[Result] n.Count=0
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1", "offset":
+[Result] 82	        [Parameter(Mandatory)] $Matrix,
+83	        $Exclude = @(),
+84	        $Include = @()
+85	    )
+86	
+87	    $Matrix  = ConvertTo-Hashtable $Matrix
+88	    # Normalise each entry individually. (Piping an empty array into a process
+89	    # block would yield a stray $null element, so map element-by-element.)
+90	    $Exclude = @(@($Exclude) | ForEach-Object { ConvertTo-Hashtable $_ })
+91	    $Include = @(@($Include) | ForEach-Object { ConvertTo-Hashtable $_ })
+92	
+93	    # Track which keys came from the original matrix dimensions. GitHub only
+94	    # lets an include merge into a combination when it does not overwrite any
+95	    # ORIGINAL matrix value (added keys may be overwritten by later includes).
+96	    $dimensionKeys = @($Matrix.Keys)
+97	
+98	    # 1. Cartesian product of the dimensions.
+99	    $combos = @([ordered]@{})  # start with one empty combination
+100	    foreach ($key in $dimensionKeys) {
+101	        $values = @($Matrix[$key])
+102	        $next = @()
+103	        fore
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Set-StrictMode -Version Latest
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+$Config = ConvertTo-Hashtable $cfg
+$matrix = $Config["matrix"]
+# call with NO include/exclude args at all (use defaults)
+try { Get-MatrixCombination -Matrix $matrix | Out-Null; "no-args ok" } catch { "no-args ERR: "+$_.Exception.Message }
+# call with explicit empty
+$e=@()
+try { Get-MatrixCombination -Matrix $matrix -Exclude $e -Include $e | Out-Null; "empty ok" } catch { "empty ERR: "+$_.Exception.Message }
+'
+[Result] no-args ok
+empty ok
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Set-StrictMode -Version Latest
+Import-Module ./src/BuildMatrix.psm1 -Force
+$cfg = @{ matrix = [ordered]@{ os=@("linux","windows"); version=@("18") }; "fail-fast"=$true } | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+$Config = ConvertTo-Hashtable $cfg
+$matrix = $Config["matrix"]
+$include = if ($Config.Contains("include")) { @($Config["include"]) } else { @() }
+$exclude = if ($Config.Contains("exclude")) { @($Config["exclude"]) } else { @() }
+"include is null: $($null -eq $include); type: $(if($include){$include.GetType().Name}else{\"<none>\"})"
+"include count: $(@($include).Count)"
+try { Get-MatrixCombination -Matrix $matrix -Include $include -Exclude $exclude | Out-Null; "ok" } catch { "ERR: "+$_.Exception.Message }
+'
+[Result] [31;1m\<none>\: [0m
+[31;1m[36;1mLine |[0m
+[31;1m[36;1m[36;1m   9 | [0m … ude); type: $(if($include){$include.GetType().Name}else{[36;1m\"<none>\"[0m})"[0m
+[31;1m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m                                                           ~~~~~~~~~~[0m
+[31;1m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mThe term '\<none>\' is not recognized as a name of a cmdlet, function, script file, or executable program.[0m
+[31;1m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m[31;1mCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.[0m
+include is null: True; type: 
+include count: 0
+ERR: The property 'Keys' cannot be found on this object. Verify that the property exists.
+[Assistant] Found it! An `if`-expression returning `@()` assigns `$null` (empty array unrolls to nothing). So `$include`/`$exclude` become `$null`, then `@($null)` creates a 1-element null array. Two fixes:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildM
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildM
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/BuildMatrix.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && pwsh -c "Invoke-Pester ./tests/BuildMatrix.Tests.ps1 -Output Minimal" 2>&1 | tail -6
+[Result] [95mStarting discovery in 1 files.[0m
+[95mDiscovery found 13 tests in 213ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/BuildMatrix.Tests.ps1[0m[90m 984ms (434ms|368ms)[0m
+[97mTests completed in 1s[0m
+[32mTests Passed: 13, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 13 green. Now the CLI wrapper, fixtures, and workflow:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/Generate-Matrix.ps1", "conte
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/src/Generate-Matrix.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now the fixtures. Let me create three and verify their expected outputs locally:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/fixtures/basic.json", "content":
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/fixtures/basic.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/fixtures/include-exclude.json", 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/fixtures/include-exclude.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/fixtures/oversize.json", "conten
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/fixtures/oversize.json (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module ./src/BuildMatrix.psm1 -Force
+foreach ($f in "basic","include-exclude") {
+  $r = Invoke-MatrixGenerator -ConfigPath "./fixtures/$f.json" | ConvertFrom-Json
+  "$f => jobCount=$($r.jobCount)"
+}
+try { Invoke-MatrixGenerator -ConfigPath "./fixtures/oversize.json" | Out-Null } catch { "oversize => $($_.Exception.Message)" }
+'
+[Result] basic => jobCount=4
+include-exclude => jobCount=6
+oversize => Matrix validation failed: the expanded matrix has 12 jobs, which exceeds the maximum allowed size of 5.
+[Assistant] Counts confirmed (basic=4, include-exclude=6, oversize fails at 12>5). Now the workflow:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/.github/workflows/environment-ma
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/.github/workflows/environment-matrix-generator.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && actionlint .github/workflows/environment-matrix-generator.yml && echo "ACTIONLINT_EXIT=$?"
+[Result] ACTIONLINT_EXIT=0
+[Assistant] actionlint passes (exit 0). Let me check host capabilities for the harness (YAML parsing, act):
+[Tool: Bash] cd "$PWD" && pwsh -c '(Get-Module -ListAvailable powershell-yaml | Select-Object -First 1).Version; "pester:"; (Get-Module -ListAvailable Pester|Select-Object -First 1).Version' 2>&1; echo "---git---"; git config user.email >/dev/null 2>&1 && echo "email set" || echo "no email"; git --version
+[Result] [32;1mMajor [0m[32;1m Minor [0m[32;1m Build [0m[32;1m Revision[0m
+[32;1m----- [0m [32;1m----- [0m [32;1m----- [0m [32;1m--------[0m
+0      4      12     -1
+pester:
+5      7      1      -1
+
+---git---
+email set
+git version 2.54.0
+[Assistant] powershell-yaml available. Now the workflow structure + act harness test file:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Workflow.Tests.ps1", "cont
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Workflow.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] I referenced `Get-FixtureJson` — let me define it at script scope:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Work
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Workflow.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Let me validate the structure tests first (fast, no act):
+[Tool: Bash] cd "$PWD" && pwsh -c '
+$c = New-PesterConfiguration
+$c.Run.Path = "./tests/Workflow.Tests.ps1"
+$c.Filter.FullName = "Workflow structure*"
+$c.Output.Verbosity = "Detailed"
+Invoke-Pester -Configuration $c
+' 2>&1 | tail -25
+[Result] [95mPester v5.7.1[0m
+[95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 18 tests in 302ms.[0m
+[95mFilter 'FullName' set to ('Workflow structure*').[0m
+[95mFilters selected 9 tests to run.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Workflow.Tests.ps1'[0m
+[92mDescribing Workflow structure[0m
+[32m  [+] exists as a YAML file[0m[90m 155ms (110ms|45ms)[0m
+[32m  [+] declares the expected trigger events[0m[90m 23ms (20ms|3ms)[0m
+[32m  [+] sets least-privilege permissions[0m[90m 10ms (8ms|2ms)[0m
+[32m  [+] defines the generate-matrix job on ubuntu-latest[0m[90m 18ms (8ms|10ms)[0m
+[91m  [-] checks out the repo with actions/checkout@v4[0m[90m 64ms (58ms|6ms)[0m
+[91m   Expected 1, but got 2.
+[91m   at ($steps | Where-Object { $_.uses -eq 'actions/checkout@v4' }).Count | Should -B
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module powershell-yaml
+$y = ConvertFrom-Yaml (Get-Content ./.github/workflows/environment-matrix-generator.yml -Raw)
+$steps = $y.jobs["generate-matrix"].steps
+$steps | ForEach-Object { "uses=[$($_.uses)] name=[$($_.name)]" }
+'
+[Result] uses=[actions/checkout@v4] name=[Check out repository]
+uses=[] name=[Show PowerShell and Pester versions]
+uses=[] name=[Generate matrix for each fixture]
+uses=[] name=[Run Pester unit tests]
+[Tool: Bash] cd "$PWD" && pwsh -c '
+Import-Module powershell-yaml
+$Yaml = ConvertFrom-Yaml (Get-Content ./.github/workflows/environment-matrix-generator.yml -Raw)
+$steps = $Yaml.jobs["generate-matrix"].steps
+$m = $steps | Where-Object { $_.uses -eq "actions/checkout@v4" }
+"match count: $(@($m).Count)"
+"raw .Count: $(($steps | Where-Object { $_.uses -eq \"actions/checkout@v4\" }).Count)"
+'
+[Result ERROR] Exit code 1
+[Tool: Bash] cd "$PWD" && pwsh -File /dev/stdin <<'EOF'
+Import-Module powershell-yaml
+$Yaml = ConvertFrom-Yaml (Get-Content ./.github/workflows/environment-matrix-generator.yml -Raw)
+$steps = $Yaml.jobs['generate-matrix'].steps
+$m = @($steps | Where-Object { $_.uses -eq 'actions/checkout@v4' })
+Write-Output "match count: $($m.Count)"
+EOF
+[Result] match count: 1
+[Assistant] The `.Count` returned the step hashtable's key count, not the match count. Wrap in `@()`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Work
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Workflow.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now the act integration run (run #1 of ≤3). This takes time:
+[Tool: Bash] cd "$PWD" && pwsh -c '
+$c = New-PesterConfiguration
+$c.Run.Path = "./tests/Workflow.Tests.ps1"
+$c.Output.Verbosity = "Detailed"
+Invoke-Pester -Configuration $c
+' 2>&1 | tail -45
+[Result] [91m  [-] include-exclude fixture expands to exactly 6 jobs[0m[90m 10ms (8ms|2ms)[0m
+[91m   Expected regular expression 'JOBCOUNT: include-exclude = 6' to match 'time="2026-06-27T08:18:07-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[91m   [Environment Matrix Generator/Generate and validate build matrix] ⭐ Run Set up job
+[91m   [Environment Matrix Generator/Generate and validate build matrix] 🚀  Start image=act-ubuntu-pwsh:latest
+[91m   [Environment Matrix Generator/Generate and validate build matrix]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=true
+[91m   [Environment Matrix Generator/Generate and validate build matrix] using DockerAuthConfig authentication for docker pull
+[91m   [Environment Matrix Generator/Generate and validate build matrix] Error response from daemon: pull access denied for act-ubuntu-pwsh, repository does not exist or may require 'docker login'
+[
+[Assistant] Two fixes: act force-pulls `:latest` (need `--pull=false`), and `Get-FixtureJson` must be defined inside a `BeforeAll` for Pester 5 scoping. Let me fix both:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Work
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Workflow.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Work
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Workflow.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now rerun (act run #2 — this one actually executes the container):
+[Tool: Bash] cd "$PWD" && pwsh -c '
+$c = New-PesterConfiguration
+$c.Run.Path = "./tests/Workflow.Tests.ps1"
+$c.Output.Verbosity = "Detailed"
+Invoke-Pester -Configuration $c
+' 2>&1 | tail -40
+[Result] [95mPester v5.7.1[0m
+[95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 18 tests in 441ms.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Workflow.Tests.ps1'[0m
+[92mDescribing Workflow structure[0m
+[32m  [+] exists as a YAML file[0m[90m 187ms (127ms|60ms)[0m
+[32m  [+] declares the expected trigger events[0m[90m 30ms (26ms|4ms)[0m
+[32m  [+] sets least-privilege permissions[0m[90m 14ms (12ms|2ms)[0m
+[32m  [+] defines the generate-matrix job on ubuntu-latest[0m[90m 22ms (20ms|2ms)[0m
+[32m  [+] checks out the repo with actions/checkout@v4[0m[90m 18ms (16ms|2ms)[0m
+[32m  [+] uses shell: pwsh for run steps[0m[90m 24ms (22ms|2ms)[0m
+[32m  [+] references the BuildMatrix module that actually exists[0m[90m 32ms (30ms|2ms)[0m
+[32m  [+] ships the CLI script and unit tests referenc
+[Assistant] All 18 pass, including the full act run. Let me verify the `act-result.txt` artifact exists and contains the expected output:
+[Tool: Bash] cd "$PWD" && ls -la act-result.txt && echo "===KEY LINES===" && grep -E "FIXTURE|JOBCOUNT|VALIDATION_FAILED|Job succeeded|Tests Passed|ACT EXIT" act-result.txt | sed -E 's/^\[[^]]*\][[:space:]]*\|?[[:space:]]*//' | head -40
+[Result] -rw-r--r-- 1 passp passp 12974 Jun 27 08:19 act-result.txt
+===KEY LINES===
+===== FIXTURE: basic =====
+===== JOBCOUNT: basic = 4 =====
+===== END FIXTURE: basic =====
+===== FIXTURE: include-exclude =====
+===== JOBCOUNT: include-exclude = 6 =====
+===== END FIXTURE: include-exclude =====
+===== FIXTURE: oversize =====
+===== VALIDATION_FAILED: oversize = Matrix validation failed: the expanded matrix has 12 jobs, which exceeds the maximum allowed size of 5. =====
+===== END FIXTURE: oversize =====
+[32mTests Passed: 13, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+🏁  Job succeeded
+===== ACT EXIT CODE: 0 =====
+[Assistant] Everything works: artifact present, exit 0, exact values. Final combined run of the full suite (`Invoke-Pester ./tests`, act run #3 — within budget) to confirm the canonical invocation:
+[Tool: Bash] cd "$PWD" && pwsh -c 'Invoke-Pester ./tests -Output Minimal' 2>&1 | tail -6
+[Result] [95mDiscovery found 31 tests in 368ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/BuildMatrix.Tests.ps1[0m[90m 1.42s (602ms|542ms)[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/tests/Workflow.Tests.ps1[0m[90m 10.24s (10.1s|109ms)[0m
+[97mTests completed in 11.7s[0m
+[32mTests Passed: 31, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 31 tests pass. Let me add a README documenting the solution and approach:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/README.md", "content": "# Enviro
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/powershell-tool-opus48-1m-medium/README.md (file state is current in your context — no need to Read it back)
+[Assistant] Final verification — actionlint clean and project structure:
+[Tool: Bash] cd "$PWD" && actionlint .github/workflows/environment-matrix-generator.yml && echo "actionlint OK (exit $?)" && echo "---FILES---" && find src tests fixtures .github -type f | sort && echo "---ARTIFACT---" && ls -la act-result.txt
+[Result] actionlint OK (exit 0)
+---FILES---
+.github/workflows/environment-matrix-generator.yml
+fixtures/basic.json
+fixtures/include-exclude.json
+fixtures/oversize.json
+src/BuildMatrix.psm1
+src/Generate-Matrix.ps1
+tests/BuildMatrix.Tests.ps1
+tests/Workflow.Tests.ps1
+---ARTIFACT---
+-rw-r--r-- 1 passp passp 12977 Jun 27 08:19 act-result.txt
+[Assistant] The solution is complete and fully verified. Here's a summary of what was built.
+
+## What was delivered
+
+**Core logic** (`src/BuildMatrix.psm1`) — pure, testable functions:
+- `Get-MatrixCombination` — cartesian expansion + GitHub-faithful `exclude` (wildcard on unspecified keys) and `include` (merge-or-append) rules
+- `New-BuildMatrix` — assembles the full `strategy` object (`fail-fast`, `max-parallel`, `matrix`) and validates against `max-size`
+- `Invoke-MatrixGenerator` — loads a JSON config, returns matrix JSON, with clear errors for missing file / bad JSON / missing `matrix` section
+
+**CLI wrapper** (`src/Generate-Matrix.ps1`) and three fixtures (basic → 4 jobs, include-exclude → 6 jobs, oversize → fails at 12 > 5).
+
+**TDD followed red→green**: wrote `tests/BuildMatrix.Tests.ps1` first (confirmed 13 failing), then implemented to green. Two real bugs surfaced and were fixed along the way — an `if`-expression returning `@()` silently coerces to `$null`, and `.Count` on an `OrderedDictionary` returns key-count not match-count.
+
+**GitHub Actions workflow** (`.github/workflows/environment-matrix-generator.yml`):
+- Triggers: push, pull_request, workflow_dispatch (with input), schedule
+- `permissions: contents: read`, env var for fixtures dir, `shell: pwsh` throughout
+- Loops over every fixture, emits delimited output, then runs the Pester unit suite
+- **actionlint passes (exit 0)**
+
+**act harness** (`tests/Workflow.Tests.ps1`): parses the YAML for structure, verifies referenced script paths exist, asserts actionlint exit 0, then builds an isolated temp git repo, runs `act push --rm --pull=false`, writes **`act-result.txt`**, and asserts **exact** values per fixture (`JOBCOUNT: basic = 4`, exact OS/node arrays, `max-parallel=3`, the precise oversize error string, `13` unit tests passing inside the pipeline) plus `Job succeeded` and exit 0.
+
+## Results
+- **31/31 tests pass** via `Invoke-Pester ./tests`
+- **act exited 0**, every job shows "Job succeeded"
+- `act-result.txt` written (required artifact present)
+- Stayed within the 3 `act push` run budget (1 diagnosed image-pull issue, 2 successful runs)

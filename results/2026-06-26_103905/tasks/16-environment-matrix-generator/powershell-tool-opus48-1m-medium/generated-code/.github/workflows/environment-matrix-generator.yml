@@ -1,0 +1,78 @@
+name: Environment Matrix Generator
+
+# Generate a GitHub Actions strategy.matrix from declarative config fixtures.
+# Triggers cover normal CI plus manual and scheduled runs.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      fixtures_dir:
+        description: Directory containing matrix config fixtures
+        required: false
+        default: fixtures
+  schedule:
+    # Weekly sanity run (Mondays 06:00 UTC).
+    - cron: '0 6 * * 1'
+
+# Least-privilege: the job only needs to read the repository contents.
+permissions:
+  contents: read
+
+env:
+  # Default fixtures directory; overridable via workflow_dispatch input.
+  FIXTURES_DIR: ${{ github.event.inputs.fixtures_dir || 'fixtures' }}
+
+jobs:
+  generate-matrix:
+    name: Generate and validate build matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show PowerShell and Pester versions
+        shell: pwsh
+        run: |
+          $PSVersionTable.PSVersion.ToString()
+          (Get-Module -ListAvailable Pester | Select-Object -First 1).Version.ToString()
+
+      - name: Generate matrix for each fixture
+        shell: pwsh
+        env:
+          FIXTURES_DIR: ${{ env.FIXTURES_DIR }}
+        run: |
+          # Import the matrix-generation logic from the repository.
+          Import-Module "$PWD/src/BuildMatrix.psm1" -Force
+
+          $fixturesDir = Join-Path $PWD $env:FIXTURES_DIR
+          if (-not (Test-Path $fixturesDir)) {
+              throw "Fixtures directory not found: $fixturesDir"
+          }
+
+          # Process fixtures in a deterministic order so output is stable.
+          $fixtures = Get-ChildItem -Path $fixturesDir -Filter '*.json' | Sort-Object Name
+          foreach ($fixture in $fixtures) {
+              $name = $fixture.BaseName
+              Write-Output "===== FIXTURE: $name ====="
+              try {
+                  $json = Invoke-MatrixGenerator -ConfigPath $fixture.FullName
+                  $parsed = $json | ConvertFrom-Json
+                  Write-Output $json
+                  Write-Output "===== JOBCOUNT: $name = $($parsed.jobCount) ====="
+              }
+              catch {
+                  # Expected for fixtures that intentionally violate max-size.
+                  Write-Output "===== VALIDATION_FAILED: $name = $($_.Exception.Message) ====="
+              }
+              Write-Output "===== END FIXTURE: $name ====="
+          }
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = "$PWD/tests/BuildMatrix.Tests.ps1"
+          $config.Output.Verbosity = 'Detailed'
+          $config.Run.Exit = $true
+          Invoke-Pester -Configuration $config
