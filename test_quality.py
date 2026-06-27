@@ -36,6 +36,7 @@ from pathlib import Path
 TEST_FILE_PATTERNS = {
     "python": [r"test_.*\.py$", r".*_test\.py$", r"run_tests\.py$"],
     "typescript": [r".*\.test\.ts$", r".*\.spec\.ts$"],
+    "javascript": [r".*\.test\.(js|mjs|cjs)$", r".*\.spec\.(js|mjs|cjs)$"],
     "powershell": [r".*\.Tests\.ps1$"],
     "bash": [r".*\.bats$", r"run_tests\.sh$"],
     "csharp": [r".*Tests\.cs$", r"^tests\.cs$"],
@@ -44,6 +45,7 @@ TEST_FILE_PATTERNS = {
 IMPL_FILE_PATTERNS = {
     "python": [r"(?!test_)(?!.*_test)(?!run_tests).*\.py$"],
     "typescript": [r"(?!.*\.test\.)(?!.*\.spec\.).*\.ts$"],
+    "javascript": [r"(?!.*\.test\.)(?!.*\.spec\.).*\.(js|mjs|cjs)$"],
     "powershell": [r"(?!.*\.Tests\.).*\.ps1$"],
     "bash": [r"(?!.*\.bats$)(?!run_tests\.).*\.sh$"],
     "csharp": [r"(?!.*Tests).*\.cs$"],
@@ -69,6 +71,8 @@ def _detect_language(files: list[str]) -> str:
             return "powershell"
         if f.endswith(".test.ts") or f.endswith(".spec.ts"):
             return "typescript"
+        if re.search(r"\.(test|spec)\.(js|mjs|cjs)$", f):
+            return "javascript"
         if re.search(r"test_.*\.py$|.*_test\.py$|run_tests\.py$", f):
             return "python"
         if f.endswith("Tests.cs") or f == "tests.cs":
@@ -79,6 +83,8 @@ def _detect_language(files: list[str]) -> str:
             return "powershell"
         if f.endswith(".ts"):
             return "typescript"
+        if re.search(r"\.(js|mjs|cjs)$", f):
+            return "javascript"
         if f.endswith(".sh"):
             return "bash"
         if f.endswith(".cs"):
@@ -107,7 +113,7 @@ def _is_impl_file(filepath: str, language: str) -> bool:
 
 def _is_code_file(filepath: str) -> bool:
     """Check if a file is any kind of source code."""
-    return filepath.endswith((".py", ".ts", ".ps1", ".sh", ".bats", ".cs"))
+    return filepath.endswith((".py", ".ts", ".js", ".mjs", ".cjs", ".ps1", ".sh", ".bats", ".cs"))
 
 
 # ---------------------------------------------------------------------------
@@ -162,6 +168,21 @@ def _count_typescript(content: str) -> dict:
     # test("name", ...) or it("name", ...)
     tests = len(re.findall(r"(?:^|\s)(?:test|it)\s*\(", content, re.MULTILINE))
     asserts = len(re.findall(r"\bexpect\s*\(", content))
+    return {"tests": tests, "assertions": asserts}
+
+
+def _count_javascript(content: str) -> dict:
+    """Count tests and assertions in JavaScript code.
+
+    Covers both common stacks the agents use for the default (free-choice)
+    language: node:test / Jest / Vitest (`test(...)`, `it(...)`) with either
+    `expect(...)` matchers or node:assert (`assert(...)`, `assert.equal(...)`,
+    `assert.strictEqual(...)`, etc.).
+    """
+    tests = len(re.findall(r"(?:^|\s)(?:test|it)\s*\(", content, re.MULTILINE))
+    asserts = len(re.findall(r"\bexpect\s*\(", content))
+    # node:assert — bare assert(...) and assert.<method>(...)
+    asserts += len(re.findall(r"\bassert(?:\.\w+)?\s*\(", content))
     return {"tests": tests, "assertions": asserts}
 
 
@@ -228,6 +249,7 @@ def _count_csharp(content: str) -> dict:
 COUNTERS = {
     "python": _count_python,
     "typescript": _count_typescript,
+    "javascript": _count_javascript,
     "powershell": _count_powershell,
     "bash": _count_bash,
     "csharp": _count_csharp,

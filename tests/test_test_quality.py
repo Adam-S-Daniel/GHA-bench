@@ -9,6 +9,7 @@ import pytest
 from test_quality import (
     _count_bash,
     _count_csharp,
+    _count_javascript,
     _count_powershell,
     _count_python,
     _count_typescript,
@@ -36,6 +37,18 @@ class TestDetectLanguage:
 
     def test_typescript_from_test_file(self):
         assert _detect_language(["app.test.ts", "app.ts"]) == "typescript"
+
+    def test_javascript_from_test_file(self):
+        # opus-4.8 at high effort chose JS for the default (free-choice) language
+        assert _detect_language(["bumper.test.js", "src/bumper.js"]) == "javascript"
+        assert _detect_language(["app.spec.mjs", "app.mjs"]) == "javascript"
+
+    def test_javascript_fallback_to_impl_extension(self):
+        assert _detect_language(["src/cli.js"]) == "javascript"
+
+    def test_typescript_test_beats_javascript(self):
+        # a .test.ts present should still resolve to typescript, not javascript
+        assert _detect_language(["a.test.ts", "b.js"]) == "typescript"
 
     def test_powershell_from_test_file(self):
         assert _detect_language(["Foo.Tests.ps1", "Foo.ps1"]) == "powershell"
@@ -314,6 +327,48 @@ it("should subtract", () => {
 
     def test_empty(self):
         r = _count_typescript("")
+        assert r["tests"] == 0
+        assert r["assertions"] == 0
+
+
+# =========================================================================
+# JavaScript counter
+# =========================================================================
+
+class TestCountJavaScript:
+    def test_jest_style_expect(self):
+        code = """
+test("adds", () => {
+    expect(add(1, 2)).toBe(3);
+});
+it("subtracts", () => {
+    expect(sub(3, 1)).toBe(2);
+    expect(sub(0, 0)).toBe(0);
+});
+"""
+        r = _count_javascript(code)
+        assert r["tests"] == 2
+        assert r["assertions"] == 3
+
+    def test_node_assert_style(self):
+        # node:test + node:assert (what opus-4.8 high produced)
+        code = """
+import test from 'node:test';
+import assert from 'node:assert';
+test('bumps major', () => {
+    assert.strictEqual(bump('1.0.0', 'major'), '2.0.0');
+    assert.equal(typeof bump, 'function');
+});
+test('throws on bad input', () => {
+    assert.throws(() => bump(null));
+});
+"""
+        r = _count_javascript(code)
+        assert r["tests"] == 2
+        assert r["assertions"] == 3   # strictEqual + equal + throws
+
+    def test_empty(self):
+        r = _count_javascript("")
         assert r["tests"] == 0
         assert r["assertions"] == 0
 
