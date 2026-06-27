@@ -1,0 +1,89 @@
+name: Artifact Cleanup
+
+# Triggers: run on pushes/PRs (so the plan is validated in CI), on a weekly
+# schedule (the realistic "housekeeping" use case), and on demand.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Plan only, do not act"
+        type: boolean
+        default: true
+  schedule:
+    # Every Sunday at 03:00 UTC.
+    - cron: "0 3 * * 0"
+
+# Least privilege: the planner only needs to read the repository.
+permissions:
+  contents: read
+
+# Deterministic inputs so the plan is reproducible in CI.
+env:
+  NOW: "2026-06-27T00:00:00Z"
+  MAX_AGE_DAYS: "30"
+  KEEP_LATEST: "2"
+  MAX_TOTAL_SIZE: "6000"
+  FIXTURE: "fixtures/artifacts.tsv"
+
+jobs:
+  plan:
+    name: Build deletion plan
+    runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.run.outputs.total }}
+      retained: ${{ steps.run.outputs.retained }}
+      deleted: ${{ steps.run.outputs.deleted }}
+      reclaimed: ${{ steps.run.outputs.reclaimed }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate script syntax
+        run: bash -n artifact-cleanup.sh
+
+      - name: Generate artifact deletion plan
+        id: run
+        run: |
+          set -euo pipefail
+          chmod +x artifact-cleanup.sh
+          # Run the planner against the committed fixture with the policies above.
+          ./artifact-cleanup.sh \
+            --now "${NOW}" \
+            --max-age-days "${MAX_AGE_DAYS}" \
+            --keep-latest "${KEEP_LATEST}" \
+            --max-total-size "${MAX_TOTAL_SIZE}" \
+            --dry-run \
+            "${FIXTURE}" | tee plan.txt
+
+          # Surface the summary numbers as step outputs for downstream jobs.
+          total=$(grep -oP 'Total artifacts: \K[0-9]+' plan.txt)
+          retained=$(grep -oP 'Retained: \K[0-9]+' plan.txt)
+          deleted=$(grep -oP 'Deleted: \K[0-9]+' plan.txt)
+          reclaimed=$(grep -oP 'Space reclaimed: \K[0-9]+' plan.txt)
+          {
+            echo "total=${total}"
+            echo "retained=${retained}"
+            echo "deleted=${deleted}"
+            echo "reclaimed=${reclaimed}"
+          } >> "${GITHUB_OUTPUT}"
+
+  report:
+    name: Report plan summary
+    needs: plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print summary from planner outputs
+        env:
+          TOTAL: ${{ needs.plan.outputs.total }}
+          RETAINED: ${{ needs.plan.outputs.retained }}
+          DELETED: ${{ needs.plan.outputs.deleted }}
+          RECLAIMED: ${{ needs.plan.outputs.reclaimed }}
+        run: |
+          set -euo pipefail
+          echo "PLAN_RESULT total=${TOTAL} retained=${RETAINED} deleted=${DELETED} reclaimed=${RECLAIMED}"
+          if [ -z "${DELETED}" ] || [ -z "${RECLAIMED}" ]; then
+            echo "Error: planner did not produce a usable summary" >&2
+            exit 1
+          fi
