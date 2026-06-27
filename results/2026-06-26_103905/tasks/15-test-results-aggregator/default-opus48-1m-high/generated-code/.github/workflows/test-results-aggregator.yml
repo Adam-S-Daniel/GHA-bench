@@ -1,0 +1,59 @@
+name: Test Results Aggregator
+
+# Triggers: run on every push and PR, on a weekly schedule (catch flaky
+# regressions over time), and on manual dispatch.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      results_dir:
+        description: Directory containing test result files to aggregate.
+        required: false
+        default: test-results
+
+# Least privilege: the job only reads the checked-out code.
+permissions:
+  contents: read
+
+# Default location of the result files; workflow_dispatch can override it.
+env:
+  TEST_RESULTS_DIR: ${{ github.event.inputs.results_dir || 'test-results' }}
+
+jobs:
+  # 1) Run the project's own unit tests (the TDD suite) inside the pipeline.
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        run: python3 --version
+
+      - name: Install test dependencies
+        # The aggregator itself uses only the standard library; pytest is the
+        # one dev dependency needed to run the TDD suite. --break-system-packages
+        # is required on the Debian/Ubuntu runner image (PEP 668).
+        run: python3 -m pip install --break-system-packages --quiet pytest
+
+      - name: Run unit tests
+        run: python3 -m pytest tests/ -v
+
+  # 2) Aggregate the matrix test results into a Markdown job summary.
+  #    Depends on the unit tests passing first.
+  aggregate:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Aggregate test results
+        # Prints the Markdown report to stdout (captured in the CI log) and
+        # appends it to the GitHub Actions job summary.
+        run: |
+          python3 aggregator.py "$TEST_RESULTS_DIR" \
+            --summary-file "$GITHUB_STEP_SUMMARY"
