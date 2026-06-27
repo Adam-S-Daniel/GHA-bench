@@ -1,0 +1,108 @@
+name: Semantic Version Bumper
+
+# Run on pushes and PRs so every change is validated, weekly on a schedule to
+# catch drift, and on-demand via the Actions UI.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      release_date:
+        description: "Date to stamp on the changelog entry (YYYY-MM-DD)"
+        required: false
+        default: "2026-06-27"
+
+# The script only reads the repo and writes files inside the workspace, so
+# read-only access to repo contents is all that is required.
+permissions:
+  contents: read
+
+# A fixed date keeps the workflow output deterministic across CI runs and `act`,
+# falling back to the dispatch input when one is provided.
+env:
+  RELEASE_DATE: ${{ github.event.inputs.release_date || '2026-06-27' }}
+
+jobs:
+  bump:
+    name: Bump ${{ matrix.case }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # Each matrix entry is one test scenario: a committed fixture (version
+      # file + mock commit log) plus the exact version we expect out.
+      matrix:
+        include:
+          - case: patch
+            version_file: fixtures/patch/VERSION
+            commits: fixtures/patch/commits.txt
+            expected: 1.1.1
+          - case: minor
+            version_file: fixtures/minor/VERSION
+            commits: fixtures/minor/commits.txt
+            expected: 1.2.0
+          - case: major
+            version_file: fixtures/major/VERSION
+            commits: fixtures/major/commits.txt
+            expected: 2.0.0
+          - case: pkgjson
+            version_file: fixtures/pkgjson/package.json
+            commits: fixtures/pkgjson/commits.txt
+            expected: 0.4.0
+          - case: breaking-footer
+            version_file: fixtures/breaking-footer/VERSION
+            commits: fixtures/breaking-footer/commits.txt
+            expected: 3.0.0
+          - case: none
+            version_file: fixtures/none/VERSION
+            commits: fixtures/none/commits.txt
+            expected: 1.1.0
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        # The script only needs coreutils + sed/grep, which are present in the
+        # runner image. This step makes the requirement explicit and ensures the
+        # script is executable in the isolated container.
+        run: |
+          set -euo pipefail
+          chmod +x ./semver-bump.sh
+          ./semver-bump.sh --help >/dev/null
+
+      - name: Run semantic version bumper
+        id: bump
+        run: |
+          set -euo pipefail
+          NEW_VERSION="$(./semver-bump.sh \
+            --version-file '${{ matrix.version_file }}' \
+            --commits '${{ matrix.commits }}' \
+            --changelog 'CHANGELOG.md' \
+            --date "${RELEASE_DATE}")"
+          echo "new_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          # Emit a clearly delimited, machine-parseable result line for the harness.
+          echo "RESULT case=${{ matrix.case }} new_version=${NEW_VERSION}"
+
+      - name: Assert exact expected version
+        run: |
+          set -euo pipefail
+          actual='${{ steps.bump.outputs.new_version }}'
+          expected='${{ matrix.expected }}'
+          echo "case=${{ matrix.case }} expected=${expected} actual=${actual}"
+          if [ "${actual}" != "${expected}" ]; then
+            echo "ASSERTION FAILED: case=${{ matrix.case }} expected ${expected} but got ${actual}" >&2
+            exit 1
+          fi
+          echo "ASSERTION PASSED: case=${{ matrix.case }} => ${actual}"
+
+      - name: Show generated changelog
+        # Only the bumping cases write a changelog; the "none" case leaves none.
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            echo "----- CHANGELOG.md (${{ matrix.case }}) -----"
+            cat CHANGELOG.md
+          else
+            echo "No changelog generated for case=${{ matrix.case }} (nothing to release)"
+          fi

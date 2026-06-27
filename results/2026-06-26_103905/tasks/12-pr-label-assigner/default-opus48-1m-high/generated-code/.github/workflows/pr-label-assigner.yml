@@ -1,0 +1,67 @@
+name: PR Label Assigner
+
+# Triggers: run on pushes and PRs (the real CI use-case), and allow manual
+# dispatch so the config / changed-files paths can be overridden on demand.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: "Path to the rules JSON config"
+        required: false
+        default: "rules.json"
+      files:
+        description: "Path to the changed-files list (one path per line)"
+        required: false
+        default: "changed_files.txt"
+
+# Least-privilege: the job only needs to read the repo and (in a real
+# deployment) write PR labels.
+permissions:
+  contents: read
+  pull-requests: write
+
+# Workflow-level defaults; individual steps may override per dispatch input.
+env:
+  CONFIG_FILE: rules.json
+  CHANGED_FILES: changed_files.txt
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  assign-labels:
+    name: Compute labels
+    runs-on: ubuntu-latest
+    # Expose the computed label set to dependent jobs.
+    outputs:
+      labels: ${{ steps.assign.outputs.labels }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        run: python3 --version
+
+      - name: Run label assigner
+        id: assign
+        env:
+          # Fall back to the workflow-level defaults when not dispatched manually.
+          CONFIG_FILE: ${{ github.event.inputs.config || 'rules.json' }}
+          CHANGED_FILES: ${{ github.event.inputs.files || 'changed_files.txt' }}
+        run: |
+          echo "Config file:        $CONFIG_FILE"
+          echo "Changed-files list: $CHANGED_FILES"
+          python3 label_assigner.py --config "$CONFIG_FILE" --files "$CHANGED_FILES" | tee assigner-output.txt
+          # Lift the deterministic LABELS line into a step output for downstream jobs.
+          labels_line=$(grep '^LABELS:' assigner-output.txt)
+          echo "labels=${labels_line#LABELS: }" >> "$GITHUB_OUTPUT"
+
+  summary:
+    name: Summarize result
+    needs: assign-labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo labels from previous job
+        run: |
+          echo "Labels received from 'assign-labels' job:"
+          echo "LABELS: ${{ needs.assign-labels.outputs.labels }}"

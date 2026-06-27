@@ -1,0 +1,85 @@
+name: Semantic Version Bumper
+
+# Trigger on code changes, PRs, a weekly schedule (e.g. a regular release
+# cadence), and manual dispatch with an optional dry-run toggle.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Compute the next version without writing any files"
+        type: boolean
+        default: false
+  schedule:
+    # Mondays at 06:00 UTC — a regular cadence to propose the next release.
+    - cron: "0 6 * * 1"
+
+# The job only needs to read repository contents; it never pushes back.
+permissions:
+  contents: read
+
+# Centralised, overridable file locations consumed by the bumper script.
+env:
+  VERSION_FILE: VERSION
+  COMMIT_LOG: commits.log
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  bump:
+    name: Bump semantic version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Bun is not present in the runner image, so install it from the official
+      # script and expose it on PATH for subsequent steps.
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "${HOME}/.bun/bin" >> "${GITHUB_PATH}"
+
+      - name: Show tool versions
+        run: bun --version
+
+      # Gate the release logic behind the unit test suite (red/green TDD output).
+      # Scoped to tests/ so the container never runs the integration/ suite,
+      # which itself invokes `act` (that would recurse) and needs actionlint.
+      - name: Run unit tests
+        run: bun test tests/
+
+      - name: Compute and apply version bump
+        id: bump
+        env:
+          # workflow_dispatch passes a dry-run flag; default to empty otherwise.
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          DRY_FLAG=""
+          if [ "${DRY_RUN}" = "true" ]; then
+            DRY_FLAG="--dry-run"
+          fi
+          bun run src/bumper.ts \
+            --version-file "${VERSION_FILE}" \
+            --commits "${COMMIT_LOG}" \
+            --changelog "${CHANGELOG_FILE}" \
+            --date "$(date -u +%F)" \
+            ${DRY_FLAG} | tee bump-output.txt
+          NEW_VERSION="$(grep '^NEW_VERSION=' bump-output.txt | cut -d= -f2)"
+          PREVIOUS_VERSION="$(grep '^PREVIOUS_VERSION=' bump-output.txt | cut -d= -f2)"
+          BUMP_TYPE="$(grep '^BUMP=' bump-output.txt | cut -d= -f2)"
+          {
+            echo "new_version=${NEW_VERSION}"
+            echo "previous_version=${PREVIOUS_VERSION}"
+            echo "bump=${BUMP_TYPE}"
+          } >> "${GITHUB_OUTPUT}"
+
+      # Emit clearly-marked lines the act test harness can grep for exact values.
+      - name: Report result
+        run: |
+          echo "Previous version: ${{ steps.bump.outputs.previous_version }}"
+          echo "Bump type:        ${{ steps.bump.outputs.bump }}"
+          echo "RESULT_NEW_VERSION=${{ steps.bump.outputs.new_version }}"
+          echo "RESULT_BUMP=${{ steps.bump.outputs.bump }}"
+          echo "RESULT_PREVIOUS_VERSION=${{ steps.bump.outputs.previous_version }}"

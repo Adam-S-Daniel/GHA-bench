@@ -1,0 +1,81 @@
+name: Semantic Version Bumper
+
+# Triggers: run on pushes and PRs (CI), on a weekly schedule (e.g. a release
+# heartbeat), and on demand via the Actions UI with overridable inputs.
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  schedule:
+    # Mondays at 06:00 UTC — a weekly check for an accumulated release.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      version_file:
+        description: 'Path to the VERSION file or package.json'
+        required: false
+        default: 'VERSION'
+      commit_log:
+        description: 'Path to the commit log fixture'
+        required: false
+        default: 'commits.log'
+
+# Least-privilege: the job only reads the repository contents.
+permissions:
+  contents: read
+
+# Defaults consumed by the bump step; workflow_dispatch inputs override them.
+env:
+  VERSION_FILE: ${{ github.event.inputs.version_file || 'VERSION' }}
+  COMMIT_LOG: ${{ github.event.inputs.commit_log || 'commits.log' }}
+  CHANGELOG_FILE: 'CHANGELOG.md'
+
+jobs:
+  # Job 1: run the Pester unit test suite for the module.
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests/SemanticVersionBumper.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  # Job 2: run the actual version bump, depends on the tests passing.
+  bump:
+    name: Compute & apply version bump
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run semantic version bumper
+        id: bump
+        shell: pwsh
+        run: |
+          ./Invoke-VersionBump.ps1 `
+            -VersionFile $env:VERSION_FILE `
+            -CommitLog $env:COMMIT_LOG `
+            -ChangelogFile $env:CHANGELOG_FILE
+
+      - name: Report outcome
+        shell: pwsh
+        run: |
+          Write-Host "Resolved new version: $($env:RESULT_NEW_VERSION)"
+          Write-Host "Bump type: ${{ steps.bump.outputs.bump_type }}"
+          Write-Host "New version: ${{ steps.bump.outputs.new_version }}"
+        env:
+          RESULT_NEW_VERSION: ${{ steps.bump.outputs.new_version }}

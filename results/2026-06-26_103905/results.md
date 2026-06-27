@@ -1,7 +1,7 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-06-27 12:22:37 AM ET — 34/69 runs completed, 35 remaining; total cost $77.53; total agent time 367.3 min.
-**Claude Code versions used:** v2.1.193 (23 runs), v2.1.195 (11 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
+**Last updated:** 2026-06-27 08:08:35 AM ET — 43/44 runs completed, 1 remaining; total cost $102.35; total agent time 466.6 min.
+**Claude Code versions used:** v2.1.193 (23 runs), v2.1.195 (20 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
 
@@ -66,10 +66,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
 | powershell | opus48-1m-medium | A+ (7.8min) | A+ ($1.75) | — | — |
-| default | opus48-1m-medium | B- (9.5min) | C ($2.34) | — | — |
-| powershell-tool | opus48-1m-medium | C+ (9.9min) | C- ($2.41) | — | — |
-| bash | opus48-1m-medium | D- (12.1min) | D ($2.56) | — | — |
-| typescript-bun | opus48-1m-medium* | D- (11.8min) | D- ($2.76) | — | — |
+| default | opus48-1m-high | A (8.4min) | C- ($2.60) | — | — |
+| default | opus48-1m-medium | B (9.5min) | B- ($2.34) | — | — |
+| powershell-tool | opus48-1m-medium | B (9.9min) | C+ ($2.41) | — | — |
+| bash | opus48-1m-high | B (9.8min) | C ($2.57) | — | — |
+| bash | opus48-1m-medium | C- (12.1min) | C ($2.56) | — | — |
+| powershell-tool | opus48-1m-high | C- (11.7min) | C ($2.55) | — | — |
+| typescript-bun | opus48-1m-medium* | C- (11.8min) | D+ ($2.76) | — | — |
+| typescript-bun | opus48-1m-high | C (11.5min) | D- ($3.14) | — | — |
+| powershell | opus48-1m-high | D- (14.0min) | D- ($3.12) | — | — |
 
 
 <details>
@@ -78,10 +83,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
 | powershell | opus48-1m-medium | A+ (7.8min) | A+ ($1.75) | — | — |
-| default | opus48-1m-medium | B- (9.5min) | C ($2.34) | — | — |
-| powershell-tool | opus48-1m-medium | C+ (9.9min) | C- ($2.41) | — | — |
-| bash | opus48-1m-medium | D- (12.1min) | D ($2.56) | — | — |
-| typescript-bun | opus48-1m-medium* | D- (11.8min) | D- ($2.76) | — | — |
+| default | opus48-1m-high | A (8.4min) | C- ($2.60) | — | — |
+| default | opus48-1m-medium | B (9.5min) | B- ($2.34) | — | — |
+| powershell-tool | opus48-1m-medium | B (9.9min) | C+ ($2.41) | — | — |
+| bash | opus48-1m-high | B (9.8min) | C ($2.57) | — | — |
+| typescript-bun | opus48-1m-high | C (11.5min) | D- ($3.14) | — | — |
+| bash | opus48-1m-medium | C- (12.1min) | C ($2.56) | — | — |
+| powershell-tool | opus48-1m-high | C- (11.7min) | C ($2.55) | — | — |
+| typescript-bun | opus48-1m-medium* | C- (11.8min) | D+ ($2.76) | — | — |
+| powershell | opus48-1m-high | D- (14.0min) | D- ($3.12) | — | — |
 
 </details>
 
@@ -91,10 +101,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
 | powershell | opus48-1m-medium | A+ (7.8min) | A+ ($1.75) | — | — |
-| default | opus48-1m-medium | B- (9.5min) | C ($2.34) | — | — |
-| powershell-tool | opus48-1m-medium | C+ (9.9min) | C- ($2.41) | — | — |
-| bash | opus48-1m-medium | D- (12.1min) | D ($2.56) | — | — |
-| typescript-bun | opus48-1m-medium* | D- (11.8min) | D- ($2.76) | — | — |
+| default | opus48-1m-medium | B (9.5min) | B- ($2.34) | — | — |
+| powershell-tool | opus48-1m-medium | B (9.9min) | C+ ($2.41) | — | — |
+| bash | opus48-1m-high | B (9.8min) | C ($2.57) | — | — |
+| bash | opus48-1m-medium | C- (12.1min) | C ($2.56) | — | — |
+| powershell-tool | opus48-1m-high | C- (11.7min) | C ($2.55) | — | — |
+| default | opus48-1m-high | A (8.4min) | C- ($2.60) | — | — |
+| typescript-bun | opus48-1m-medium* | C- (11.8min) | D+ ($2.76) | — | — |
+| typescript-bun | opus48-1m-high | C (11.5min) | D- ($3.14) | — | — |
+| powershell | opus48-1m-high | D- (14.0min) | D- ($3.12) | — | — |
 
 </details>
 
@@ -104,10 +119,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
 | powershell | opus48-1m-medium | A+ (7.8min) | A+ ($1.75) | — | — |
-| default | opus48-1m-medium | B- (9.5min) | C ($2.34) | — | — |
-| powershell-tool | opus48-1m-medium | C+ (9.9min) | C- ($2.41) | — | — |
-| bash | opus48-1m-medium | D- (12.1min) | D ($2.56) | — | — |
-| typescript-bun | opus48-1m-medium* | D- (11.8min) | D- ($2.76) | — | — |
+| default | opus48-1m-high | A (8.4min) | C- ($2.60) | — | — |
+| default | opus48-1m-medium | B (9.5min) | B- ($2.34) | — | — |
+| powershell-tool | opus48-1m-medium | B (9.9min) | C+ ($2.41) | — | — |
+| bash | opus48-1m-high | B (9.8min) | C ($2.57) | — | — |
+| bash | opus48-1m-medium | C- (12.1min) | C ($2.56) | — | — |
+| powershell-tool | opus48-1m-high | C- (11.7min) | C ($2.55) | — | — |
+| typescript-bun | opus48-1m-medium* | C- (11.8min) | D+ ($2.76) | — | — |
+| typescript-bun | opus48-1m-high | C (11.5min) | D- ($3.14) | — | — |
+| powershell | opus48-1m-high | D- (14.0min) | D- ($3.12) | — | — |
 
 </details>
 
@@ -117,15 +137,20 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
 | powershell | opus48-1m-medium | A+ (7.8min) | A+ ($1.75) | — | — |
-| default | opus48-1m-medium | B- (9.5min) | C ($2.34) | — | — |
-| powershell-tool | opus48-1m-medium | C+ (9.9min) | C- ($2.41) | — | — |
-| bash | opus48-1m-medium | D- (12.1min) | D ($2.56) | — | — |
-| typescript-bun | opus48-1m-medium* | D- (11.8min) | D- ($2.76) | — | — |
+| default | opus48-1m-high | A (8.4min) | C- ($2.60) | — | — |
+| default | opus48-1m-medium | B (9.5min) | B- ($2.34) | — | — |
+| powershell-tool | opus48-1m-medium | B (9.9min) | C+ ($2.41) | — | — |
+| bash | opus48-1m-high | B (9.8min) | C ($2.57) | — | — |
+| bash | opus48-1m-medium | C- (12.1min) | C ($2.56) | — | — |
+| powershell-tool | opus48-1m-high | C- (11.7min) | C ($2.55) | — | — |
+| typescript-bun | opus48-1m-medium* | C- (11.8min) | D+ ($2.76) | — | — |
+| typescript-bun | opus48-1m-high | C (11.5min) | D- ($3.14) | — | — |
+| powershell | opus48-1m-high | D- (14.0min) | D- ($3.12) | — | — |
 
 </details>
 
-- **Estimated time remaining:** 378.1min
-- **Estimated total cost:** $157.34
+- **Estimated time remaining:** 227.9min
+- **Estimated total cost:** $104.73
 
 ## Failed / Timed-Out Runs
 
@@ -141,10 +166,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | opus48-1m-high | 2 | 9.8min | 6.8min | 0.5 | 36 | $2.57 | $5.15 | — | — |
 | bash | opus48-1m-medium | 7 | 12.1min | 12.1min | 1.4 | 35 | $2.56 | $17.91 | — | — |
+| default | opus48-1m-high | 2 | 8.4min | 8.4min | 0.5 | 38 | $2.60 | $5.20 | — | — |
 | default | opus48-1m-medium | 7 | 9.5min | 9.5min | 0.3 | 33 | $2.34 | $16.35 | — | — |
+| powershell | opus48-1m-high | 2 | 14.0min | 9.2min | 1.0 | 54 | $3.12 | $6.24 | — | — |
 | powershell | opus48-1m-medium | 7 | 7.8min | 7.8min | 0.1 | 28 | $1.75 | $12.23 | — | — |
+| powershell-tool | opus48-1m-high | 2 | 11.7min | 10.3min | 0.0 | 38 | $2.55 | $5.10 | — | — |
 | powershell-tool | opus48-1m-medium | 6 | 9.9min | 9.9min | 0.8 | 36 | $2.41 | $14.48 | — | — |
+| typescript-bun | opus48-1m-high | 1 | 11.5min | 8.3min | 0.0 | 52 | $3.14 | $3.14 | — | — |
 | typescript-bun | opus48-1m-medium* | 6 | 11.8min | 11.8min | 0.8 | 46 | $2.76 | $16.56 | — | — |
 
 
@@ -156,8 +186,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus48-1m-medium | 7 | 7.8min | 7.8min | 0.1 | 28 | $1.75 | $12.23 | — | — |
 | default | opus48-1m-medium | 7 | 9.5min | 9.5min | 0.3 | 33 | $2.34 | $16.35 | — | — |
 | powershell-tool | opus48-1m-medium | 6 | 9.9min | 9.9min | 0.8 | 36 | $2.41 | $14.48 | — | — |
+| powershell-tool | opus48-1m-high | 2 | 11.7min | 10.3min | 0.0 | 38 | $2.55 | $5.10 | — | — |
 | bash | opus48-1m-medium | 7 | 12.1min | 12.1min | 1.4 | 35 | $2.56 | $17.91 | — | — |
+| bash | opus48-1m-high | 2 | 9.8min | 6.8min | 0.5 | 36 | $2.57 | $5.15 | — | — |
+| default | opus48-1m-high | 2 | 8.4min | 8.4min | 0.5 | 38 | $2.60 | $5.20 | — | — |
 | typescript-bun | opus48-1m-medium* | 6 | 11.8min | 11.8min | 0.8 | 46 | $2.76 | $16.56 | — | — |
+| powershell | opus48-1m-high | 2 | 14.0min | 9.2min | 1.0 | 54 | $3.12 | $6.24 | — | — |
+| typescript-bun | opus48-1m-high | 1 | 11.5min | 8.3min | 0.0 | 52 | $3.14 | $3.14 | — | — |
 
 </details>
 
@@ -167,10 +202,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell | opus48-1m-medium | 7 | 7.8min | 7.8min | 0.1 | 28 | $1.75 | $12.23 | — | — |
+| default | opus48-1m-high | 2 | 8.4min | 8.4min | 0.5 | 38 | $2.60 | $5.20 | — | — |
 | default | opus48-1m-medium | 7 | 9.5min | 9.5min | 0.3 | 33 | $2.34 | $16.35 | — | — |
+| bash | opus48-1m-high | 2 | 9.8min | 6.8min | 0.5 | 36 | $2.57 | $5.15 | — | — |
 | powershell-tool | opus48-1m-medium | 6 | 9.9min | 9.9min | 0.8 | 36 | $2.41 | $14.48 | — | — |
+| typescript-bun | opus48-1m-high | 1 | 11.5min | 8.3min | 0.0 | 52 | $3.14 | $3.14 | — | — |
+| powershell-tool | opus48-1m-high | 2 | 11.7min | 10.3min | 0.0 | 38 | $2.55 | $5.10 | — | — |
 | typescript-bun | opus48-1m-medium* | 6 | 11.8min | 11.8min | 0.8 | 46 | $2.76 | $16.56 | — | — |
 | bash | opus48-1m-medium | 7 | 12.1min | 12.1min | 1.4 | 35 | $2.56 | $17.91 | — | — |
+| powershell | opus48-1m-high | 2 | 14.0min | 9.2min | 1.0 | 54 | $3.12 | $6.24 | — | — |
 
 </details>
 
@@ -179,9 +219,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | opus48-1m-high | 2 | 9.8min | 6.8min | 0.5 | 36 | $2.57 | $5.15 | — | — |
 | powershell | opus48-1m-medium | 7 | 7.8min | 7.8min | 0.1 | 28 | $1.75 | $12.23 | — | — |
+| typescript-bun | opus48-1m-high | 1 | 11.5min | 8.3min | 0.0 | 52 | $3.14 | $3.14 | — | — |
+| default | opus48-1m-high | 2 | 8.4min | 8.4min | 0.5 | 38 | $2.60 | $5.20 | — | — |
+| powershell | opus48-1m-high | 2 | 14.0min | 9.2min | 1.0 | 54 | $3.12 | $6.24 | — | — |
 | default | opus48-1m-medium | 7 | 9.5min | 9.5min | 0.3 | 33 | $2.34 | $16.35 | — | — |
 | powershell-tool | opus48-1m-medium | 6 | 9.9min | 9.9min | 0.8 | 36 | $2.41 | $14.48 | — | — |
+| powershell-tool | opus48-1m-high | 2 | 11.7min | 10.3min | 0.0 | 38 | $2.55 | $5.10 | — | — |
 | typescript-bun | opus48-1m-medium* | 6 | 11.8min | 11.8min | 0.8 | 46 | $2.76 | $16.56 | — | — |
 | bash | opus48-1m-medium | 7 | 12.1min | 12.1min | 1.4 | 35 | $2.56 | $17.91 | — | — |
 
@@ -192,10 +237,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| powershell-tool | opus48-1m-high | 2 | 11.7min | 10.3min | 0.0 | 38 | $2.55 | $5.10 | — | — |
+| typescript-bun | opus48-1m-high | 1 | 11.5min | 8.3min | 0.0 | 52 | $3.14 | $3.14 | — | — |
 | powershell | opus48-1m-medium | 7 | 7.8min | 7.8min | 0.1 | 28 | $1.75 | $12.23 | — | — |
 | default | opus48-1m-medium | 7 | 9.5min | 9.5min | 0.3 | 33 | $2.34 | $16.35 | — | — |
+| bash | opus48-1m-high | 2 | 9.8min | 6.8min | 0.5 | 36 | $2.57 | $5.15 | — | — |
+| default | opus48-1m-high | 2 | 8.4min | 8.4min | 0.5 | 38 | $2.60 | $5.20 | — | — |
 | powershell-tool | opus48-1m-medium | 6 | 9.9min | 9.9min | 0.8 | 36 | $2.41 | $14.48 | — | — |
 | typescript-bun | opus48-1m-medium* | 6 | 11.8min | 11.8min | 0.8 | 46 | $2.76 | $16.56 | — | — |
+| powershell | opus48-1m-high | 2 | 14.0min | 9.2min | 1.0 | 54 | $3.12 | $6.24 | — | — |
 | bash | opus48-1m-medium | 7 | 12.1min | 12.1min | 1.4 | 35 | $2.56 | $17.91 | — | — |
 
 </details>
@@ -208,8 +258,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus48-1m-medium | 7 | 7.8min | 7.8min | 0.1 | 28 | $1.75 | $12.23 | — | — |
 | default | opus48-1m-medium | 7 | 9.5min | 9.5min | 0.3 | 33 | $2.34 | $16.35 | — | — |
 | bash | opus48-1m-medium | 7 | 12.1min | 12.1min | 1.4 | 35 | $2.56 | $17.91 | — | — |
+| bash | opus48-1m-high | 2 | 9.8min | 6.8min | 0.5 | 36 | $2.57 | $5.15 | — | — |
 | powershell-tool | opus48-1m-medium | 6 | 9.9min | 9.9min | 0.8 | 36 | $2.41 | $14.48 | — | — |
+| powershell-tool | opus48-1m-high | 2 | 11.7min | 10.3min | 0.0 | 38 | $2.55 | $5.10 | — | — |
+| default | opus48-1m-high | 2 | 8.4min | 8.4min | 0.5 | 38 | $2.60 | $5.20 | — | — |
 | typescript-bun | opus48-1m-medium* | 6 | 11.8min | 11.8min | 0.8 | 46 | $2.76 | $16.56 | — | — |
+| typescript-bun | opus48-1m-high | 1 | 11.5min | 8.3min | 0.0 | 52 | $3.14 | $3.14 | — | — |
+| powershell | opus48-1m-high | 2 | 14.0min | 9.2min | 1.0 | 54 | $3.12 | $6.24 | — | — |
 
 </details>
 
@@ -218,10 +273,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | opus48-1m-high | 2 | 9.8min | 6.8min | 0.5 | 36 | $2.57 | $5.15 | — | — |
 | bash | opus48-1m-medium | 7 | 12.1min | 12.1min | 1.4 | 35 | $2.56 | $17.91 | — | — |
+| default | opus48-1m-high | 2 | 8.4min | 8.4min | 0.5 | 38 | $2.60 | $5.20 | — | — |
 | default | opus48-1m-medium | 7 | 9.5min | 9.5min | 0.3 | 33 | $2.34 | $16.35 | — | — |
+| powershell | opus48-1m-high | 2 | 14.0min | 9.2min | 1.0 | 54 | $3.12 | $6.24 | — | — |
 | powershell | opus48-1m-medium | 7 | 7.8min | 7.8min | 0.1 | 28 | $1.75 | $12.23 | — | — |
+| powershell-tool | opus48-1m-high | 2 | 11.7min | 10.3min | 0.0 | 38 | $2.55 | $5.10 | — | — |
 | powershell-tool | opus48-1m-medium | 6 | 9.9min | 9.9min | 0.8 | 36 | $2.41 | $14.48 | — | — |
+| typescript-bun | opus48-1m-high | 1 | 11.5min | 8.3min | 0.0 | 52 | $3.14 | $3.14 | — | — |
 | typescript-bun | opus48-1m-medium* | 6 | 11.8min | 11.8min | 0.8 | 46 | $2.76 | $16.56 | — | — |
 
 </details>
@@ -231,10 +291,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | opus48-1m-high | 2 | 9.8min | 6.8min | 0.5 | 36 | $2.57 | $5.15 | — | — |
 | bash | opus48-1m-medium | 7 | 12.1min | 12.1min | 1.4 | 35 | $2.56 | $17.91 | — | — |
+| default | opus48-1m-high | 2 | 8.4min | 8.4min | 0.5 | 38 | $2.60 | $5.20 | — | — |
 | default | opus48-1m-medium | 7 | 9.5min | 9.5min | 0.3 | 33 | $2.34 | $16.35 | — | — |
+| powershell | opus48-1m-high | 2 | 14.0min | 9.2min | 1.0 | 54 | $3.12 | $6.24 | — | — |
 | powershell | opus48-1m-medium | 7 | 7.8min | 7.8min | 0.1 | 28 | $1.75 | $12.23 | — | — |
+| powershell-tool | opus48-1m-high | 2 | 11.7min | 10.3min | 0.0 | 38 | $2.55 | $5.10 | — | — |
 | powershell-tool | opus48-1m-medium | 6 | 9.9min | 9.9min | 0.8 | 36 | $2.41 | $14.48 | — | — |
+| typescript-bun | opus48-1m-high | 1 | 11.5min | 8.3min | 0.0 | 52 | $3.14 | $3.14 | — | — |
 | typescript-bun | opus48-1m-medium* | 6 | 11.8min | 11.8min | 0.8 | 46 | $2.76 | $16.56 | — | — |
 
 </details>
@@ -250,16 +315,21 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| bash | opus48-1m-medium-cli2.1.193 | 51 | 1 | 2.0% | 0.2min | 0.1% | 0.0min | 0.0% | 0.2min | 0.1% | 0.7min | 20.5% |
-| bash | opus48-1m-medium-cli2.1.195 | 28 | 1 | 3.6% | 0.2min | 0.1% | 0.0min | 0.0% | 0.2min | 0.0% | 19.4min | 0.8% |
+| bash | opus48-1m-high-cli2.1.195 | 26 | 1 | 3.8% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 1.8min | 9.3% |
+| bash | opus48-1m-medium-cli2.1.193 | 51 | 1 | 2.0% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 0.7min | 20.5% |
+| bash | opus48-1m-medium-cli2.1.195 | 28 | 1 | 3.6% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 19.4min | 0.8% |
+| default | opus48-1m-high-cli2.1.195 | 42 | 1 | 2.4% | 0.1min | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | 0.8min | 13.4% |
 | default | opus48-1m-medium-cli2.1.193 | 68 | 0 | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | -0.2min | -0.0% | 4.0min | -3.9% |
 | default | opus48-1m-medium-cli2.1.195 | 30 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 5.6min | -1.0% |
+| powershell | opus48-1m-high-cli2.1.195 | 47 | 0 | 0.0% | 0.0min | 0.0% | 0.8min | 0.2% | -0.8min | -0.2% | 6.3min | -14.0% |
 | powershell | opus48-1m-medium-cli2.1.193 | 70 | 0 | 0.0% | 0.0min | 0.0% | 0.7min | 0.2% | -0.7min | -0.2% | 4.3min | -19.8% |
 | powershell | opus48-1m-medium-cli2.1.195 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.5min | 0.1% | -0.5min | -0.1% | 3.3min | -17.9% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 37 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 5.4min | -6.6% |
 | powershell-tool | opus48-1m-medium-cli2.1.193 | 62 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 3.6min | -8.2% |
 | powershell-tool | opus48-1m-medium-cli2.1.195 | 21 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 1.3min | -9.0% |
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 1.5% | 1.4min | 0.4% | 3.9min | 1.1% | 4.0min | 49.5% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 42 | 14 | 33.3% | 1.9min | 0.5% | 1.5min | 0.4% | 0.3min | 0.1% | 10.4min | 3.3% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 29 | 11 | 37.9% | 1.5min | 0.3% | 0.2min | 0.0% | 1.3min | 0.3% | 0.8min | 63.0% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 1.1% | 1.4min | 0.3% | 3.9min | 0.8% | 4.0min | 49.5% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 42 | 14 | 33.3% | 1.9min | 0.4% | 1.5min | 0.3% | 0.3min | 0.1% | 10.4min | 3.3% |
 
 
 <details>
@@ -267,16 +337,21 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 1.5% | 1.4min | 0.4% | 3.9min | 1.1% | 4.0min | 49.5% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 42 | 14 | 33.3% | 1.9min | 0.5% | 1.5min | 0.4% | 0.3min | 0.1% | 10.4min | 3.3% |
-| bash | opus48-1m-medium-cli2.1.193 | 51 | 1 | 2.0% | 0.2min | 0.1% | 0.0min | 0.0% | 0.2min | 0.1% | 0.7min | 20.5% |
-| bash | opus48-1m-medium-cli2.1.195 | 28 | 1 | 3.6% | 0.2min | 0.1% | 0.0min | 0.0% | 0.2min | 0.0% | 19.4min | 0.8% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 1.1% | 1.4min | 0.3% | 3.9min | 0.8% | 4.0min | 49.5% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 29 | 11 | 37.9% | 1.5min | 0.3% | 0.2min | 0.0% | 1.3min | 0.3% | 0.8min | 63.0% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 42 | 14 | 33.3% | 1.9min | 0.4% | 1.5min | 0.3% | 0.3min | 0.1% | 10.4min | 3.3% |
+| bash | opus48-1m-medium-cli2.1.193 | 51 | 1 | 2.0% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 0.7min | 20.5% |
+| bash | opus48-1m-high-cli2.1.195 | 26 | 1 | 3.8% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 1.8min | 9.3% |
+| bash | opus48-1m-medium-cli2.1.195 | 28 | 1 | 3.6% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 19.4min | 0.8% |
+| default | opus48-1m-high-cli2.1.195 | 42 | 1 | 2.4% | 0.1min | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | 0.8min | 13.4% |
 | default | opus48-1m-medium-cli2.1.195 | 30 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 5.6min | -1.0% |
 | powershell-tool | opus48-1m-medium-cli2.1.195 | 21 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 1.3min | -9.0% |
 | default | opus48-1m-medium-cli2.1.193 | 68 | 0 | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | -0.2min | -0.0% | 4.0min | -3.9% |
 | powershell-tool | opus48-1m-medium-cli2.1.193 | 62 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 3.6min | -8.2% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 37 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 5.4min | -6.6% |
 | powershell | opus48-1m-medium-cli2.1.195 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.5min | 0.1% | -0.5min | -0.1% | 3.3min | -17.9% |
 | powershell | opus48-1m-medium-cli2.1.193 | 70 | 0 | 0.0% | 0.0min | 0.0% | 0.7min | 0.2% | -0.7min | -0.2% | 4.3min | -19.8% |
+| powershell | opus48-1m-high-cli2.1.195 | 47 | 0 | 0.0% | 0.0min | 0.0% | 0.8min | 0.2% | -0.8min | -0.2% | 6.3min | -14.0% |
 
 </details>
 
@@ -285,14 +360,19 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 1.5% | 1.4min | 0.4% | 3.9min | 1.1% | 4.0min | 49.5% |
-| bash | opus48-1m-medium-cli2.1.193 | 51 | 1 | 2.0% | 0.2min | 0.1% | 0.0min | 0.0% | 0.2min | 0.1% | 0.7min | 20.5% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 42 | 14 | 33.3% | 1.9min | 0.5% | 1.5min | 0.4% | 0.3min | 0.1% | 10.4min | 3.3% |
-| bash | opus48-1m-medium-cli2.1.195 | 28 | 1 | 3.6% | 0.2min | 0.1% | 0.0min | 0.0% | 0.2min | 0.0% | 19.4min | 0.8% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 29 | 11 | 37.9% | 1.5min | 0.3% | 0.2min | 0.0% | 1.3min | 0.3% | 0.8min | 63.0% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 1.1% | 1.4min | 0.3% | 3.9min | 0.8% | 4.0min | 49.5% |
+| bash | opus48-1m-medium-cli2.1.193 | 51 | 1 | 2.0% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 0.7min | 20.5% |
+| default | opus48-1m-high-cli2.1.195 | 42 | 1 | 2.4% | 0.1min | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | 0.8min | 13.4% |
+| bash | opus48-1m-high-cli2.1.195 | 26 | 1 | 3.8% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 1.8min | 9.3% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 42 | 14 | 33.3% | 1.9min | 0.4% | 1.5min | 0.3% | 0.3min | 0.1% | 10.4min | 3.3% |
+| bash | opus48-1m-medium-cli2.1.195 | 28 | 1 | 3.6% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 19.4min | 0.8% |
 | default | opus48-1m-medium-cli2.1.195 | 30 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 5.6min | -1.0% |
 | default | opus48-1m-medium-cli2.1.193 | 68 | 0 | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | -0.2min | -0.0% | 4.0min | -3.9% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 37 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 5.4min | -6.6% |
 | powershell-tool | opus48-1m-medium-cli2.1.193 | 62 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 3.6min | -8.2% |
 | powershell-tool | opus48-1m-medium-cli2.1.195 | 21 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 1.3min | -9.0% |
+| powershell | opus48-1m-high-cli2.1.195 | 47 | 0 | 0.0% | 0.0min | 0.0% | 0.8min | 0.2% | -0.8min | -0.2% | 6.3min | -14.0% |
 | powershell | opus48-1m-medium-cli2.1.195 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.5min | 0.1% | -0.5min | -0.1% | 3.3min | -17.9% |
 | powershell | opus48-1m-medium-cli2.1.193 | 70 | 0 | 0.0% | 0.0min | 0.0% | 0.7min | 0.2% | -0.7min | -0.2% | 4.3min | -19.8% |
 
@@ -303,14 +383,19 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 1.5% | 1.4min | 0.4% | 3.9min | 1.1% | 4.0min | 49.5% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 42 | 14 | 33.3% | 1.9min | 0.5% | 1.5min | 0.4% | 0.3min | 0.1% | 10.4min | 3.3% |
-| bash | opus48-1m-medium-cli2.1.195 | 28 | 1 | 3.6% | 0.2min | 0.1% | 0.0min | 0.0% | 0.2min | 0.0% | 19.4min | 0.8% |
-| bash | opus48-1m-medium-cli2.1.193 | 51 | 1 | 2.0% | 0.2min | 0.1% | 0.0min | 0.0% | 0.2min | 0.1% | 0.7min | 20.5% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 1.1% | 1.4min | 0.3% | 3.9min | 0.8% | 4.0min | 49.5% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 29 | 11 | 37.9% | 1.5min | 0.3% | 0.2min | 0.0% | 1.3min | 0.3% | 0.8min | 63.0% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 42 | 14 | 33.3% | 1.9min | 0.4% | 1.5min | 0.3% | 0.3min | 0.1% | 10.4min | 3.3% |
+| bash | opus48-1m-high-cli2.1.195 | 26 | 1 | 3.8% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 1.8min | 9.3% |
+| bash | opus48-1m-medium-cli2.1.195 | 28 | 1 | 3.6% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 19.4min | 0.8% |
+| default | opus48-1m-high-cli2.1.195 | 42 | 1 | 2.4% | 0.1min | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | 0.8min | 13.4% |
+| bash | opus48-1m-medium-cli2.1.193 | 51 | 1 | 2.0% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 0.7min | 20.5% |
 | default | opus48-1m-medium-cli2.1.193 | 68 | 0 | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | -0.2min | -0.0% | 4.0min | -3.9% |
 | default | opus48-1m-medium-cli2.1.195 | 30 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 5.6min | -1.0% |
+| powershell | opus48-1m-high-cli2.1.195 | 47 | 0 | 0.0% | 0.0min | 0.0% | 0.8min | 0.2% | -0.8min | -0.2% | 6.3min | -14.0% |
 | powershell | opus48-1m-medium-cli2.1.193 | 70 | 0 | 0.0% | 0.0min | 0.0% | 0.7min | 0.2% | -0.7min | -0.2% | 4.3min | -19.8% |
 | powershell | opus48-1m-medium-cli2.1.195 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.5min | 0.1% | -0.5min | -0.1% | 3.3min | -17.9% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 37 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 5.4min | -6.6% |
 | powershell-tool | opus48-1m-medium-cli2.1.193 | 62 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 3.6min | -8.2% |
 | powershell-tool | opus48-1m-medium-cli2.1.195 | 21 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 1.3min | -9.0% |
 
@@ -320,26 +405,34 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 1.1% | $1.08 | 1.39% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 7.7min | 2.1% | $1.32 | 1.70% |
-| repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 1.5% | $1.34 | 1.73% |
-| repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.9% | $0.72 | 0.93% |
-| repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.7% | $0.66 | 0.86% |
-| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.9% | $0.78 | 1.00% |
-| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.2% | $0.16 | 0.20% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 2.4% | $2.26 | 2.91% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 2.3min | 0.6% | $0.30 | 0.38% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 2.2% | $2.17 | 2.80% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 2.8min | 0.8% | $0.60 | 0.78% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.4% | $0.41 | 0.53% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 2 | 3.8min | 1.0% | $0.82 | 1.06% |
-| fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.2% | $0.22 | 0.29% |
-| fixture-rework | default | opus48-1m-medium-cli2.1.195 | 1 | 1.5min | 0.4% | $0.41 | 0.53% |
-| fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.1% | $0.12 | 0.15% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.3% | $0.27 | 0.34% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.18 | 0.23% |
-| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.3% | $0.27 | 0.34% |
-| act-push-debug-loops | bash | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.12 | 0.15% |
+| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 2 | 4.7min | 1.0% | $1.26 | 1.23% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.9% | $1.08 | 1.05% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 7.7min | 1.6% | $1.32 | 1.29% |
+| repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 1.2% | $1.34 | 1.31% |
+| repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.7% | $0.72 | 0.71% |
+| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 2 | 9.0min | 1.9% | $2.00 | 1.96% |
+| repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.6% | $0.66 | 0.65% |
+| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 2.3min | 0.5% | $0.57 | 0.56% |
+| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.7% | $0.78 | 0.76% |
+| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.1% | $0.16 | 0.15% |
+| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 1.0min | 0.2% | $0.27 | 0.27% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 1.9% | $2.26 | 2.21% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 2.3min | 0.5% | $0.30 | 0.29% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 2.2min | 0.5% | $0.60 | 0.59% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 1.7% | $2.17 | 2.12% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 2.8min | 0.6% | $0.60 | 0.59% |
+| fixture-rework | bash | opus48-1m-high-cli2.1.195 | 2 | 1.2min | 0.3% | $0.33 | 0.33% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.3% | $0.41 | 0.40% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 2 | 3.8min | 0.8% | $0.82 | 0.80% |
+| fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.2% | $0.22 | 0.22% |
+| fixture-rework | default | opus48-1m-medium-cli2.1.195 | 1 | 1.5min | 0.3% | $0.41 | 0.40% |
+| fixture-rework | powershell | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.1% | $0.11 | 0.10% |
+| fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.1% | $0.12 | 0.11% |
+| fixture-rework | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.1% | $0.12 | 0.12% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.2% | $0.27 | 0.26% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.18 | 0.17% |
+| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.2% | $0.27 | 0.26% |
+| act-push-debug-loops | bash | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.12 | 0.12% |
 
 
 <details>
@@ -347,26 +440,34 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.1% | $0.12 | 0.15% |
-| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.2% | $0.16 | 0.20% |
-| fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.2% | $0.22 | 0.29% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.18 | 0.23% |
-| act-push-debug-loops | bash | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.12 | 0.15% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.3% | $0.27 | 0.34% |
-| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.3% | $0.27 | 0.34% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.4% | $0.41 | 0.53% |
-| fixture-rework | default | opus48-1m-medium-cli2.1.195 | 1 | 1.5min | 0.4% | $0.41 | 0.53% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 2.3min | 0.6% | $0.30 | 0.38% |
-| repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.7% | $0.66 | 0.86% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 2.8min | 0.8% | $0.60 | 0.78% |
-| repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.9% | $0.72 | 0.93% |
-| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.9% | $0.78 | 1.00% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 2 | 3.8min | 1.0% | $0.82 | 1.06% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 1.1% | $1.08 | 1.39% |
-| repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 1.5% | $1.34 | 1.73% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 7.7min | 2.1% | $1.32 | 1.70% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 2.2% | $2.17 | 2.80% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 2.4% | $2.26 | 2.91% |
+| fixture-rework | powershell | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.1% | $0.11 | 0.10% |
+| fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.1% | $0.12 | 0.11% |
+| fixture-rework | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.1% | $0.12 | 0.12% |
+| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.1% | $0.16 | 0.15% |
+| fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.2% | $0.22 | 0.22% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.18 | 0.17% |
+| act-push-debug-loops | bash | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.12 | 0.12% |
+| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 1.0min | 0.2% | $0.27 | 0.27% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.2% | $0.27 | 0.26% |
+| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.2% | $0.27 | 0.26% |
+| fixture-rework | bash | opus48-1m-high-cli2.1.195 | 2 | 1.2min | 0.3% | $0.33 | 0.33% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.3% | $0.41 | 0.40% |
+| fixture-rework | default | opus48-1m-medium-cli2.1.195 | 1 | 1.5min | 0.3% | $0.41 | 0.40% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 2.2min | 0.5% | $0.60 | 0.59% |
+| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 2.3min | 0.5% | $0.57 | 0.56% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 2.3min | 0.5% | $0.30 | 0.29% |
+| repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.6% | $0.66 | 0.65% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 2.8min | 0.6% | $0.60 | 0.59% |
+| repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.7% | $0.72 | 0.71% |
+| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.7% | $0.78 | 0.76% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 2 | 3.8min | 0.8% | $0.82 | 0.80% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.9% | $1.08 | 1.05% |
+| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 2 | 4.7min | 1.0% | $1.26 | 1.23% |
+| repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 1.2% | $1.34 | 1.31% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 7.7min | 1.6% | $1.32 | 1.29% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 1.7% | $2.17 | 2.12% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 1.9% | $2.26 | 2.21% |
+| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 2 | 9.0min | 1.9% | $2.00 | 1.96% |
 
 </details>
 
@@ -375,26 +476,34 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.1% | $0.12 | 0.15% |
-| act-push-debug-loops | bash | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.12 | 0.15% |
-| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.2% | $0.16 | 0.20% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.18 | 0.23% |
-| fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.2% | $0.22 | 0.29% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.3% | $0.27 | 0.34% |
-| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.3% | $0.27 | 0.34% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 2.3min | 0.6% | $0.30 | 0.38% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.4% | $0.41 | 0.53% |
-| fixture-rework | default | opus48-1m-medium-cli2.1.195 | 1 | 1.5min | 0.4% | $0.41 | 0.53% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 2.8min | 0.8% | $0.60 | 0.78% |
-| repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.7% | $0.66 | 0.86% |
-| repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.9% | $0.72 | 0.93% |
-| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.9% | $0.78 | 1.00% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 2 | 3.8min | 1.0% | $0.82 | 1.06% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 1.1% | $1.08 | 1.39% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 7.7min | 2.1% | $1.32 | 1.70% |
-| repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 1.5% | $1.34 | 1.73% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 2.2% | $2.17 | 2.80% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 2.4% | $2.26 | 2.91% |
+| fixture-rework | powershell | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.1% | $0.11 | 0.10% |
+| fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.1% | $0.12 | 0.11% |
+| act-push-debug-loops | bash | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.12 | 0.12% |
+| fixture-rework | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.1% | $0.12 | 0.12% |
+| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.1% | $0.16 | 0.15% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.18 | 0.17% |
+| fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.2% | $0.22 | 0.22% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.2% | $0.27 | 0.26% |
+| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.2% | $0.27 | 0.26% |
+| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 1.0min | 0.2% | $0.27 | 0.27% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 2.3min | 0.5% | $0.30 | 0.29% |
+| fixture-rework | bash | opus48-1m-high-cli2.1.195 | 2 | 1.2min | 0.3% | $0.33 | 0.33% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.3% | $0.41 | 0.40% |
+| fixture-rework | default | opus48-1m-medium-cli2.1.195 | 1 | 1.5min | 0.3% | $0.41 | 0.40% |
+| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 2.3min | 0.5% | $0.57 | 0.56% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 2.2min | 0.5% | $0.60 | 0.59% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 2.8min | 0.6% | $0.60 | 0.59% |
+| repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.6% | $0.66 | 0.65% |
+| repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.7% | $0.72 | 0.71% |
+| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.7% | $0.78 | 0.76% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 2 | 3.8min | 0.8% | $0.82 | 0.80% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.9% | $1.08 | 1.05% |
+| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 2 | 4.7min | 1.0% | $1.26 | 1.23% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 7.7min | 1.6% | $1.32 | 1.29% |
+| repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 1.2% | $1.34 | 1.31% |
+| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 2 | 9.0min | 1.9% | $2.00 | 1.96% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 1.7% | $2.17 | 2.12% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 1.9% | $2.26 | 2.21% |
 
 </details>
 
@@ -403,26 +512,34 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.2% | $0.16 | 0.20% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 2.8min | 0.8% | $0.60 | 0.78% |
-| fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.2% | $0.22 | 0.29% |
-| fixture-rework | default | opus48-1m-medium-cli2.1.195 | 1 | 1.5min | 0.4% | $0.41 | 0.53% |
-| fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.1% | $0.12 | 0.15% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.3% | $0.27 | 0.34% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.18 | 0.23% |
-| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.3% | $0.27 | 0.34% |
-| act-push-debug-loops | bash | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.12 | 0.15% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 7.7min | 2.1% | $1.32 | 1.70% |
-| repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.9% | $0.72 | 0.93% |
-| repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.7% | $0.66 | 0.86% |
-| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.9% | $0.78 | 1.00% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.4% | $0.41 | 0.53% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 2 | 3.8min | 1.0% | $0.82 | 1.06% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 1.1% | $1.08 | 1.39% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 2.3min | 0.6% | $0.30 | 0.38% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 2.2% | $2.17 | 2.80% |
-| repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 1.5% | $1.34 | 1.73% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 2.4% | $2.26 | 2.91% |
+| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 2.3min | 0.5% | $0.57 | 0.56% |
+| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.1% | $0.16 | 0.15% |
+| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 1.0min | 0.2% | $0.27 | 0.27% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 2.2min | 0.5% | $0.60 | 0.59% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 2.8min | 0.6% | $0.60 | 0.59% |
+| fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.2% | $0.22 | 0.22% |
+| fixture-rework | default | opus48-1m-medium-cli2.1.195 | 1 | 1.5min | 0.3% | $0.41 | 0.40% |
+| fixture-rework | powershell | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.1% | $0.11 | 0.10% |
+| fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.1% | $0.12 | 0.11% |
+| fixture-rework | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.1% | $0.12 | 0.12% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.2% | $0.27 | 0.26% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.18 | 0.17% |
+| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.2% | $0.27 | 0.26% |
+| act-push-debug-loops | bash | opus48-1m-medium-cli2.1.195 | 1 | 0.8min | 0.2% | $0.12 | 0.12% |
+| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 2 | 4.7min | 1.0% | $1.26 | 1.23% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 7.7min | 1.6% | $1.32 | 1.29% |
+| repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.7% | $0.72 | 0.71% |
+| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 2 | 9.0min | 1.9% | $2.00 | 1.96% |
+| repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.6% | $0.66 | 0.65% |
+| repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.7% | $0.78 | 0.76% |
+| fixture-rework | bash | opus48-1m-high-cli2.1.195 | 2 | 1.2min | 0.3% | $0.33 | 0.33% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.3% | $0.41 | 0.40% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 2 | 3.8min | 0.8% | $0.82 | 0.80% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.9% | $1.08 | 1.05% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 2.3min | 0.5% | $0.30 | 0.29% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 1.7% | $2.17 | 2.12% |
+| repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 1.2% | $1.34 | 1.31% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 1.9% | $2.26 | 2.21% |
 
 </details>
 
@@ -447,16 +564,21 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| bash | opus48-1m-medium-cli2.1.193 | 5 | 5 | 5.5min | 1.5% | $1.49 | 1.92% |
-| bash | opus48-1m-medium-cli2.1.195 | 2 | 5 | 12.2min | 3.3% | $2.26 | 2.91% |
-| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 1.7% | $1.57 | 2.02% |
-| default | opus48-1m-medium-cli2.1.195 | 2 | 3 | 4.8min | 1.3% | $1.14 | 1.47% |
-| powershell | opus48-1m-medium-cli2.1.193 | 5 | 3 | 3.2min | 0.9% | $0.78 | 1.01% |
+| bash | opus48-1m-high-cli2.1.195 | 2 | 4 | 5.9min | 1.3% | $1.59 | 1.55% |
+| bash | opus48-1m-medium-cli2.1.193 | 5 | 5 | 5.5min | 1.2% | $1.49 | 1.45% |
+| bash | opus48-1m-medium-cli2.1.195 | 2 | 5 | 12.2min | 2.6% | $2.26 | 2.21% |
+| default | opus48-1m-high-cli2.1.195 | 2 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
+| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 1.4% | $1.57 | 1.53% |
+| default | opus48-1m-medium-cli2.1.195 | 2 | 3 | 4.8min | 1.0% | $1.14 | 1.11% |
+| powershell | opus48-1m-high-cli2.1.195 | 2 | 3 | 9.5min | 2.0% | $2.11 | 2.06% |
+| powershell | opus48-1m-medium-cli2.1.193 | 5 | 3 | 3.2min | 0.7% | $0.78 | 0.76% |
 | powershell | opus48-1m-medium-cli2.1.195 | 2 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
-| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 1.5% | $1.31 | 1.69% |
-| powershell-tool | opus48-1m-medium-cli2.1.195 | 2 | 2 | 1.4min | 0.4% | $0.33 | 0.43% |
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 4.5% | $4.43 | 5.71% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 4 | 5.1min | 1.4% | $0.90 | 1.16% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 2 | 2 | 2.8min | 0.6% | $0.69 | 0.67% |
+| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 1.1% | $1.31 | 1.28% |
+| powershell-tool | opus48-1m-medium-cli2.1.195 | 2 | 2 | 1.4min | 0.3% | $0.33 | 0.33% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 2 | 3.2min | 0.7% | $0.88 | 0.86% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 3.6% | $4.43 | 4.33% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 4 | 5.1min | 1.1% | $0.90 | 0.88% |
 
 
 <details>
@@ -464,16 +586,21 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
+| default | opus48-1m-high-cli2.1.195 | 2 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | powershell | opus48-1m-medium-cli2.1.195 | 2 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
-| powershell-tool | opus48-1m-medium-cli2.1.195 | 2 | 2 | 1.4min | 0.4% | $0.33 | 0.43% |
-| powershell | opus48-1m-medium-cli2.1.193 | 5 | 3 | 3.2min | 0.9% | $0.78 | 1.01% |
-| default | opus48-1m-medium-cli2.1.195 | 2 | 3 | 4.8min | 1.3% | $1.14 | 1.47% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 4 | 5.1min | 1.4% | $0.90 | 1.16% |
-| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 1.5% | $1.31 | 1.69% |
-| bash | opus48-1m-medium-cli2.1.193 | 5 | 5 | 5.5min | 1.5% | $1.49 | 1.92% |
-| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 1.7% | $1.57 | 2.02% |
-| bash | opus48-1m-medium-cli2.1.195 | 2 | 5 | 12.2min | 3.3% | $2.26 | 2.91% |
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 4.5% | $4.43 | 5.71% |
+| powershell-tool | opus48-1m-medium-cli2.1.195 | 2 | 2 | 1.4min | 0.3% | $0.33 | 0.33% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 2 | 2 | 2.8min | 0.6% | $0.69 | 0.67% |
+| powershell | opus48-1m-medium-cli2.1.193 | 5 | 3 | 3.2min | 0.7% | $0.78 | 0.76% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 2 | 3.2min | 0.7% | $0.88 | 0.86% |
+| default | opus48-1m-medium-cli2.1.195 | 2 | 3 | 4.8min | 1.0% | $1.14 | 1.11% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 4 | 5.1min | 1.1% | $0.90 | 0.88% |
+| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 1.1% | $1.31 | 1.28% |
+| bash | opus48-1m-medium-cli2.1.193 | 5 | 5 | 5.5min | 1.2% | $1.49 | 1.45% |
+| bash | opus48-1m-high-cli2.1.195 | 2 | 4 | 5.9min | 1.3% | $1.59 | 1.55% |
+| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 1.4% | $1.57 | 1.53% |
+| powershell | opus48-1m-high-cli2.1.195 | 2 | 3 | 9.5min | 2.0% | $2.11 | 2.06% |
+| bash | opus48-1m-medium-cli2.1.195 | 2 | 5 | 12.2min | 2.6% | $2.26 | 2.21% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 3.6% | $4.43 | 4.33% |
 
 </details>
 
@@ -482,16 +609,21 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
+| default | opus48-1m-high-cli2.1.195 | 2 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | powershell | opus48-1m-medium-cli2.1.195 | 2 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
-| powershell-tool | opus48-1m-medium-cli2.1.195 | 2 | 2 | 1.4min | 0.4% | $0.33 | 0.43% |
-| powershell | opus48-1m-medium-cli2.1.193 | 5 | 3 | 3.2min | 0.9% | $0.78 | 1.01% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 4 | 5.1min | 1.4% | $0.90 | 1.16% |
-| default | opus48-1m-medium-cli2.1.195 | 2 | 3 | 4.8min | 1.3% | $1.14 | 1.47% |
-| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 1.5% | $1.31 | 1.69% |
-| bash | opus48-1m-medium-cli2.1.193 | 5 | 5 | 5.5min | 1.5% | $1.49 | 1.92% |
-| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 1.7% | $1.57 | 2.02% |
-| bash | opus48-1m-medium-cli2.1.195 | 2 | 5 | 12.2min | 3.3% | $2.26 | 2.91% |
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 4.5% | $4.43 | 5.71% |
+| powershell-tool | opus48-1m-medium-cli2.1.195 | 2 | 2 | 1.4min | 0.3% | $0.33 | 0.33% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 2 | 2 | 2.8min | 0.6% | $0.69 | 0.67% |
+| powershell | opus48-1m-medium-cli2.1.193 | 5 | 3 | 3.2min | 0.7% | $0.78 | 0.76% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 2 | 3.2min | 0.7% | $0.88 | 0.86% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 4 | 5.1min | 1.1% | $0.90 | 0.88% |
+| default | opus48-1m-medium-cli2.1.195 | 2 | 3 | 4.8min | 1.0% | $1.14 | 1.11% |
+| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 1.1% | $1.31 | 1.28% |
+| bash | opus48-1m-medium-cli2.1.193 | 5 | 5 | 5.5min | 1.2% | $1.49 | 1.45% |
+| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 1.4% | $1.57 | 1.53% |
+| bash | opus48-1m-high-cli2.1.195 | 2 | 4 | 5.9min | 1.3% | $1.59 | 1.55% |
+| powershell | opus48-1m-high-cli2.1.195 | 2 | 3 | 9.5min | 2.0% | $2.11 | 2.06% |
+| bash | opus48-1m-medium-cli2.1.195 | 2 | 5 | 12.2min | 2.6% | $2.26 | 2.21% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 3.6% | $4.43 | 4.33% |
 
 </details>
 
@@ -499,9 +631,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Status | Runs | $ Saved | % of $ |
 |--------|------|---------|--------|
-| Full hit (100%) | 1 | $0.12 | 0.16% |
-| Partial | 32 | $3.22 | 4.15% |
-| Miss | 1 | $0.00 | 0.00% |
+| Full hit (100%) | 1 | $0.12 | 0.12% |
+| Partial | 40 | $4.02 | 3.93% |
+| Miss | 2 | $0.00 | 0.00% |
 
 ## Test Quality Evaluation
 
@@ -511,10 +643,15 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| bash | opus48-1m-high | 39.5 | 69.0 | 1.7 | 1.46 |
 | bash | opus48-1m-medium | 22.9 | 40.6 | 1.8 | 1.15 |
+| default | opus48-1m-high | 33.0 | 54.0 | 1.6 | 0.76 |
 | default | opus48-1m-medium | 26.7 | 48.0 | 1.8 | 1.08 |
+| powershell | opus48-1m-high | 49.5 | 81.0 | 1.6 | 7.63 |
 | powershell | opus48-1m-medium | 32.4 | 60.3 | 1.9 | 2.76 |
+| powershell-tool | opus48-1m-high | 39.0 | 63.0 | 1.6 | 3.01 |
 | powershell-tool | opus48-1m-medium | 32.8 | 56.3 | 1.7 | 3.23 |
+| typescript-bun | opus48-1m-high | 51.0 | 104.0 | 2.0 | 1.20 |
 | typescript-bun | opus48-1m-medium | 31.0 | 64.6 | 2.1 | 1.04 |
 
 
@@ -523,6 +660,11 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| typescript-bun | opus48-1m-high | 51.0 | 104.0 | 2.0 | 1.20 |
+| powershell | opus48-1m-high | 49.5 | 81.0 | 1.6 | 7.63 |
+| bash | opus48-1m-high | 39.5 | 69.0 | 1.7 | 1.46 |
+| powershell-tool | opus48-1m-high | 39.0 | 63.0 | 1.6 | 3.01 |
+| default | opus48-1m-high | 33.0 | 54.0 | 1.6 | 0.76 |
 | powershell-tool | opus48-1m-medium | 32.8 | 56.3 | 1.7 | 3.23 |
 | powershell | opus48-1m-medium | 32.4 | 60.3 | 1.9 | 2.76 |
 | typescript-bun | opus48-1m-medium | 31.0 | 64.6 | 2.1 | 1.04 |
@@ -536,9 +678,14 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| typescript-bun | opus48-1m-high | 51.0 | 104.0 | 2.0 | 1.20 |
+| powershell | opus48-1m-high | 49.5 | 81.0 | 1.6 | 7.63 |
+| bash | opus48-1m-high | 39.5 | 69.0 | 1.7 | 1.46 |
 | typescript-bun | opus48-1m-medium | 31.0 | 64.6 | 2.1 | 1.04 |
+| powershell-tool | opus48-1m-high | 39.0 | 63.0 | 1.6 | 3.01 |
 | powershell | opus48-1m-medium | 32.4 | 60.3 | 1.9 | 2.76 |
 | powershell-tool | opus48-1m-medium | 32.8 | 56.3 | 1.7 | 3.23 |
+| default | opus48-1m-high | 33.0 | 54.0 | 1.6 | 0.76 |
 | default | opus48-1m-medium | 26.7 | 48.0 | 1.8 | 1.08 |
 | bash | opus48-1m-medium | 22.9 | 40.6 | 1.8 | 1.15 |
 
@@ -549,11 +696,16 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| powershell | opus48-1m-high | 49.5 | 81.0 | 1.6 | 7.63 |
 | powershell-tool | opus48-1m-medium | 32.8 | 56.3 | 1.7 | 3.23 |
+| powershell-tool | opus48-1m-high | 39.0 | 63.0 | 1.6 | 3.01 |
 | powershell | opus48-1m-medium | 32.4 | 60.3 | 1.9 | 2.76 |
+| bash | opus48-1m-high | 39.5 | 69.0 | 1.7 | 1.46 |
+| typescript-bun | opus48-1m-high | 51.0 | 104.0 | 2.0 | 1.20 |
 | bash | opus48-1m-medium | 22.9 | 40.6 | 1.8 | 1.15 |
 | default | opus48-1m-medium | 26.7 | 48.0 | 1.8 | 1.08 |
 | typescript-bun | opus48-1m-medium | 31.0 | 64.6 | 2.1 | 1.04 |
+| default | opus48-1m-high | 33.0 | 54.0 | 1.6 | 0.76 |
 
 </details>
 
@@ -563,14 +715,23 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Tests | Assertions | Assert/Test | Test Lines | Impl Lines | Test:Code |
 |------|------|-------|-------|------------|-------------|------------|------------|-----------|
+| Semantic Version Bumper | bash | opus48-1m-high | 36 | 54 | 1.5 | 346 | 467 | 0.74 |
 | Semantic Version Bumper | bash | opus48-1m-medium | 24 | 34 | 1.4 | 286 | 275 | 1.04 |
+| Semantic Version Bumper | default | opus48-1m-high | 38 | 66 | 1.7 | 330 | 364 | 0.91 |
 | Semantic Version Bumper | default | opus48-1m-medium | 38 | 61 | 1.6 | 498 | 312 | 1.60 |
+| Semantic Version Bumper | powershell | opus48-1m-high | 53 | 92 | 1.7 | 567 | 75 | 7.56 |
 | Semantic Version Bumper | powershell | opus48-1m-medium | 39 | 62 | 1.6 | 359 | 53 | 6.77 |
+| Semantic Version Bumper | powershell-tool | opus48-1m-high | 40 | 69 | 1.7 | 360 | 585 | 0.62 |
 | Semantic Version Bumper | powershell-tool | opus48-1m-medium | 35 | 57 | 1.6 | 380 | 118 | 3.22 |
+| Semantic Version Bumper | typescript-bun | opus48-1m-high | 51 | 104 | 2.0 | 568 | 475 | 1.20 |
 | Semantic Version Bumper | typescript-bun | opus48-1m-medium | 38 | 76 | 2.0 | 462 | 558 | 0.83 |
+| PR Label Assigner | bash | opus48-1m-high | 43 | 84 | 2.0 | 506 | 232 | 2.18 |
 | PR Label Assigner | bash | opus48-1m-medium | 18 | 10 | 0.6 | 171 | 198 | 0.86 |
+| PR Label Assigner | default | opus48-1m-high | 28 | 42 | 1.5 | 266 | 444 | 0.60 |
 | PR Label Assigner | default | opus48-1m-medium | 30 | 36 | 1.2 | 222 | 407 | 0.55 |
+| PR Label Assigner | powershell | opus48-1m-high | 46 | 70 | 1.5 | 493 | 64 | 7.70 |
 | PR Label Assigner | powershell | opus48-1m-medium | 32 | 47 | 1.5 | 261 | 393 | 0.66 |
+| PR Label Assigner | powershell-tool | opus48-1m-high | 38 | 57 | 1.5 | 443 | 82 | 5.40 |
 | PR Label Assigner | powershell-tool | opus48-1m-medium | 26 | 46 | 1.8 | 210 | 253 | 0.83 |
 | PR Label Assigner | typescript-bun | opus48-1m-medium | 25 | 53 | 2.1 | 362 | 372 | 0.97 |
 | Dependency License Checker | bash | opus48-1m-medium | 24 | 52 | 2.2 | 334 | 191 | 1.75 |
@@ -620,9 +781,13 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Environment Matrix Generator | default | opus48-1m-medium | 6.7min | 28 | 0 | $2.01 | — | python | ok |
 | Environment Matrix Generator | powershell | opus48-1m-medium | 9.3min | 33 | 0 | $2.29 | — | powershell | ok |
 | Environment Matrix Generator | typescript-bun | opus48-1m-medium | 32.5min | 0 | 3 | $0.00 | — | typescript | timeout |
+| PR Label Assigner | bash | opus48-1m-high | 10.1min | 31 | 0 | $2.45 | — | bash | ok |
 | PR Label Assigner | bash | opus48-1m-medium | 4.8min | 20 | 0 | $1.22 | — | bash | ok |
+| PR Label Assigner | default | opus48-1m-high | 7.1min | 25 | 1 | $1.86 | — | python | ok |
 | PR Label Assigner | default | opus48-1m-medium | 8.2min | 36 | 1 | $1.91 | — | powershell | ok |
+| PR Label Assigner | powershell | opus48-1m-high | 11.0min | 47 | 0 | $2.65 | — | powershell | ok |
 | PR Label Assigner | powershell | opus48-1m-medium | 6.3min | 23 | 0 | $1.52 | — | powershell | ok |
+| PR Label Assigner | powershell-tool | opus48-1m-high | 11.4min | 41 | 0 | $2.78 | — | powershell | ok |
 | PR Label Assigner | powershell-tool | opus48-1m-medium | 7.6min | 27 | 1 | $1.66 | — | powershell | ok |
 | PR Label Assigner | typescript-bun | opus48-1m-medium | 13.1min | 44 | 0 | $2.48 | — | typescript | ok |
 | Secret Rotation Validator | bash | opus48-1m-medium | 23.9min | 64 | 6 | $5.71 | — | bash | ok |
@@ -630,10 +795,15 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Secret Rotation Validator | powershell | opus48-1m-medium | 1.1min | 11 | 0 | $0.55 | — | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus48-1m-medium | 12.5min | 35 | 2 | $2.93 | — | powershell | ok |
 | Secret Rotation Validator | typescript-bun | opus48-1m-medium | 14.6min | 48 | 1 | $3.15 | — | typescript | ok |
+| Semantic Version Bumper | bash | opus48-1m-high | 9.5min | 41 | 1 | $2.70 | — | bash | ok |
 | Semantic Version Bumper | bash | opus48-1m-medium | 6.8min | 22 | 0 | $1.55 | — | bash | ok |
+| Semantic Version Bumper | default | opus48-1m-high | 9.8min | 52 | 0 | $3.34 | — | javascript | ok |
 | Semantic Version Bumper | default | opus48-1m-medium | 7.2min | 27 | 0 | $1.83 | — | python | ok |
+| Semantic Version Bumper | powershell | opus48-1m-high | 16.9min | 60 | 2 | $3.59 | — | powershell | ok |
 | Semantic Version Bumper | powershell | opus48-1m-medium | 10.0min | 34 | 0 | $2.33 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | opus48-1m-high | 12.1min | 34 | 0 | $2.32 | — | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus48-1m-medium | 10.6min | 40 | 1 | $2.39 | — | powershell | ok |
+| Semantic Version Bumper | typescript-bun | opus48-1m-high | 11.5min | 52 | 0 | $3.14 | — | typescript | ok |
 | Semantic Version Bumper | typescript-bun | opus48-1m-medium | 9.3min | 47 | 2 | $2.47 | — | typescript | ok |
 | Test Results Aggregator | bash | opus48-1m-medium | 6.3min | 29 | 1 | $1.83 | — | bash | ok |
 | Test Results Aggregator | default | opus48-1m-medium | 6.6min | 26 | 0 | $1.50 | — | python | ok |
@@ -661,6 +831,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Semantic Version Bumper | default | opus48-1m-medium | 7.2min | 27 | 0 | $1.83 | — | python | ok |
 | Test Results Aggregator | bash | opus48-1m-medium | 6.3min | 29 | 1 | $1.83 | — | bash | ok |
 | Artifact Cleanup Script | powershell | opus48-1m-medium | 12.0min | 30 | 1 | $1.85 | — | powershell | ok |
+| PR Label Assigner | default | opus48-1m-high | 7.1min | 25 | 1 | $1.86 | — | python | ok |
 | PR Label Assigner | default | opus48-1m-medium | 8.2min | 36 | 1 | $1.91 | — | powershell | ok |
 | Dependency License Checker | powershell | opus48-1m-medium | 7.7min | 33 | 0 | $1.93 | — | powershell | ok |
 | Dependency License Checker | default | opus48-1m-medium | 7.9min | 33 | 0 | $1.94 | — | python | ok |
@@ -668,16 +839,24 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Environment Matrix Generator | default | opus48-1m-medium | 6.7min | 28 | 0 | $2.01 | — | python | ok |
 | Artifact Cleanup Script | powershell-tool | opus48-1m-medium | 8.6min | 39 | 1 | $2.20 | — | powershell | ok |
 | Environment Matrix Generator | powershell | opus48-1m-medium | 9.3min | 33 | 0 | $2.29 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | opus48-1m-high | 12.1min | 34 | 0 | $2.32 | — | powershell | ok |
 | Dependency License Checker | typescript-bun | opus48-1m-medium | 8.7min | 45 | 0 | $2.33 | — | typescript | ok |
 | Semantic Version Bumper | powershell | opus48-1m-medium | 10.0min | 34 | 0 | $2.33 | — | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus48-1m-medium | 10.6min | 40 | 1 | $2.39 | — | powershell | ok |
+| PR Label Assigner | bash | opus48-1m-high | 10.1min | 31 | 0 | $2.45 | — | bash | ok |
 | Semantic Version Bumper | typescript-bun | opus48-1m-medium | 9.3min | 47 | 2 | $2.47 | — | typescript | ok |
 | PR Label Assigner | typescript-bun | opus48-1m-medium | 13.1min | 44 | 0 | $2.48 | — | typescript | ok |
 | Test Results Aggregator | typescript-bun | opus48-1m-medium | 9.2min | 45 | 0 | $2.57 | — | typescript | ok |
+| PR Label Assigner | powershell | opus48-1m-high | 11.0min | 47 | 0 | $2.65 | — | powershell | ok |
+| Semantic Version Bumper | bash | opus48-1m-high | 9.5min | 41 | 1 | $2.70 | — | bash | ok |
+| PR Label Assigner | powershell-tool | opus48-1m-high | 11.4min | 41 | 0 | $2.78 | — | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus48-1m-medium | 12.5min | 35 | 2 | $2.93 | — | powershell | ok |
+| Semantic Version Bumper | typescript-bun | opus48-1m-high | 11.5min | 52 | 0 | $3.14 | — | typescript | ok |
 | Secret Rotation Validator | typescript-bun | opus48-1m-medium | 14.6min | 48 | 1 | $3.15 | — | typescript | ok |
+| Semantic Version Bumper | default | opus48-1m-high | 9.8min | 52 | 0 | $3.34 | — | javascript | ok |
 | Dependency License Checker | powershell-tool | opus48-1m-medium | 12.7min | 49 | 0 | $3.35 | — | powershell | ok |
 | Artifact Cleanup Script | typescript-bun | opus48-1m-medium | 15.6min | 48 | 2 | $3.55 | — | typescript | ok |
+| Semantic Version Bumper | powershell | opus48-1m-high | 16.9min | 60 | 2 | $3.59 | — | powershell | ok |
 | Artifact Cleanup Script | bash | opus48-1m-medium | 31.2min | 57 | 3 | $4.44 | — | bash | ok |
 | Secret Rotation Validator | default | opus48-1m-medium | 19.4min | 55 | 1 | $5.36 | — | powershell | ok |
 | Secret Rotation Validator | bash | opus48-1m-medium | 23.9min | 64 | 6 | $5.71 | — | bash | ok |
@@ -698,6 +877,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Test Results Aggregator | default | opus48-1m-medium | 6.6min | 26 | 0 | $1.50 | — | python | ok |
 | Environment Matrix Generator | default | opus48-1m-medium | 6.7min | 28 | 0 | $2.01 | — | python | ok |
 | Semantic Version Bumper | bash | opus48-1m-medium | 6.8min | 22 | 0 | $1.55 | — | bash | ok |
+| PR Label Assigner | default | opus48-1m-high | 7.1min | 25 | 1 | $1.86 | — | python | ok |
 | Semantic Version Bumper | default | opus48-1m-medium | 7.2min | 27 | 0 | $1.83 | — | python | ok |
 | Test Results Aggregator | powershell-tool | opus48-1m-medium | 7.4min | 29 | 0 | $1.95 | — | powershell | ok |
 | PR Label Assigner | powershell-tool | opus48-1m-medium | 7.6min | 27 | 1 | $1.66 | — | powershell | ok |
@@ -710,15 +890,23 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Test Results Aggregator | typescript-bun | opus48-1m-medium | 9.2min | 45 | 0 | $2.57 | — | typescript | ok |
 | Semantic Version Bumper | typescript-bun | opus48-1m-medium | 9.3min | 47 | 2 | $2.47 | — | typescript | ok |
 | Environment Matrix Generator | powershell | opus48-1m-medium | 9.3min | 33 | 0 | $2.29 | — | powershell | ok |
+| Semantic Version Bumper | bash | opus48-1m-high | 9.5min | 41 | 1 | $2.70 | — | bash | ok |
+| Semantic Version Bumper | default | opus48-1m-high | 9.8min | 52 | 0 | $3.34 | — | javascript | ok |
 | Semantic Version Bumper | powershell | opus48-1m-medium | 10.0min | 34 | 0 | $2.33 | — | powershell | ok |
+| PR Label Assigner | bash | opus48-1m-high | 10.1min | 31 | 0 | $2.45 | — | bash | ok |
 | Artifact Cleanup Script | default | opus48-1m-medium | 10.1min | 27 | 0 | $1.80 | — | python | ok |
 | Semantic Version Bumper | powershell-tool | opus48-1m-medium | 10.6min | 40 | 1 | $2.39 | — | powershell | ok |
+| PR Label Assigner | powershell | opus48-1m-high | 11.0min | 47 | 0 | $2.65 | — | powershell | ok |
+| PR Label Assigner | powershell-tool | opus48-1m-high | 11.4min | 41 | 0 | $2.78 | — | powershell | ok |
+| Semantic Version Bumper | typescript-bun | opus48-1m-high | 11.5min | 52 | 0 | $3.14 | — | typescript | ok |
 | Artifact Cleanup Script | powershell | opus48-1m-medium | 12.0min | 30 | 1 | $1.85 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | opus48-1m-high | 12.1min | 34 | 0 | $2.32 | — | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus48-1m-medium | 12.5min | 35 | 2 | $2.93 | — | powershell | ok |
 | Dependency License Checker | powershell-tool | opus48-1m-medium | 12.7min | 49 | 0 | $3.35 | — | powershell | ok |
 | PR Label Assigner | typescript-bun | opus48-1m-medium | 13.1min | 44 | 0 | $2.48 | — | typescript | ok |
 | Secret Rotation Validator | typescript-bun | opus48-1m-medium | 14.6min | 48 | 1 | $3.15 | — | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | opus48-1m-medium | 15.6min | 48 | 2 | $3.55 | — | typescript | ok |
+| Semantic Version Bumper | powershell | opus48-1m-high | 16.9min | 60 | 2 | $3.59 | — | powershell | ok |
 | Secret Rotation Validator | default | opus48-1m-medium | 19.4min | 55 | 1 | $5.36 | — | powershell | ok |
 | Secret Rotation Validator | bash | opus48-1m-medium | 23.9min | 64 | 6 | $5.71 | — | bash | ok |
 | Artifact Cleanup Script | bash | opus48-1m-medium | 31.2min | 57 | 3 | $4.44 | — | bash | ok |
@@ -732,10 +920,16 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | bash | opus48-1m-medium | 6.8min | 22 | 0 | $1.55 | — | bash | ok |
+| Semantic Version Bumper | default | opus48-1m-high | 9.8min | 52 | 0 | $3.34 | — | javascript | ok |
 | Semantic Version Bumper | default | opus48-1m-medium | 7.2min | 27 | 0 | $1.83 | — | python | ok |
 | Semantic Version Bumper | powershell | opus48-1m-medium | 10.0min | 34 | 0 | $2.33 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | opus48-1m-high | 12.1min | 34 | 0 | $2.32 | — | powershell | ok |
+| Semantic Version Bumper | typescript-bun | opus48-1m-high | 11.5min | 52 | 0 | $3.14 | — | typescript | ok |
+| PR Label Assigner | bash | opus48-1m-high | 10.1min | 31 | 0 | $2.45 | — | bash | ok |
 | PR Label Assigner | bash | opus48-1m-medium | 4.8min | 20 | 0 | $1.22 | — | bash | ok |
+| PR Label Assigner | powershell | opus48-1m-high | 11.0min | 47 | 0 | $2.65 | — | powershell | ok |
 | PR Label Assigner | powershell | opus48-1m-medium | 6.3min | 23 | 0 | $1.52 | — | powershell | ok |
+| PR Label Assigner | powershell-tool | opus48-1m-high | 11.4min | 41 | 0 | $2.78 | — | powershell | ok |
 | PR Label Assigner | typescript-bun | opus48-1m-medium | 13.1min | 44 | 0 | $2.48 | — | typescript | ok |
 | Dependency License Checker | bash | opus48-1m-medium | 5.7min | 24 | 0 | $1.45 | — | bash | ok |
 | Dependency License Checker | default | opus48-1m-medium | 7.9min | 33 | 0 | $1.94 | — | python | ok |
@@ -751,7 +945,9 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Environment Matrix Generator | powershell | opus48-1m-medium | 9.3min | 33 | 0 | $2.29 | — | powershell | ok |
 | Artifact Cleanup Script | default | opus48-1m-medium | 10.1min | 27 | 0 | $1.80 | — | python | ok |
 | Secret Rotation Validator | powershell | opus48-1m-medium | 1.1min | 11 | 0 | $0.55 | — | powershell | ok |
+| Semantic Version Bumper | bash | opus48-1m-high | 9.5min | 41 | 1 | $2.70 | — | bash | ok |
 | Semantic Version Bumper | powershell-tool | opus48-1m-medium | 10.6min | 40 | 1 | $2.39 | — | powershell | ok |
+| PR Label Assigner | default | opus48-1m-high | 7.1min | 25 | 1 | $1.86 | — | python | ok |
 | PR Label Assigner | default | opus48-1m-medium | 8.2min | 36 | 1 | $1.91 | — | powershell | ok |
 | PR Label Assigner | powershell-tool | opus48-1m-medium | 7.6min | 27 | 1 | $1.66 | — | powershell | ok |
 | Test Results Aggregator | bash | opus48-1m-medium | 6.3min | 29 | 1 | $1.83 | — | bash | ok |
@@ -759,6 +955,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Artifact Cleanup Script | powershell-tool | opus48-1m-medium | 8.6min | 39 | 1 | $2.20 | — | powershell | ok |
 | Secret Rotation Validator | default | opus48-1m-medium | 19.4min | 55 | 1 | $5.36 | — | powershell | ok |
 | Secret Rotation Validator | typescript-bun | opus48-1m-medium | 14.6min | 48 | 1 | $3.15 | — | typescript | ok |
+| Semantic Version Bumper | powershell | opus48-1m-high | 16.9min | 60 | 2 | $3.59 | — | powershell | ok |
 | Semantic Version Bumper | typescript-bun | opus48-1m-medium | 9.3min | 47 | 2 | $2.47 | — | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | opus48-1m-medium | 15.6min | 48 | 2 | $3.55 | — | typescript | ok |
 | Secret Rotation Validator | powershell-tool | opus48-1m-medium | 12.5min | 35 | 2 | $2.93 | — | powershell | ok |
@@ -779,6 +976,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Semantic Version Bumper | bash | opus48-1m-medium | 6.8min | 22 | 0 | $1.55 | — | bash | ok |
 | PR Label Assigner | powershell | opus48-1m-medium | 6.3min | 23 | 0 | $1.52 | — | powershell | ok |
 | Dependency License Checker | bash | opus48-1m-medium | 5.7min | 24 | 0 | $1.45 | — | bash | ok |
+| PR Label Assigner | default | opus48-1m-high | 7.1min | 25 | 1 | $1.86 | — | python | ok |
 | Test Results Aggregator | default | opus48-1m-medium | 6.6min | 26 | 0 | $1.50 | — | python | ok |
 | Semantic Version Bumper | default | opus48-1m-medium | 7.2min | 27 | 0 | $1.83 | — | python | ok |
 | PR Label Assigner | powershell-tool | opus48-1m-medium | 7.6min | 27 | 1 | $1.66 | — | powershell | ok |
@@ -789,23 +987,31 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Test Results Aggregator | powershell-tool | opus48-1m-medium | 7.4min | 29 | 0 | $1.95 | — | powershell | ok |
 | Test Results Aggregator | powershell | opus48-1m-medium | 8.1min | 30 | 0 | $1.77 | — | powershell | ok |
 | Artifact Cleanup Script | powershell | opus48-1m-medium | 12.0min | 30 | 1 | $1.85 | — | powershell | ok |
+| PR Label Assigner | bash | opus48-1m-high | 10.1min | 31 | 0 | $2.45 | — | bash | ok |
 | Dependency License Checker | default | opus48-1m-medium | 7.9min | 33 | 0 | $1.94 | — | python | ok |
 | Dependency License Checker | powershell | opus48-1m-medium | 7.7min | 33 | 0 | $1.93 | — | powershell | ok |
 | Environment Matrix Generator | powershell | opus48-1m-medium | 9.3min | 33 | 0 | $2.29 | — | powershell | ok |
 | Semantic Version Bumper | powershell | opus48-1m-medium | 10.0min | 34 | 0 | $2.33 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | opus48-1m-high | 12.1min | 34 | 0 | $2.32 | — | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus48-1m-medium | 12.5min | 35 | 2 | $2.93 | — | powershell | ok |
 | PR Label Assigner | default | opus48-1m-medium | 8.2min | 36 | 1 | $1.91 | — | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | opus48-1m-medium | 8.6min | 39 | 1 | $2.20 | — | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus48-1m-medium | 10.6min | 40 | 1 | $2.39 | — | powershell | ok |
+| Semantic Version Bumper | bash | opus48-1m-high | 9.5min | 41 | 1 | $2.70 | — | bash | ok |
+| PR Label Assigner | powershell-tool | opus48-1m-high | 11.4min | 41 | 0 | $2.78 | — | powershell | ok |
 | PR Label Assigner | typescript-bun | opus48-1m-medium | 13.1min | 44 | 0 | $2.48 | — | typescript | ok |
 | Dependency License Checker | typescript-bun | opus48-1m-medium | 8.7min | 45 | 0 | $2.33 | — | typescript | ok |
 | Test Results Aggregator | typescript-bun | opus48-1m-medium | 9.2min | 45 | 0 | $2.57 | — | typescript | ok |
 | Semantic Version Bumper | typescript-bun | opus48-1m-medium | 9.3min | 47 | 2 | $2.47 | — | typescript | ok |
+| PR Label Assigner | powershell | opus48-1m-high | 11.0min | 47 | 0 | $2.65 | — | powershell | ok |
 | Artifact Cleanup Script | typescript-bun | opus48-1m-medium | 15.6min | 48 | 2 | $3.55 | — | typescript | ok |
 | Secret Rotation Validator | typescript-bun | opus48-1m-medium | 14.6min | 48 | 1 | $3.15 | — | typescript | ok |
 | Dependency License Checker | powershell-tool | opus48-1m-medium | 12.7min | 49 | 0 | $3.35 | — | powershell | ok |
+| Semantic Version Bumper | default | opus48-1m-high | 9.8min | 52 | 0 | $3.34 | — | javascript | ok |
+| Semantic Version Bumper | typescript-bun | opus48-1m-high | 11.5min | 52 | 0 | $3.14 | — | typescript | ok |
 | Secret Rotation Validator | default | opus48-1m-medium | 19.4min | 55 | 1 | $5.36 | — | powershell | ok |
 | Artifact Cleanup Script | bash | opus48-1m-medium | 31.2min | 57 | 3 | $4.44 | — | bash | ok |
+| Semantic Version Bumper | powershell | opus48-1m-high | 16.9min | 60 | 2 | $3.59 | — | powershell | ok |
 | Secret Rotation Validator | bash | opus48-1m-medium | 23.9min | 64 | 6 | $5.71 | — | bash | ok |
 
 </details>
@@ -815,14 +1021,23 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
+| Semantic Version Bumper | bash | opus48-1m-high | 9.5min | 41 | 1 | $2.70 | — | bash | ok |
 | Semantic Version Bumper | bash | opus48-1m-medium | 6.8min | 22 | 0 | $1.55 | — | bash | ok |
+| Semantic Version Bumper | default | opus48-1m-high | 9.8min | 52 | 0 | $3.34 | — | javascript | ok |
 | Semantic Version Bumper | default | opus48-1m-medium | 7.2min | 27 | 0 | $1.83 | — | python | ok |
+| Semantic Version Bumper | powershell | opus48-1m-high | 16.9min | 60 | 2 | $3.59 | — | powershell | ok |
 | Semantic Version Bumper | powershell | opus48-1m-medium | 10.0min | 34 | 0 | $2.33 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | opus48-1m-high | 12.1min | 34 | 0 | $2.32 | — | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus48-1m-medium | 10.6min | 40 | 1 | $2.39 | — | powershell | ok |
+| Semantic Version Bumper | typescript-bun | opus48-1m-high | 11.5min | 52 | 0 | $3.14 | — | typescript | ok |
 | Semantic Version Bumper | typescript-bun | opus48-1m-medium | 9.3min | 47 | 2 | $2.47 | — | typescript | ok |
+| PR Label Assigner | bash | opus48-1m-high | 10.1min | 31 | 0 | $2.45 | — | bash | ok |
 | PR Label Assigner | bash | opus48-1m-medium | 4.8min | 20 | 0 | $1.22 | — | bash | ok |
+| PR Label Assigner | default | opus48-1m-high | 7.1min | 25 | 1 | $1.86 | — | python | ok |
 | PR Label Assigner | default | opus48-1m-medium | 8.2min | 36 | 1 | $1.91 | — | powershell | ok |
+| PR Label Assigner | powershell | opus48-1m-high | 11.0min | 47 | 0 | $2.65 | — | powershell | ok |
 | PR Label Assigner | powershell | opus48-1m-medium | 6.3min | 23 | 0 | $1.52 | — | powershell | ok |
+| PR Label Assigner | powershell-tool | opus48-1m-high | 11.4min | 41 | 0 | $2.78 | — | powershell | ok |
 | PR Label Assigner | powershell-tool | opus48-1m-medium | 7.6min | 27 | 1 | $1.66 | — | powershell | ok |
 | PR Label Assigner | typescript-bun | opus48-1m-medium | 13.1min | 44 | 0 | $2.48 | — | typescript | ok |
 | Dependency License Checker | bash | opus48-1m-medium | 5.7min | 24 | 0 | $1.45 | — | bash | ok |
@@ -856,8 +1071,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 ### Tiers
 
-- **Duration bands:** **A+** ≤1.04×, **A** ≤1.08×, **A-** ≤1.12×, **B+** ≤1.16×, **B** ≤1.20×, **B-** ≤1.25×, **C+** ≤1.29×, **C** ≤1.34×, **C-** ≤1.39×, **D+** ≤1.44×, **D** ≤1.50×, **D-** ≤1.55×, **F** >1.55×
-- **Cost bands:** **A+** ≤1.04×, **A** ≤1.08×, **A-** ≤1.12×, **B+** ≤1.16×, **B** ≤1.21×, **B-** ≤1.26×, **C+** ≤1.31×, **C** ≤1.36×, **C-** ≤1.41×, **D+** ≤1.46×, **D** ≤1.52×, **D-** ≤1.58×, **F** >1.58×
+- **Duration bands:** **A+** ≤1.05×, **A** ≤1.10×, **A-** ≤1.16×, **B+** ≤1.22×, **B** ≤1.28×, **B-** ≤1.34×, **C+** ≤1.41×, **C** ≤1.48×, **C-** ≤1.55×, **D+** ≤1.63×, **D** ≤1.71×, **D-** ≤1.80×, **F** >1.80×
+- **Cost bands:** **A+** ≤1.05×, **A** ≤1.10×, **A-** ≤1.16×, **B+** ≤1.22×, **B** ≤1.28×, **B-** ≤1.34×, **C+** ≤1.41×, **C** ≤1.48×, **C-** ≤1.55×, **D+** ≤1.63×, **D** ≤1.71×, **D-** ≤1.80×, **F** >1.80×
 
 *Tests/Workflow Craft bands are absolute Overall score bands:* **A+** ≥4.7, **A** ≥4.4, **A-** ≥4.1, **B+** ≥3.8, **B** ≥3.5, **B-** ≥3.2, **C+** ≥2.9, **C** ≥2.6, **C-** ≥2.3, **D+** ≥2.0, **D** ≥1.7, **D-** ≥1.4, **F** <1.4, `—` = no data.*
 
@@ -865,6 +1080,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Variant label | CLI version | Tasks | Languages |
 |---------------|-------------|-------|-----------|
+| opus48-1m-high | 2.1.195 | 11-semantic-version-bumper, 12-pr-label-assigner | All |
 | opus48-1m-medium | 2.1.193 | 11-semantic-version-bumper, 12-pr-label-assigner, 13-dependency-license-checker, 15-test-results-aggregator, 16-environment-matrix-generator | All |
 | opus48-1m-medium | 2.1.195 | 17-artifact-cleanup-script, 18-secret-rotation-validator | All |
 

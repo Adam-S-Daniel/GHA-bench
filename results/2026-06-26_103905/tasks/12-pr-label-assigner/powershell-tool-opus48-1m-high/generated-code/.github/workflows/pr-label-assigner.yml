@@ -1,0 +1,80 @@
+name: PR Label Assigner
+
+# Triggers:
+#   pull_request     - the real use case: label a PR from its changed files.
+#   push             - lets the test harness drive the pipeline via `act push`.
+#   workflow_dispatch - manual runs from the Actions UI.
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+# Least-privilege defaults; the optional apply step needs pull-requests: write.
+permissions:
+  contents: read
+  pull-requests: write
+
+# Default fixture/config locations, overridable per environment.
+env:
+  CHANGED_FILES_FILE: fixtures/changed-files.txt
+  LABEL_RULES_FILE: config/label-rules.json
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $result = Invoke-Pester -Path ./tests/PRLabelAssigner.Tests.ps1 -Output Detailed -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "Pester reported $($result.FailedCount) failing test(s)."
+          }
+          Write-Host "All $($result.PassedCount) unit tests passed."
+
+  assign-labels:
+    name: Assign labels
+    runs-on: ubuntu-latest
+    # Only label once the logic is known good.
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compute PR labels
+        id: labeler
+        shell: pwsh
+        run: |
+          ./Invoke-LabelAssigner.ps1 `
+            -ChangedFilesPath $env:CHANGED_FILES_FILE `
+            -RulesPath $env:LABEL_RULES_FILE
+
+      - name: Show computed labels
+        shell: pwsh
+        run: |
+          Write-Host "Computed labels: $($env:COMPUTED_LABELS)"
+        env:
+          COMPUTED_LABELS: ${{ steps.labeler.outputs.labels }}
+
+      # Apply the labels only on a real pull_request event with a token present.
+      # Skipped during `act push` test runs, so no secrets are required there.
+      - name: Apply labels to the pull request
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.number != '' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LABELS: ${{ steps.labeler.outputs.labels }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:LABELS)) {
+            Write-Host "No labels to apply."
+            exit 0
+          }
+          $labelArgs = $env:LABELS -split ',\s*' | ForEach-Object { '--add-label', $_.Trim() }
+          gh pr edit $env:PR_NUMBER @labelArgs

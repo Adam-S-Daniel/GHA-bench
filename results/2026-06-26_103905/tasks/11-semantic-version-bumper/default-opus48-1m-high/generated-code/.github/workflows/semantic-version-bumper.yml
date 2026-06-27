@@ -1,0 +1,60 @@
+name: Semantic Version Bumper
+
+# Trigger on code changes (push/PR), on a weekly schedule for routine release
+# cuts, and manually via the Actions tab. All of these run the same bump job.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Mondays at 03:00 UTC — a quiet time to cut a routine release.
+    - cron: '0 3 * * 1'
+
+# The job only reads the repo here; it computes and reports the next version.
+# (Bumped to `write` only if you later add a commit/tag step.)
+permissions:
+  contents: read
+
+# File locations are centralised here so the workflow is easy to repoint. The
+# version file is auto-detected by the script (VERSION, else package.json).
+env:
+  COMMITS_FILE: commits.log
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  bump:
+    name: Compute and apply version bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Node version
+        run: node --version
+
+      - name: Run unit tests
+        run: node --test test/bumper.test.js
+
+      - name: Compute next version
+        id: bump
+        run: |
+          node src/cli.js \
+            --commits "$COMMITS_FILE" \
+            --changelog "$CHANGELOG_FILE"
+
+      - name: Report result
+        run: |
+          echo "Bumped ${{ steps.bump.outputs.OLD_VERSION }} -> ${{ steps.bump.outputs.NEW_VERSION }} (${{ steps.bump.outputs.BUMP_TYPE }})"
+          echo "NEW_VERSION=${{ steps.bump.outputs.NEW_VERSION }}"
+          {
+            echo "## Version bump"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Old version | ${{ steps.bump.outputs.OLD_VERSION }} |"
+            echo "| New version | ${{ steps.bump.outputs.NEW_VERSION }} |"
+            echo "| Bump type | ${{ steps.bump.outputs.BUMP_TYPE }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show updated changelog
+        run: cat "$CHANGELOG_FILE"
