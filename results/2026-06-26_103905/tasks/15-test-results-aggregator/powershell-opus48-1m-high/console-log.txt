@@ -1,0 +1,406 @@
+[Assistant] I'll start by understanding the project context and environment.
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100; echo "---ACTRC---"; cat /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/.actrc 2>/dev/null; echo "---PWD---"; pwd; ls -la
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Tool: Bash] which pwsh act actionlint docker 2>/dev/null; echo "---"; pwsh -v 2>/dev/null; echo "---pester---"; pwsh -c "Get-Module -ListAvailable Pester | Select-Object Name,Version" 2>/dev/null
+[Result] /snap/bin/pwsh
+/home/passp/.local/bin/act
+/home/passp/.local/bin/actionlint
+/usr/bin/docker
+---
+PowerShell 7.6.3
+---pester---
+
+[32;1mName  [0m[32;1m Version[0m
+[32;1m----  [0m [32;1m-------[0m
+Pester 5.7.1
+[Assistant] I have a clear picture. Let me record key project context, then start the TDD cycle.
+[Tool: Bash] docker images | grep -i act-ubuntu-pwsh; echo "---git---"; git config user.name; git config user.email
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+---git---
+benchmark
+benchmark@test
+[Assistant] Good — custom act container exists. Now let me begin the TDD cycle. **Cycle 1 (RED):** write the first failing test for JUnit XML parsing.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1", "con
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -20
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 1 tests in 203ms.[0m
+[95mRunning tests.[0m
+[31;1mImport-Module: [0m/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1:10[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  10 | [0m     [36;1mImport-Module $script:ModulePath -Force[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mThe specified module[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m[31;1m[36;1m     | [31;1m'/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.psm1' was not loaded because no valid module file was found in any module dir
+[Assistant] RED confirmed. **Cycle 1 (GREEN):** create the module with `ConvertFrom-JUnitXml`.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.psm1", "content": "# T
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.psm1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -6
+[Result] [95mStarting discovery in 1 files.[0m
+[95mDiscovery found 1 tests in 453ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1[0m[90m 1.34s (362ms|592ms)[0m
+[97mTests completed in 1.38s[0m
+[32mTests Passed: 1, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] GREEN. **Cycle 2 (RED):** add JSON parsing test.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggre
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -5
+[Result] [91m CommandNotFoundException: The term 'ConvertFrom-TestJson' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91m Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1:84[0m
+[97mTests completed in 4.12s[0m
+[97mTests Passed: 3, [0m[91mFailed: 2, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] RED confirmed for JSON. **Cycle 2 (GREEN):** add `ConvertFrom-TestJson`.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -3
+[Result] [91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1:84[0m
+[97mTests completed in 1.3s[0m
+[97mTests Passed: 4, [0m[91mFailed: 1, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Detailed" 2>&1 | grep -A15 "bare top-level"
+[Result] [91m  [-] accepts a bare top-level array of test cases[0m[90m 22ms (17ms|5ms)[0m
+[91m   RuntimeException: JSON file '/tmp/ee4584bb-f26e-4460-adea-74900e7c172d/bare.json' must contain a 'tests' array or be a top-level array of test cases.
+[91m   at ConvertFrom-TestJson, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.psm1:160
+[91m   at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1:84[0m
+[97mTests completed in 1.22s[0m
+[97mTests Passed: 4, [0m[91mFailed: 1, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] The pipeline unwrapped the single-element array. Let me handle a bare single test-case object.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1[0m[90m 766ms (274ms|298ms)[0m
+[97mTests completed in 788ms[0m
+[32mTests Passed: 5, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] GREEN. **Cycle 3 (RED):** `Import-TestResults` (dispatch by extension across a directory).
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggre
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1[0m[90m 1.22s (437ms|506ms)[0m
+[97mTests completed in 1.25s[0m
+[32mTests Passed: 8, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] GREEN. **Cycle 4 (RED):** `Get-TestAggregate` — totals, duration, and flaky detection.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggre
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -3
+[Result] [91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1:154[0m
+[97mTests completed in 2.29s[0m
+[97mTests Passed: 12, [0m[91mFailed: 1, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Detailed" 2>&1 | grep -B1 -A6 "153\|154\|empty flaky\|distinct source"
+[Result] [91m   Expected 3.8, but got 3.3.
+[91m   at $script:agg.Duration | Should -Be 3.8, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1:154
+[91m   at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1:154[0m
+[32m  [+] reports the number of distinct source files (matrix runs)[0m[90m 10ms (7ms|3ms)[0m
+[32m  [+] identifies only tests that both passed and failed as flaky[0m[90m 55ms (52ms|3ms)[0m
+[32m  [+] returns an empty flaky list when no test ever flips[0m[90m 13ms (11ms|2ms)[0m
+[97mTests completed in 1.78s[0m
+[97mTests Passed: 12, [0m[91mFailed: 1, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] My test's arithmetic was wrong — actual sum is 3.3, not 3.8. Fix the test.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggre
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -2
+[Result] [97mTests completed in 1.16s[0m
+[32mTests Passed: 13, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] GREEN. **Cycle 5 (RED):** `New-MarkdownSummary`.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggre
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/TestResultsAggregator.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -2
+[Result] [97mTests completed in 1.38s[0m
+[32mTests Passed: 16, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] GREEN — core module complete. **Cycle 6 (RED):** the CLI entry script `Invoke-Aggregator.ps1`.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggre
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Invoke-Aggregator.ps1", "content": "#!/usr/b
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Invoke-Aggregator.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1[0m[90m 18.02s (16.96s|735ms)[0m
+[97mTests completed in 18.05s[0m
+[32mTests Passed: 19, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 19 green. Now let me create the default fixtures used by the workflow, with known exact totals.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/fixtures/run-ubuntu.xml", "content": "<?xml 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/fixtures/run-ubuntu.xml (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/fixtures/run-windows.xml", "content": "<?xml
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/fixtures/run-windows.xml (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/fixtures/run-macos.json", "content": "{\n  \
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/fixtures/run-macos.json (file state is current in your context — no need to Read it back)
+[Assistant] Now let me verify exact output from the default fixtures locally before building the workflow.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && pwsh -NoProfile -File ./Invoke-Aggregator.ps1 -Path ./fixtures; echo "EXIT=$?"
+[Result] # Test Results Summary
+
+:x: **1 of 12 test runs failed.**
+
+| Metric | Value |
+| --- | --- |
+| Total | 12 |
+| Passed | 8 |
+| Failed | 1 |
+| Skipped | 3 |
+| Duration | 1.97s |
+| Runs | 3 |
+
+## Flaky Tests
+
+| Suite | Test | Passes | Failures |
+| --- | --- | --- | --- |
+| Network | fetch | 2 | 1 |
+[31;1mWrite-Error: [31;1mTest run contains 1 failure(s).[0m
+EXIT=1
+[Assistant] Exact match. One issue: the aggregator exits 1 when there are test failures, which would make the act **job fail**. The aggregator is a *reporter* — it should succeed by default and only gate the build when explicitly asked. Let me make that opt-in via TDD.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggre
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Invoke-Aggregator.ps1"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Invoke-Aggregator.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Invoke-Aggregator.ps1"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Invoke-Aggregator.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -2
+[Result] [97mTests completed in 12.18s[0m
+[97mTests Passed: 20, [0m[91mFailed: 1, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && pwsh -c "Invoke-Pester -Path ./Tests -Output Detailed" 2>&1 | grep -B1 -A5 "\[-\]"
+[Result] [32m  [+] exits 1 on test failures when -FailOnFailure is given (build gate)[0m[90m 4.13s (4.13s|1ms)[0m
+[91m  [-] exits 2 with a clear error when the path is empty of results[0m[90m 3.28s (3.27s|2ms)[0m
+[91m   Expected 2, but got 1.
+[91m   at $LASTEXITCODE | Should -Be 2, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1:268
+[91m   at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1:268[0m
+[97mTests completed in 15.48s[0m
+[97mTests Passed: 20, [0m[91mFailed: 1, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] The catch-block `Write-Error` re-throws because `$ErrorActionPreference='Stop'`, so `exit 2` never runs. Fix it.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Invoke-Aggregator.ps1"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Invoke-Aggregator.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && pwsh -c "Invoke-Pester -Path ./Tests -Output Minimal" 2>&1 | tail -2
+[Result] [97mTests completed in 22.33s[0m
+[32mTests Passed: 21, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 21 green. Now the GitHub Actions workflow with two dependent jobs.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/.github/workflows/test-results-aggregator.ym
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/.github/workflows/test-results-aggregator.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && actionlint .github/workflows/test-results-aggregator.yml; echo "actionlint EXIT=$?"
+[Result] actionlint EXIT=0
+[Assistant] actionlint passes. Let me check for a YAML parser available to PowerShell for the structure tests.
+[Tool: Bash] pwsh -c "Get-Module -ListAvailable powershell-yaml,PSYaml | Select-Object Name,Version" 2>&1 | head; echo "---python---"; python3 -c "import yaml; print('pyyaml ok')" 2>&1
+[Result] [32;1mName           [0m[32;1m Version[0m
+[32;1m----           [0m [32;1m-------[0m
+powershell-yaml 0.4.12
+
+---python---
+pyyaml ok
+[Assistant] `powershell-yaml` is available. Let me check how it parses the `on:` key (YAML truthy quirk).
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && pwsh -c "Import-Module powershell-yaml; \$d = ConvertFrom-Yaml (Get-Content .github/workflows/test-results-aggregator.yml -Raw); 'KEYS:'; \$d.Keys; 'JOBS:'; \$d['jobs'].Keys; 'NEEDS:'; \$d['jobs']['aggregate']['needs']"
+[Result] KEYS:
+env
+permissions
+jobs
+on
+name
+JOBS:
+aggregate
+unit-tests
+NEEDS:
+unit-tests
+[Assistant] `on` parses cleanly as a string key. Let me verify the "clean" case output locally before writing the act harness.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && tmp=$(mktemp -d) && mkdir "$tmp/f" && cat > "$tmp/f/clean1.xml" <<'EOF'
+<?xml version="1.0"?>
+<testsuites><testsuite name="Smoke" tests="2" failures="0" time="0.30">
+  <testcase classname="Smoke" name="ping" time="0.10"/>
+  <testcase classname="Smoke" name="pong" time="0.20"/>
+</testsuite></testsuites>
+EOF
+cat > "$tmp/f/clean2.json" <<'EOF'
+{ "name":"Smoke","tests":[
+  {"name":"ping","suite":"Smoke","status":"passed","duration":0.10},
+  {"name":"pong","suite":"Smoke","status":"passed","duration":0.20}
+]}
+EOF
+pwsh -NoProfile -File ./Invoke-Aggregator.ps1 -Path "$tmp/f"; echo "EXIT=$?"; rm -rf "$tmp"
+[Result] # Test Results Summary
+
+:white_check_mark: **All 4 tests passed.**
+
+| Metric | Value |
+| --- | --- |
+| Total | 4 |
+| Passed | 4 |
+| Failed | 0 |
+| Skipped | 0 |
+| Duration | 0.6s |
+| Runs | 2 |
+
+## Flaky Tests
+
+No flaky tests detected.
+EXIT=0
+[Assistant] Both cases predicted exactly. Now let me write the workflow structure tests + act harness in a separate directory (so it never runs act-inside-act).
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1", "content"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Let me first validate the structure/actionlint tests (forcing act cases to skip via `$env:ACT`) before spending the act budget.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && ACT=true pwsh -c "Invoke-Pester -Path ./WorkflowTests -Output Detailed" 2>&1 | tail -30
+[Result] [95mDiscovery found 17 tests in 202ms.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1'[0m
+[92mDescribing Workflow structure[0m
+[32m  [+] is named and defines the expected trigger events[0m[90m 127ms (98ms|28ms)[0m
+[32m  [+] declares least-privilege permissions[0m[90m 6ms (4ms|2ms)[0m
+[32m  [+] defines both jobs with the correct dependency[0m[90m 8ms (6ms|2ms)[0m
+[32m  [+] checks out the repo with actions/checkout@v4 in every job[0m[90m 16ms (10ms|7ms)[0m
+[32m  [+] uses pwsh shell (not bash-invoked pwsh) for run steps[0m[90m 22ms (21ms|2ms)[0m
+[32m  [+] references script files that actually exist on disk[0m[90m 36ms (34ms|2ms)[0m
+[0m
+[92mDescribing actionlint validation[0m
+[32m  [+] passes actionlint with exit code 0[0m[90m 104ms (99ms|4ms)[0m
+[0m
+[92mDescribing Workf
+[Assistant] Structure tests pass. Now running the full act harness (2 act runs). Giving it a generous timeout.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && pwsh -c "Invoke-Pester -Path ./WorkflowTests -Output Detailed" 2>&1 | tail -40
+[Result] [91m    at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1:201[0m
+[91m   [-] every job reports Job succeeded (and none failed)[0m[90m 24ms (17ms|7ms)[0m
+[91m    Expected the actual value to be greater than or equal to 2, but got 0.
+[91m    at ([regex]::Matches($script:FlakyRun.Output, 'Job succeeded')).Count | Should -BeGreaterOrEqual 2, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1:204
+[91m    at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1:204[0m
+[91m   [-] emits the exact aggregate totals[0m[90m 17ms (14ms|3ms)[0m
+[91m    Expected like wildcard '*| Total | 12 |*'
+[Assistant] Act never actually executed (1.5s total) — `$script:CanRunAct` set in `BeforeDiscovery` didn't carry into the `BeforeAll` run phase, so the act block was skipped. No act budget spent yet. Let me recompute it in `BeforeAll`.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && pwsh -c "Invoke-Pester -Path ./WorkflowTests -Output Detailed" 2>&1 | tail -45
+[Result] [91m    [Test Results Aggregator/Pester unit tests] Error response from daemon: authentication required - incorrect username or password
+[91m    [Test Results Aggregator/Pester unit tests]   ❌  Failure - Set up job
+[91m    [Test Results Aggregator/Pester unit tests] 🏁  Job failed
+[91m    Error: Error response from daemon: authentication required - incorrect username or password
+[91m    ', but it did not match.
+[91m    at $script:FlakyRun.Output | Should -BeLike '*1 of 12 test runs failed.*', /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1:225
+[91m    at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1:225[0m
+[96m Context clean case (all passing, no flakes)[0m
+[91m   [-] act exits 0[0m[90m 16ms (11ms|4ms)[0m
+[9
+[Assistant] Act ran (2 runs used). The failure is `forcePull=true` trying to pull the local-only custom image and failing registry auth. Fix: add `--pull=false` so act uses the local image. Let me also add it to `.actrc` for robustness.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/.actrc"}
+[Result] 1	-P ubuntu-latest=act-ubuntu-pwsh:latest
+2	
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/.actrc", "content": "-P ubuntu-latest=act-ub
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/.actrc has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Both `.actrc` and the harness command now disable force-pull. The earlier failure was purely the registry pull on a local-only image — the workflow steps never executed. The fix is targeted; running the final harness now.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && pwsh -c "Invoke-Pester -Path ./WorkflowTests -Output Detailed" 2>&1 | tail -50
+[Result] [95mPester v5.7.1[0m
+[95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 17 tests in 257ms.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1'[0m
+[92mDescribing Workflow structure[0m
+[32m  [+] is named and defines the expected trigger events[0m[90m 202ms (147ms|55ms)[0m
+[32m  [+] declares least-privilege permissions[0m[90m 5ms (3ms|2ms)[0m
+[32m  [+] defines both jobs with the correct dependency[0m[90m 8ms (6ms|3ms)[0m
+[32m  [+] checks out the repo with actions/checkout@v4 in every job[0m[90m 21ms (19ms|2ms)[0m
+[32m  [+] uses pwsh shell (not bash-invoked pwsh) for run steps[0m[90m 21ms (18ms|2ms)[0m
+[32m  [+] references script files that actually exist on disk[0m[90m 24ms (22ms|2ms)[0m
+[0m
+[92mDescribing actionlint validation[0m
+[32m  [+] passes actionlint wit
+[Assistant] All 17 workflow tests pass through `act`. Let me verify the `act-result.txt` artifact and run the complete combined Pester suite once more.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && echo "=== act-result.txt size ===" && wc -l act-result.txt && echo "=== Job succeeded count ===" && grep -c "Job succeeded" act-result.txt && echo "=== exact value lines captured ===" && grep -E "Total \| 12|Total \| 4|Network \| fetch|No flaky tests|All 4 tests" act-result.txt | sed 's/.*\] //' | sort -u
+[Result] === act-result.txt size ===
+268 act-result.txt
+=== Job succeeded count ===
+4
+=== exact value lines captured ===
+  | :white_check_mark: **All 4 tests passed.**
+  | No flaky tests detected.
+  | | Network | fetch | 2 | 1 |
+  | | Total | 12 |
+  | | Total | 4 |
+:white_check_mark: **All 4 tests passed.**
+No flaky tests detected.
+| Network | fetch | 2 | 1 |
+| Total | 12 |
+| Total | 4 |
+[Assistant] artifact is complete (4 "Job succeeded" across 2 cases × 2 jobs). Now the final combined Pester run across both test directories.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && pwsh -c "\$r = Invoke-Pester -Path ./Tests,./WorkflowTests -PassThru -Output Minimal; 'TOTAL Passed='+\$r.PassedCount+' Failed='+\$r.FailedCount+' Skipped='+\$r.SkippedCount" 2>&1 | tail -5
+[Result] [32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/Tests/TestResultsAggregator.Tests.ps1[0m[90m 16.27s (15.08s|860ms)[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/WorkflowTests/Workflow.Tests.ps1[0m[90m 48.49s (48.34s|93ms)[0m
+[97mTests completed in 64.8s[0m
+[32mTests Passed: 38, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+TOTAL Passed=38 Failed=0 Skipped=0
+[Assistant] All 38 tests pass (21 unit + 17 workflow, including all act cases). Let me add a brief README and review the final structure.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/README.md", "content": "# Test Results Aggre
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high/README.md (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-opus48-1m-high" && find . -type f -not -path './.git/*' | sort && echo "=== actionlint final ===" && actionlint .github/workflows/test-results-aggregator.yml && echo "actionlint OK"
+[Result] ./.actrc
+./.claude/settings.json
+./.github/workflows/test-results-aggregator.yml
+./Invoke-Aggregator.ps1
+./README.md
+./TestResultsAggregator.psm1
+./Tests/TestResultsAggregator.Tests.ps1
+./WorkflowTests/Workflow.Tests.ps1
+./act-result.txt
+./benchmark-instructions-v4.md
+./fixtures/run-macos.json
+./fixtures/run-ubuntu.xml
+./fixtures/run-windows.xml
+=== actionlint final ===
+actionlint OK
+[Assistant] Everything is in place and passing. Here's the summary of what I built.
+
+## Solution overview
+
+A PowerShell test-results aggregator built with **red/green TDD** (every function was driven by a failing test first), fully exercised end-to-end through GitHub Actions via `act`.
+
+### Core deliverables
+
+- **`TestResultsAggregator.psm1`** — the library, with one normalized record shape (`Suite, Name, Status, Duration, File`) so everything downstream is format-agnostic:
+  - `ConvertFrom-JUnitXml` / `ConvertFrom-TestJson` — parsers (JSON supports both `{tests:[…]}` and bare arrays; status synonyms normalized)
+  - `Import-TestResults` — dispatches files by extension across a directory (a matrix build)
+  - `Get-TestAggregate` — totals (passed/failed/skipped/duration/runs) + flaky detection (a test that both passed and failed across runs)
+  - `New-MarkdownSummary` — GitHub-friendly markdown with invariant-culture formatting for stable assertions
+- **`Invoke-Aggregator.ps1`** — CLI entry; prints markdown, appends to `$GITHUB_STEP_SUMMARY`, exit 0 by default (reporter), exit 1 with `-FailOnFailure` (build gate), exit 2 on tool errors
+- **`fixtures/`** — 2 JUnit XML + 1 JSON matrix legs with a genuine flaky test (`Network.fetch` passes on ubuntu/macos, fails on windows)
+
+### Testing
+- **38 Pester tests pass, 0 failures**: 21 unit tests (`Tests/`) + 17 workflow tests (`WorkflowTests/`).
+- The act harness builds an isolated temp git repo per fixture case, runs `act push --rm`, appends to **`act-result.txt`**, and asserts **exact values** (e.g. `| Total | 12 |`, `| Network | fetch | 2 | 1 |`, `| Total | 4 |`, `No flaky tests detected.`) plus `Job succeeded` for every job and no `Job failed`.
+- Structure tests parse the YAML (triggers, jobs, `needs` dependency, `shell: pwsh`, script paths exist) and assert `actionlint` exits 0.
+
+### Workflow (`.github/workflows/test-results-aggregator.yml`)
+- Triggers: push / pull_request / schedule / workflow_dispatch; least-privilege `permissions: contents: read`; `RESULTS_DIR` env var
+- Two dependent jobs: `unit-tests` → `aggregate` (`needs: unit-tests`), both using `actions/checkout@v4` and `shell: pwsh`
+- **Passes actionlint cleanly** and **runs successfully under `act`**
+
+### Notes on the act budget
+Two diagnosed fixes were needed (a Pester `BeforeDiscovery`→`BeforeAll` scope issue that meant act never ran, then a force-pull failure on the local-only custom image fixed with `--pull=false`). Each fix was root-caused from output rather than blind retries; the final harness run was clean.
