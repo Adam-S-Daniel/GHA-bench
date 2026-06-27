@@ -1,0 +1,78 @@
+name: Artifact Cleanup
+
+# Triggers:
+#   * push / pull_request  - validate the engine on every change.
+#   * schedule             - run the retention sweep automatically (weekly).
+#   * workflow_dispatch     - run on demand, optionally toggling dry-run.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 3 * * 0'   # Sundays at 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Generate the plan without performing deletions'
+        type: boolean
+        default: true
+
+# Least-privilege by default. `actions: write` is what a real implementation
+# would need to delete artifacts via the GitHub Actions API.
+permissions:
+  contents: read
+  actions: write
+
+env:
+  # A fixed reference "now" so age-based decisions are reproducible in CI.
+  REFERENCE_DATE: '2026-06-27T00:00:00Z'
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester test suite
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $config = New-PesterConfiguration
+          $config.Run.Path = './ArtifactCleanup.Tests.ps1'
+          $config.Run.Exit = $true            # non-zero exit on any failure
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  cleanup:
+    name: Apply retention policies
+    needs: test            # only run the sweep once the engine is proven green
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate and apply the deletion plan
+        shell: pwsh
+        env:
+          # Empty on push/schedule; set only via workflow_dispatch.
+          DISPATCH_DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # Policy values come from the committed fixture so the run is
+          # reproducible; a workflow_dispatch can override the dry-run flag.
+          $policy = Get-Content fixtures/policy.json -Raw | ConvertFrom-Json
+          $dry = [bool]$policy.DryRun
+          if (-not [string]::IsNullOrEmpty($env:DISPATCH_DRY_RUN)) {
+            $dry = [System.Convert]::ToBoolean($env:DISPATCH_DRY_RUN)
+          }
+
+          ./Invoke-Cleanup.ps1 `
+            -FixturePath fixtures/artifacts.json `
+            -MaxAgeDays ([int]$policy.MaxAgeDays) `
+            -KeepLatestPerWorkflow ([int]$policy.KeepLatestPerWorkflow) `
+            -MaxTotalSize ([long]$policy.MaxTotalSize) `
+            -DryRun:$dry
