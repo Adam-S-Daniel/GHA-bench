@@ -1,0 +1,77 @@
+name: Environment Matrix Generator
+
+# Triggers: run on every push / PR, allow manual dispatch, and a weekly
+# scheduled sanity check that the matrix generator still produces valid output.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      config_file:
+        description: "Path to the matrix configuration JSON file"
+        required: false
+        default: fixtures/matrix.json
+  schedule:
+    - cron: "0 6 * * 1"
+
+# Principle of least privilege: the workflow only needs to read the repository.
+permissions:
+  contents: read
+
+env:
+  # Config file the generator reads. The test harness overwrites this fixture
+  # per test case so the same workflow can exercise many inputs.
+  CONFIG_FILE: ${{ github.event.inputs.config_file || 'fixtures/matrix.json' }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: generate the build matrix from the configuration file.
+  # ---------------------------------------------------------------------------
+  generate:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Run unit tests (TDD suite)
+        # Only the pure-logic suites run inside the container. The workflow
+        # structure tests (which shell out to actionlint) and the act harness
+        # (which needs Docker) are host-only and excluded here on purpose.
+        run: |
+          "$HOME/.bun/bin/bun" test tests/matrix.test.ts tests/cli.test.ts
+
+      - name: Generate matrix
+        id: gen
+        # The CLI prints the strategy JSON to stdout AND appends a `matrix=...`
+        # step output to $GITHUB_OUTPUT for the downstream build job to consume.
+        run: |
+          "$HOME/.bun/bin/bun" run src/cli.ts "$CONFIG_FILE" --pretty | tee matrix.json
+
+      - name: Show matrix output
+        # Clearly delimited so the act-based test harness can extract and assert
+        # on the exact generated JSON.
+        run: |
+          echo "MATRIX_OUTPUT_START"
+          cat matrix.json
+          echo "MATRIX_OUTPUT_END"
+
+  # ---------------------------------------------------------------------------
+  # Job 2: consume the generated matrix in a real fan-out build job.
+  # ---------------------------------------------------------------------------
+  build:
+    needs: generate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate.outputs.matrix) }}
+    steps:
+      - name: Report combination
+        run: |
+          echo "BUILD os=${{ matrix.os }} language=${{ matrix.language }} feature=${{ matrix.feature }}"
