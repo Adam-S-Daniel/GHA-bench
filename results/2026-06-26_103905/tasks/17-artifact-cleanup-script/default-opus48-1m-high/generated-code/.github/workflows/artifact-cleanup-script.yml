@@ -1,0 +1,63 @@
+name: Artifact Cleanup
+
+# Runs on the usual change events, on a weekly schedule (a real cleanup job
+# would prune stale artifacts periodically), and on manual dispatch.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+# Read-only is all this planner needs; it never writes to the repo.
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  # Stage 1: run the TDD unit suite. The cleanup-plan jobs depend on this, so
+  # the pipeline only exercises fixtures once the logic is proven correct.
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        run: python3 -m pip install --quiet --disable-pip-version-check --break-system-packages -r requirements.txt
+
+      - name: Run unit tests
+        run: python3 -m pytest test_artifact_cleanup.py -v
+
+  # Stage 2: run the cleanup planner against each fixture case. The matrix turns
+  # every fixture into its own job so each prints an independently verifiable
+  # plan and its own "Job succeeded" line.
+  cleanup-plan:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - case: case_max_age
+            dry_run: '--dry-run'
+          - case: case_keep_latest
+            dry_run: '--dry-run'
+          - case: case_combined
+            dry_run: ''
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify fixture exists
+        run: test -f "fixtures/${{ matrix.case }}.json"
+
+      - name: Generate cleanup plan (${{ matrix.case }})
+        run: |
+          echo "::group::CASE ${{ matrix.case }}"
+          echo "----- BEGIN ${{ matrix.case }} -----"
+          python3 artifact_cleanup.py --input "fixtures/${{ matrix.case }}.json" ${{ matrix.dry_run }}
+          echo "----- END ${{ matrix.case }} -----"
+          echo "::endgroup::"
