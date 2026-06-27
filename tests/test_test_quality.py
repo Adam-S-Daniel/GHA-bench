@@ -589,6 +589,34 @@ class TestComputeStructuralMetrics:
         assert r["impl_lines"] == 0
         assert r["test_to_code_ratio"] == 0  # no ZeroDivisionError
 
+    def test_workflow_lines_and_code_lines(self, tmp_path):
+        # code_lines = impl + test + workflow (the authored-code total used by
+        # the reports' "Lines" and the monitor's "total").
+        (tmp_path / "app.py").write_text("def add(a, b):\n    return a + b\n")        # 2
+        (tmp_path / "test_app.py").write_text(
+            "def test_add():\n    assert add(1, 2) == 3\n"
+            "def test_zero():\n    assert add(0, 0) == 0\n"                            # 4
+        )
+        wf = tmp_path / ".github" / "workflows"
+        wf.mkdir(parents=True)
+        (wf / "ci.yml").write_text("name: ci\non: push\njobs: {}\n")                  # 3
+        r = compute_structural_metrics(tmp_path)
+        assert r["workflow_file_count"] == 1
+        assert r["workflow_lines"] == 3
+        assert r["code_lines"] == r["impl_lines"] + r["test_lines"] + r["workflow_lines"]
+        assert r["code_lines"] == 2 + 4 + 3
+
+    def test_code_lines_excludes_fixtures_docs_and_logs(self, tmp_path):
+        # The whole point of the redefinition: fixtures / act-result.txt / README
+        # must NOT inflate code_lines.
+        (tmp_path / "app.py").write_text("x = 1\n")                       # 1 impl line
+        (tmp_path / "act-result.txt").write_text("\n".join(str(i) for i in range(50)))
+        (tmp_path / "README.md").write_text("# doc\nblah\n")
+        (tmp_path / "fixtures").mkdir()
+        (tmp_path / "fixtures" / "data.json").write_text('{"a": 1}\n')
+        r = compute_structural_metrics(tmp_path)
+        assert r["code_lines"] == 1  # only app.py — no tests, no workflow, no noise
+
     def test_zero_tests_no_crash(self, tmp_path):
         (tmp_path / "app.py").write_text("def add(a, b): return a + b\n")
         (tmp_path / "test_app.py").write_text("# placeholder\n")

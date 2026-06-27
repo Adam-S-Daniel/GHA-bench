@@ -167,7 +167,6 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
             "avg_turns": sum(m["timing"]["num_turns"] for m in mm) / n,
             "avg_cost": sum(m["cost"]["total_cost_usd"] for m in mm) / n,
             "total_cost": sum(m["cost"]["total_cost_usd"] for m in mm),
-            "avg_lines": sum(m["code_metrics"]["total_lines"] for m in mm) / n,
         })
     return rows
 
@@ -430,6 +429,8 @@ def _build_markdown(
         lines.append("")
         lines.append("| Task | Language | Model | Source | Duration | Reason | Lines | actionlint | act-result.txt |")
         lines.append("|------|----------|-------|--------|----------|--------|-------|------------|----------------|")
+        from test_quality import compute_structural_metrics
+        _rd_by_name = {rd.name: rd for rd in run_dirs}
         for m in sorted(failed, key=lambda m: (m["task_id"], m["language_mode"],
                                                _label(m), m.get("source_run_dir", ""))):
             dur = m["timing"]["grand_total_duration_ms"] / 1000
@@ -437,10 +438,17 @@ def _build_markdown(
             alint_val = m.get("quality", {}).get("actionlint_pass")
             alint = "pass" if alint_val else ("fail" if alint_val is False else "n/a")
             act = "yes" if m.get("quality", {}).get("act_result_txt_exists") else "no"
+            # Lines = authored code (impl + tests + workflow), not the runner's
+            # whole-dir count (which includes fixtures / act-result.txt).
+            rd = _rd_by_name.get(m.get("source_run_dir", ""))
+            code_lines = 0
+            if rd is not None:
+                gen_dir = rd / "tasks" / m["task_id"] / f"{m['language_mode']}-{_path_label(m)}" / "generated-code"
+                code_lines = compute_structural_metrics(gen_dir).get("code_lines", 0)
             lines.append(
                 f"| {m['task_name'][:30]} | {m['language_mode']} | {_label(m)} "
                 f"| {m.get('source_run_dir', '')} | {_dur(dur)} | {reason} "
-                f"| {m['code_metrics']['total_lines']} | {alint} | {act} |"
+                f"| {code_lines} | {alint} | {act} |"
             )
         lines.append("")
         lines.append(f"*{len(failed)} run(s) excluded from averages below.*")

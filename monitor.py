@@ -208,11 +208,14 @@ def flag_outliers(by_lang: dict[str, float], z=1.5, min_pp=LANG_OUTLIER_PP):
 
 # ── file-based stats (best-effort) ───────────────────────────────────────────
 def structural(cell: dict) -> dict:
+    # total_lines here is the authored-code total = impl + test + workflow
+    # (from compute_structural_metrics.code_lines), NOT the runner's
+    # code_metrics.total_lines (which also counts fixtures/README/act-result.txt).
     out = {"impl_files": None, "impl_lines": None, "test_files": None,
            "test_lines": None, "tests": None, "asserts": None, "apt": None,
            "tc": None, "wf_files": 0, "wf_lines": 0,
            "total_files": cell.get("code_metrics", {}).get("file_count"),
-           "total_lines": cell.get("code_metrics", {}).get("total_lines")}
+           "total_lines": None}
     gc = Path(cell.get("_dir", "")) / "generated-code"
     if compute_structural_metrics and gc.exists():
         try:
@@ -220,12 +223,11 @@ def structural(cell: dict) -> dict:
             out.update(impl_files=s.get("impl_file_count"), impl_lines=s.get("impl_lines"),
                        test_files=s.get("test_file_count"), test_lines=s.get("test_lines"),
                        tests=s.get("test_count"), asserts=s.get("assertion_count"),
-                       apt=s.get("assertions_per_test"), tc=s.get("test_to_code_ratio"))
+                       apt=s.get("assertions_per_test"), tc=s.get("test_to_code_ratio"),
+                       wf_files=s.get("workflow_file_count"), wf_lines=s.get("workflow_lines"),
+                       total_lines=s.get("code_lines"))
         except Exception:
             pass
-    wf = glob.glob(str(gc / ".github/workflows/*.yml")) + glob.glob(str(gc / ".github/workflows/*.yaml"))
-    out["wf_files"] = len(wf)
-    out["wf_lines"] = sum(len(open(w, errors="ignore").read().splitlines()) for w in wf) if wf else 0
     return out
 
 
@@ -422,7 +424,7 @@ def _h2h_block(run_var, base_var, run_cells, base_cells):
     row("impl files", f"{sa(rs,'impl_files'):.1f}", f"{sa(bs,'impl_files'):.1f}")
     row("impl lines", f"{sa(rs,'impl_lines'):.0f}", f"{sa(bs,'impl_lines'):.0f}")
     row("workflow lines", f"{sa(rs,'wf_lines'):.0f}", f"{sa(bs,'wf_lines'):.0f}")
-    row("total lines", f"{sa(rs,'total_lines'):.0f}", f"{sa(bs,'total_lines'):.0f}")
+    row("total (i+t+wf)", f"{sa(rs,'total_lines'):.0f}", f"{sa(bs,'total_lines'):.0f}")
     L.append("    TESTS")
     row("test files", f"{sa(rs,'test_files'):.1f}", f"{sa(bs,'test_files'):.1f}")
     row("test lines", f"{sa(rs,'test_lines'):.0f}", f"{sa(bs,'test_lines'):.0f}")

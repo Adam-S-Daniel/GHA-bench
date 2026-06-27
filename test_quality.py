@@ -322,6 +322,21 @@ def compute_structural_metrics(generated_code_dir: Path) -> dict:
             continue
         impl_lines += len(content.splitlines())
 
+    # The GitHub Actions workflow YAML (the core deliverable) lives under
+    # .github/workflows/ and isn't an impl/test source file, so count it
+    # separately. `code_lines` = the authored solution (impl + tests +
+    # workflow); this is the single source of truth for "total lines" in the
+    # reports and the monitor (NOT the runner's code_metrics.total_lines, which
+    # also counts fixtures, README, helper scripts, and the act-result.txt log).
+    wf_files = [f for f in all_files
+                if re.search(r"\.github/workflows/[^/]+\.ya?ml$", f.replace(os.sep, "/"))]
+    workflow_lines = 0
+    for f in wf_files:
+        try:
+            workflow_lines += len((generated_code_dir / f).read_text(errors="replace").splitlines())
+        except Exception:
+            pass
+
     return {
         "language": language,
         "test_file_count": len(test_files),
@@ -330,6 +345,9 @@ def compute_structural_metrics(generated_code_dir: Path) -> dict:
         "impl_files": impl_files,
         "test_lines": test_lines,
         "impl_lines": impl_lines,
+        "workflow_file_count": len(wf_files),
+        "workflow_lines": workflow_lines,
+        "code_lines": impl_lines + test_lines + workflow_lines,
         "test_to_code_ratio": round(test_lines / impl_lines, 2) if impl_lines > 0 else 0,
         "test_count": total_tests,
         "assertion_count": total_assertions,
@@ -343,6 +361,7 @@ def _empty_structural() -> dict:
         "test_file_count": 0, "impl_file_count": 0,
         "test_files": [], "impl_files": [],
         "test_lines": 0, "impl_lines": 0,
+        "workflow_file_count": 0, "workflow_lines": 0, "code_lines": 0,
         "test_to_code_ratio": 0,
         "test_count": 0, "assertion_count": 0,
         "assertions_per_test": 0,

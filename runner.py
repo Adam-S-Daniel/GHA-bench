@@ -1642,7 +1642,6 @@ def main():
         if mode_metrics:
             summary["by_mode"][mode] = {
                 "avg_duration_s": sum(m["timing"]["grand_total_duration_ms"] for m in mode_metrics) / len(mode_metrics) / 1000,
-                "avg_lines": sum(m["code_metrics"]["total_lines"] for m in mode_metrics) / len(mode_metrics),
                 "avg_errors": sum(m["quality"]["error_count"] for m in mode_metrics) / len(mode_metrics),
                 "total_cost_usd": sum(m["cost"]["total_cost_usd"] for m in mode_metrics),
             }
@@ -1653,7 +1652,6 @@ def main():
         if model_metrics:
             summary["by_model"][model_short] = {
                 "avg_duration_s": sum(m["timing"]["grand_total_duration_ms"] for m in model_metrics) / len(model_metrics) / 1000,
-                "avg_lines": sum(m["code_metrics"]["total_lines"] for m in model_metrics) / len(model_metrics),
                 "avg_errors": sum(m["quality"]["error_count"] for m in model_metrics) / len(model_metrics),
                 "total_cost_usd": sum(m["cost"]["total_cost_usd"] for m in model_metrics),
             }
