@@ -1,0 +1,44 @@
+name: Environment Matrix Generator
+
+# Triggers: run on pushes and PRs, on a weekly schedule to catch drift, and
+# on-demand via the Actions UI.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+# Least-privilege: the generator only reads the repo contents.
+permissions:
+  contents: read
+
+env:
+  # Config file the generator consumes. The act test harness overwrites this
+  # file per test case so each case exercises a different matrix.
+  CONFIG_FILE: fixtures/default-config.json
+
+jobs:
+  generate-matrix:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Run unit tests
+        # Scope to the unit suites; the act-harness suite must not run in CI.
+        run: bun test matrix-generator.test.ts cli.test.ts
+
+      - name: Generate matrix JSON
+        run: |
+          echo "Using config: $CONFIG_FILE"
+          bun run matrix-generator.ts "$CONFIG_FILE" | tee matrix.json
+
+      - name: Summarize matrix for assertions
+        run: bun run summarize.ts matrix.json
