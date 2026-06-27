@@ -437,11 +437,20 @@ def git_push_results(
             )
 
             push_args = ["git", "push", "-u", "origin", branch]
-            subprocess.run(push_args, capture_output=True, timeout=60, cwd=str(repo_root))
-
-            log(f"  [push] Pushed results ({run_count}/{total_runs} done{', FINAL' if final else ''})")
+            push = subprocess.run(push_args, capture_output=True, text=True,
+                                  timeout=60, cwd=str(repo_root))
+            tag = f"{run_count}/{total_runs} done{', FINAL' if final else ''}"
+            if push.returncode == 0:
+                log(f"  [push] Pushed results ({tag})")
+            else:
+                # Do NOT claim success on a failed push — a silently-failing
+                # push (e.g. a broken pre-push hook) once hid 8h of un-backed-up
+                # commits. Commits are local and safe; surface the failure.
+                err = (push.stderr or push.stdout or "(no output)").strip().splitlines()
+                log(f"  [push] WARNING: push FAILED ({tag}); committed locally only. "
+                    f"git push exit {push.returncode}: {err[-1] if err else '?'}")
         except Exception as e:
-            log(f"  [push] Warning: push failed: {e}")
+            log(f"  [push] Warning: commit/push failed: {e}")
 
 
 class PeriodicPusher:
