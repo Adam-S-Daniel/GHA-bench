@@ -583,21 +583,6 @@ def copy_generated_files(workspace: Path, dest: Path) -> list[str]:
     return copied
 
 
-def count_lines(directory: Path) -> int:
-    """Count total lines of code in a directory."""
-    total = 0
-    for root, dirs, files in os.walk(directory):
-        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in SKIP_DIRS]
-        for f in files:
-            if f.startswith("."):
-                continue
-            try:
-                total += len((Path(root) / f).read_text(errors="replace").splitlines())
-            except Exception:
-                pass
-    return total
-
-
 def estimate_tokens(text: str) -> int:
     """Rough token estimate: chars / 4."""
     return len(text) // 4
@@ -1135,8 +1120,11 @@ def run_single_task(
     act_result_txt_exists = act_result_path.exists()
     act_result_txt_size = act_result_path.stat().st_size if act_result_txt_exists else 0
 
-    # Code metrics
-    total_lines = count_lines(gen_dir) if gen_dir.exists() else 0
+    # Code metrics. "code_lines" = authored code (impl + tests + workflow) via
+    # compute_structural_metrics — NOT a whole-dir count (which would also tally
+    # fixtures, README, helper scripts, and the captured act-result.txt log).
+    from test_quality import compute_structural_metrics
+    code_lines = compute_structural_metrics(gen_dir).get("code_lines", 0) if gen_dir.exists() else 0
     all_code = get_all_code_text(gen_dir) if gen_dir.exists() else ""
     total_tokens_est = estimate_tokens(all_code)
     language_breakdown = compute_language_breakdown(gen_dir) if gen_dir.exists() else {}
@@ -1231,7 +1219,7 @@ def run_single_task(
             "assumed_cache_write_cost_per_mtok": cost_rates.get("cache_write", 0),
         },
         "code_metrics": {
-            "total_lines": total_lines,
+            "code_lines": code_lines,
             "total_tokens_estimate": total_tokens_est,
             "file_count": len(generated_files),
             "files": generated_files,
@@ -1333,7 +1321,7 @@ def print_summary_table(all_metrics: list[dict]) -> None:
             f"{m['model_short']:<8} "
             f"{duration_s:>9.1f}s "
             f"{m['timing']['num_turns']:>6} "
-            f"{m['code_metrics']['total_lines']:>6} "
+            f"{m['code_metrics'].get('code_lines', m['code_metrics'].get('total_lines', 0)):>6} "
             f"{m['quality']['error_count']:>7} "
             f"${m['cost']['total_cost_usd']:>9.4f} "
             f"{m['language_chosen'][:11]:<12}"
@@ -1629,7 +1617,8 @@ def main():
             "model": m["model_short"],
             "duration_s": m["timing"]["grand_total_duration_ms"] / 1000,
             "cost_usd": m["cost"]["total_cost_usd"],
-            "lines": m["code_metrics"]["total_lines"],
+            # tolerate both new (code_lines) and resumed old (total_lines) cells
+            "lines": m["code_metrics"].get("code_lines", m["code_metrics"].get("total_lines", 0)),
             "errors": m["quality"]["error_count"],
             "language": m["language_chosen"],
             "turns": m["timing"]["num_turns"],
