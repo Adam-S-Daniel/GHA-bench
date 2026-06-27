@@ -89,7 +89,10 @@ execution modes; "language" is the concept readers expect.
 ### Key files
 
 - `models.py` — single source of truth for model IDs and token pricing. Update here when Anthropic changes prices.
-- `runner.py` — benchmark harness. Runs agents via `claude -p`, collects metrics, pushes results. Imports from `models.py` and `generate_results.py`. The `PeriodicPusher` thread commits+pushes `results/` **once per newly-completed cell** (it wakes every `PUSH_CHECK_INTERVAL`s but only commits when `run_count` increased) — roughly one commit per result, each pushed immediately, rather than a fixed-timer commit that also captured in-progress noise.
+- `runner.py` — benchmark harness. Runs agents via `claude -p`, collects metrics, pushes results. Imports from `models.py` and `generate_results.py`. Robustness invariants added 2026-06:
+  - **Single-runner lock.** On startup it takes an exclusive non-blocking `flock` on `<repo>/.runner.lock` (`acquire_single_runner_lock`); a second runner exits(2) rather than execute cells concurrently — concurrent cells compete for CPU/Docker/pwsh and confound each other's timing/cost. (Released automatically on exit.)
+  - **Resume validity.** `--resume` skips a cell only when its `metrics.json` is non-empty + parseable (`_metrics_valid`), so a write interrupted by a crash/teardown is re-run rather than skipped forever, leaving a hole.
+  - **Honest push logging + commit-per-cell.** The `PeriodicPusher` thread commits+pushes `results/` **once per newly-completed cell** (wakes every `PUSH_CHECK_INTERVAL`s, commits only when `run_count` increased) — one commit per result, each pushed immediately. `git_push_results` checks the push exit code and logs an explicit WARNING on failure instead of always printing "Pushed results".
 - `generate_results.py` — generates `results.md` reports and updates `README.md`. Can run standalone: `python3 generate_results.py --all`. Each results.md opens with a "Claude Code versions used" line linking to the per-version docs (see `version_docs.py`).
 - `combine_results.py` — produces cross-run combined reports `results/results_<dirA>__<dirB>[__<dirC>...].md`. Same table layout as per-run reports plus a CLI Version Legend; uses `judge_consistency_report.py` for the JCS section and `conclusions_report.py` for the Opus-max Conclusions prose. Standalone: `python3 combine_results.py <dirA> <dirB> [<dirC> ...]`.
 - `monitor.py` — read-only **live** dashboard for an in-flight run. Groups completed cells by `variant` and prints per-variant run-health (duration, cost, turns, errors, actionlint, hooks, test-exec time), structural code metrics (impl files/lines, workflow files/lines, total lines — all non-LLM), structural test metrics (test files/lines, tests, assertions, assertions/test, test:code ratio — all non-LLM), and live-detected traps. The head-to-head is **automatic and always strongest-vs-strongest**: `strongest_model_short` (ranked by `model_power` — family, then version, then 1m>200k context) picks the most powerful model+version in *this* run and in the *previous report* (auto-detected: newest run with a `summary.json` older than this one), then matches them by task+language at each shared effort. It also breaks the comparison down **per scripting language** and flags languages whose deltas differ significantly (≥1.5σ and ≥25 pts) from the cross-language mean. Override the auto-pick with `--baseline DIR` (which prior run; `none` to skip) and/or `--pair RUNVAR=BASEVAR` (exact variant pairing); for full cross-model rollups use `combine_results.py` post-run. On Claude-subscription auth it also prints the **weekly subscription allowance** via `GET /api/oauth/usage` (the endpoint behind the CLI's `/usage`): five-hour + weekly limits from the `limits[]` array, annotating which weekly cap an Opus run draws from, plus `extra_usage`. It reads the OAuth token from `~/.claude/.credentials.json`, never logs it, degrades gracefully (skipped when there are no OAuth creds — e.g. API-key auth has no weekly cap — or on HTTP error), and can be disabled with `--no-usage`. `--total N` enables a pace-based ETA (a floor — later tranches run slower); `--watch SECS` refreshes. Pure logic (`aggregate`, `match_pairs`, `group_by_variant`, `model_power`, `strongest_model_short`, `flag_outliers`, `format_usage`) is unit-tested in `tests/test_monitor.py`; the `fetch_usage` network call and the structural/trap helpers (which reuse `test_quality.compute_structural_metrics` and `generate_results._detect_traps`) are best-effort and not unit-tested. Distinct from `watchdog.sh` (process supervision) and `generate_results.py` (post-run report).
@@ -100,6 +103,7 @@ execution modes; "language" is the concept readers expect.
 - `hooks/syntax-check.py` — PostToolUse hook for syntax/lint checking.
 - `Dockerfile.act` — custom act container image with pwsh + Pester pre-installed. Build with `docker build -t act-ubuntu-pwsh:latest -f Dockerfile.act .`. Runner.py auto-detects it and injects `.actrc` into workspaces.
 - `run-fresh-matrix-*.sh` — per-campaign wrapper scripts that drive multiple sequential `runner.py` invocations (one per model-effort combo) into a single results dir using `--resume`. Use when the matrix needs more than one effort level; `runner.py` accepts a single `--effort` per invocation by design. See `run-fresh-matrix-2026-05-06.sh` for the canonical 8-invocation full-matrix template.
+- `run-opus48-resume.sh` + `run-opus48-supervisor.sh` — the **resilient** per-campaign runner for the opus-4.8 (1M) campaign (run dir `2026-06-26_103905`; 7 tasks × 5 languages × 4 efforts medium/high/xhigh/ultracode = 140 cells). `run-opus48-resume.sh` runs all four tranches with `--resume` (re-runnable; skips valid cells). `run-opus48-supervisor.sh` is the entry point — launch via `setsid bash run-opus48-supervisor.sh` so it survives a session teardown; it restarts the resume worker whenever the runner dies, until all 140 cells are done. It takes an `flock` on `.supervisor.lock` (and `runner.py` on `.runner.lock`) so no two runners ever run concurrently. This pattern supersedes a plain one-shot launcher for multi-day runs that must survive crashes/reboots; pair it with `monitor.py` for live status (the supervisor and runner never need git for monitoring).
 - `skills/` — agent skills following [agentskills.io](https://agentskills.io/specification) spec.
 
 ### Adding new trap detectors
@@ -287,6 +291,20 @@ See the docstring in `llm_providers.py` for a complete example skeleton.
 8. If you added files or moved things, update the Files table in `README.md`.
 
 ## Current state (2026-05-08)
+
+### opus-4.8 (1M) campaign — in progress (2026-06)
+
+`results/2026-06-26_103905/` is an in-progress v4 campaign adding
+`claude-opus-4-8[1m]` (model short `opus48-1m`) at four effort levels —
+medium, high, xhigh, and the new **`ultracode`** (xhigh + dynamic-workflow
+orchestration; enabled via `CLAUDE_CODE_EFFORT_LEVEL=ultracode`, since `--effort`
+does not accept it) — over the same 7 tasks × 5 languages = 140 cells. Driven by
+the resilient `run-opus48-supervisor.sh` + `run-opus48-resume.sh` pair with
+single-runner locks; watch it live with `monitor.py`. When it completes it gets
+the standard panel-of-judges eval (Haiku via Claude CLI + Gemini 3.1 Pro (High)
+via `agy`) and a consolidated report, and this section's "canonical dataset"
+should be updated to point at it. Note: opus-4.8 sometimes picks JavaScript /
+PowerShell for the free-choice (default) language, not always Python.
 
 ### v4 full-matrix benchmark — complete
 

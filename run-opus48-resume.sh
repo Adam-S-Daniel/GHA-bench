@@ -1,11 +1,15 @@
 #!/bin/bash
-# Resume the opus-4.8 matrix into the EXISTING run dir 2026-06-26_103905.
+# Resume/run the opus-4.8 (1M) campaign into run dir 2026-06-26_103905.
 #
-# Same matrix as run-opus48-matrix-2026-06-26.sh, but every invocation uses
-# --resume so already-completed cells (those with metrics.json) are skipped.
-# Safe to re-run after a crash/teardown: it picks up wherever it left off.
-# Do NOT launch a second copy while one is running (concurrent runners would
-# race the same cell). The caller (monitor ticker / agent) guards on pgrep.
+# The campaign matrix: 7 tasks (11,12,13,15,16,17,18) x 5 languages
+# (default,powershell,bash,powershell-tool,typescript-bun) x 4 effort levels
+# (medium, high, xhigh, ultracode) = 140 cells. Each tranche is one runner.py
+# invocation; every invocation uses --resume so already-completed cells (valid
+# metrics.json) are skipped. Safe to re-run after a crash/teardown — it picks up
+# where it left off. Normally launched by run-opus48-supervisor.sh, not directly.
+#
+# Concurrency is now hard-guarded: runner.py takes an flock on .runner.lock, so
+# a second concurrent runner exits rather than confound cell timing.
 
 set -uo pipefail
 cd "$(dirname "$0")"
