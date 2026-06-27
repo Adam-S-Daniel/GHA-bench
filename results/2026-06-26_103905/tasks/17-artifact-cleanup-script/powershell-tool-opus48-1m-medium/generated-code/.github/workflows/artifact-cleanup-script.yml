@@ -1,0 +1,76 @@
+name: Artifact Cleanup
+
+# Triggers: run on pushes / PRs that touch the script, on a nightly schedule
+# (the natural cadence for housekeeping), and on demand.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    # 03:17 UTC daily — off the top of the hour to avoid scheduler congestion.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no deletions performed)'
+        type: boolean
+        default: true
+
+# Least-privilege: the planner only reads repo contents.
+permissions:
+  contents: read
+
+env:
+  # Fixture consumed by the cleanup step. The test harness overwrites this
+  # file per test case before invoking the workflow via `act`.
+  FIXTURE_PATH: fixtures/case.json
+
+jobs:
+  # ---------------------------------------------------------------------
+  # 1. Unit tests: the Pester suite for the planning module must pass before
+  #    we trust the planner to run against fixture data.
+  # ---------------------------------------------------------------------
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module Pester -MinimumVersion 5.0.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = './ArtifactCleanup.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  # ---------------------------------------------------------------------
+  # 2. Produce a cleanup plan from the fixture. Depends on the unit tests so
+  #    a broken planner never reaches this stage.
+  # ---------------------------------------------------------------------
+  cleanup-plan:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify script files are present
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($f in @('ArtifactCleanup.psm1', 'Invoke-ArtifactCleanup.ps1', $env:FIXTURE_PATH)) {
+            if (-not (Test-Path -LiteralPath $f)) {
+              throw "Required file missing: $f"
+            }
+            Write-Host "Found: $f"
+          }
+
+      - name: Generate artifact cleanup plan
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./Invoke-ArtifactCleanup.ps1 -InputPath $env:FIXTURE_PATH
