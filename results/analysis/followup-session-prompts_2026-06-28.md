@@ -82,10 +82,92 @@ Partially, by actionlint finding **category**, not perfectly:
   category/message against cells where `act` actually ran with that error class and see
   whether `act` failed.
 
+### MAJOR FINDING — missing linters make hook coverage wildly uneven (2026-06-28)
+
+Tested the hook end-to-end + checked run data. The hook NOMINALLY has per-extension
+branches (py/sh/yml/cs/ts/fsx/ps1/psm1), but two required linters are MISSING on the host,
+and inline-YAML coverage is partial:
+
+| Language | Dedicated file | Inline in YAML |
+|---|---|---|
+| Python | py_compile = SYNTAX ONLY (undefined-name not caught) | actionlint→pyflakes, but **pyflakes MISSING** → not caught |
+| Bash | bash -n + shellcheck (error/warning only; info dropped) | actionlint→shellcheck (syntax/errors yes; info no) |
+| PowerShell | PSScriptAnalyzer — **MISSING → nothing** | actionlint has no pwsh support → nothing |
+| TypeScript | bunx tsc --noEmit works (type errors are act-cosmetic via bun) | N/A (no native inline TS) |
+| Workflow structure | — | actionlint expression/schema/syntax WORKS (act-blocking) |
+
+Run-data corroboration (hook catches/cell, all completed 2026-06-26 cells):
+
+| mode | cells | fires | caught | caught/cell |
+|---|---|---|---|---|
+| bash | 27 | 480 | 24 | 0.89 |
+| default (Python) | 27 | 566 | 1 | 0.04 |
+| powershell | 27 | 567 | 0 | **0.00** |
+| powershell-tool | 27 | 570 | 2 | 0.07 |
+| typescript-bun | 26 | 713 | 335 | **12.88** |
+
+Implications:
+1. The "time saved by hooks" stat is essentially a **TypeScript artifact** (gross_saved =
+   caught × TEST_RUN_COST_S; TS dominates catches ~14-300×). PowerShell=0 and Python≈0 are
+   LINTER AVAILABILITY, not hook design or model behavior.
+2. Cross-language hook comparisons are currently **unfair**. Installing pyflakes +
+   PSScriptAnalyzer would change the picture materially.
+
+### MAJOR FINDING #2 — the TS catches are ~99% FALSE POSITIVES (tsc invocation bug)
+
+The hook runs `bunx tsc --noEmit <file_path>`. Passing the file explicitly makes tsc
+**ignore the project tsconfig.json** and abort with `error TS5112` (treated as fatal), so it
+NEVER type-checks the actual code. Verified end-to-end on a real generated file: the hook's
+command emits ONLY TS5112. Error-code distribution across stored hook stdout (ts-bun cells):
+TS5112=313, TS1503=20 (named-capture-groups — downstream of the wrong default target once
+tsconfig is ignored), TS1343=16 (import.meta — same cause), TS2307=3 (module resolution
+without tsconfig). So the 335 TS "catches" are the hook's OWN misconfiguration, not defects
+in agent code.
+
+Consequences:
+- The hook delivered **zero real type-checking value for TS** despite 713 fires — the one
+  language that was supposed to get a deep semantic check.
+- The TS hook-savings figure is **invalid** (credits time saved for catching ~335 non-errors).
+- Behavioral confounder check: only **1 of 26** ts-bun cells had the agent's own text mention
+  TS5112/ignoreConfig — agents almost universally ignored the spurious nudge and proceeded
+  (code runs fine under bun). So the false positives polluted the STAT but did NOT
+  meaningfully confound ts-bun cell behavior/cost/traps. Dataset validity for ts-bun cells
+  is OK; only the hook-savings stat is corrupted.
+- The project-aware form `tsc --noEmit -p tsconfig.json` trips a DIFFERENT artifact
+  (`TS2688: cannot find type definition file for 'bun'`), so a correct fix must also supply
+  bun's types (bun provides them at runtime; standalone tsc needs bun-types + proper tsconfig
+  `types`/`typeRoots`).
+- SALVAGE: hook_events stdout is stored, so the fix session can retroactively FILTER the
+  config-artifact catches (TS5112 + its target/module cascade) out of existing data and
+  recompute hook-savings WITHOUT re-running cells.
+
+Conceptual note (user, 2026-06-28): a GENUINE tsc type error is NOT act-cosmetic — it can
+cause runtime misbehavior (ReferenceError from cannot-find-name, TypeError from
+null/undefined access, wrong values from shape mismatch) that fails an act run exercising
+that path. So once the tsc invocation is fixed, TS catches become genuinely act-relevant and
+should be credited by the same per-error-code spectrum as pyflakes (cannot-find-name etc. =
+act-breaking; TS6133 unused = cosmetic). It's only moot for the CURRENT data because the hook
+never ran a valid type-check.
+
+These were almost certainly missing during the whole run (the run is ongoing; powershell
+cells already show 0/27). Environmental constants — verify with `command -v pyflakes` and
+`pwsh -c "Get-Module -ListAvailable PSScriptAnalyzer"`.
+
 ### Decisions already made by the user (2026-06-28)
 
 - **Count YAML/actionlint lint catches as act-time-saved** (as proposed).
+- **Count dedicated code-file catches as act-saving too** when the workflow directly/
+  indirectly executes the file AND the error is act-runtime-relevant (not cosmetic; note TS
+  tsc errors are act-cosmetic via bun). Indirect use (script A sources B) needs tracing.
 - Open: how to discount/exclude cosmetic-to-act lints (see above) — for the fix session.
+
+### Added scope for the fix session (from the missing-linter finding)
+
+- (a) Install pyflakes + PSScriptAnalyzer on the host for cross-language parity in FUTURE
+  runs; (b) apply the act-cosmetic discount (hits TS hardest); (c) caveat the EXISTING
+  hook-savings data as linter-availability-dependent and TS-dominated. This is bigger than
+  the stat's math — it's about whether the hook-savings comparison is even fair across
+  languages.
 
 ### Recommendation
 
@@ -180,12 +262,33 @@ carries rule names + messages; consider validating any message→does-act-break 
 against cells where `act` actually ran with that error class. This half is a modeling
 decision — surface your proposed valuation for sign-off before baking it in.
 
+(3) MISSING LINTERS (bigger than the stat's math). The hook's required linters are
+unevenly installed: pyflakes (Python semantic) and PSScriptAnalyzer (PowerShell) are MISSING
+on the host, so powershell cells catch 0/27 and python ~0.04/cell, while typescript-bun
+catches ~12.88/cell (and those tsc catches are act-cosmetic via bun). So the hook-savings
+stat is essentially a TypeScript artifact and cross-language comparison is unfair. Decide:
+(a) install pyflakes + PSScriptAnalyzer for parity in future runs; (b) apply the
+act-cosmetic discount (hits TS hardest); (c) caveat the existing dataset as
+linter-availability-dependent and TS-dominated. See the run-data table in this memo's
+"MAJOR FINDING" section.
+
+(4) TSC INVOCATION BUG (the TS catches are ~99% false positives). hooks/syntax-check.py runs
+`bunx tsc --noEmit <file>`, which makes tsc IGNORE the project tsconfig and abort with TS5112
+— so it never type-checks real TS code; all 335 TS "catches" are config artifacts (TS5112 +
+target/module fallout). Fix the invocation so tsc loads the project tsconfig AND has bun's
+types available (the -p form trips TS2688 "cannot find type definition file for 'bun'"
+otherwise). Agents ignored the spurious nudge (1/26 reacted), so ts-bun cell results are OK,
+but the hook-savings TS figure is invalid. You can SALVAGE existing data by filtering
+config-artifact catches out of stored hook_events stdout and recomputing — no re-run needed.
+This is harness code (fair to fix), not agent-generated code.
+
 Also note (from AGENTS.md "Combined-report parity"): hook/trap Savings Analysis is NOT
 currently ported into the combined report, so decide and state how far your fix propagates.
 
 Deliverable: the corrected stat (per-run reports regenerated), tests, a short note on the
-empirical PowerShell finding and your ACT valuation choice, and a PR. Do not touch
-agent-generated code in workspaces/ or results/*/generated-code/.
+empirical PowerShell + missing-linter + tsc-misinvocation findings and your ACT valuation
+choice, and a PR. Do not touch agent-generated code in workspaces/ or
+results/*/generated-code/.
 ```
 
 ### Prompt 3 — Combined-report completeness audit
