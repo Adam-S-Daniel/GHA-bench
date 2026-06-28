@@ -1,0 +1,91 @@
+name: Test Results Aggregator
+
+# Triggers:
+#  - push / pull_request: aggregate the committed fixtures on every change.
+#  - schedule: a weekly run is handy for surfacing flaky tests over time.
+#  - workflow_dispatch: lets a human point the aggregator at a different folder.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      fixtures_dir:
+        description: Directory containing JUnit XML / JSON test result files
+        required: false
+        default: fixtures
+
+# Reporting only needs to read the repository.
+permissions:
+  contents: read
+
+# FIXTURES_DIR defaults to the committed fixtures, but a workflow_dispatch run
+# can override it. (For push/PR events github.event.inputs is empty, so the
+# `|| 'fixtures'` fallback applies.)
+env:
+  FIXTURES_DIR: ${{ github.event.inputs.fixtures_dir || 'fixtures' }}
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # pwsh is pre-installed on GitHub-hosted runners and in the act container,
+      # so this is a near-instant no-op; included for portability to bare images.
+      - name: Ensure PowerShell is available
+        shell: bash
+        run: |
+          if command -v pwsh >/dev/null 2>&1; then
+            echo "pwsh already installed: $(pwsh --version)"
+          else
+            echo "Installing PowerShell..."
+            sudo apt-get update
+            sudo apt-get install -y wget apt-transport-https software-properties-common
+            # shellcheck disable=SC1091
+            . /etc/os-release
+            wget -q "https://packages.microsoft.com/config/ubuntu/${VERSION_ID}/packages-microsoft-prod.deb"
+            sudo dpkg -i packages-microsoft-prod.deb
+            rm packages-microsoft-prod.deb
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          fi
+
+      # Likewise Pester 5 is pre-installed; only install when missing.
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          $have = Get-Module -ListAvailable -Name Pester |
+                  Where-Object { $_.Version -ge [version]'5.0.0' }
+          if ($have) {
+            Write-Host "Pester already available: $($have[0].Version)"
+          } else {
+            Write-Host "Installing Pester..."
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
+          }
+
+      # Run the unit tests for the aggregator logic inside the pipeline.
+      - name: Run unit tests (Pester)
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path tests/TestResultsAggregator.Tests.ps1 -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) unit test(s) failed."
+          }
+          Write-Host "All $($result.PassedCount) unit tests passed."
+
+      # Aggregate the fixtures and write the markdown summary to a file.
+      - name: Aggregate test results
+        shell: pwsh
+        run: |
+          ./Invoke-Aggregator.ps1 -Path $env:FIXTURES_DIR -OutputPath summary.md
+
+      # Echo the rendered summary so it is visible in the CI log (and captured
+      # by `act` for assertions).
+      - name: Print job summary
+        shell: pwsh
+        run: Get-Content summary.md
