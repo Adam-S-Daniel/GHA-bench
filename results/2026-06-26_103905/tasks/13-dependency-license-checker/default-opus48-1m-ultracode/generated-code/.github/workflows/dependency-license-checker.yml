@@ -1,0 +1,68 @@
+name: Dependency License Checker
+
+# Run on code changes, on PRs, on a weekly schedule (catch newly-flagged
+# licenses), and on demand.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday at 06:00 UTC
+
+# Least-privilege: the checker only needs to read the repository contents.
+permissions:
+  contents: read
+
+# Policy and license-database locations, consumed by the runner scripts.
+env:
+  POLICY_FILE: config/policy.json
+  LICENSE_DB_FILE: config/licenses.json
+
+jobs:
+  # 1) Prove the checker logic is correct with the Pester unit suite.
+  unit-tests:
+    name: Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: ./tests/Invoke-PesterTests.ps1
+
+  # 2) Run the checker over every fixture manifest and produce the report.
+  license-check:
+    name: License compliance check
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run compliance check over fixtures
+        shell: pwsh
+        run: ./tests/Run-FixtureChecks.ps1
+
+      # Real CI keeps the report as an artifact; skipped under act (env.ACT=true)
+      # because act has no artifact server.
+      - name: Upload compliance report
+        if: ${{ env.ACT != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-report
+          path: compliance-report.txt
+          if-no-files-found: error
+
+  # 3) Final gate stage — depends on the check completing.
+  gate:
+    name: Compliance gate
+    needs: license-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report pipeline completion
+        shell: pwsh
+        run: |
+          Write-Output "Dependency license compliance pipeline completed."
+          Write-Output "Unit tests and fixture compliance checks both succeeded."

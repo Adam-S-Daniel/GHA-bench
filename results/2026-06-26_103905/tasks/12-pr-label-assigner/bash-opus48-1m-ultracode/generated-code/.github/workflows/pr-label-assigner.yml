@@ -1,0 +1,80 @@
+name: PR Label Assigner
+
+# Triggers: run on PRs (the real use case), on pushes, on a weekly schedule
+# (e.g. to re-evaluate labels), and on manual dispatch.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+# Least-privilege defaults. `pull-requests: write` is what a real labeler needs
+# to apply labels via the API; this demo only computes and prints them.
+permissions:
+  contents: read
+  pull-requests: write
+
+# Workflow-level configuration shared by every job.
+env:
+  RULES_FILE: config/label-rules.conf
+
+jobs:
+  assign-labels:
+    name: Assign labels (${{ matrix.case }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # Run sequentially so the combined act log is deterministic.
+      max-parallel: 1
+      matrix:
+        # Each value is the name of a fixture in tests/fixtures/<case>.files.
+        case: [docs, api, tests, mixed, none, vendor]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure prerequisites are available
+        run: |
+          set -euo pipefail
+          # The script needs only bash + coreutils, all present in the runner.
+          for tool in bash sort cut; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              echo "Missing required tool: $tool" >&2
+              exit 1
+            fi
+          done
+          echo "Using $(bash --version | head -1)"
+
+      - name: Assign labels for the fixture
+        id: assign
+        env:
+          # Bind the matrix value to an env var to avoid shell-injection issues.
+          CASE: ${{ matrix.case }}
+        run: |
+          set -euo pipefail
+          fixture="tests/fixtures/${CASE}.files"
+          if [[ ! -f "$fixture" ]]; then
+            echo "Fixture not found: $fixture" >&2
+            exit 1
+          fi
+          labels="$(bash pr-label-assigner.sh --rules "$RULES_FILE" --files "$fixture" --format csv)"
+          # Emit a single, self-contained line the test harness can grep for.
+          echo "RESULT case=${CASE} labels=[${labels}]"
+          # Expose the result to any downstream steps/jobs.
+          echo "labels=${labels}" >> "$GITHUB_OUTPUT"
+          # Add a human-friendly line to the job summary.
+          echo "**${CASE}** -> \`${labels:-<none>}\`" >> "$GITHUB_STEP_SUMMARY"
+
+  summary:
+    name: Summary
+    # Job dependency: only run once every label-assignment matrix leg succeeds.
+    needs: assign-labels
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Report completion
+        run: |
+          set -euo pipefail
+          echo "All label-assignment jobs completed successfully."

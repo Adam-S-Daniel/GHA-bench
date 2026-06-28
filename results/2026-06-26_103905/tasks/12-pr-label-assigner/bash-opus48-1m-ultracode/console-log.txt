@@ -1,0 +1,780 @@
+[Assistant] I'll start by understanding the environment and project context.
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100; echo "---ACTRC---"; cat /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/.actrc 2>/dev/null; echo "---PWD---"; pwd; echo "---LS---"; ls -la
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Tool: Bash] echo "=== tool versions ==="; which bats shellcheck actionlint act docker bash 2>&1; echo "---"; bats --version 2>&1; shellcheck --version 2>&1 | head -3; actionlint --version 2>&1 | head -2; act --version 2>&1; docker --version 2>&1
+[Result] === tool versions ===
+/home/passp/.npm-global/bin/bats
+/home/passp/.local/bin/shellcheck
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/usr/bin/docker
+/usr/bin/bash
+---
+Bats 1.13.0
+ShellCheck - shell script analysis tool
+version: 0.10.0
+license: GNU General Public License, version 3
+1.7.12
+installed by downloading from release page
+act version 0.2.87
+Docker version 29.4.3, build 055a478
+[Assistant] I have all tools (bats 1.13, shellcheck 0.10, actionlint 1.7.12, act 0.2.87, docker). The `.actrc` pins a custom `act-ubuntu-pwsh:latest` image. Let me verify a couple environment details before starting TDD.
+[Tool: Bash] echo "bash: $(bash --version | head -1)"; echo "--- act image present? ---"; docker images | grep -E 'act-ubuntu-pwsh|catthehacker' || echo "(custom image not found locally)"; echo "--- coreutils in path ---"; which sort cut basename git 2>&1
+[Result] bash: GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+--- act image present? ---
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+catthehacker/ubuntu:full-latest                 9327301aea27       67.7GB         16.8GB        
+ghcr.io/catthehacker/ubuntu:act-latest          eb153df03ca8       2.04GB          297MB        
+ghcr.io/catthehacker/ubuntu:full-latest         9327301aea27       67.7GB         16.8GB        
+ghcr.io/catthehacker/ubuntu:pwsh-latest         6841ce5337da       2.87GB          670MB        
+--- coreutils in path ---
+/usr/bin/sort
+/usr/bin/cut
+/usr/bin/basename
+/usr/bin/git
+[Assistant] bash 5.2.21 and the custom act image are present. Now I'll begin red/green TDD. 
+
+**Cycle 1 (RED):** Write the first failing test — invoking the script with no arguments should fail with a usage message.
+[Tool: Bash] mkdir -p tests/fixtures config .github/workflows
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/pr-label-assigner.bats", "content": "#!/usr/b
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/pr-label-assigner.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats tests/pr-label-assigner.bats; echo "exit=$?"
+[Result] 1..1
+not ok 1 exits with usage error (code 2) when no rules file is given
+# (in test file tests/pr-label-assigner.bats, line 25)
+#   `[ "$status" -eq 2 ]' failed
+
+The following warnings were encountered during tests:
+BW01: `run`'s command `bash /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/../pr-label-assigner.sh` exited with code 127, indicating 'Command not found'. Use run's return code checks, e.g. `run -127`, to fix this message.
+      (from function `run' in file /home/passp/.npm-global/lib/node_modules/bats/lib/bats-core/test_functions.bash, line 420,
+       in test file tests/pr-label-assigner.bats, line 24)
+exit=1
+[Assistant] RED confirmed (exit 127, status ≠ 2). **Cycle 1 (GREEN):** Write the minimal script to handle the no-args case.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh", "content": "#!/usr/bin/env b
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats tests/pr-label-assigner.bats; echo "exit=$?"
+[Result] 1..1
+ok 1 exits with usage error (code 2) when no rules file is given
+exit=0
+[Assistant] GREEN. Now **Cycle 2 (RED):** error handling for a missing rules file, plus the core matching feature. I'll add helpers and a batch of feature-level tests.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/pr-label-assigner.bats"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/pr-label-assigner.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cat >> tests/pr-label-assigner.bats <<'BATS'
+
+# ---------------------------------------------------------------------------
+# Cycle 2: file-level error handling
+# ---------------------------------------------------------------------------
+
+@test "exits 2 with a meaningful error when the rules file does not exist" {
+  run bash "$SCRIPT" --rules "${TMP}/nope.conf" --files "$FILES"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"rules file"* ]]
+  [[ "$output" == *"nope.conf"* ]]
+}
+
+@test "exits 2 when the --files list does not exist" {
+  make_rules <<< 'docs/** | documentation | 10'
+  run bash "$SCRIPT" --rules "$RULES" --files "${TMP}/missing.txt"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"files list"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# Cycle 3: core glob matching -> labels
+# ---------------------------------------------------------------------------
+
+@test "a single directory glob (docs/**) assigns its label" {
+  make_rules <<< 'docs/** | documentation | 10'
+  make_files <<EOF
+docs/index.md
+docs/guide/setup.md
+EOF
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  [ "$output" = "documentation" ]
+}
+
+@test "files not matching any rule produce no labels" {
+  make_rules <<< 'docs/** | documentation | 10'
+  make_files <<< 'src/app.js'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "'*' does not cross a path separator but '**' does" {
+  # src/* should match a direct child only; src/** matches any depth.
+  make_rules <<EOF
+src/*  | shallow | 10
+src/** | deep    | 5
+EOF
+  make_files <<< 'src/api/users.js'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  # Only the deep (src/**) rule matches a nested file.
+  [ "$output" = "deep" ]
+}
+
+@test "a single rule can assign multiple comma-separated labels" {
+  make_rules <<< 'src/api/** | api,backend | 10'
+  make_files <<< 'src/api/users.js'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  # Same priority -> alphabetical ordering.
+  printf '%s\n' "$output" | grep -qx 'api'
+  printf '%s\n' "$output" | grep -qx 'backend'
+  [ "$(printf '%s\n' "$output" | wc -l)" -eq 2 ]
+}
+
+@test "labels from multiple matching rules are unioned and de-duplicated" {
+  make_rules <<EOF
+src/api/** | api          | 30
+src/**     | source       | 5
+EOF
+  make_files <<< 'src/api/users.js'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  # Higher priority first.
+  [ "$(printf '%s' "$output" | head -1)" = "api" ]
+  printf '%s\n' "$output" | grep -qx 'source'
+}
+
+@test "the same label from two rules appears only once" {
+  make_rules <<EOF
+*.spec.* | tests | 40
+*.test.* | tests | 40
+EOF
+  make_files <<EOF
+a.test.js
+b.spec.js
+EOF
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  [ "$output" = "tests" ]
+}
+BATS
+echo "appended"; bash -n tests/pr-label-assigner.bats && echo "bats file parses"
+[Result ERROR] Exit code 2
+appended
+tests/pr-label-assigner.bats: line 34: syntax error near unexpected token `}'
+tests/pr-label-assigner.bats: line 34: `}'
+[Assistant] The `bash -n` error is a false positive — bats `@test` syntax isn't plain bash. The append succeeded. Let me run bats to confirm the new tests are RED.
+[Tool: Bash] bats tests/pr-label-assigner.bats 2>&1 | tail -30; echo "exit=${PIPESTATUS[0]}"
+[Result] 1..9
+ok 1 exits with usage error (code 2) when no rules file is given
+not ok 2 exits 2 with a meaningful error when the rules file does not exist
+# (in test file tests/pr-label-assigner.bats, line 42)
+#   `[ "$status" -eq 2 ]' failed
+not ok 3 exits 2 when the --files list does not exist
+# (in test file tests/pr-label-assigner.bats, line 50)
+#   `[ "$status" -eq 2 ]' failed
+not ok 4 a single directory glob (docs/**) assigns its label
+# (in test file tests/pr-label-assigner.bats, line 66)
+#   `[ "$output" = "documentation" ]' failed
+ok 5 files not matching any rule produce no labels
+not ok 6 '*' does not cross a path separator but '**' does
+# (in test file tests/pr-label-assigner.bats, line 87)
+#   `[ "$output" = "deep" ]' failed
+not ok 7 a single rule can assign multiple comma-separated labels
+# (in test file tests/pr-label-assigner.bats, line 96)
+#   `printf '%s\n' "$output" | grep -qx 'api'' failed
+not ok 8 labels from multiple matching rules are unioned and de-duplicated
+# (in test f
+[Assistant] RED confirmed. **Cycle 2-3 (GREEN):** Now implement the full core engine — glob-to-regex conversion, path matching with `**`/`*`/matchBase semantics, rule parsing, priority-ordered label aggregation.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh", "content": "#!/usr/bin/env b
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bash -n pr-label-assigner.sh && echo "syntax OK"; echo "--- shellcheck ---"; shellcheck pr-label-assigner.sh && echo "shellcheck clean"; echo "--- bats ---"; bats tests/pr-label-assigner.bats 2>&1 | tail -20; echo "exit=${PIPESTATUS[0]}"
+[Result] syntax OK
+--- shellcheck ---
+
+In pr-label-assigner.sh line 109:
+      '.'|'+'|'('|')'|'['|']'|'{'|'}'|'^'|'$'|'|'|'\\')
+                                                    ^-- SC1003 (info): Want to escape a single quote? echo 'This is how it'\''s done'.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC1003 -- Want to escape a single quote? ec...
+--- bats ---
+1..9
+ok 1 exits with usage error (code 2) when no rules file is given
+ok 2 exits 2 with a meaningful error when the rules file does not exist
+ok 3 exits 2 when the --files list does not exist
+ok 4 a single directory glob (docs/**) assigns its label
+ok 5 files not matching any rule produce no labels
+ok 6 '*' does not cross a path separator but '**' does
+ok 7 a single rule can assign multiple comma-separated labels
+ok 8 labels from multiple matching rules are unioned and de-duplicated
+ok 9 the same label from two rules appears only once
+exit=0
+[Assistant] All 9 tests GREEN. shellcheck flags SC1003 — my `'\\'` case pattern is two backslashes, not the single backslash I intended. Let me fix it to correctly match a literal backslash.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh", "old_s
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] shellcheck pr-label-assigner.sh && echo "shellcheck clean"; bats tests/pr-label-assigner.bats 2>&1 | tail -3
+[Result] shellcheck clean
+ok 7 a single rule can assign multiple comma-separated labels
+ok 8 labels from multiple matching rules are unioned and de-duplicated
+ok 9 the same label from two rules appears only once
+[Assistant] shellcheck clean, 9/9 green. **Cycle 4 (spec coverage):** Add tests pinning down priority ordering, matchBase, CSV format, malformed-config handling, comments, and stdin/positional input.
+[Tool: Bash] cat >> tests/pr-label-assigner.bats <<'BATS'
+
+# ---------------------------------------------------------------------------
+# Cycle 4: priority ordering, matchBase, formats, config robustness
+# ---------------------------------------------------------------------------
+
+@test "labels are emitted in priority order (highest first), ties alphabetical" {
+  make_rules <<EOF
+*.test.*   | tests         | 40
+src/api/** | api,backend   | 30
+package.json | dependencies | 25
+src/ui/**  | frontend      | 20
+src/**     | source        | 5
+EOF
+  make_files <<EOF
+src/api/auth.js
+src/ui/Button.tsx
+package.json
+auth.test.js
+EOF
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  # 40:tests | 30:api,backend | 25:dependencies | 20:frontend | 5:source
+  expected="tests
+api
+backend
+dependencies
+frontend
+source"
+  [ "$output" = "$expected" ]
+}
+
+@test "a basename pattern (no slash) matches files at any depth (matchBase)" {
+  make_rules <<< '*.test.* | tests | 10'
+  make_files <<< 'src/components/deep/Button.test.tsx'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  [ "$output" = "tests" ]
+}
+
+@test "--format csv joins labels with commas on a single line" {
+  make_rules <<EOF
+src/api/** | api,backend | 30
+src/**     | source      | 5
+EOF
+  make_files <<< 'src/api/users.js'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES" --format csv
+  [ "$status" -eq 0 ]
+  [ "$output" = "api,backend,source" ]
+}
+
+@test "comments and blank lines in the rules file are ignored" {
+  make_rules <<EOF
+# This is a comment
+docs/** | documentation | 10   # trailing comment
+
+   # indented comment
+EOF
+  make_files <<< 'docs/x.md'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  [ "$output" = "documentation" ]
+}
+
+@test "a rule with no labels is rejected with exit 3" {
+  make_rules <<< 'docs/** |    | 10'
+  make_files <<< 'docs/x.md'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 3 ]
+  [[ "$output" == *"no labels"* ]]
+}
+
+@test "a rule with a non-integer priority is rejected with exit 3" {
+  make_rules <<< 'docs/** | documentation | high'
+  make_files <<< 'docs/x.md'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 3 ]
+  [[ "$output" == *"not an integer"* ]]
+}
+
+@test "a missing priority field defaults to 0" {
+  make_rules <<EOF
+docs/** | documentation
+src/**  | source | 5
+EOF
+  make_files <<EOF
+docs/x.md
+src/a.js
+EOF
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  # source (priority 5) outranks documentation (default 0)
+  expected="source
+documentation"
+  [ "$output" = "$expected" ]
+}
+
+@test "changed paths can be supplied as positional arguments" {
+  make_rules <<< 'docs/** | documentation | 10'
+  run bash "$SCRIPT" --rules "$RULES" docs/a.md docs/b.md
+  [ "$status" -eq 0 ]
+  [ "$output" = "documentation" ]
+}
+
+@test "changed paths can be supplied on standard input" {
+  make_rules <<< 'docs/** | documentation | 10'
+  run bash -c "printf 'docs/a.md\ndocs/b.md\n' | bash '$SCRIPT' --rules '$RULES'"
+  [ "$status" -eq 0 ]
+  [ "$output" = "documentation" ]
+}
+
+@test "--help prints usage and exits 0" {
+  run bash "$SCRIPT" --help
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Usage:"* ]]
+}
+BATS
+bats tests/pr-label-assigner.bats 2>&1 | tail -22; echo "exit=${PIPESTATUS[0]}"
+[Result] 1..19
+ok 1 exits with usage error (code 2) when no rules file is given
+ok 2 exits 2 with a meaningful error when the rules file does not exist
+ok 3 exits 2 when the --files list does not exist
+ok 4 a single directory glob (docs/**) assigns its label
+ok 5 files not matching any rule produce no labels
+ok 6 '*' does not cross a path separator but '**' does
+ok 7 a single rule can assign multiple comma-separated labels
+ok 8 labels from multiple matching rules are unioned and de-duplicated
+ok 9 the same label from two rules appears only once
+ok 10 labels are emitted in priority order (highest first), ties alphabetical
+ok 11 a basename pattern (no slash) matches files at any depth (matchBase)
+ok 12 --format csv joins labels with commas on a single line
+ok 13 comments and blank lines in the rules file are ignored
+ok 14 a rule with no labels is rejected with exit 3
+ok 15 a rule with a non-integer priority is rejected with exit 3
+ok 16 a missing priority field defaults to 0
+ok 17 changed paths c
+[Assistant] All 19 green. Now a genuine **Cycle 5 (RED):** exclusion/negation rules — a `!pattern` rule removes labels from matching files, demonstrating real conflict resolution. Write the failing tests first.
+[Tool: Bash] cat >> tests/pr-label-assigner.bats <<'BATS'
+
+# ---------------------------------------------------------------------------
+# Cycle 5: exclusion (negation) rules — '!pattern' removes labels
+# ---------------------------------------------------------------------------
+
+@test "an exclusion rule (!pattern) removes a label from a matching file" {
+  make_rules <<EOF
+src/**            | source | 5
+src/api/**        | api    | 30
+!**/*.generated.* | api    | 0
+EOF
+  make_files <<< 'src/api/client.generated.js'
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  # 'api' is excluded for this generated file; 'source' survives.
+  [ "$output" = "source" ]
+}
+
+@test "exclusion is per-file: an unexcluded file still gets the label" {
+  make_rules <<EOF
+src/api/**        | api | 30
+!**/*.generated.* | api | 0
+EOF
+  make_files <<EOF
+src/api/client.generated.js
+src/api/users.js
+EOF
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  # users.js still contributes 'api'.
+  [ "$output" = "api" ]
+}
+
+@test "an exclusion rule with '*' labels suppresses all labels for the file" {
+  make_rules <<EOF
+docs/**       | documentation | 10
+!**/vendor/** | *             | 0
+EOF
+  make_files <<EOF
+docs/vendor/lib.md
+docs/guide.md
+EOF
+  run bash "$SCRIPT" --rules "$RULES" --files "$FILES"
+  [ "$status" -eq 0 ]
+  # vendor file contributes nothing; guide.md still yields documentation.
+  [ "$output" = "documentation" ]
+}
+BATS
+bats tests/pr-label-assigner.bats 2>&1 | sed -n '20,23p;/not ok/p'; echo "---"; bats tests/pr-label-assigner.bats 2>&1 | grep -c '^ok'
+[Result] ok 19 --help prints usage and exits 0
+not ok 20 an exclusion rule (!pattern) removes a label from a matching file
+not ok 20 an exclusion rule (!pattern) removes a label from a matching file
+# (in test file tests/pr-label-assigner.bats, line 257)
+#   `[ "$output" = "source" ]' failed
+---
+21
+[Assistant] RED confirmed — test 20 fails (the discriminating case where an excluded label would otherwise outrank a surviving one). Tests 21/22 currently pass coincidentally but will properly validate once exclusions exist. **Cycle 5 (GREEN):** Implement per-file exclusion handling. First add a CSV-split helper, then restructure the matching loop.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh", "old_s
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh", "old_s
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now rewrite the matching loop for per-file processing with exclusions:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh", "old_s
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/pr-label-assigner.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bash -n pr-label-assigner.sh && echo "syntax OK"; shellcheck pr-label-assigner.sh && echo "shellcheck clean"; echo "--- bats ---"; bats tests/pr-label-assigner.bats 2>&1 | tail -8; echo "exit=${PIPESTATUS[0]}"
+[Result] syntax OK
+shellcheck clean
+--- bats ---
+ok 15 a rule with a non-integer priority is rejected with exit 3
+ok 16 a missing priority field defaults to 0
+ok 17 changed paths can be supplied as positional arguments
+ok 18 changed paths can be supplied on standard input
+ok 19 --help prints usage and exits 0
+ok 20 an exclusion rule (!pattern) removes a label from a matching file
+ok 21 exclusion is per-file: an unexcluded file still gets the label
+ok 22 an exclusion rule with '*' labels suppresses all labels for the file
+exit=0
+[Assistant] All 22 tests GREEN, shellcheck clean. The script is complete. Now let me create the production rules config and test fixtures, then verify exact outputs locally (so the act assertions use known-good values).
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/config/label-rules.conf", "content": "# ===========
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/config/label-rules.conf (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/docs.files", "content": "docs/index.
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/docs.files (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/api.files", "content": "src/api/user
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/api.files (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/tests.files", "content": "src/compon
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/tests.files (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/mixed.files", "content": "docs/readm
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/mixed.files (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/none.files", "content": "LICENSE\n.g
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/none.files (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/vendor.files", "content": "src/vendo
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/fixtures/vendor.files (file state is current in your context — no need to Read it back)
+[Assistant] Now let me run the script against each fixture to capture the exact expected outputs:
+[Tool: Bash] for c in docs api tests mixed none vendor; do
+  out="$(bash pr-label-assigner.sh --rules config/label-rules.conf --files "tests/fixtures/${c}.files" --format csv)"
+  printf 'case=%-8s rc=%s labels=[%s]\n' "$c" "$?" "$out"
+done
+[Result] case=docs     rc=0 labels=[documentation]
+case=api      rc=0 labels=[api,backend,source]
+case=tests    rc=0 labels=[tests,source]
+case=mixed    rc=0 labels=[tests,api,backend,dependencies,frontend,ci,documentation,source]
+case=none     rc=0 labels=[]
+case=vendor   rc=0 labels=[documentation]
+[Assistant] Every output matches my predictions exactly. These are my known-good values:
+
+| case | expected labels |
+|------|----------------|
+| docs | `documentation` |
+| api | `api,backend,source` |
+| tests | `tests,source` |
+| mixed | `tests,api,backend,dependencies,frontend,ci,documentation,source` |
+| none | *(empty)* |
+| vendor | `documentation` |
+
+Now the GitHub Actions workflow:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/.github/workflows/pr-label-assigner.yml", "content"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/.github/workflows/pr-label-assigner.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/pr-label-assigner.yml; echo "actionlint exit=$?"
+[Result] actionlint exit=0
+[Assistant] actionlint passes cleanly. Now let me check available YAML-parsing tooling for the structure tests, and write the act-runner helper (DRY: used by both the bats harness and my one manual validation run).
+[Tool: Bash] echo "yq: $(command -v yq || echo no)"; echo "python3: $(command -v python3 || echo no)"; python3 -c 'import yaml; print("pyyaml: yes", yaml.__version__)' 2>&1 | head -1
+[Result] yq: no
+python3: /usr/bin/python3
+pyyaml: yes 6.0.1
+[Assistant] python3 + pyyaml available — I'll use that for YAML structure tests. Now the act-runner helper:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/run-act.sh", "content": "#!/usr/bin/env bash\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/run-act.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] chmod +x pr-label-assigner.sh tests/run-act.sh; bash -n tests/run-act.sh && echo "syntax OK"; shellcheck tests/run-act.sh && echo "shellcheck clean"
+[Result ERROR] Exit code 1
+syntax OK
+
+In tests/run-act.sh line 25:
+cleanup() { rm -rf "$WORK"; }
+            ^------------^ SC2317 (info): Command appears to be unreachable. Check usage (or ignore if invoked indirectly).
+
+
+In tests/run-act.sh line 65:
+      echo "${line#*RESULT }" | sed 's/^/RESULT /'
+      ^-- SC2001 (style): See if you can use ${variable//search/replace} instead.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2317 -- Command appears to be unreachable...
+  https://www.shellcheck.net/wiki/SC2001 -- See if you can use ${variable//se...
+[Assistant] Both are info/style. Let me clean them up — simplify the sed to a parameter expansion and annotate the trap handler:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/run-act.sh", "old_strin
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/run-act.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/run-act.sh", "old_strin
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/run-act.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] shellcheck tests/run-act.sh && echo "shellcheck clean"
+[Result] shellcheck clean
+[Assistant] Now my one validation run of `act` (run #1 of my 3-run budget) to confirm the pipeline works and capture the real output format:
+[Tool: Bash] bash tests/run-act.sh; echo "run-act.sh exit=$?"
+[Result] run-act.sh exit=1
+[Assistant] act exited 1 — let me diagnose from the captured output rather than re-running.
+[Tool: Bash] echo "=== tail of parsed section ==="; sed -n '/PER-CASE PARSED RESULTS/,$p' act-result.txt; echo; echo "=== Job succeeded/failed counts ==="; grep -cE 'Job succeeded' act-result.txt; grep -cE 'Job failed' act-result.txt; echo "=== any error lines ==="; grep -iE 'error|failure|cannot|not found|denied|✗|❌' act-result.txt | sed -E 's/\x1b\[[0-9;]*[mGKHF]//g' | head -40
+[Result] === tail of parsed section ===
+===================== PER-CASE PARSED RESULTS ==========================
+------------------------------ case: docs ------------------------------
+(no RESULT line captured for case 'docs')
+------------------------------ case: api ------------------------------
+(no RESULT line captured for case 'api')
+------------------------------ case: tests ------------------------------
+(no RESULT line captured for case 'tests')
+------------------------------ case: mixed ------------------------------
+(no RESULT line captured for case 'mixed')
+------------------------------ case: none ------------------------------
+(no RESULT line captured for case 'none')
+------------------------------ case: vendor ------------------------------
+(no RESULT line captured for case 'vendor')
+
+ACT_EXIT_CODE=1
+
+=== Job succeeded/failed counts ===
+0
+6
+=== any error lines ===
+[PR Label Assigner/Assign labels (docs)-1  ] Error response from daemon: authentication required - incorrect username 
+[Assistant] Root cause is clear: act's "Set up job" tries to **pull** the runner image, but `act-ubuntu-pwsh:latest` is a locally-built image — pulling it from a registry fails auth. The fix is `--pull=false` so act uses the local image. Let me also check whether `actions/checkout` is cached locally (to avoid a second failure downstream).
+[Tool: Bash] echo "=== act action cache ==="; ls -la ~/.cache/act 2>/dev/null | head; ls -la ~/.cache/act/actions-checkout@v4 2>/dev/null | head || echo "(checkout@v4 not pre-cached in ~/.cache/act)"; echo "=== docker confirm local image ==="; docker image inspect act-ubuntu-pwsh:latest --format 'present: {{.Id}}' 2>&1 | head -1
+[Result] === act action cache ===
+total 56
+drwxr-xr-x 13 passp passp 4096 May  6 21:13 .
+drwx------ 25 passp passp 4096 Jun 26 12:46 ..
+-rw-------  1 passp passp   36 Jun 28 06:31 .notices.etag
+drwxr-xr-x 10 passp passp 4096 Apr  9 01:13 actions-checkout@v4
+drwxr-xr-x 10 passp passp 4096 May  6 20:02 actions-download-artifact@v4
+drwxr-xr-x 11 passp passp 4096 Apr 19 00:11 actions-setup-node@v4
+drwxr-xr-x  9 passp passp 4096 May  6 21:13 actions-setup-python@61a6322f88396a6271a6ee3cb4d175c0dc4ef479
+drwxr-xr-x  9 passp passp 4096 Apr 19 02:00 actions-setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+drwxr-xr-x  9 passp passp 4096 May  6 20:47 actions-setup-python@f677139bbe7f9c59b41e7462f120eb1989c08947
+total 376
+drwxr-xr-x 10 passp passp   4096 Apr  9 01:13 .
+drwxr-xr-x 13 passp passp   4096 May  6 21:13 ..
+-rw-r--r--  1 passp passp     25 Apr  9 01:12 .eslintignore
+-rw-r--r--  1 passp passp   2260 Apr  9 01:12 .eslintrc.json
+drwxr-xr-x  4 passp passp   4096 Apr  9 01:12 .git
+-rw-r--r--  1 p
+[Assistant] `actions/checkout@v4` is cached locally. Let me confirm the exact act flag names before spending another act run:
+[Tool: Bash] act --help 2>&1 | grep -iE 'pull|offline|reuse' 
+[Result]       --action-offline-mode                               If action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull
+  -p, --pull                                              pull docker image(s) even if already present (default true)
+  -r, --reuse                                             don't remove container(s) on successfully completed workflow(s) to maintain state between runs
+[Assistant] Both flags exist: `--pull` (default true → set `--pull=false`) and `--action-offline-mode` (use cached actions). Let me update the act invocation:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/run-act.sh", "old_strin
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/run-act.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now let me run `act` again (run #2) via the helper to confirm the workflow succeeds with the corrected flags:
+[Tool: Bash] bash tests/run-act.sh; echo "run-act.sh exit=$?"
+[Result] run-act.sh exit=0
+[Assistant] act exited 0. Let me verify the captured results and job successes:
+[Tool: Bash] echo "=== PER-CASE PARSED RESULTS ==="; sed -n '/PER-CASE PARSED RESULTS/,$p' act-result.txt; echo; echo "=== Job succeeded count ==="; grep -c 'Job succeeded' act-result.txt; echo "=== Job failed count ==="; grep -c 'Job failed' act-result.txt; echo "=== job-name lines with Job succeeded (ansi-stripped) ==="; sed -E 's/\x1b\[[0-9;]*[mGKHF]//g' act-result.txt | grep 'Job succeeded'
+[Result] === PER-CASE PARSED RESULTS ===
+===================== PER-CASE PARSED RESULTS ==========================
+------------------------------ case: docs ------------------------------
+RESULT case=docs labels=[documentation]
+------------------------------ case: api ------------------------------
+RESULT case=api labels=[api,backend,source]
+------------------------------ case: tests ------------------------------
+RESULT case=tests labels=[tests,source]
+------------------------------ case: mixed ------------------------------
+RESULT case=mixed labels=[tests,api,backend,dependencies,frontend,ci,documentation,source]
+------------------------------ case: none ------------------------------
+RESULT case=none labels=[]
+------------------------------ case: vendor ------------------------------
+RESULT case=vendor labels=[documentation]
+
+ACT_EXIT_CODE=0
+
+=== Job succeeded count ===
+7
+=== Job failed count ===
+0
+=== job-name lines with Job succeeded (ansi-stripped) ===
+[PR Label Assigner/Assign labels (doc
+[Assistant] The pipeline works end-to-end through act — all 6 cases produced exact expected labels, 7 jobs succeeded (6 matrix + summary), 0 failed, `ACT_EXIT_CODE=0`. Now let me write the workflow structure validator and the bats integration harness.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/check-workflow.py", "content": "#!/usr/bin/en
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/check-workflow.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 tests/check-workflow.py "$(pwd)"; echo "check-workflow exit=$?"
+[Result] [PASS] workflow file exists
+[PASS] 'on' triggers block exists
+[PASS] trigger 'push' present
+[PASS] trigger 'pull_request' present
+[PASS] trigger 'workflow_dispatch' present
+[PASS] trigger 'schedule' present
+[PASS] schedule has a cron expression
+[PASS] permissions.contents defined
+[PASS] permissions.pull-requests defined
+[PASS] env.RULES_FILE == config/label-rules.conf
+[PASS] job 'assign-labels' exists
+[PASS] job 'summary' exists
+[PASS] assign-labels runs-on ubuntu-latest
+[PASS] matrix.case == expected fixture list
+[PASS] uses actions/checkout@v4
+[PASS] a step invokes pr-label-assigner.sh
+[PASS] a step references RULES_FILE
+[PASS] summary needs assign-labels
+[PASS] script file exists
+[PASS] rules config exists
+[PASS] fixture 'docs.files' exists
+[PASS] fixture 'api.files' exists
+[PASS] fixture 'tests.files' exists
+[PASS] fixture 'mixed.files' exists
+[PASS] fixture 'none.files' exists
+[PASS] fixture 'vendor.files' exists
+
+0 failure(s)
+check-workflow exit=0
+[Assistant] All structure checks pass. Now the bats integration harness that ties act + structure assertions together:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/act-integration.bats", "content": "#!/usr/bin
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/tests/act-integration.bats (file state is current in your context — no need to Read it back)
+[Assistant] Now run the integration harness. Since a successful `act-result.txt` already exists, `setup_file` reuses it (no extra act run) and validates all assertions against the real pipeline output:
+[Tool: Bash] bats tests/act-integration.bats 2>&1; echo "exit=${PIPESTATUS[0]}"
+[Result] 1..13
+ok 1 act produced the result artifact
+ok 2 act exited 0
+ok 3 every job reports 'Job succeeded' and none failed
+ok 4 each matrix job and the summary job succeeded by name
+ok 5 pipeline result for 'docs' is exactly [documentation]
+ok 6 pipeline result for 'api' is exactly [api,backend,source]
+ok 7 pipeline result for 'tests' is exactly [tests,source]
+ok 8 pipeline result for 'mixed' is priority-ordered and complete
+ok 9 pipeline result for 'none' is the empty label set
+ok 10 pipeline result for 'vendor' shows exclusion (only [documentation])
+ok 11 actionlint validates the workflow cleanly (exit 0)
+ok 12 workflow YAML has the expected structure (triggers, jobs, steps, deps)
+ok 13 workflow references files that exist on disk
+exit=0
+[Assistant] All 13 integration tests pass against the real pipeline output. Now, to definitively prove the bats harness itself drives `act` end-to-end (not just reuses the artifact), I'll do my final act run (#3) with `FORCE_ACT=1`, which re-runs act inside `setup_file` and regenerates the artifact fresh:
+[Tool: Bash] FORCE_ACT=1 bats tests/act-integration.bats 2>&1; echo "exit=${PIPESTATUS[0]}"
+[Result] 1..13
+ok 1 act produced the result artifact
+ok 2 act exited 0
+ok 3 every job reports 'Job succeeded' and none failed
+ok 4 each matrix job and the summary job succeeded by name
+ok 5 pipeline result for 'docs' is exactly [documentation]
+ok 6 pipeline result for 'api' is exactly [api,backend,source]
+ok 7 pipeline result for 'tests' is exactly [tests,source]
+ok 8 pipeline result for 'mixed' is priority-ordered and complete
+ok 9 pipeline result for 'none' is the empty label set
+ok 10 pipeline result for 'vendor' shows exclusion (only [documentation])
+ok 11 actionlint validates the workflow cleanly (exit 0)
+ok 12 workflow YAML has the expected structure (triggers, jobs, steps, deps)
+ok 13 workflow references files that exist on disk
+exit=0
+[Assistant] The bats harness genuinely drove `act` (FORCE_ACT=1) and all 13 tests passed against the freshly generated artifact — that's my 3rd and final act run. Now a comprehensive final validation pass over everything:
+[Tool: Bash] echo "===== bash -n (syntax) ====="; for f in pr-label-assigner.sh tests/run-act.sh; do bash -n "$f" && echo "  OK: $f"; done
+echo "===== shellcheck ====="; shellcheck pr-label-assigner.sh tests/run-act.sh && echo "  shellcheck: CLEAN"
+echo "===== actionlint ====="; actionlint .github/workflows/pr-label-assigner.yml && echo "  actionlint: CLEAN (exit 0)"
+echo "===== full bats suite (unit + integration; integration reuses artifact) ====="; bats tests/ 2>&1 | tail -40
+echo "exit=${PIPESTATUS[0]}"
+echo "===== artifact present ====="; ls -l act-result.txt && echo "lines: $(wc -l < act-result.txt)"
+[Result] ===== bash -n (syntax) =====
+  OK: pr-label-assigner.sh
+  OK: tests/run-act.sh
+===== shellcheck =====
+  shellcheck: CLEAN
+===== actionlint =====
+  actionlint: CLEAN (exit 0)
+===== full bats suite (unit + integration; integration reuses artifact) =====
+1..35
+ok 1 act produced the result artifact
+ok 2 act exited 0
+ok 3 every job reports 'Job succeeded' and none failed
+ok 4 each matrix job and the summary job succeeded by name
+ok 5 pipeline result for 'docs' is exactly [documentation]
+ok 6 pipeline result for 'api' is exactly [api,backend,source]
+ok 7 pipeline result for 'tests' is exactly [tests,source]
+ok 8 pipeline result for 'mixed' is priority-ordered and complete
+ok 9 pipeline result for 'none' is the empty label set
+ok 10 pipeline result for 'vendor' shows exclusion (only [documentation])
+ok 11 actionlint validates the workflow cleanly (exit 0)
+ok 12 workflow YAML has the expected structure (triggers, jobs, steps, deps)
+ok 13 workflow references files that exist on disk
+ok 14 exits
+[Assistant] Everything is green: **35/35 bats tests pass** (22 unit + 13 integration), shellcheck clean, actionlint clean (exit 0), and `act-result.txt` exists (18KB, 188 lines). Let me verify the artifact is well-delimited and add a concise README.
+[Tool: Bash] echo "=== act-result.txt head (delimiting) ==="; sed -E 's/\x1b\[[0-9;]*[mGKHF]//g' act-result.txt | head -25; echo "..."; echo "=== project tree ==="; find . -type f -not -path './.git/*' | sort
+[Result] === act-result.txt head (delimiting) ===
+########################################################################
+# PR Label Assigner — act run
+# Single 'act push --rm' over a build matrix of all fixtures.
+########################################################################
+
+===================== RAW act push --rm LOG ============================
+time="2026-06-28T06:34:59-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[PR Label Assigner/Assign labels (docs)-1  ] ⭐ Run Set up job
+[PR Label Assigner/Assign labels (docs)-1  ] 🚀  Start image=act-ubuntu-pwsh:latest
+[PR Label Assigner/Assign labels (docs)-1  ]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=false
+[PR Label Assigner/Assign labels (docs)-1  ]   🐳  docker create image=act-ubuntu-pwsh:latest platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="host"
+[PR Label Assigner/Assign labels (docs)-1  ]   🐳  docker run image
+[Assistant] The artifact clearly shows the real pipeline (Set up job → Checkout → prerequisites → Assign labels → RESULT line). Let me clean up the stray `__pycache__` and add a concise README documenting the solution.
+[Tool: Bash] rm -rf tests/__pycache__; echo "cleaned pycache"
+[Result] cleaned pycache
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/README.md", "content": "# PR Label Assigner\n\nA sm
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/bash-opus48-1m-ultracode/README.md (file state is current in your context — no need to Read it back)
+[Assistant] All deliverables are complete and verified. Let me record one genuinely non-obvious environment fact for future tasks in this benchmark — the `act` flags needed to avoid burning runs on the local-image pull-auth error.
+[Tool: Bash] MEMDIR="/home/passp/.claude/projects/-home-passp-repos-GHA-bench--claude-worktrees-opus48-bench-workspaces-2026-06-26-103905-12-pr-label-assigner-bash-opus48-1m-ultracode/memory"; ls -la "$MEMDIR" 2>/dev/null && echo "---MEMORY.md---" && cat "$MEMDIR/MEMORY.md" 2>/dev/null || echo "no memory dir/index yet"
+[Result] no memory dir/index yet
+[Assistant] The memory directory is scoped to this single throwaway workspace, so a note there won't carry to other tasks — I'll skip it. The work is complete.
+
+## Summary
+
+I built a Bash PR-label-assigner with full red/green TDD, a real GitHub Actions pipeline, and an `act`-driven test harness. Everything passes.
+
+### What was built
+
+**`pr-label-assigner.sh`** — maps changed file paths to labels via configurable glob rules:
+- **Glob semantics** via glob→regex conversion: `*` stays within a path segment, `**` crosses `/`, `?` is one non-`/` char, and slash-free patterns match the basename (so `*.test.*` matches `src/components/Button.test.tsx`).
+- **Multiple labels per file** (one rule can list several; multiple rules union and de-dupe).
+- **Priority ordering / conflict resolution** — output sorted by priority desc, ties alphabetical; duplicate labels keep their highest priority.
+- **Exclusion rules** (`!pattern`) that remove labels per-file (`*` suppresses all).
+- Reads files from `--files`, positional args, or stdin; `lines`/`csv` output; meaningful errors with exit codes `2` (usage/IO) and `3` (malformed config).
+
+### TDD discipline
+Genuine red→green cycles: usage handling → core matching → exclusions, each with a failing test watched fail before implementing. **22 unit tests** in `tests/pr-label-assigner.bats`.
+
+### CI pipeline (`.github/workflows/pr-label-assigner.yml`)
+Triggers (`push`, `pull_request`, `workflow_dispatch`, `schedule`), least-privilege `permissions`, workflow-level `env`, a **matrix over all 6 fixtures**, and a `summary` job with a `needs:` dependency. Steps run in an isolated container (`actions/checkout@v4` → prerequisite check → run script).
+
+### All tests through `act`
+`tests/act-integration.bats` + `tests/run-act.sh` build an isolated git repo, run the whole matrix in a **single `act push --rm`**, and assert **exact** per-case labels, `ACT_EXIT_CODE=0`, and all **7 jobs "Job succeeded"**. `tests/check-workflow.py` statically validates the YAML structure.
+
+| case | pipeline output (asserted exactly) |
+|------|-----------|
+| docs | `documentation` |
+| api | `api,backend,source` |
+| tests | `tests,source` |
+| mixed | `tests,api,backend,dependencies,frontend,ci,documentation,source` |
+| none | *(empty)* |
+| vendor | `documentation` (exclusion suppressed the vendored test file) |
+
+### Final verification
+- **35/35 bats tests pass** (22 unit + 13 integration)
+- `shellcheck` clean, `bash -n` clean on both scripts
+- `actionlint` clean (exit 0)
+- **`act-result.txt` written** (188 lines: full delimited act log + per-case parsed summary)
+- Used exactly **3 `act` runs**: one diagnosed a local-image pull-auth failure (fixed with `--pull=false --action-offline-mode`), one validated, and the final `FORCE_ACT=1` bats run proved the harness drives `act` end-to-end.

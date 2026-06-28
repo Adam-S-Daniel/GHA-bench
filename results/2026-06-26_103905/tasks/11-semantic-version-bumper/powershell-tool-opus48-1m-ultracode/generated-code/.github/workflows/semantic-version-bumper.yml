@@ -1,0 +1,133 @@
+name: Semantic Version Bumper
+
+# Release-automation pipeline. It reads the current version and a conventional
+# commit log, computes the next semantic version, updates the version file and
+# changelog, and exposes the result as a job output that a downstream job
+# verifies. Designed to run unmodified inside an isolated container via `act`.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Weekly dry run every Monday at 06:00 UTC to catch regressions.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      release_date:
+        description: 'Override the changelog release date (yyyy-MM-dd). Blank = today.'
+        required: false
+        default: ''
+
+# Least privilege by default; the bump job opts into write access because in a
+# real pipeline it would commit the bumped version file and changelog.
+permissions:
+  contents: read
+
+# Where the bumper looks for its inputs. Overridable per-environment.
+env:
+  VERSION_FILE: VERSION
+  COMMIT_LOG: commits.txt
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  bump:
+    name: Compute and apply version bump
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      previous_version: ${{ steps.bump.outputs.previous_version }}
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_type: ${{ steps.bump.outputs.bump_type }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # PowerShell is pre-installed on GitHub-hosted runners and in the act
+      # container, so this is a near-instant no-op there. It is kept for
+      # portability to vanilla runners that lack pwsh.
+      - name: Ensure PowerShell is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v pwsh >/dev/null 2>&1; then
+            echo "PowerShell already installed: $(pwsh --version)"
+          else
+            echo "PowerShell not found; installing PowerShell 7..."
+            sudo apt-get update
+            sudo apt-get install -y wget
+            wget -q "https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb" -O /tmp/ms-prod.deb
+            sudo dpkg -i /tmp/ms-prod.deb
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          fi
+
+      # Run the Pester unit tests for the script logic inside the container, so
+      # the pipeline fails fast if the bumper logic is broken. Scoped to the unit
+      # test file (NOT the act harness, which must never run inside act).
+      - name: Run unit tests (Pester)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $config = New-PesterConfiguration
+          $config.Run.Path = './SemanticVersionBumper.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+      - name: Bump version from conventional commits
+        id: bump
+        shell: pwsh
+        env:
+          # Lets a manual `workflow_dispatch` run pin the release date. Empty on
+          # other events, in which case the script falls back to RELEASE_DATE /
+          # today (RELEASE_DATE can be injected via `act --env`).
+          DISPATCH_DATE: ${{ github.event.inputs.release_date }}
+        run: |
+          if (-not [string]::IsNullOrWhiteSpace($env:DISPATCH_DATE)) {
+            $env:RELEASE_DATE = $env:DISPATCH_DATE
+          }
+          ./Invoke-VersionBump.ps1 `
+            -VersionFile $env:VERSION_FILE `
+            -CommitLog $env:COMMIT_LOG `
+            -ChangelogFile $env:CHANGELOG_FILE
+
+      - name: Show updated files
+        shell: pwsh
+        run: |
+          Write-Host "===== $($env:VERSION_FILE) ====="
+          Get-Content -LiteralPath $env:VERSION_FILE
+          Write-Host ""
+          Write-Host "===== $($env:CHANGELOG_FILE) (top) ====="
+          Get-Content -LiteralPath $env:CHANGELOG_FILE -TotalCount 30
+
+  verify:
+    name: Verify bump output
+    needs: bump
+    runs-on: ubuntu-latest
+    steps:
+      # Generic, case-independent validation of the previous job's output. The
+      # exact per-case expected values are asserted by the external act harness.
+      - name: Validate the computed version
+        shell: pwsh
+        env:
+          PREVIOUS_VERSION: ${{ needs.bump.outputs.previous_version }}
+          NEW_VERSION: ${{ needs.bump.outputs.new_version }}
+          BUMP_TYPE: ${{ needs.bump.outputs.bump_type }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Write-Host "VERIFIED_PREVIOUS_VERSION=$($env:PREVIOUS_VERSION)"
+          Write-Host "VERIFIED_NEW_VERSION=$($env:NEW_VERSION)"
+          Write-Host "VERIFIED_BUMP_TYPE=$($env:BUMP_TYPE)"
+
+          if ([string]::IsNullOrWhiteSpace($env:NEW_VERSION)) {
+            throw 'The bump job did not produce a new version.'
+          }
+          if ($env:NEW_VERSION -notmatch '^\d+\.\d+\.\d+$') {
+            throw "New version '$($env:NEW_VERSION)' is not a valid semantic version."
+          }
+          if ($env:BUMP_TYPE -notin @('major', 'minor', 'patch')) {
+            throw "Unexpected bump type '$($env:BUMP_TYPE)'."
+          }
+          Write-Host 'Verification passed.'

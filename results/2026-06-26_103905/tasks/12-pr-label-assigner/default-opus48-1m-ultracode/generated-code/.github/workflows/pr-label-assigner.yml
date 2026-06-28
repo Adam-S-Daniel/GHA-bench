@@ -1,0 +1,64 @@
+name: PR Label Assigner
+
+# Triggers:
+#   - pull_request: the real-world use case (label PRs as they are opened/updated).
+#   - push:         lets the pipeline run in CI / via `act push` for the test harness.
+#   - workflow_dispatch: manual runs for debugging.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Least-privilege defaults. `pull-requests: write` is what a real labeling step
+# would need to apply the resolved labels; this demo only prints them.
+permissions:
+  contents: read
+  pull-requests: write
+
+# Centralised, overridable inputs. The mock file list and rules config both
+# live in the repo so the workflow runs hermetically in an isolated container.
+env:
+  CONFIG_FILE: label-rules.json
+  CHANGED_FILES_FILE: changed_files.txt
+
+jobs:
+  assign-labels:
+    name: Assign labels from changed files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify Python is available
+        run: |
+          if ! command -v python3 >/dev/null 2>&1; then
+            echo "python3 not found; installing it"
+            sudo apt-get update && sudo apt-get install -y python3
+          fi
+          python3 --version
+
+      - name: Assign labels
+        id: assign
+        # The script is stdlib-only, so there is nothing to pip install.
+        # Output is tee'd to a file for the job summary; pipefail (on by
+        # default in the Actions bash shell) propagates a script failure.
+        run: |
+          python3 pr_label_assigner.py \
+            --config "$CONFIG_FILE" \
+            --files-from "$CHANGED_FILES_FILE" \
+            --format text | tee labels-output.txt
+
+      - name: Publish job summary
+        run: |
+          {
+            echo "## PR Label Assigner"
+            echo ""
+            echo '```text'
+            cat labels-output.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report resolved labels
+        run: |
+          echo "Resolved labels: ${{ steps.assign.outputs.labels }}"
+          echo "Label count: ${{ steps.assign.outputs.count }}"

@@ -1,0 +1,117 @@
+# Semantic Version Bumper — CI/CD pipeline.
+#
+# Two jobs:
+#   1. `validate` runs the bumper against a matrix of representative release
+#      scenarios (the committed fixtures) and prints a machine-checkable
+#      `RESULT scenario=<name> new_version=<v>` line per case. This is the
+#      release-logic regression check the test harness asserts on.
+#   2. `release` (depends on `validate`) runs the bumper against the repo's
+#      own VERSION + commit log, writes the new version + changelog entry, and
+#      exposes the result as a step output / job summary — the "real" release
+#      action a pipeline would perform on a push to the default branch.
+#
+# The script is pure-stdlib Python 3, which is pre-installed on GitHub-hosted
+# `ubuntu-latest` runners (and in the act container), so no dependency install
+# or `setup-python` step is required.
+name: Semantic Version Bumper
+
+# Triggered on pushes / PRs (validate the bump logic), on a weekly schedule
+# (release dry-run), and manually via the Actions UI.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'  # Mondays 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      version_file:
+        description: Path to the version file or package.json
+        required: false
+        default: VERSION
+
+# Least-privilege by default; the release job opts up to contents:write.
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'  # flush script stdout immediately so act captures it
+
+jobs:
+  validate:
+    name: Validate bump (${{ matrix.scenario }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each scenario maps to a fixtures/<scenario>/ directory.
+        scenario: [feat, fix, breaking, package-json, no-bump]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        run: python3 --version
+
+      - name: Run version bumper for scenario
+        run: |
+          set -euo pipefail
+          dir="fixtures/${{ matrix.scenario }}"
+          # The version source is package.json when present, else a VERSION file.
+          if [ -f "$dir/package.json" ]; then
+            version_file="$dir/package.json"
+          else
+            version_file="$dir/VERSION"
+          fi
+          echo "Scenario '${{ matrix.scenario }}' using version file: $version_file"
+          output="$(python3 version_bumper.py --version-file "$version_file" --commits "$dir/commits.txt")"
+          echo "$output"
+          new_version="$(printf '%s\n' "$output" | sed -n 's/^NEW_VERSION=//p')"
+          # Self-identifying, exact line the test harness asserts on.
+          echo "RESULT scenario=${{ matrix.scenario }} new_version=$new_version"
+
+  release:
+    name: Compute and write release version
+    runs-on: ubuntu-latest
+    needs: validate
+    permissions:
+      contents: write  # a real pipeline would commit/tag with this
+    env:
+      # Deterministic changelog date so output is reproducible under test.
+      CHANGELOG_DATE: '2026-06-28'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        run: python3 --version
+
+      - name: Compute next version and update files
+        id: bump
+        run: |
+          set -euo pipefail
+          python3 version_bumper.py \
+            --version-file VERSION \
+            --commits commits.txt \
+            --changelog CHANGELOG.md \
+            --write
+
+      - name: Report release result
+        run: |
+          set -euo pipefail
+          # Consume the outputs the script wrote to $GITHUB_OUTPUT.
+          echo "RELEASE_CURRENT_VERSION=${{ steps.bump.outputs.current_version }}"
+          echo "RELEASE_BUMP_TYPE=${{ steps.bump.outputs.bump_type }}"
+          echo "RELEASE_NEW_VERSION=${{ steps.bump.outputs.new_version }}"
+          echo '----- Updated VERSION -----'
+          cat VERSION
+          echo '----- CHANGELOG (head) -----'
+          head -n 20 CHANGELOG.md
+
+      # A real release would tag/push here. Guarded off by default so the
+      # workflow needs no secrets to run in CI / act.
+      - name: Create tag (disabled in CI dry-run)
+        if: ${{ steps.bump.outputs.changed == 'true' && env.PUBLISH_RELEASE == 'true' }}
+        run: |
+          git tag "v${{ steps.bump.outputs.new_version }}"
+          echo "Tagged v${{ steps.bump.outputs.new_version }}"

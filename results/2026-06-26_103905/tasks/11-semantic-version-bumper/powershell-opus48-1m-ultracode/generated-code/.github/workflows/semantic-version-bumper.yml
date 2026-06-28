@@ -1,0 +1,128 @@
+name: Semantic Version Bumper
+
+# Trigger on pushes/PRs (validate the bumper logic in CI), on a weekly schedule
+# (so a routine release-prep run can be wired up later), and manually with an
+# optional dry-run toggle.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 3 * * 1' # Mondays at 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Compute the next version without writing files
+        type: boolean
+        default: false
+
+# Read-only is sufficient: this pipeline computes and reports the next version
+# but does not push commits/tags back to the repository.
+permissions:
+  contents: read
+
+# Project-wide defaults consumed by the bumper. Centralised here so the steps
+# stay declarative and easy to change.
+env:
+  VERSION_FILE_DEFAULT: VERSION
+  COMMIT_LOG: commits.txt
+  CHANGELOG_FILE: CHANGELOG.md
+  RELEASE_DATE: '2026-06-28'
+
+concurrency:
+  group: semver-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Job 1: run the Pester unit suite for the bumper's building blocks.
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          # pwsh + Pester are preinstalled on GitHub runners and in the act image;
+          # install on demand only when missing so the workflow stays portable.
+          $pester = Get-Module -ListAvailable -Name Pester |
+            Where-Object { $_.Version -ge [version]'5.0.0' }
+          if (-not $pester) {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
+          }
+          $v = (Get-Module -ListAvailable -Name Pester | Sort-Object Version -Descending | Select-Object -First 1).Version
+          Write-Host "Using Pester $v"
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Run only the unit-level suites here. The act-based integration suite
+          # (Tests/Workflow.Tests.ps1) is intentionally excluded to avoid running
+          # act recursively inside this container.
+          $config = New-PesterConfiguration
+          $config.Run.Path = @(
+            './Tests/SemVerBumper.Tests.ps1',
+            './Tests/UpdateSemanticVersion.Tests.ps1'
+          )
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  # Job 2: run the bumper against the repository's version file + commit log.
+  bump:
+    name: Bump version
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Determine version file
+        id: detect
+        shell: pwsh
+        env:
+          DEFAULT_FILE: ${{ env.VERSION_FILE_DEFAULT }}
+        run: |
+          # Prefer package.json when present, else fall back to the plain
+          # VERSION file. This lets the same workflow serve JS and non-JS repos.
+          $vf = if (Test-Path 'package.json') { 'package.json' }
+                elseif (Test-Path $env:DEFAULT_FILE) { $env:DEFAULT_FILE }
+                else { throw "No version file found (looked for package.json and $($env:DEFAULT_FILE))." }
+          "version_file=$vf" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Using version file: $vf"
+
+      - name: Bump semantic version
+        id: bump
+        shell: pwsh
+        env:
+          VERSION_FILE: ${{ steps.detect.outputs.version_file }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Pass parameters via a hashtable splat (named binding; array splat
+          # would bind positionally and ignore -Name tokens).
+          $params = @{
+            VersionFile   = $env:VERSION_FILE
+            CommitLogPath = $env:COMMIT_LOG
+            ChangelogFile = $env:CHANGELOG_FILE
+            Date          = $env:RELEASE_DATE
+          }
+          if ($env:DRY_RUN -eq 'true') { $params.DryRun = $true }
+          ./Update-SemanticVersion.ps1 @params
+
+      - name: Report result
+        shell: pwsh
+        env:
+          PREV: ${{ steps.bump.outputs.previous_version }}
+          BUMP: ${{ steps.bump.outputs.bump_type }}
+          NEW: ${{ steps.bump.outputs.new_version }}
+          CHANGED: ${{ steps.bump.outputs.changed }}
+        run: |
+          # A single, stable, machine-parseable line for downstream tooling/tests.
+          Write-Host "BUMP_RESULT previous_version=$($env:PREV) bump_type=$($env:BUMP) new_version=$($env:NEW) changed=$($env:CHANGED)"
+          Write-Host "::notice title=Semantic Version::Next version is $($env:NEW) ($($env:BUMP) bump)"

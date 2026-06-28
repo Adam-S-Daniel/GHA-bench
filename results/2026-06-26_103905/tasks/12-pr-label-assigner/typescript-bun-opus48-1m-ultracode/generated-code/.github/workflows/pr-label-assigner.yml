@@ -1,0 +1,113 @@
+name: PR Label Assigner
+
+# Realistic CI/CD pipeline for the label assigner:
+#   * push / pull_request  -> validate code and (on real PRs) apply labels
+#   * workflow_dispatch     -> manual run
+#   * schedule              -> nightly sanity sweep so a broken config/rule set
+#                              is caught even when no PR is open
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"
+
+# Least privilege: read the repo, and (only the apply step) write PR labels.
+permissions:
+  contents: read
+  pull-requests: write
+
+# One in-flight run per ref; newer pushes cancel stale runs.
+concurrency:
+  group: pr-label-assigner-${{ github.ref }}
+  cancel-in-progress: true
+
+# Pin the Bun version once and point the CLI at its default inputs. The CLI
+# reads LABELER_CONFIG / CHANGED_FILES_FILE from the environment.
+env:
+  BUN_VERSION: "1.3.11"
+  LABELER_CONFIG: labeler.config.json
+  CHANGED_FILES_FILE: changed-files.txt
+
+jobs:
+  # Gate 1: the project's hermetic unit tests must pass before we trust the
+  # labeler's output. (The subprocess/integration tests run in local dev; this
+  # job runs the pure-logic suite for maximum reliability inside a container.)
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"; then
+              break
+            fi
+            echo "bun install attempt ${attempt} failed; retrying..." >&2
+            sleep 3
+          done
+          echo "${HOME}/.bun/bin" >> "${GITHUB_PATH}"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Run unit tests
+        run: bun test tests/labeler.test.ts
+
+  # Gate 2: compute the label set from the changed-files list. Depends on the
+  # tests passing first (job dependency).
+  assign-labels:
+    name: Assign labels
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"; then
+              break
+            fi
+            echo "bun install attempt ${attempt} failed; retrying..." >&2
+            sleep 3
+          done
+          echo "${HOME}/.bun/bin" >> "${GITHUB_PATH}"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Assign labels from changed files
+        id: labeler
+        run: |
+          set -euo pipefail
+          bun run cli.ts | tee labeler-output.txt
+          labels="$(grep '^RESULT_LABELS=' labeler-output.txt | head -n1 | cut -d= -f2-)"
+          count="$(grep '^RESULT_COUNT=' labeler-output.txt | head -n1 | cut -d= -f2-)"
+          {
+            echo "labels=${labels}"
+            echo "count=${count}"
+          } >> "${GITHUB_OUTPUT}"
+          {
+            echo "## PR Label Assigner"
+            echo ""
+            echo "Resolved ${count} label(s): ${labels:-(none)}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      # Real labeling on actual pull requests only. Skipped on push / schedule /
+      # workflow_dispatch and under act (whose event is push), so no secrets or
+      # network are required to exercise the pipeline end-to-end.
+      - name: Apply labels to the pull request
+        if: ${{ github.event_name == 'pull_request' && steps.labeler.outputs.labels != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh pr edit "${{ github.event.pull_request.number }}" \
+            --add-label "${{ steps.labeler.outputs.labels }}"
