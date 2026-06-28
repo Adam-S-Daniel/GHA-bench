@@ -1,0 +1,503 @@
+[Assistant] I'll start by understanding the environment and the benchmark instructions.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/benchmark-instructions-v4.md"}
+[Result] 1	# Benchmark Instructions v4 — GitHub Actions
+2	
+3	**Version**: v4
+4	**Date**: 2026-04-09
+5	**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+6	
+7	**Changes from v3**:
+8	- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+9	- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+10	- GHA workflow addendum expanded with `shell: pwsh` guidance for PowerShell mode
+11	- All other methodology, tasks, modes, and models are unchanged from v3
+12	
+13	## Methodology
+14	
+15	### Overview
+16	
+17	Each task is executed by a Claude Code agent under 4 different language constraints ("modes") and with 2 different models, yielding **8 runs per task**. A
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/AGENTS.md"}
+[Result] 1	# Agent Instructions
+2	
+3	All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+4	reference here. If you are a Claude Code agent, you have already loaded this
+5	via `CLAUDE.md`. Other agents: read this file directly.
+6	
+7	## Build and test
+8	
+9	```bash
+10	# Run unit tests (REQUIRED before every PR)
+11	pip install pytest  # if not already installed
+12	python3 -m pytest tests/ -v
+13	
+14	# Validate imports
+15	python3 -c "from runner import main"
+16	python3 -c "from generate_results import generate_results_md"
+17	python3 -c "from test_quality import compute_structural_metrics"
+18	python3 -c "from llm_providers import get_provider"
+19	python3 -c "from version_docs import build_doc, main"
+20	python3 -c "from combine_results import combine"
+21	
+22	# Regenerate all reports
+23	python3 generate_results.py --all
+24	
+25	# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+26	# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+27	# a 
+[Tool: Bash] cat /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/.actrc; echo "---LS---"; ls -la /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+[Result] -P ubuntu-latest=act-ubuntu-pwsh:latest
+---LS---
+total 44
+drwxr-xr-x  4 passp passp  4096 Jun 28 13:43 .
+drwxr-xr-x 18 passp passp  4096 Jun 28 13:43 ..
+-rw-r--r--  1 passp passp    40 Jun 28 13:43 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 28 13:43 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 28 13:43 .git
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+[Assistant] This is the **default** language mode (I get to choose), task 17 — Artifact Cleanup. Python is the best fit (pre-installed with pytest, ideal for data processing). The critical constraint is the **3 `act push` limit**, so I must get the workflow right via actionlint and local validation first. Let me check what the act container provides (especially Python) before designing the workflow.
+[Tool: Bash] cd /home/passp/repos/GHA-bench
+echo "=== Dockerfile.act ==="; cat Dockerfile.act 2>/dev/null | head -60
+echo "=== docker images ==="; docker images 2>/dev/null | head -20
+echo "=== act version ==="; act --version 2>/dev/null
+echo "=== actionlint version ==="; actionlint --version 2>/dev/null
+[Tool: Bash] echo "=== python3 in act image ==="; docker run --rm act-ubuntu-pwsh:latest bash -lc 'which python3; python3 --version; which pip3; which pwsh; which git' 2>&1 | head -20
+[Result] === Dockerfile.act ===
+# Custom act container image with PowerShell and Pester pre-installed.
+# Matches what real GitHub-hosted ubuntu-latest runners provide.
+#
+# Build:  docker build -t act-ubuntu-pwsh:latest -f Dockerfile.act .
+# Use:    act push -P ubuntu-latest=act-ubuntu-pwsh:latest
+# Or:     echo '-P ubuntu-latest=act-ubuntu-pwsh:latest' > .actrc
+
+FROM catthehacker/ubuntu:act-latest
+
+# Install PowerShell from Microsoft's APT repo
+RUN apt-get update -qq \
+    && apt-get install -y -qq wget apt-transport-https software-properties-common \
+    && wget -q "https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb" \
+    && dpkg -i packages-microsoft-prod.deb \
+    && apt-get update -qq \
+    && apt-get install -y -qq powershell \
+    && rm -f packages-microsoft-prod.deb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Pester 5 (PowerShell testing framework, pre-installed on GitHub runners)
+RUN pwsh -NoProfile -Command " \
+    Set-PSRepositor
+[Result] === python3 in act image ===
+/usr/bin/python3
+Python 3.12.3
+/usr/bin/pip3
+/usr/bin/pwsh
+/usr/bin/git
+[Assistant] The act image has Python 3.12.3, pip3, pwsh, and git — so I can rely on pre-installed `python3` and avoid `actions/setup-python` network downloads. Let me confirm my tooling (pytest, PyYAML) and working directory, then begin TDD.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+echo "PWD: $(pwd)"
+echo "=== python/pytest/pyyaml on host ==="
+python3 --version
+python3 -m pytest --version 2>&1 | head -3
+python3 -c "import yaml; print('PyYAML', yaml.__version__)" 2>&1
+echo "=== git remote (act needs none) ==="
+git config user.name; git config user.email
+[Result] PWD: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+=== python/pytest/pyyaml on host ===
+Python 3.12.3
+pytest 9.0.3
+PyYAML 6.0.1
+=== git remote (act needs none) ===
+benchmark
+benchmark@test
+[Assistant] All tooling confirmed: Python 3.12.3, pytest 9.0.3, PyYAML 6.0.1, and the act image has python3/pip3/git pre-installed (no `setup-python` needed). 
+
+Now I'll begin **red/green TDD**. Let me design fixtures up front (per the pitfalls guidance) and start with the first failing test for the core data model.
+
+**Cycle 1** — write the first failing test:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+mkdir -p tests fixtures .github/workflows
+echo created
+[Result] created
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_cleanup.py", "content"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_cleanup.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest tests/test_artifact_cleanup.py -q 2>&1 | tail -15
+[Result] ==================================== ERRORS ====================================
+[31m[1m_ ERROR collecting workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_cleanup.py _[0m
+[31mImportError while importing test module '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_cleanup.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+[1m[31m/usr/lib/python3.12/importlib/__init__.py[0m:90: in import_module
+    [0m[94mreturn[39;49;00m _bootstrap._gcd_import(name[level:], package, level)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_artifact_cleanup.py[0m:21: in <module>
+    [0m[94mimport[39;49;00m [04m[96martifact_cleanup[39;49;00m [94mas[39;49;00m [04m[96mac[39;49;00m[90m[39;49;00m
+[1m[31mE   ModuleNotFou
+[Assistant] Red confirmed (`ModuleNotFoundError`). I need pytest to resolve the module from the workspace root. Let me add a `conftest.py` + `pytest.ini` so the workspace is the rootdir and on `sys.path`, then write the minimal implementation (green).
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/pytest.ini", "content": "[pytest]\n# Pin t
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/pytest.ini (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/conftest.py", "content": "\"\"\"\npytest c
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/conftest.py (file state is current in your context — no need to Read it back)
+[Assistant] **Cycle 1 (green)** — minimal implementation for parsing:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py", "content": "#!/usr/b
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -8
+[Result] [32m.[0m[32m                                                                        [100%][0m
+[32m[32m[1m1 passed[0m[32m in 0.01s[0m[0m
+[Assistant] Green. **Cycle 2** — add failing tests for validation/error handling and bulk loading:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -8
+[Result] [1m[31mE           AttributeError: module 'artifact_cleanup' has no attribute 'load_artifacts'[0m
+
+[1m[31mtests/test_artifact_cleanup.py[0m:80: AttributeError
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_parse_artifact_missing_field_reports_which[0m - KeyError: 'workflow_run_id'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_parse_artifact_rejects_negative_size[0m - Failed: DID NOT RAISE <class 'artifact_cleanup.CleanupError'>
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_load_artifacts_indexes_errors[0m - AttributeError: module 'artifact_cleanup' has no attribute 'load_artifacts'
+[31m[31m[1m3 failed[0m, [32m2 passed[0m[31m in 0.05s[0m[0m
+[Assistant] Red confirmed for cycle 2. Now implement the validation + `load_artifacts` (green):
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -6
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                                    [100%][0m
+[32m[32m[1m5 passed[0m[32m in 0.01s[0m[0m
+[Assistant] Green. **Cycle 3** — the core retention-policy engine. Writing failing tests for each policy (using my pre-computed fixtures) plus the combined interaction:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -12
+[Result]                ^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mE       AttributeError: module 'artifact_cleanup' has no attribute 'build_plan'[0m
+
+[1m[31mtests/test_artifact_cleanup.py[0m:197: AttributeError
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_max_age_deletes_only_older_than_cutoff[0m - AttributeError: module 'artifact_cleanup' has no attribute 'RetentionPolicy'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_keep_latest_n_per_workflow_run[0m - AttributeError: module 'artifact_cleanup' has no attribute 'RetentionPolicy'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_max_total_size_evicts_oldest_until_under_budget[0m - AttributeError: module 'artifact_cleanup' has no attribute 'RetentionPolicy'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_combined_policies_accumulate_reasons[0m - AttributeError: module 'artifact_cleanup' has no attribute 'Reten
+[Assistant] Red confirmed for the whole policy engine. Now implement `RetentionPolicy`, `Decision`, `DeletionPlan`, and `build_plan` (green):
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -8
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                              [100%][0m
+[32m[32m[1m11 passed[0m[32m in 0.01s[0m[0m
+[Assistant] All 11 green — the engine behaves exactly as hand-computed. **Cycle 4** — summary, report rendering (with greppable machine-readable lines for `act`), dry-run, and the mockable deleter. Failing tests first:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -10
+[Result] [1m[31mtests/test_artifact_cleanup.py[0m:274: AttributeError
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_summarize_reports_aggregates[0m - AttributeError: module 'artifact_cleanup' has no attribute 'summarize'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_render_text_contains_machine_readable_lines[0m - AttributeError: module 'artifact_cleanup' has no attribute 'render'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_render_json_is_parseable_and_exact[0m - AttributeError: module 'artifact_cleanup' has no attribute 'render'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_execute_deletion_dry_run_does_not_call_deleter[0m - AttributeError: module 'artifact_cleanup' has no attribute 'execute_deletion'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_execute_deletion_calls_deleter_for_each_deleted[0m - AttributeError: module 'artifact_cleanu
+[Assistant] Red confirmed. Now implement `summarize`, `render`, and `execute_deletion` (green):
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] I referenced `json` — need to add the import:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -6
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                        [100%][0m
+[32m[32m[1m17 passed[0m[32m in 0.01s[0m[0m
+[Assistant] 17 green. **Cycle 5** — config-file loading (`load_input`) and the CLI (`main`), which is what the workflow invokes. Failing tests first:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -10
+[Result] [1m[31mtests/test_artifact_cleanup.py[0m:357: AttributeError
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_load_input_parses_config[0m - AttributeError: module 'artifact_cleanup' has no attribute 'load_input'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_load_input_missing_file_is_meaningful[0m - AttributeError: module 'artifact_cleanup' has no attribute 'load_input'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_load_input_invalid_json[0m - AttributeError: module 'artifact_cleanup' has no attribute 'load_input'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_main_prints_text_summary[0m - AttributeError: module 'artifact_cleanup' has no attribute 'main'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[1mtest_main_json_format[0m - AttributeError: module 'artifact_cleanup' has no attribute 'main'
+[31mFAILED[0m tests/test_artifact_cleanup.py::[
+[Assistant] Red confirmed. Now implement `load_input`, `InputConfig`, and `main` with argparse (green):
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] I imported `field` but didn't use it — removing to keep clean:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -6
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                 [100%][0m
+[32m[32m[1m24 passed[0m[32m in 0.06s[0m[0m
+[Assistant] All 24 unit tests pass. Now let me create the 5 test fixtures I designed (each self-contained with a fixed `now` for deterministic output):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/keep_n.json", "content": "{\n  \"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/keep_n.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/age.json", "content": "{\n  \"_de
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/age.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/size.json", "content": "{\n  \"_d
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/size.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/combined.json", "content": "{\n  
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/combined.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/empty.json", "content": "{\n  \"_
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/fixtures/empty.json (file state is current in your context — no need to Read it back)
+[Assistant] Let me validate the script against each fixture directly (local validation before touching `act`):
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+for f in keep_n age size combined empty; do
+  echo "===== $f ====="
+  python3 artifact_cleanup.py --input "fixtures/$f.json" 2>/dev/null | grep -E '^(DELETED_COUNT|RETAINED_COUNT|SPACE_RECLAIMED|DRY_RUN)='
+done
+[Result] ===== keep_n =====
+DRY_RUN=true
+RETAINED_COUNT=4
+DELETED_COUNT=1
+SPACE_RECLAIMED=100
+===== age =====
+DRY_RUN=true
+RETAINED_COUNT=3
+DELETED_COUNT=2
+SPACE_RECLAIMED=3000
+===== size =====
+DRY_RUN=true
+RETAINED_COUNT=1
+DELETED_COUNT=3
+SPACE_RECLAIMED=1800
+===== combined =====
+DRY_RUN=true
+RETAINED_COUNT=3
+DELETED_COUNT=4
+SPACE_RECLAIMED=1800
+===== empty =====
+DRY_RUN=true
+RETAINED_COUNT=0
+DELETED_COUNT=0
+SPACE_RECLAIMED=0
+[Assistant] All 5 fixtures produce exactly the hand-computed values. Now the **GitHub Actions workflow**. I'll use a matrix over the 5 cases so a *single* `act push` exercises every case (respecting the 3-run budget), plus a dependent `summary` job to demonstrate job dependencies:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/.github/workflows/artifact-cleanup-script.
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/.github/workflows/artifact-cleanup-script.yml (file state is current in your context — no need to Read it back)
+[Assistant] Now validate with actionlint (instant) before any `act` run:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+actionlint .github/workflows/artifact-cleanup-script.yml; echo "actionlint exit: $?"
+[Result] actionlint exit: 0
+[Assistant] actionlint passes cleanly (exit 0). Before writing the act harness, let me check exactly how the benchmark runner invokes `act` so I mirror its flags (especially `--pull`, platform mapping) and avoid a wasted run:
+[Tool: Bash] cd /home/passp/repos/GHA-bench
+grep -rn "act push\|--pull\|act_cmd\|\"act\"\|'act'\|--rm\|actrc\|-P ubuntu" runner.py 2>/dev/null | head -40
+[Result] runner.py:350:   fixture data, run `act push --rm`, capture the output
+runner.py:361:`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs —
+runner.py:853:    # Inject .actrc so act uses a custom image with pwsh/Pester pre-installed
+runner.py:862:            (workspace / ".actrc").write_text(
+runner.py:863:                f"-P ubuntu-latest={ACT_CUSTOM_IMAGE}\n")
+runner.py:947:    # hung waiting on a stalled `act push`) bypassed it entirely, letting
+runner.py:1337:        ("act", ["act", "--version"]),
+Shell cwd was reset to /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+[Tool: Bash] cd /home/passp/repos/GHA-bench
+sed -n '840,870p' runner.py
+echo "=== ACT_CUSTOM_IMAGE def ==="
+grep -n "ACT_CUSTOM_IMAGE\s*=" runner.py
+[Result]     # Create workspace
+    workspace = repo_root / "workspaces" / run_dir.name / task_id / f"{mode}-{variant}"
+    workspace.mkdir(parents=True, exist_ok=True)
+
+    # Initialize workspace as a git repo (act requires one)
+    if not (workspace / ".git").exists():
+        subprocess.run(["git", "init", "-q"], cwd=str(workspace), capture_output=True, timeout=10)
+        subprocess.run(["git", "config", "user.email", "benchmark@test"], cwd=str(workspace), capture_output=True, timeout=5)
+        subprocess.run(["git", "config", "user.name", "benchmark"], cwd=str(workspace), capture_output=True, timeout=5)
+
+    # Copy instructions file
+    shutil.copy2(repo_root / INSTRUCTIONS_FILE, workspace / INSTRUCTIONS_FILE)
+
+    # Inject .actrc so act uses a custom image with pwsh/Pester pre-installed
+    # (if the image exists). This eliminates ~24s/job install overhead that
+    # wouldn't exist on real GitHub runners where pwsh is pre-installed.
+    ACT_CUSTOM_IMAGE = "act-ubuntu-pwsh:latest"
+    try
+[Assistant] The runner injects `.actrc` (already present in my workspace) mapping `ubuntu-latest` to the local `act-ubuntu-pwsh:latest` image. My harness runs `act` itself. Let me check the act action cache (so `actions/checkout` resolves offline) and do an instant `act -n` dry-run to validate the job graph without spending a real container run:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+echo "=== act action cache ==="
+ls -la ~/.cache/act 2>/dev/null | head; find ~/.cache/act -maxdepth 2 -iname '*checkout*' 2>/dev/null | head
+echo "=== need to git-add so act sees files (act reads committed tree) ==="
+git add -A 2>/dev/null
+echo "=== act dry-run (no containers) ==="
+act push -n 2>&1 | tail -40
+[Result] === act action cache ===
+total 56
+drwxr-xr-x 13 passp passp 4096 May  6 21:13 .
+drwx------ 25 passp passp 4096 Jun 26 12:46 ..
+-rw-------  1 passp passp   36 Jun 28 13:41 .notices.etag
+drwxr-xr-x 10 passp passp 4096 Apr  9 01:13 actions-checkout@v4
+drwxr-xr-x 10 passp passp 4096 May  6 20:02 actions-download-artifact@v4
+drwxr-xr-x 11 passp passp 4096 Apr 19 00:11 actions-setup-node@v4
+drwxr-xr-x  9 passp passp 4096 May  6 21:13 actions-setup-python@61a6322f88396a6271a6ee3cb4d175c0dc4ef479
+drwxr-xr-x  9 passp passp 4096 Apr 19 02:00 actions-setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+drwxr-xr-x  9 passp passp 4096 May  6 20:47 actions-setup-python@f677139bbe7f9c59b41e7462f120eb1989c08947
+/home/passp/.cache/act/actions-checkout@v4
+=== need to git-add so act sees files (act reads committed tree) ===
+=== act dry-run (no containers) ===
+*DRYRUN* [Artifact Cleanup/cleanup (empty)-5   ] unable to get git ref: reference not found
+*DRYRUN* [Artifact Cleanup/cleanup (empty)-5   ] unabl
+[Assistant] The dry-run confirms the graph parses (5 matrix jobs + `summary` dependent job, all planned). One critical observation: the plan shows `docker pull ... forcePull=true` for the **local-only** `act-ubuntu-pwsh:latest` image — a real pull would fail since it's not in any registry. I must pass `--pull=false`. Let me confirm that suppresses the pull:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+act push -n --pull=false 2>&1 | grep -E "docker pull|forcePull|Start image" | head -6
+echo "--- reset staging ---"
+git reset -q 2>/dev/null; echo done
+[Result] *DRYRUN* [Artifact Cleanup/cleanup (size)-3    ] 🚀  Start image=act-ubuntu-pwsh:latest
+*DRYRUN* [Artifact Cleanup/cleanup (age)-2     ] 🚀  Start image=act-ubuntu-pwsh:latest
+*DRYRUN* [Artifact Cleanup/cleanup (combined)-4] 🚀  Start image=act-ubuntu-pwsh:latest
+*DRYRUN* [Artifact Cleanup/cleanup (keep_n)-1  ] 🚀  Start image=act-ubuntu-pwsh:latest
+*DRYRUN* [Artifact Cleanup/cleanup (size)-3    ]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=false
+*DRYRUN* [Artifact Cleanup/cleanup (keep_n)-1  ]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=false
+--- reset staging ---
+done
+[Assistant] `--pull=false` correctly sets `forcePull=false`, so act will use the local image without a network pull. Now let me write the **workflow structure tests** (fast, run every time) and the **act integration harness** (gated, single controlled run). First, let me confirm the PyYAML `on:` key gotcha:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -c "
+import yaml
+d = yaml.safe_load(open('.github/workflows/artifact-cleanup-script.yml'))
+print('top-level keys:', list(d.keys()))
+print('has True key (the on: gotcha):', True in d)
+"
+[Result] top-level keys: ['name', True, 'permissions', 'env', 'jobs']
+has True key (the on: gotcha): True
+[Assistant] Confirmed the `on:` → `True` YAML 1.1 gotcha. Now the structure tests, handling it:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_workflow_structure.py", "conten
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_workflow_structure.py (file state is current in your context — no need to Read it back)
+[Assistant] Now run the structure tests + full unit suite to confirm everything green so far:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+python3 -m pytest -q 2>&1 | tail -8
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                        [100%][0m
+[32m[32m[1m33 passed[0m[32m in 0.19s[0m[0m
+[Assistant] 33 passing (24 unit + 9 structure). Now the **act integration harness** — the single controlled `act push` run that writes `act-result.txt` and asserts exact per-case values:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_workflow_act.py", "content": "\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/tests/test_workflow_act.py (file state is current in your context — no need to Read it back)
+[Assistant] Now the first real `act push` run (of my 3-run budget). Running the gated integration test:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+RUN_ACT=1 python3 -m pytest tests/test_workflow_act.py -v -s 2>&1 | tail -30
+[Result] [1m============================= test session starts ==============================[0m
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+configfile: pytest.ini
+plugins: anyio-4.13.0
+[1mcollecting ... [0mcollected 1 item
+
+tests/test_workflow_act.py::test_workflow_runs_through_act [32mPASSED[0m
+
+[32m============================== [32m[1m1 passed[0m[32m in 11.31s[0m[32m ==============================[0m
+[Assistant] The act integration test **passed on the first run** (11.3s). Let me verify `act-result.txt` was written with the per-case breakdown and job-success markers:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+echo "=== exists? ==="; ls -la act-result.txt
+echo "=== Job succeeded count ==="; grep -c "Job succeeded" act-result.txt
+echo "=== job-success lines ==="; grep "Job succeeded" act-result.txt
+echo "=== PER-CASE PARSED RESULTS ==="; sed -n '/PER-CASE PARSED RESULTS/,$p' act-result.txt
+[Result] === exists? ===
+-rw-r--r-- 1 passp passp 30709 Jun 28 13:57 act-result.txt
+=== Job succeeded count ===
+6
+=== job-success lines ===
+[Artifact Cleanup/cleanup (combined)-4] 🏁  Job succeeded
+[Artifact Cleanup/cleanup (age)-2     ] 🏁  Job succeeded
+[Artifact Cleanup/cleanup (keep_n)-1  ] 🏁  Job succeeded
+[Artifact Cleanup/cleanup (size)-3    ] 🏁  Job succeeded
+[Artifact Cleanup/cleanup (empty)-5   ] 🏁  Job succeeded
+[Artifact Cleanup/summary             ] 🏁  Job succeeded
+=== PER-CASE PARSED RESULTS ===
+PER-CASE PARSED RESULTS (clearly delimited)
+==============================================================================
+
+----- CASE: keep_n -----
+  expected: {'DELETED_COUNT': 1, 'RETAINED_COUNT': 4, 'SPACE_RECLAIMED': 100}
+  actual  : {'DELETED_COUNT': 1, 'RETAINED_COUNT': 4, 'SPACE_RECLAIMED': 100, 'DRY_RUN': 'true'}
+  verdict : PASS
+
+----- CASE: age -----
+  expected: {'DELETED_COUNT': 2, 'RETAINED_COUNT': 3, 'SPACE_RECLAIMED': 3000}
+  actual  : {'DELETED_COUNT': 2, 'RETAINED_COUNT': 3
+[Assistant] All green: `act-result.txt` exists (30 KB), exactly 6 "Job succeeded" lines (5 matrix cases + dependent summary job), and all 5 cases match their exact known-good values with `DRY_RUN=true`. That used 1 of my 3 `act` runs.
+
+Let me add a README and requirements file, then do one final combined run of the **entire** suite (including act) as definitive proof:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/requirements.txt", "content": "# The clean
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/requirements.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/README.md", "content": "# Artifact Cleanup
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode/README.md (file state is current in your context — no need to Read it back)
+[Assistant] Now the definitive final run — the **entire** suite including the Docker/act end-to-end test, plus a final actionlint check (act run #2 of 3):
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+echo "=== actionlint (final) ==="
+actionlint .github/workflows/artifact-cleanup-script.yml; echo "actionlint exit: $?"
+echo ""
+echo "=== FULL TEST SUITE (incl. act) ==="
+RUN_ACT=1 python3 -m pytest -q 2>&1 | tail -12
+[Result] === actionlint (final) ===
+actionlint exit: 0
+
+=== FULL TEST SUITE (incl. act) ===
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                       [100%][0m
+[32m[32m[1m34 passed[0m[32m in 21.54s[0m[0m
+[Assistant] All **34 tests pass** (24 unit TDD + 9 workflow-structure + 1 Docker/act end-to-end), actionlint is clean (exit 0), and the act run succeeded again — used 2 of 3 `act` runs, with one in reserve. Let me confirm the final deliverable set:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/default-opus48-1m-ultracode
+echo "=== Deliverables ==="
+find . -type f -not -path './.git/*' -not -path '*/__pycache__/*' -not -path './.pytest_cache/*' -not -path './.claude/*' | sort
+echo ""
+echo "=== act-result.txt present ==="; ls -la act-result.txt | awk '{print $5, $9}'
+echo "=== script syntax ==="; python3 -m py_compile artifact_cleanup.py && echo "py_compile OK"
+[Result] === Deliverables ===
+./.actrc
+./.github/workflows/artifact-cleanup-script.yml
+./README.md
+./act-result.txt
+./artifact_cleanup.py
+./benchmark-instructions-v4.md
+./conftest.py
+./fixtures/age.json
+./fixtures/combined.json
+./fixtures/empty.json
+./fixtures/keep_n.json
+./fixtures/size.json
+./pytest.ini
+./requirements.txt
+./tests/test_artifact_cleanup.py
+./tests/test_workflow_act.py
+./tests/test_workflow_structure.py
+
+=== act-result.txt present ===
+30705 act-result.txt
+=== script syntax ===
+py_compile OK
+[Assistant] The task is complete. Here's a summary of what I built.
+
+## Solution: Artifact Cleanup Script (Python 3, stdlib-only)
+
+**Language choice (default mode):** Python — the natural fit for data-processing logic, pre-installed with pytest, and available in the act container.
+
+### Methodology — genuine red/green TDD
+Five documented cycles, each written failing-first then made green:
+1. Timestamp parsing + `Artifact` model
+2. Validation & meaningful errors (missing fields, negative size, indexed bulk errors)
+3. The policy engine (`build_plan`) — each policy + the combined interaction
+4. Summary, text/JSON rendering, dry-run, mockable deleter
+5. Config loading + the `argparse` CLG (`main`)
+
+### Retention policies (union of deletion conditions, reasons accumulate)
+1. **max_age_days** — delete strictly older than cutoff (exactly-N-days is kept)
+2. **keep_latest_n** — per `workflow_run_id`, keep N newest; flag the rest
+3. **max_total_size** — evict oldest survivors until retained size fits budget
+
+The plan reports space reclaimed and retained-vs-deleted counts/sizes, with `--dry-run` support (mockable deleter; dry-run never invokes it).
+
+### GitHub Actions pipeline
+`.github/workflows/artifact-cleanup-script.yml` — triggers on push/pull_request/schedule/workflow_dispatch, least-privilege permissions (`contents: read`, `actions: write`), a **matrix** (one job per fixture case) and a dependent `summary` job (`needs: cleanup`). Uses pre-installed `python3` (no network `setup-python`).
+
+### Verification (final state)
+- **34/34 tests pass** — 24 unit (TDD) + 9 workflow-structure + 1 Docker/act end-to-end
+- **actionlint: exit 0** (clean)
+- **act: 6/6 "Job succeeded"**, every case asserted on **exact** known-good values (e.g. combined → `DELETED_COUNT=4, RETAINED_COUNT=3, SPACE_RECLAIMED=1800`)
+- **`act-result.txt`** written (30 KB) with the full log + a per-case PASS/FAIL breakdown
+
+### Key engineering decisions
+- **Matrix-in-one-run** reconciles "every test case through act" with the 3-`act`-run budget — a single `act push` covers all 5 cases with per-case isolation. I used **2 of 3** runs (1 reserve).
+- **`--pull=false`** because the act image is local-only (not in any registry); a default pull would have failed.
+- Handled the **PyYAML `on:` → `True`** YAML 1.1 gotcha in structure tests.
+- Per-case parsing filters by job tag, robust to interleaved parallel matrix output.
