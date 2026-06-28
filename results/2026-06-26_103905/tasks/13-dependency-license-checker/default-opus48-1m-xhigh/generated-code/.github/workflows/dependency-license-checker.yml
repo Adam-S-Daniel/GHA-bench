@@ -1,0 +1,75 @@
+name: Dependency License Checker
+
+# Compliance gate: parse a dependency manifest, look up each dependency's
+# license and classify it against the allow/deny policy in fixtures/policy.json.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly re-scan (Mondays 06:00 UTC) so newly-flagged licenses are caught
+    # even when nothing changed in the repo.
+    - cron: '0 6 * * 1'
+
+# Read-only: this workflow only inspects the checked-out source.
+permissions:
+  contents: read
+
+# Default fixture paths. The test harness overwrites the manifest / license-db
+# files per scenario but always reads them from these locations.
+env:
+  MANIFEST_PATH: fixtures/package.json
+  POLICY_PATH: fixtures/policy.json
+  LICENSE_DB_PATH: fixtures/licenses.json
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        run: python3 --version
+
+      # Stdlib unittest -> no pip install / network needed inside the container.
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -t . -v
+
+  license-check:
+    name: License compliance check
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify inputs exist
+        run: |
+          for f in "$MANIFEST_PATH" "$POLICY_PATH" "$LICENSE_DB_PATH"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Required input file missing: $f"
+              exit 1
+            fi
+          done
+
+      - name: Run dependency license checker
+        id: check
+        run: |
+          python3 license_checker.py \
+            --manifest "$MANIFEST_PATH" \
+            --policy "$POLICY_PATH" \
+            --license-db "$LICENSE_DB_PATH" \
+            --format text | tee report.txt
+
+      - name: Publish report to job summary
+        if: always()
+        run: |
+          {
+            echo "## Dependency License Compliance Report"
+            echo ""
+            echo '```text'
+            cat report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,97 @@
+name: Dependency License Checker
+
+# Run on pushes and PRs, on a weekly schedule (compliance drift), and on demand.
+on:
+  push:
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+# Least-privilege: the checker only reads the repository.
+permissions:
+  contents: read
+
+# Default fixture locations. The test harness overwrites these files per case;
+# a normal push uses the committed defaults in fixtures/ci/.
+env:
+  MANIFEST_PATH: fixtures/ci/manifest.json
+  POLICY_PATH: fixtures/ci/policy.json
+  LICENSES_PATH: fixtures/ci/licenses.json
+
+jobs:
+  license-check:
+    name: Check dependency licenses
+    runs-on: ubuntu-latest
+    # Expose the summary so the downstream gate job can react to it.
+    outputs:
+      total: ${{ steps.check.outputs.total }}
+      approved: ${{ steps.check.outputs.approved }}
+      denied: ${{ steps.check.outputs.denied }}
+      unknown: ${{ steps.check.outputs.unknown }}
+      compliant: ${{ steps.check.outputs.compliant }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        # Self-contained install (no marketplace action needed); add it to PATH
+        # for subsequent steps via $GITHUB_PATH.
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Run license compliance check
+        id: check
+        run: |
+          echo "Checking manifest '$MANIFEST_PATH' against policy '$POLICY_PATH'"
+
+          # Human-readable report -> stdout and the GitHub job summary.
+          {
+            echo '### Dependency License Compliance Report'
+            echo ''
+            echo '```'
+            bun run src/app.ts \
+              --manifest "$MANIFEST_PATH" \
+              --config "$POLICY_PATH" \
+              --licenses "$LICENSES_PATH" \
+              --format text
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          # Machine-readable summary -> job outputs for the gate job.
+          bun run src/app.ts \
+            --manifest "$MANIFEST_PATH" \
+            --config "$POLICY_PATH" \
+            --licenses "$LICENSES_PATH" \
+            --format kv >> "$GITHUB_OUTPUT"
+
+  compliance-gate:
+    name: Evaluate compliance gate
+    needs: license-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report compliance decision
+        env:
+          TOTAL: ${{ needs.license-check.outputs.total }}
+          APPROVED: ${{ needs.license-check.outputs.approved }}
+          DENIED: ${{ needs.license-check.outputs.denied }}
+          UNKNOWN: ${{ needs.license-check.outputs.unknown }}
+          COMPLIANT: ${{ needs.license-check.outputs.compliant }}
+        run: |
+          echo "Compliance summary: total=$TOTAL approved=$APPROVED denied=$DENIED unknown=$UNKNOWN compliant=$COMPLIANT"
+          if [ "$DENIED" != "0" ]; then
+            echo "::warning::Found $DENIED dependency/dependencies with a denied license."
+          fi
+          if [ "$UNKNOWN" != "0" ]; then
+            echo "::warning::Found $UNKNOWN dependency/dependencies with an unknown license."
+          fi
+          if [ "$COMPLIANT" = "true" ]; then
+            echo "GATE: PASS - no denied licenses detected."
+          else
+            echo "GATE: REVIEW - denied licenses present (reported, not blocking in report mode)."
+          fi

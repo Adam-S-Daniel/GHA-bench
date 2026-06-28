@@ -1,0 +1,629 @@
+[Assistant] I'll start by exploring the environment to understand the context and available tools.
+[Tool: Bash] pwd && ls -la && echo "---ACTRC---" && cat .actrc 2>/dev/null && echo "---BENCH INSTRUCTIONS---" && cat benchmark-instructions-v4.md 2>/dev/null | head -100
+[Result] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh
+total 44
+drwxr-xr-x  4 passp passp  4096 Jun 27 22:53 .
+drwxr-xr-x 15 passp passp  4096 Jun 27 22:53 ..
+-rw-r--r--  1 passp passp    40 Jun 27 22:53 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 27 22:53 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 27 22:53 .git
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---BENCH INSTRUCTIONS---
+# Benchmark Instructions v4 — GitHub Actions
+
+**Version**: v4
+**Date**: 2026-04-09
+**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+
+**Changes from v3**:
+- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+- Act container now has pwsh and Pester pr
+[Tool: Bash] which bats shellcheck actionlint act docker jq bash 2>&1; echo "---VERSIONS---"; bats --version 2>&1; shellcheck --version 2>&1 | head -2; actionlint --version 2>&1; act --version 2>&1; jq --version 2>&1; bash --version 2>&1 | head -1; docker --version 2>&1
+[Result] /home/passp/.npm-global/bin/bats
+/home/passp/.local/bin/shellcheck
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/usr/bin/docker
+/home/passp/.local/bin/jq
+/usr/bin/bash
+---VERSIONS---
+Bats 1.13.0
+ShellCheck - shell script analysis tool
+version: 0.10.0
+1.7.12
+installed by downloading from release page
+built with go1.26.1 compiler for linux/amd64
+act version 0.2.87
+jq-1.7.1
+GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+Docker version 29.4.3, build 055a478
+[Assistant] Let me read the rest of the benchmark instructions, particularly the pitfalls section.
+[Tool: Bash] sed -n '100,400p' benchmark-instructions-v4.md
+[Result] - `.sh` files: `bash -n` for syntax errors, `shellcheck` for lint
+- `.ts` files: `bunx tsc --noEmit` for type errors
+- `.ps1` files: `Invoke-ScriptAnalyzer` for PowerShell analysis
+- `.yml` files in `.github/workflows/`: `actionlint` for workflow validation
+
+Diagnostics appear as additional context before the agent's next turn, enabling faster error correction.
+
+### Permissions
+
+All tool permissions are bypassed (`--dangerously-skip-permissions`). Agents have full access to all tools without approval prompts.
+
+### Execution
+
+- Tasks run **sequentially** (one at a time).
+- Each agent runs in an **isolated workspace directory** containing only a copy of this instructions file.
+- No conversation context or prior run data is passed to the agent.
+
+---
+
+## Common Pitfalls
+
+The following patterns were observed in v3 runs wasting significant agent time. Agents are encouraged to avoid them:
+
+### PowerShell: Use `shell: pwsh` in workflow steps
+
+When writing GitHub Actions workflow YAML for Power
+[Assistant] Now I understand the task. Let me check the act Docker image setup and git config.
+[Tool: Bash] docker images 2>&1 | head -20; echo "---GIT CONFIG---"; git config --global user.email 2>&1; git config --global user.name 2>&1; echo "---ACT IMAGE CHECK---"; docker image inspect act-ubuntu-pwsh:latest >/dev/null 2>&1 && echo "act-ubuntu-pwsh:latest EXISTS" || echo "act-ubuntu-pwsh:latest MISSING"
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+IMAGE                                           ID             DISK USAGE   CONTENT SIZE   EXTRA
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+alpine:latest                                   5b10f432ef3d       13.1MB         3.95MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+catthehacker/ubuntu:full-latest                 9327301aea27       67.7GB         16.8GB        
+civic-terraform-mcp:latest                      84776a24bc66       1.28GB          265MB        
+ghcr.io/catthehacker/ubuntu:act-latest          eb153df03ca8       2.04GB          297MB        
+ghcr.io/catthehacker/ubuntu:full-latest         9327301aea27       67.7GB         16.8GB        
+ghcr.io/catthehacker/
+[Assistant] Let me check what tools are available inside the act Docker image, since my script will need jq for JSON.
+[Tool: Bash] timeout 60 docker run --rm act-ubuntu-pwsh:latest bash -c 'echo "jq: $(command -v jq || echo MISSING)"; jq --version 2>&1; echo "bash: $(bash --version | head -1)"; echo "sudo: $(command -v sudo || echo MISSING)"; echo "apt-get: $(command -v apt-get || echo MISSING)"; echo "python3: $(command -v python3 || echo MISSING)"' 2>&1
+[Result] jq: /usr/bin/jq
+jq-1.6
+bash: GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+sudo: /usr/bin/sudo
+apt-get: /usr/bin/apt-get
+python3: /usr/bin/python3
+[Assistant] I have a clear picture now. Let me set up the project structure and begin TDD. First, the RED step — I'll write a failing test before any implementation exists.
+
+Let me create the directory structure and the first test fixture.
+[Tool: Bash] cd "$(git rev-parse --show-toplevel 2>/dev/null || pwd)" 2>/dev/null; mkdir -p tests/fixtures .github/workflows && ls -la
+[Result] total 52
+drwxr-xr-x  6 passp passp  4096 Jun 27 22:57 .
+drwxr-xr-x 15 passp passp  4096 Jun 27 22:53 ..
+-rw-r--r--  1 passp passp    40 Jun 27 22:53 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 27 22:53 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 27 22:53 .git
+drwxr-xr-x  3 passp passp  4096 Jun 27 22:57 .github
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+drwxr-xr-x  3 passp passp  4096 Jun 27 22:57 tests
+[Assistant] Wait — I need to verify I'm in the correct working directory, not the git root. The task says to work in the current working directory.
+[Tool: Bash] pwd; echo "---"; git rev-parse --show-toplevel
+[Result] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh
+---
+/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh
+[Assistant] Good, the working directory is itself a git repo. Let me set up a task list and begin TDD.
+[Tool: ToolSearch] {"query": "select:TaskCreate", "max_results": 1}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskCreate'}
+[Tool: TaskCreate] {"subject": "Build matrix-generator.sh via TDD", "description": "Implement the Bash matrix generator: cartesian product of dimensions, exclude rules, include rules (GitHub semantics), fail-fast/max-pa
+[Result] Task #1 created successfully: Build matrix-generator.sh via TDD
+[Tool: TaskCreate] {"subject": "Create test fixtures with exact expected values", "description": "Design fixtures up front: basic, exclude, include, feature-flags, include-only, oversize(error). Each with config.json + 
+[Result] Task #2 created successfully: Create test fixtures with exact expected values
+[Tool: TaskCreate] {"subject": "Author GHA workflow + fixture runner", "description": "Create .github/workflows/environment-matrix-generator.yml and run-fixtures.sh that processes all fixtures in one act run, prints exa
+[Result] Task #3 created successfully: Author GHA workflow + fixture runner
+[Tool: TaskCreate] {"subject": "Write bats suite (act integration + structure)", "description": "bats tests: run act once in setup_file -> act-result.txt; per-fixture exact-value assertions; workflow YAML structure test
+[Result] Task #4 created successfully: Write bats suite (act integration + structure)
+[Tool: TaskCreate] {"subject": "Run actionlint then act, finalize artifacts", "description": "Validate workflow with actionlint (instant), then run act push via bats (<=3 runs). Ensure act-result.txt exists, exit 0, all
+[Result] Task #5 created successfully: Run actionlint then act, finalize artifacts
+[Assistant] Let me start the RED step. First, I'll set the task in progress and demonstrate a failing test (the script doesn't exist yet).
+[Tool: ToolSearch] {"query": "select:TaskUpdate", "max_results": 1}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskUpdate'}
+[Tool: TaskUpdate] {"taskId": "1", "status": "in_progress"}
+[Result] Updated task #1 status
+[Assistant] Now the RED step — write the first test expectation and run it against a non-existent script:
+[Tool: Bash] # RED: First failing test — the script doesn't exist yet.
+# Dev-loop assertion (fast feedback for TDD). The final committed tests run through act.
+printf '{"dimensions":{"os":["ubuntu-latest","macos-latest"],"node":["18","20"]}}' > /tmp/basic.json
+echo "TEST: basic config should produce strategy JSON with 4 expanded combinations"
+./matrix-generator.sh --config /tmp/basic.json --output size 2>&1
+echo "exit: $?"
+[Result] TEST: basic config should produce strategy JSON with 4 expanded combinations
+/bin/bash: line 10: ./matrix-generator.sh: No such file or directory
+exit: 127
+[Assistant] RED confirmed (exit 127, script missing). Now the GREEN step — I'll implement `matrix-generator.sh`. The core matrix logic (cartesian product, exclude/include with GitHub semantics) is a cohesive `jq` program, so I'll write it as one well-commented script and then verify each behavior with fast direct-invocation tests.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/matrix-generator.sh", "content": "#!/usr/bin
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/matrix-generator.sh (file state is current in your context — no need to Read it back)
+[Assistant] Now make it executable and verify GREEN for the basic case, plus syntax/lint checks:
+[Tool: Bash] chmod +x matrix-generator.sh
+echo "=== bash -n ==="; bash -n matrix-generator.sh && echo "OK"
+echo "=== shellcheck ==="; shellcheck matrix-generator.sh && echo "OK"
+echo "=== GREEN: basic size ==="
+printf '{"dimensions":{"os":["ubuntu-latest","macos-latest"],"node":["18","20"]}}' > /tmp/basic.json
+./matrix-generator.sh --config /tmp/basic.json --output size
+echo "=== basic strategy ==="
+./matrix-generator.sh --config /tmp/basic.json --output strategy
+[Result] === bash -n ===
+OK
+=== shellcheck ===
+OK
+=== GREEN: basic size ===
+4
+=== basic strategy ===
+{
+  "fail-fast": true,
+  "matrix": {
+    "os": [
+      "ubuntu-latest",
+      "macos-latest"
+    ],
+    "node": [
+      "18",
+      "20"
+    ]
+  }
+}
+[Assistant] GREEN. Now let me verify the harder behaviors (exclude, include semantics, oversize, validation) with direct tests:
+[Tool: Bash] echo "=== TEST: exclude (2x3 minus 1 = 5), fail-fast:false, max-parallel:3 ==="
+printf '{"dimensions":{"os":["ubuntu-latest","windows-latest"],"node":["16","18","20"]},"exclude":[{"os":"windows-latest","node":"16"}],"fail-fast":false,"max-parallel":3}' > /tmp/exclude.json
+echo "size: $(./matrix-generator.sh -c /tmp/exclude.json -o size)"
+./matrix-generator.sh -c /tmp/exclude.json -o strategy | jq -c .
+echo "expanded:"; ./matrix-generator.sh -c /tmp/exclude.json -o expand | jq -c .
+
+echo ""
+echo "=== TEST: include (augment one + add new) -> 3 ==="
+printf '{"dimensions":{"os":["ubuntu-latest"],"node":["18","20"]},"include":[{"os":"ubuntu-latest","node":"20","coverage":true},{"os":"windows-latest","node":"21"}]}' > /tmp/include.json
+echo "size: $(./matrix-generator.sh -c /tmp/include.json -o size)"
+./matrix-generator.sh -c /tmp/include.json -o expand | jq -c .
+
+echo ""
+echo "=== TEST: include-only (no dimensions) -> 2 ==="
+printf '{"include":[{"os":"ubuntu-latest","node":"18"},{"os":"windows-latest","node":"20"}]}' > /tmp/includeonly.json
+echo "size: $(./matrix-generator.sh -c /tmp/includeonly.json -o size)"
+./matrix-generator.sh -c /tmp/includeonly.json -o matrix | jq -c .
+./matrix-generator.sh -c /tmp/includeonly.json -o expand | jq -c .
+[Result] === TEST: exclude (2x3 minus 1 = 5), fail-fast:false, max-parallel:3 ===
+size: 5
+{"fail-fast":true,"max-parallel":3,"matrix":{"os":["ubuntu-latest","windows-latest"],"node":["16","18","20"],"exclude":[{"os":"windows-latest","node":"16"}]}}
+expanded:
+[{"os":"ubuntu-latest","node":"16"},{"os":"ubuntu-latest","node":"18"},{"os":"ubuntu-latest","node":"20"},{"os":"windows-latest","node":"18"},{"os":"windows-latest","node":"20"}]
+
+=== TEST: include (augment one + add new) -> 3 ===
+size: 3
+[{"os":"ubuntu-latest","node":"18"},{"os":"ubuntu-latest","node":"20","coverage":true},{"os":"windows-latest","node":"21"}]
+
+=== TEST: include-only (no dimensions) -> 2 ===
+size: 2
+{"include":[{"os":"ubuntu-latest","node":"18"},{"os":"windows-latest","node":"20"}]}
+[{"os":"ubuntu-latest","node":"18"},{"os":"windows-latest","node":"20"}]
+[Assistant] Found a bug: `fail-fast:false` in config but output shows `true`. The jq `//` operator treats `false` as absent. Let me fix with an explicit null check:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/matrix-generator.sh", 
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/matrix-generator.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] echo "=== fail-fast:false now respected ==="
+./matrix-generator.sh -c /tmp/exclude.json -o strategy | jq -c '{"fail-fast", "max-parallel"}'
+
+echo ""
+echo "=== TEST: oversize error (27 > 10) -> exit 3 ==="
+printf '{"dimensions":{"os":["a","b","c"],"node":["1","2","3"],"feature":["x","y","z"]},"max-size":10}' > /tmp/oversize.json
+./matrix-generator.sh -c /tmp/oversize.json -o strategy; echo "exit: $?"
+
+echo ""
+echo "=== TEST: --max-size override allows it (override 30) ==="
+./matrix-generator.sh -c /tmp/oversize.json -o size --max-size 30; echo "exit: $?"
+
+echo ""
+echo "=== TEST: feature flags 2x2x2=8, max-size 50 ==="
+printf '{"dimensions":{"os":["ubuntu-latest","macos-latest"],"node":["18","20"],"feature":["minimal","full"]},"fail-fast":true,"max-size":50}' > /tmp/feat.json
+echo "size: $(./matrix-generator.sh -c /tmp/feat.json -o size)"
+[Result] === fail-fast:false now respected ===
+{"fail-fast":false,"max-parallel":3}
+
+=== TEST: oversize error (27 > 10) -> exit 3 ===
+matrix-generator.sh: generated matrix has 27 combinations, which exceeds the maximum allowed size of 10
+exit: 3
+
+=== TEST: --max-size override allows it (override 30) ===
+27
+exit: 0
+
+=== TEST: feature flags 2x2x2=8, max-size 50 ===
+size: 8
+[Assistant] All behaviors correct. Now let me verify error handling and validation paths:
+[Tool: Bash] echo "=== invalid JSON ==="
+printf '{not json' | ./matrix-generator.sh 2>&1; echo "exit: $?"
+echo ""
+echo "=== empty matrix (no dims, no include) ==="
+printf '{"fail-fast":false}' | ./matrix-generator.sh 2>&1; echo "exit: $?"
+echo ""
+echo "=== bad type: dimensions not object ==="
+printf '{"dimensions":[1,2,3]}' | ./matrix-generator.sh 2>&1; echo "exit: $?"
+echo ""
+echo "=== bad type: dimension value not array ==="
+printf '{"dimensions":{"os":"ubuntu"}}' | ./matrix-generator.sh 2>&1; echo "exit: $?"
+echo ""
+echo "=== empty dimension array ==="
+printf '{"dimensions":{"os":[]}}' | ./matrix-generator.sh 2>&1; echo "exit: $?"
+echo ""
+echo "=== max-parallel wrong type ==="
+printf '{"dimensions":{"os":["a"]},"max-parallel":"fast"}' | ./matrix-generator.sh 2>&1; echo "exit: $?"
+echo ""
+echo "=== missing config file ==="
+./matrix-generator.sh -c /tmp/does-not-exist.json 2>&1; echo "exit: $?"
+echo ""
+echo "=== bad output mode ==="
+printf '{"dimensions":{"os":["a"]}}' | ./matrix-generator.sh -o bogus 2>&1 | head -1; echo "exit: ${PIPESTATUS[1]}"
+echo ""
+echo "=== stdin works (default) ==="
+printf '{"dimensions":{"os":["a"]}}' | ./matrix-generator.sh -o size; echo "exit: $?"
+echo ""
+echo "=== help ==="
+./matrix-generator.sh --help | head -1; echo "exit: $?"
+[Result] === invalid JSON ===
+matrix-generator.sh: configuration is not valid JSON: jq: parse error: Invalid numeric literal at line 1, column 5
+exit: 1
+
+=== empty matrix (no dims, no include) ===
+matrix-generator.sh: invalid config: matrix is empty: provide 'dimensions' and/or 'include'
+exit: 1
+
+=== bad type: dimensions not object ===
+matrix-generator.sh: invalid config: 'dimensions' must be an object
+matrix-generator.sh: invalid config: dimension '0' must be an array
+matrix-generator.sh: invalid config: dimension '1' must be an array
+matrix-generator.sh: invalid config: dimension '2' must be an array
+exit: 1
+
+=== bad type: dimension value not array ===
+matrix-generator.sh: invalid config: dimension 'os' must be an array
+exit: 1
+
+=== empty dimension array ===
+matrix-generator.sh: invalid config: dimension 'os' must not be empty
+exit: 1
+
+=== max-parallel wrong type ===
+matrix-generator.sh: invalid config: 'max-parallel' must be a number
+exit: 1
+
+=== missing config file ===
+matrix-generator.sh: 
+[Assistant] Almost all correct. One cleanup: when `dimensions` isn't an object, the per-dimension checks produce a confusing cascade. Let me guard those checks so only the root-cause error shows:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/matrix-generator.sh", 
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/matrix-generator.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] echo "=== dimensions not object (clean error now) ==="
+printf '{"dimensions":[1,2,3]}' | ./matrix-generator.sh 2>&1; echo "exit: $?"
+echo "=== bad output mode (no head pipe) ==="
+printf '{"dimensions":{"os":["a"]}}' | ./matrix-generator.sh -o bogus >/dev/null 2>/tmp/e; echo "exit: $?"; head -1 /tmp/e
+echo "=== re-verify shellcheck + bash -n ==="
+bash -n matrix-generator.sh && shellcheck matrix-generator.sh && echo "LINT OK"
+[Result] === dimensions not object (clean error now) ===
+matrix-generator.sh: invalid config: 'dimensions' must be an object
+exit: 1
+=== bad output mode (no head pipe) ===
+exit: 1
+matrix-generator.sh: invalid --output mode: 'bogus'
+=== re-verify shellcheck + bash -n ===
+LINT OK
+[Assistant] Task 1 done. Let me verify jq-1.6 compatibility (act image has 1.6, I have 1.7) by running the script inside the act Docker image:
+[Tool: TaskUpdate] {"taskId": "1", "status": "completed"}
+[Result] Updated task #1 status
+[Tool: Bash] timeout 90 docker run --rm -v "$PWD":/w -w /w act-ubuntu-pwsh:latest bash -c '
+  echo "jq: $(jq --version)";
+  echo "--- include semantics (expect size 3) ---";
+  printf "{\"dimensions\":{\"os\":[\"ubuntu-latest\"],\"node\":[\"18\",\"20\"]},\"include\":[{\"os\":\"ubuntu-latest\",\"node\":\"20\",\"coverage\":true},{\"os\":\"windows-latest\",\"node\":\"21\"}]}" | ./matrix-generator.sh -o expand | jq -c .;
+  echo "--- exclude + fail-fast false (expect 5) ---";
+  printf "{\"dimensions\":{\"os\":[\"ubuntu-latest\",\"windows-latest\"],\"node\":[\"16\",\"18\",\"20\"]},\"exclude\":[{\"os\":\"windows-latest\",\"node\":\"16\"}],\"fail-fast\":false,\"max-parallel\":3}" | ./matrix-generator.sh -o strategy | jq -c .;
+  echo "--- oversize (expect exit 3) ---";
+  printf "{\"dimensions\":{\"os\":[\"a\",\"b\",\"c\"],\"node\":[\"1\",\"2\",\"3\"],\"feature\":[\"x\",\"y\",\"z\"]},\"max-size\":10}" | ./matrix-generator.sh -o size; echo "exit: $?";
+' 2>&1
+[Result] jq: jq-1.6
+--- include semantics (expect size 3) ---
+[{"os":"ubuntu-latest","node":"18"},{"os":"ubuntu-latest","node":"20","coverage":true},{"os":"windows-latest","node":"21"}]
+--- exclude + fail-fast false (expect 5) ---
+{"fail-fast":false,"max-parallel":3,"matrix":{"os":["ubuntu-latest","windows-latest"],"node":["16","18","20"],"exclude":[{"os":"windows-latest","node":"16"}]}}
+--- oversize (expect exit 3) ---
+matrix-generator.sh: generated matrix has 27 combinations, which exceeds the maximum allowed size of 10
+exit: 3
+[Assistant] jq 1.6 is fully compatible. Task 1 complete. Now Task 2 — create the test fixtures. Let me write the config files (the inputs/oracles):
+[Tool: TaskUpdate] {"taskId": "2", "status": "in_progress"}
+[Result] Updated task #2 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/basic/config.json", "content"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/basic/config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/exclude/config.json", "conten
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/exclude/config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/include/config.json", "conten
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/include/config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/feature-flags/config.json", "
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/feature-flags/config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/include-only/config.json", "c
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/include-only/config.json (file state is current in your context — no need to Read it back)
+[Assistant] Now the oversize (failure) fixture with its expect-fail marker:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/oversize/config.json", "conte
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/oversize/config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/oversize/expect-fail.txt", "c
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures/oversize/expect-fail.txt (file state is current in your context — no need to Read it back)
+[Assistant] Now generate `expected.json` (canonical strategy) and `expected-size.txt` for the pass fixtures from the verified script, then display them to confirm against my hand-computed expectations:
+[Tool: Bash] set -e
+for f in basic exclude include feature-flags include-only; do
+  d="tests/fixtures/$f"
+  ./matrix-generator.sh -c "$d/config.json" -o strategy | jq -S . > "$d/expected.json"
+  ./matrix-generator.sh -c "$d/config.json" -o size > "$d/expected-size.txt"
+  echo "===== $f (size=$(cat "$d/expected-size.txt")) ====="
+  jq -c . "$d/expected.json"
+done
+echo ""
+echo "===== oversize: expect-fail substring ====="
+cat tests/fixtures/oversize/expect-fail.txt
+echo "===== tree ====="
+find tests/fixtures -type f | sort
+[Result] ===== basic (size=4) =====
+{"fail-fast":true,"matrix":{"node":["18","20"],"os":["ubuntu-latest","macos-latest"]}}
+===== exclude (size=5) =====
+{"fail-fast":false,"matrix":{"exclude":[{"node":"16","os":"windows-latest"}],"node":["16","18","20"],"os":["ubuntu-latest","windows-latest"]},"max-parallel":3}
+===== include (size=3) =====
+{"fail-fast":true,"matrix":{"include":[{"coverage":true,"node":"20","os":"ubuntu-latest"},{"node":"21","os":"windows-latest"}],"node":["18","20"],"os":["ubuntu-latest"]}}
+===== feature-flags (size=8) =====
+{"fail-fast":true,"matrix":{"feature":["minimal","full"],"node":["18","20"],"os":["ubuntu-latest","macos-latest"]}}
+===== include-only (size=2) =====
+{"fail-fast":true,"matrix":{"include":[{"node":"18","os":"ubuntu-latest"},{"node":"20","os":"windows-latest"}]}}
+
+===== oversize: expect-fail substring =====
+exceeds the maximum allowed size of 10
+===== tree =====
+tests/fixtures/basic/config.json
+tests/fixtures/basic/expected-size.txt
+tests/fixtures/basic/expec
+[Assistant] All expected values match my hand-computed analysis. Task 2 done. Now Task 3 — the fixture runner that the workflow executes. It processes all fixtures in one pass, prints exact parseable values, and self-validates:
+[Tool: TaskUpdate] {"taskId": "2", "status": "completed"}
+[Result] Updated task #2 status
+[Tool: TaskUpdate] {"taskId": "3", "status": "in_progress"}
+[Result] Updated task #3 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/run-fixtures.sh", "content": "#!/usr/bin/env
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/run-fixtures.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$PWD" && sed -i '/set -e 2>\/dev\/null || true/d' run-fixtures.sh && grep -n 'set [-+]e' run-fixtures.sh; echo "--- removed stray set -e lines ---"
+[Result] 66:    set +e
+84:    set +e
+--- removed stray set -e lines ---
+[Assistant] Now make it executable, run it locally, and lint:
+[Tool: Bash] chmod +x run-fixtures.sh
+echo "=== bash -n ==="; bash -n run-fixtures.sh && echo OK
+echo "=== shellcheck ==="; shellcheck run-fixtures.sh && echo OK
+echo "=== RUN LOCALLY ==="
+./run-fixtures.sh; echo "runner exit: $?"
+[Result] === bash -n ===
+OK
+=== shellcheck ===
+OK
+=== RUN LOCALLY ===
+Environment Matrix Generator — fixture run
+generator:   /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/matrix-generator.sh
+fixtures dir: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/fixtures
+
+========== FIXTURE: basic ==========
+expect: pass
+basic SIZE=4
+basic STRATEGY={"fail-fast":true,"matrix":{"node":["18","20"],"os":["ubuntu-latest","macos-latest"]}}
+basic RESULT=PASS
+
+========== FIXTURE: exclude ==========
+expect: pass
+exclude SIZE=5
+exclude STRATEGY={"fail-fast":false,"matrix":{"exclude":[{"node":"16","os":"windows-latest"}],"node":["16","18","20"],"os":["ubuntu-latest","windows-latest"]},"max-parallel":3}
+exclude RESULT=PASS
+
+========== FIXTURE: feature-flags ==========
+expect: pass
+feature-flags SIZE=8
+feature-flags STRATEGY=
+[Assistant] Excellent — runner passes all 6 fixtures locally with exact values. Now let me create the demo config and the workflow. The workflow will have two jobs (demonstrating job dependencies): a `validate` job that runs all fixtures through the generator and emits a matrix, and a downstream `build` job that consumes that generated matrix as a real `strategy.matrix`.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/examples/demo-config.json", "content": "{\n 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/examples/demo-config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/.github/workflows/environment-matrix-generat
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/.github/workflows/environment-matrix-generator.yml (file state is current in your context — no need to Read it back)
+[Assistant] Now validate the workflow with actionlint (instant) before touching act:
+[Tool: Bash] actionlint .github/workflows/environment-matrix-generator.yml && echo "ACTIONLINT: PASS (exit $?)"
+[Result] ACTIONLINT: PASS (exit 0)
+[Assistant] actionlint passes. Let me verify the demo matrix output locally and check what YAML tooling is available for the structure tests:
+[Tool: Bash] echo "=== demo matrix output (what generate step emits) ==="
+./matrix-generator.sh --config examples/demo-config.json --output matrix | jq -c .
+echo "size: $(./matrix-generator.sh --config examples/demo-config.json --output size)"
+echo ""
+echo "=== fromJson sanity: does it expand to 2 combos? ==="
+./matrix-generator.sh --config examples/demo-config.json --output matrix | jq -c '
+  . as $m | [ $m.os[] as $o | $m.node[] as $n | {os:$o,node:$n} ]'
+echo ""
+echo "=== YAML tooling availability ==="
+which yq 2>&1; yq --version 2>&1
+python3 -c "import yaml; print('pyyaml OK', yaml.__version__)" 2>&1
+echo ""
+echo "=== bats libs (bats-support/assert)? ==="
+ls /home/passp/.npm-global/lib/node_modules/ 2>/dev/null | grep -i bats || echo "no bats helper libs in npm-global"
+ls /usr/lib/bats* 2>/dev/null || echo "no /usr/lib/bats"
+[Result] === demo matrix output (what generate step emits) ===
+{"os":["ubuntu-latest"],"node":["18","20"]}
+size: 2
+
+=== fromJson sanity: does it expand to 2 combos? ===
+[{"os":"ubuntu-latest","node":"18"},{"os":"ubuntu-latest","node":"20"}]
+
+=== YAML tooling availability ===
+/bin/bash: line 24: yq: command not found
+pyyaml OK 6.0.1
+
+=== bats libs (bats-support/assert)? ===
+bats
+no /usr/lib/bats
+[Assistant] Good: demo matrix → 2 combos, python3+pyyaml available (no yq), no bats helper libs (I'll write plain bats). 
+
+Before writing the bats harness, let me de-risk with my first direct `act` run (#1 of 3) using the exact temp-repo procedure the harness will use. This produces real output to tune assertions against and validates pull behavior:
+[Tool: Bash] set -u
+PROJECT_DIR="$PWD"
+WORK="$(mktemp -d)"
+echo "WORK=$WORK"
+cp "$PROJECT_DIR/matrix-generator.sh" "$PROJECT_DIR/run-fixtures.sh" "$WORK/"
+cp -r "$PROJECT_DIR/.github" "$PROJECT_DIR/tests" "$PROJECT_DIR/examples" "$WORK/"
+cp "$PROJECT_DIR/.actrc" "$WORK/"
+cd "$WORK"
+git init -q
+git config user.email "test@example.com"
+git config user.name "bats test"
+git add -A
+git commit -qm "fixture commit" >/dev/null
+echo "=== running act (run #1) ==="
+act push --rm --pull=false > "$PROJECT_DIR/act-result.txt" 2>&1
+code=$?
+echo "ACT EXIT CODE: $code"
+cd "$PROJECT_DIR"
+rm -rf "$WORK"
+echo "=== act-result.txt size: $(wc -l < act-result.txt) lines ==="
+echo "=== Job succeeded count: $(grep -c 'Job succeeded' act-result.txt) ==="
+echo "=== Job failed count: $(grep -c 'Job failed' act-result.txt) ==="
+[Result] WORK=/tmp/tmp.dEMT8b9G5Y
+=== running act (run #1) ===
+ACT EXIT CODE: 0
+=== act-result.txt size: 117 lines ===
+=== Job succeeded count: 3 ===
+=== Job failed count: 0 ===
+[Assistant] act run #1 passed cleanly: exit 0, 3 jobs succeeded, 0 failed. Let me inspect the exact output format to tune my assertions:
+[Tool: Bash] echo "=== fixture SIZE/RESULT lines ==="
+grep -E 'SIZE=|RESULT=|OVERALL=|FIXTURES TOTAL|EXIT=|STDERR=' act-result.txt
+echo ""
+echo "=== STRATEGY lines (basic + include) ==="
+grep -E 'basic STRATEGY=|include STRATEGY=' act-result.txt
+echo ""
+echo "=== generate step + build combinations ==="
+grep -E 'Generated matrix:|Expanded size:|BUILD_COMBINATION|Job succeeded' act-result.txt
+[Result] === fixture SIZE/RESULT lines ===
+[Environment Matrix Generator/Validate generator and emit matrix]   | basic SIZE=4
+[Environment Matrix Generator/Validate generator and emit matrix]   | basic RESULT=PASS
+[Environment Matrix Generator/Validate generator and emit matrix]   | exclude SIZE=5
+[Environment Matrix Generator/Validate generator and emit matrix]   | exclude RESULT=PASS
+[Environment Matrix Generator/Validate generator and emit matrix]   | feature-flags SIZE=8
+[Environment Matrix Generator/Validate generator and emit matrix]   | feature-flags RESULT=PASS
+[Environment Matrix Generator/Validate generator and emit matrix]   | include-only SIZE=2
+[Environment Matrix Generator/Validate generator and emit matrix]   | include-only RESULT=PASS
+[Environment Matrix Generator/Validate generator and emit matrix]   | include SIZE=3
+[Environment Matrix Generator/Validate generator and emit matrix]   | include RESULT=PASS
+[Environment Matrix Generator/Validate generator and emit matrix]   | ove
+[Assistant] Everything appears in the act output exactly as designed — all KEY=VALUE lines, exact strategy JSON matching my oracles, both build combinations, 3 "Job succeeded". Now I'll write the bats suite (Task 4). First the YAML structure checker:
+[Tool: TaskUpdate] {"taskId": "3", "status": "completed"}
+[Result] Updated task #3 status
+[Tool: TaskUpdate] {"taskId": "4", "status": "in_progress"}
+[Result] Updated task #4 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/check_structure.py", "content": "#!/us
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/check_structure.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 tests/check_structure.py .github/workflows/environment-matrix-generator.yml; echo "exit: $?"
+[Result] STRUCTURE_OK
+exit: 0
+[Assistant] Structure checker works. Now the bats suite:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/environment-matrix-generator.bats", "c
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/tests/environment-matrix-generator.bats (file state is current in your context — no need to Read it back)
+[Assistant] Now run the full bats suite — this is act run #2 (the authoritative harness run that regenerates act-result.txt):
+[Tool: Bash] bats tests/environment-matrix-generator.bats 2>&1; echo "BATS EXIT: $?"
+[Result] 1..18
+ok 1 act exited with code 0
+ok 2 act-result.txt artifact exists and is non-empty
+ok 3 every job reported success and none failed
+ok 4 fixture runner reports overall pass for all 6 fixtures
+ok 5 basic: size is exactly 4 and strategy matches expected
+ok 6 exclude: size is exactly 5, fail-fast false, max-parallel 3
+ok 7 include: size is exactly 3 (augment + new combo)
+ok 8 feature-flags: size is exactly 8 (2x2x2)
+ok 9 include-only: size is exactly 2 (one job per include)
+ok 10 oversize: generator fails with exit 3 and exact error message
+ok 11 validate job emits the generated matrix for the build job
+ok 12 build job runs once per generated combination
+ok 13 workflow file exists
+ok 14 workflow passes actionlint cleanly
+ok 15 workflow references scripts that exist on disk
+ok 16 workflow YAML has expected structure (triggers/jobs/needs/permissions)
+ok 17 matrix-generator.sh passes bash -n and shellcheck
+ok 18 run-fixtures.sh passes bash -n and shellcheck
+BATS EXIT: 0
+[Assistant] All 18 bats tests pass, including the full pipeline through act. I've used 2 of 3 act runs. Let me do a final verification of all artifacts and quality gates:
+[Tool: TaskUpdate] {"taskId": "4", "status": "completed"}
+[Result] Updated task #4 status
+[Tool: TaskUpdate] {"taskId": "5", "status": "in_progress"}
+[Result] Updated task #5 status
+[Tool: Bash] echo "=== act-result.txt exists & exit ==="; ls -l act-result.txt; echo "act exit code: $(cat .act-exit)"
+echo "=== act-result jobs ==="; grep -c "Job succeeded" act-result.txt; grep -c "Job failed" act-result.txt
+echo ""
+echo "=== actionlint ==="; actionlint .github/workflows/environment-matrix-generator.yml && echo "actionlint exit: $?"
+echo "=== bash -n + shellcheck both scripts ==="
+bash -n matrix-generator.sh && bash -n run-fixtures.sh && shellcheck matrix-generator.sh run-fixtures.sh && echo "LINT: ALL CLEAN"
+echo ""
+echo "=== final file tree ==="
+find . -type f -not -path './.git/*' -not -name 'benchmark-instructions-v4.md' | sort
+[Result] === act-result.txt exists & exit ===
+-rw-r--r-- 1 passp passp 13415 Jun 27 23:10 act-result.txt
+act exit code: 0
+=== act-result jobs ===
+3
+0
+
+=== actionlint ===
+actionlint exit: 0
+=== bash -n + shellcheck both scripts ===
+LINT: ALL CLEAN
+
+=== final file tree ===
+./.act-exit
+./.actrc
+./.claude/settings.json
+./.github/workflows/environment-matrix-generator.yml
+./act-result.txt
+./examples/demo-config.json
+./matrix-generator.sh
+./run-fixtures.sh
+./tests/__pycache__/check_structure.cpython-312.pyc
+./tests/check_structure.py
+./tests/environment-matrix-generator.bats
+./tests/fixtures/basic/config.json
+./tests/fixtures/basic/expected-size.txt
+./tests/fixtures/basic/expected.json
+./tests/fixtures/exclude/config.json
+./tests/fixtures/exclude/expected-size.txt
+./tests/fixtures/exclude/expected.json
+./tests/fixtures/feature-flags/config.json
+./tests/fixtures/feature-flags/expected-size.txt
+./tests/fixtures/feature-flags/expected.json
+./tests/fixtures/include-only/config.json
+./tests/fixtures/inclu
+[Assistant] All quality gates pass. Let me clean up the python cache artifact and add a concise README documenting the design and config schema:
+[Tool: Bash] rm -rf tests/__pycache__ && echo "removed __pycache__"
+printf 'tests/__pycache__/\n*.pyc\n' > .gitignore && echo "wrote .gitignore"
+[Result] removed __pycache__
+wrote .gitignore
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/README.md", "content": "# Environment Matrix
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/bash-opus48-1m-xhigh/README.md (file state is current in your context — no need to Read it back)
+[Tool: TaskUpdate] {"taskId": "5", "status": "completed"}
+[Result] Updated task #5 status
+[Assistant] Done. Everything is built, tested through `act`, and passing. Here's the summary.
+
+## What was built
+
+A Bash **Environment Matrix Generator** that turns a JSON config (OS options, language versions, feature flags) into a GitHub Actions `strategy.matrix`, developed red→green with bats-core.
+
+**Core script — `matrix-generator.sh`** (passes `bash -n` + `shellcheck`):
+- Cartesian product of arbitrary named dimensions
+- `exclude` rules (partial-match removal) and `include` rules implemented to **GitHub's exact documented semantics** (merge into matching base combos with key-overwrite rules, or spawn a new combination)
+- `fail-fast` (default `true`) and `max-parallel` emitted into the strategy block
+- **`max-size` validation** → exits `3` with a meaningful message when the expanded job count exceeds the limit (default 256, GitHub's real cap)
+- Output modes: `strategy` / `matrix` / `expand` / `size` / `all`; reads file or stdin; graceful, specific errors for every bad-input path
+- Verified compatible with the act image's **jq 1.6**
+
+## TDD + verification
+- Caught and fixed a real bug during development: jq's `//` treated `fail-fast: false` as absent.
+- 6 fixtures with hand-verified expected values: `basic`(4), `exclude`(5), `include`(3), `feature-flags`(8), `include-only`(2), `oversize`(error).
+
+## Pipeline (the required part)
+- **`.github/workflows/environment-matrix-generator.yml`** — triggers on push/pull_request/workflow_dispatch/schedule, least-privilege `permissions`, env vars, two jobs with a `needs` dependency: `validate` runs every fixture through `run-fixtures.sh` and emits a matrix, then `build` consumes it as a real `fromJson(...)` `strategy.matrix`. **actionlint: clean (exit 0).**
+- **`tests/environment-matrix-generator.bats`** — 18 tests, **all pass**. `setup_file` builds an isolated temp git repo, runs `act push --rm` **once** (workflow loops over all fixtures internally — necessary to respect the 3-run budget), saves to **`act-result.txt`**, then asserts: act exit 0, every job "Job succeeded" (0 failed), and **exact** per-fixture values (e.g. `basic SIZE=4`, full canonical strategy JSON, `oversize EXIT=3` + "27 combinations" + "exceeds the maximum allowed size of 10", both `BUILD_COMBINATION` rows). Plus structure tests (parsed YAML, referenced-paths-exist, actionlint) and shellcheck/bash -n.
+
+## Final state
+- `act-result.txt` present, **act exit 0**, 3 jobs succeeded / 0 failed
+- `actionlint`: exit 0 · `shellcheck`+`bash -n`: clean on both scripts · `bats`: 18/18
+- **act runs used: 2 of 3** (one de-risking run to tune assertions, one authoritative harness run)

@@ -1,0 +1,109 @@
+name: Semantic Version Bumper
+
+# Triggers:
+#   * push / pull_request - validate the next version on every change
+#   * workflow_dispatch    - run on demand, optionally against a custom log
+#   * schedule             - a weekly "what would the next release be?" check
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      commits_file:
+        description: Delimited conventional-commit log to analyze
+        required: false
+        default: commits.log
+  schedule:
+    - cron: '0 3 * * 1'
+
+# Least-privilege: the pipeline only reads the repo and computes a version;
+# it does not push commits or tags, so read access is sufficient.
+permissions:
+  contents: read
+
+# Centralized configuration. COMMITS_FILE honours the workflow_dispatch input
+# when present and otherwise falls back to the repo's committed commits.log.
+env:
+  VERSION_FILE: VERSION
+  CHANGELOG_FILE: CHANGELOG.md
+  COMMITS_FILE: ${{ github.event.inputs.commits_file || 'commits.log' }}
+
+jobs:
+  bump:
+    name: Compute next version
+    runs-on: ubuntu-latest
+    # Expose the computed values so the dependent `verify` job can consume them.
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_type: ${{ steps.bump.outputs.bump_type }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        shell: bash
+        run: python3 --version
+
+      - name: Compute next version
+        id: bump
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Version file: ${VERSION_FILE}"
+          echo "Commit log:   ${COMMITS_FILE}"
+          if [ ! -f "${COMMITS_FILE}" ]; then
+            echo "::error::commit log '${COMMITS_FILE}' not found"
+            exit 1
+          fi
+          # Run the bumper. It updates VERSION + CHANGELOG.md and prints
+          # PREVIOUS_VERSION=, BUMP_TYPE= and NEW_VERSION= lines on stdout.
+          output="$(python3 semver_bumper.py \
+            --version-file "${VERSION_FILE}" \
+            --commits-file "${COMMITS_FILE}" \
+            --changelog "${CHANGELOG_FILE}")"
+          echo "${output}"
+          new_version="$(printf '%s\n' "${output}" | sed -n 's/^NEW_VERSION=//p')"
+          bump_type="$(printf '%s\n' "${output}" | sed -n 's/^BUMP_TYPE=//p')"
+          if [ -z "${new_version}" ]; then
+            echo "::error::could not determine the new version from script output"
+            exit 1
+          fi
+          # Surface the results as step outputs for the dependent job.
+          {
+            echo "new_version=${new_version}"
+            echo "bump_type=${bump_type}"
+          } >> "${GITHUB_OUTPUT}"
+          echo "NEW_VERSION=${new_version}"
+          echo "BUMP_TYPE=${bump_type}"
+
+      - name: Write job summary
+        shell: bash
+        run: |
+          {
+            echo "## Semantic Version Bump"
+            echo ""
+            echo "| Field | Value |"
+            echo "| ----- | ----- |"
+            echo "| New version | ${{ steps.bump.outputs.new_version }} |"
+            echo "| Bump type   | ${{ steps.bump.outputs.bump_type }} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  verify:
+    name: Verify computed version
+    needs: bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate semantic version
+        shell: bash
+        env:
+          NEW_VERSION: ${{ needs.bump.outputs.new_version }}
+          BUMP_TYPE: ${{ needs.bump.outputs.bump_type }}
+        run: |
+          set -euo pipefail
+          echo "Received NEW_VERSION=${NEW_VERSION} (bump=${BUMP_TYPE}) from bump job"
+          if ! printf '%s' "${NEW_VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::'${NEW_VERSION}' is not a valid semantic version"
+            exit 1
+          fi
+          echo "NEW_VERSION=${NEW_VERSION}"
+          echo "Version verified successfully"

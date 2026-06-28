@@ -1,0 +1,90 @@
+name: Environment Matrix Generator
+
+# Trigger on the usual CI events plus a manual button and a weekly schedule.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Re-validate weekly (Mondays at 06:00 UTC) to catch environment drift.
+    - cron: '0 6 * * 1'
+
+# Least-privilege: this workflow only needs to read the repository contents.
+permissions:
+  contents: read
+
+# Workflow-level environment variables consumed by the run steps below.
+env:
+  FIXTURES_DIR: tests/fixtures
+  DEMO_CONFIG: examples/demo-config.json
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: validate the generator against every fixture, then generate the
+  # build matrix that the downstream job will consume.
+  # ---------------------------------------------------------------------------
+  validate:
+    name: Validate generator and emit matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+      size: ${{ steps.generate.outputs.size }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure jq is available
+        run: |
+          # jq is pre-installed on GitHub-hosted runners and in the act image;
+          # install it only as a portability fallback.
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+          jq --version
+
+      - name: Make scripts executable
+        run: chmod +x matrix-generator.sh run-fixtures.sh
+
+      - name: Lint shell scripts (best effort)
+        run: |
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck matrix-generator.sh run-fixtures.sh
+          else
+            echo "shellcheck not installed; skipping lint"
+          fi
+
+      - name: Run all fixtures through the generator
+        run: ./run-fixtures.sh
+
+      - name: Generate matrix for the build job
+        id: generate
+        run: |
+          matrix="$(./matrix-generator.sh --config "$DEMO_CONFIG" --output matrix | jq -c .)"
+          size="$(./matrix-generator.sh --config "$DEMO_CONFIG" --output size)"
+          echo "Generated matrix: $matrix"
+          echo "Expanded size:    $size"
+          {
+            echo "matrix=$matrix"
+            echo "size=$size"
+          } >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------------------
+  # Job 2: consume the generated matrix as a real strategy.matrix. Depends on
+  # the validate job via `needs`. runs-on is pinned to ubuntu-latest so the job
+  # runs reliably under `act` (which maps only the ubuntu image); the matrix
+  # values are echoed to prove the generated matrix drives the build.
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build with generated matrix
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.validate.outputs.matrix) }}
+    steps:
+      - name: Show this matrix combination
+        run: |
+          echo "Generated matrix size was: ${{ needs.validate.outputs.size }}"
+          echo "BUILD_COMBINATION os=${{ matrix.os }} node=${{ matrix.node }}"
+          echo "Building on OS '${{ matrix.os }}' with Node '${{ matrix.node }}'."

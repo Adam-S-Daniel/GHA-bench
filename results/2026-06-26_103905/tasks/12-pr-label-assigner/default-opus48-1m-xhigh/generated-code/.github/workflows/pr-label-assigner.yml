@@ -1,0 +1,76 @@
+name: PR Label Assigner
+
+# Trigger on PR activity (the real use case), on push (used by the `act` test
+# harness), and manually via workflow_dispatch with an optional override for the
+# changed-files list.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+    inputs:
+      files:
+        description: "Path to a newline-separated changed-files list"
+        required: false
+        default: "fixtures/changed-files.txt"
+
+# Least-privilege: read the repo; write PR labels (the realistic action a
+# downstream step would take with these outputs). No secrets are required.
+permissions:
+  contents: read
+  pull-requests: write
+
+# Sensible defaults so the workflow runs with zero external configuration.
+env:
+  CONFIG_FILE: label-rules.json
+  CHANGED_FILES_FILE: fixtures/changed-files.txt
+
+jobs:
+  assign-labels:
+    name: Compute labels
+    runs-on: ubuntu-latest
+    # Expose the computed labels so dependent jobs can consume them.
+    outputs:
+      labels: ${{ steps.assign.outputs.labels }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        # The script is pure-stdlib Python 3, pre-installed on ubuntu runners
+        # (and in the act container), so no dependency install is needed.
+        run: python3 --version
+
+      - name: Resolve changed-files list
+        id: resolve
+        # Use the workflow_dispatch input when provided, else the env default.
+        # Untrusted input is passed through an env var (never interpolated
+        # directly into the shell) to avoid script injection.
+        env:
+          INPUT_FILES: ${{ github.event.inputs.files }}
+        run: |
+          FILES="${INPUT_FILES:-$CHANGED_FILES_FILE}"
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          echo "Using changed-files list: $FILES"
+
+      - name: Assign labels
+        id: assign
+        # The script prints "LABELS: ..." to stdout and writes "labels=..." to
+        # $GITHUB_OUTPUT, which becomes this job's output.
+        env:
+          FILES: ${{ steps.resolve.outputs.files }}
+        run: |
+          python3 pr_label_assigner.py --config "$CONFIG_FILE" --files "$FILES"
+
+  report:
+    name: Report labels
+    runs-on: ubuntu-latest
+    needs: assign-labels
+    steps:
+      - name: Show resulting labels
+        env:
+          LABELS: ${{ needs.assign-labels.outputs.labels }}
+        run: |
+          echo "RESULT_LABELS: ${LABELS:-<none>}"
+          echo "On a real PR these labels would be applied via the GitHub API."

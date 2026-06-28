@@ -1,0 +1,85 @@
+name: Artifact Cleanup
+
+# Triggers: run on pushes / PRs (to validate the tool), on a weekly schedule
+# (the real-world maintenance use case), and on manual dispatch.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 0' # 03:00 UTC every Sunday
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview the plan without performing deletions'
+        type: boolean
+        default: true
+
+# The job only reads the repository contents.
+permissions:
+  contents: read
+
+# Paths to the artifact inventory and policy file. Centralised here so the
+# workflow stays static while the committed fixtures drive the behaviour.
+env:
+  INVENTORY: fixtures/artifacts.txt
+  POLICY: fixtures/policy.env
+
+jobs:
+  # Job 1: cheap, dependency-free validation of the script and its inputs.
+  validate:
+    name: Validate script and fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate Bash syntax
+        run: bash -n artifact-cleanup.sh
+
+      - name: Ensure required files exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in artifact-cleanup.sh "$INVENTORY" "$POLICY"; do
+            if [[ ! -f "$f" ]]; then
+              echo "::error::required file missing: $f"
+              exit 1
+            fi
+          done
+          echo "All required files present."
+
+  # Job 2: run the cleanup tool and surface the plan. Depends on validate.
+  cleanup:
+    name: Run artifact cleanup plan
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Make script executable
+        run: chmod +x artifact-cleanup.sh
+
+      - name: Generate deletion plan (text)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "===== ARTIFACT CLEANUP PLAN ====="
+          ./artifact-cleanup.sh --config "$POLICY" --input "$INVENTORY" | tee plan.txt
+          # Mirror the plan into the GitHub Actions job summary for visibility.
+          {
+            echo '## Artifact cleanup plan'
+            echo ''
+            echo '```'
+            cat plan.txt
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+
+      - name: Generate deletion plan (JSON)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./artifact-cleanup.sh --config "$POLICY" --input "$INVENTORY" --format json > plan.json
+          echo "----- JSON PLAN -----"
+          cat plan.json
+          echo

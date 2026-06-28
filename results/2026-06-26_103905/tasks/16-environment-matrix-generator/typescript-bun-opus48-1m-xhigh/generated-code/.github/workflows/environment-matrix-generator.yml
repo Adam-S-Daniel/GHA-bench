@@ -1,0 +1,127 @@
+name: Environment Matrix Generator
+
+# Trigger on the usual change events, on a weekly schedule (so a drifting
+# matrix config is caught even without a push), and manually via the Actions
+# UI. workflow_dispatch exposes an optional override for the config file path.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      config:
+        description: "Path to the matrix configuration JSON"
+        required: false
+        default: "matrix-config.json"
+
+# Least-privilege: the pipeline only reads the repository contents.
+permissions:
+  contents: read
+
+# Default config file location. The job step prefers the workflow_dispatch
+# input when present and falls back to this. A test harness can drop a fixture
+# at this path to exercise the pipeline.
+env:
+  MATRIX_CONFIG_FILE: matrix-config.json
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Job 1: run the generator over the configuration and expose the resulting
+  # GitHub Actions matrix as a job output so downstream jobs can consume it.
+  # -------------------------------------------------------------------------
+  generate-matrix:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+      count: ${{ steps.generate.outputs.count }}
+      max-parallel: ${{ steps.generate.outputs.max-parallel }}
+      fail-fast: ${{ steps.generate.outputs.fail-fast }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Run unit tests
+        # Run only the pure-logic test files in CI. These are fully in-process
+        # (no subprocesses, no Docker), so they are fast and safe inside the
+        # isolated container.
+        run: bun test tests/matrix.test.ts tests/cli.test.ts
+
+      - name: Resolve config path
+        id: config
+        run: |
+          CONFIG="${{ github.event.inputs.config || env.MATRIX_CONFIG_FILE }}"
+          echo "path=$CONFIG" >> "$GITHUB_OUTPUT"
+          echo "Using configuration file: $CONFIG"
+
+      - name: Generate matrix
+        id: generate
+        run: |
+          set -euo pipefail
+          CONFIG="${{ steps.config.outputs.path }}"
+          # Produce the strategy JSON (pretty in the log, also saved to a file).
+          bun run src/generate.ts --config "$CONFIG" --out matrix.json --pretty
+
+          # Expose pieces of the result as step outputs for downstream jobs.
+          # NOTE: use explicit `has(...)` checks, NOT jq's `//` operator, when a
+          # value may legitimately be boolean `false`: `false // x` evaluates to
+          # `x` in jq, which would silently drop `fail-fast: false`.
+          {
+            echo "matrix=$(jq -c '.matrix' matrix.json)"
+            echo "count=$(jq -c '.count' matrix.json)"
+            echo "max-parallel=$(jq -rc 'if has("max-parallel") then ."max-parallel" else "" end' matrix.json)"
+            echo "fail-fast=$(jq -rc 'if has("fail-fast") then ."fail-fast" else "" end' matrix.json)"
+          } >> "$GITHUB_OUTPUT"
+
+          # Emit clearly-delimited, greppable markers for the test harness so it
+          # can assert on exact values parsed from the pipeline output.
+          echo "MATRIX_COUNT=$(jq -rc '.count' matrix.json)"
+          echo "MATRIX_MAX_PARALLEL=$(jq -rc 'if has("max-parallel") then ."max-parallel" else "none" end' matrix.json)"
+          echo "MATRIX_FAIL_FAST=$(jq -rc 'if has("fail-fast") then ."fail-fast" else "none" end' matrix.json)"
+          echo "MATRIX_INCLUDE_JSON=$(jq -c '.matrix' matrix.json)"
+          echo "MATRIX_STRATEGY_JSON=$(jq -c '.' matrix.json)"
+
+  # -------------------------------------------------------------------------
+  # Job 2: consume the generated matrix in a real strategy.matrix so the whole
+  # pipeline proves the output is usable. This job depends on job 1 (job
+  # dependency) and fans out one run per generated combination.
+  # -------------------------------------------------------------------------
+  build:
+    name: Build (matrix)
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Report combination
+        run: |
+          echo "Building combination: ${{ toJson(matrix) }}"
+          echo "  os=${{ matrix.os }} node=${{ matrix.node }}"
+
+  # -------------------------------------------------------------------------
+  # Job 3: a fan-in summary that depends on both prior jobs and confirms the
+  # matrix was generated and consumed end to end.
+  # -------------------------------------------------------------------------
+  summary:
+    name: Summary
+    needs: [generate-matrix, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print summary
+        run: |
+          echo "Generated ${{ needs.generate-matrix.outputs.count }} combination(s)."
+          echo "max-parallel=${{ needs.generate-matrix.outputs.max-parallel }}"
+          echo "fail-fast=${{ needs.generate-matrix.outputs.fail-fast }}"
+          echo "MATRIX_PIPELINE_OK=true"

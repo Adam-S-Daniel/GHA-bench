@@ -1,0 +1,90 @@
+name: Semantic Version Bumper
+
+# Trigger on day-to-day repo activity, on demand, and on a weekly schedule.
+# - push / pull_request: validate the bumper against the repo's commit fixtures.
+# - workflow_dispatch:    let a human run it (optionally as a dry run).
+# - schedule:             a weekly sanity run.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Compute the next version without writing any files"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "0 3 * * 1"
+
+# The job only reads the checkout and computes/prints the next version; it does
+# not push commits or tags, so read-only access to repo contents is enough.
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  bump:
+    name: Determine next version
+    runs-on: ubuntu-latest
+    env:
+      # Install Bun inside the workspace so it is self-contained per run.
+      BUN_INSTALL: ${{ github.workspace }}/.bun-runtime
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "${BUN_INSTALL}/bin" >> "$GITHUB_PATH"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit tests
+        run: bun run test:unit
+
+      - name: Bump version
+        id: bump
+        env:
+          # The integration harness overrides VERSION_FILE / COMMITS_FILE per
+          # test case via `act --env`; the defaults make a plain run work too.
+          # DRY_RUN comes from the workflow_dispatch input when present.
+          DRY_RUN: ${{ github.event.inputs.dry-run || 'false' }}
+        run: |
+          set -euo pipefail
+          VERSION_FILE="${VERSION_FILE:-version.txt}"
+          COMMITS_FILE="${COMMITS_FILE:-fixtures/commits.txt}"
+          EXTRA=""
+          if [ "${DRY_RUN}" = "true" ]; then
+            EXTRA="--dry-run"
+          fi
+          echo "Bumping '${VERSION_FILE}' using commits from '${COMMITS_FILE}'"
+          bun run src/index.ts \
+            --version-file "${VERSION_FILE}" \
+            --commits "${COMMITS_FILE}" \
+            --changelog CHANGELOG.md \
+            --date "$(date -u +%F)" \
+            ${EXTRA}
+
+      - name: Summarise result
+        run: |
+          echo "previous-version=${{ steps.bump.outputs.previous-version }}"
+          echo "NEW_VERSION=${{ steps.bump.outputs.new-version }}"
+          echo "BUMP_TYPE=${{ steps.bump.outputs.bump-type }}"
+          echo "CHANGED=${{ steps.bump.outputs.changed }}"
+
+      - name: Show generated changelog
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            echo "----- CHANGELOG.md -----"
+            cat CHANGELOG.md
+          else
+            echo "No changelog generated (no release-worthy commits)."
+          fi

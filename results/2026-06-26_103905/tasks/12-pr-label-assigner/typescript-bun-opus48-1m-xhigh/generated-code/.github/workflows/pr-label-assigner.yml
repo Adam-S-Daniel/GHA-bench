@@ -1,0 +1,97 @@
+name: PR Label Assigner
+
+# Triggers:
+#   - push / pull_request: triage changed files on every change.
+#   - workflow_dispatch: run on demand, optionally overriding which config and
+#     changed-files fixture to evaluate.
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      config:
+        description: Path to the labeler rules config (JSON)
+        required: false
+        default: examples/labeler.config.json
+      files:
+        description: Path to the changed-files list (JSON array or newline list)
+        required: false
+        default: examples/changed-files.json
+
+# Least-privilege default for the whole workflow.
+permissions:
+  contents: read
+
+# Default fixture locations, shared by the jobs. workflow_dispatch inputs
+# override these per-run (see the assign step's env block).
+env:
+  LABELER_CONFIG: examples/labeler.config.json
+  CHANGED_FILES: examples/changed-files.json
+
+jobs:
+  # First job: prove the script's logic with its own unit tests. The
+  # label-assignment job depends on this passing.
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Run unit tests
+        run: bun test tests/labeler.test.ts tests/cli.test.ts
+
+  # Second job: compute and publish the label set. Runs only if tests pass.
+  assign-labels:
+    name: Assign labels
+    needs: test
+    runs-on: ubuntu-latest
+    # This job needs to write labels back to the PR in a real deployment.
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      labels: ${{ steps.labeler.outputs.labels }}
+      count: ${{ steps.labeler.outputs.count }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Assign labels from changed files
+        id: labeler
+        env:
+          # Fall back to the workflow-level defaults unless a dispatch input
+          # overrides them.
+          CONFIG_PATH: ${{ github.event.inputs.config || env.LABELER_CONFIG }}
+          FILES_PATH: ${{ github.event.inputs.files || env.CHANGED_FILES }}
+        run: |
+          echo "Using config: $CONFIG_PATH"
+          echo "Using files:  $FILES_PATH"
+          bun run src/cli.ts --config "$CONFIG_PATH" --files "$FILES_PATH"
+
+      - name: Show resolved labels
+        # Read the values back via the step output to prove the
+        # GITHUB_OUTPUT integration works end-to-end.
+        env:
+          LABELS: ${{ steps.labeler.outputs.labels }}
+          COUNT: ${{ steps.labeler.outputs.count }}
+        run: |
+          echo "Resolved labels: $LABELS"
+          echo "Label count:     $COUNT"

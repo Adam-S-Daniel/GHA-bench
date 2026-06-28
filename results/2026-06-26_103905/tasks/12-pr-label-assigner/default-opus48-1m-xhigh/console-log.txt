@@ -1,0 +1,345 @@
+[Assistant] I'll start by exploring the environment to understand the setup and constraints.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/benchmark-instructions-v4.md"}
+[Result] 1	# Benchmark Instructions v4 — GitHub Actions
+2	
+3	**Version**: v4
+4	**Date**: 2026-04-09
+5	**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+6	
+7	**Changes from v3**:
+8	- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+9	- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+10	- GHA workflow addendum expanded with `shell: pwsh` guidance for PowerShell mode
+11	- All other methodology, tasks, modes, and models are unchanged from v3
+12	
+13	## Methodology
+14	
+15	### Overview
+16	
+17	Each task is executed by a Claude Code agent under 4 different language constraints ("modes") and with 2 different models, yielding **8 runs per task**. A
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100; echo "---ACTRC---"; cat /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/.actrc 2>/dev/null
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Assistant] I've read the full instructions. This is **default mode** — I choose the language. I'll use **Python 3** (pytest pre-installed, excellent glob/regex support, and available in the act container).
+
+Let me verify the environment before writing code.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+echo "=== pwd ==="; pwd
+echo "=== python ==="; python3 --version; which pytest; python3 -c "import pytest; print('pytest', pytest.__version__)"
+echo "=== tools ==="; which actionlint act docker
+echo "=== docker images ==="; docker images | grep -i act || echo "no act images yet"
+echo "=== ls ==="; ls -la
+[Result] === pwd ===
+/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh
+=== python ===
+Python 3.12.3
+/home/passp/.local/bin/pytest
+pytest 9.0.3
+=== tools ===
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/usr/bin/docker
+=== docker images ===
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+ghcr.io/catthehacker/ubuntu:act-latest          eb153df03ca8       2.04GB          297MB        
+=== ls ===
+total 44
+drwxr-xr-x  4 passp passp  4096 Jun 27 16:57 .
+drwxr-xr-x 13 passp passp  4096 Jun 27 16:57 ..
+-rw-r--r--  1 passp passp    40 Jun 27 16:57 .actrc
+drwxr-xr-
+[Tool: Bash] cat /home/passp/repos/GHA-bench/Dockerfile.act 2>/dev/null | head -40
+echo "=== check python in act container ==="
+timeout 60 docker run --rm act-ubuntu-pwsh:latest bash -c "python3 --version; which python3; which git; which pwsh" 2>&1 | head -20 || echo "container check failed/slow"
+[Result] # Custom act container image with PowerShell and Pester pre-installed.
+# Matches what real GitHub-hosted ubuntu-latest runners provide.
+#
+# Build:  docker build -t act-ubuntu-pwsh:latest -f Dockerfile.act .
+# Use:    act push -P ubuntu-latest=act-ubuntu-pwsh:latest
+# Or:     echo '-P ubuntu-latest=act-ubuntu-pwsh:latest' > .actrc
+
+FROM catthehacker/ubuntu:act-latest
+
+# Install PowerShell from Microsoft's APT repo
+RUN apt-get update -qq \
+    && apt-get install -y -qq wget apt-transport-https software-properties-common \
+    && wget -q "https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb" \
+    && dpkg -i packages-microsoft-prod.deb \
+    && apt-get update -qq \
+    && apt-get install -y -qq powershell \
+    && rm -f packages-microsoft-prod.deb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Pester 5 (PowerShell testing framework, pre-installed on GitHub runners)
+RUN pwsh -NoProfile -Command " \
+    Set-PSRepository -Name PSGallery -Inst
+[Assistant] Environment confirmed: Python 3.12 + pytest 9 locally, and the act container (`act-ubuntu-pwsh:latest`) has Python 3.12, git, and pwsh. **Python** is my language.
+
+Now I'll begin **red/green TDD**. First, the failing test for the core glob matcher.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+mkdir -p tests fixtures
+# empty conftest at root so pytest puts project root on sys.path (prepend import mode)
+: > conftest.py
+ls -la
+[Result] total 52
+drwxr-xr-x  6 passp passp  4096 Jun 27 17:00 .
+drwxr-xr-x 13 passp passp  4096 Jun 27 16:57 ..
+-rw-r--r--  1 passp passp    40 Jun 27 16:57 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 27 16:57 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 27 16:57 .git
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+-rw-r--r--  1 passp passp     0 Jun 27 17:00 conftest.py
+drwxr-xr-x  2 passp passp  4096 Jun 27 17:00 fixtures
+drwxr-xr-x  2 passp passp  4096 Jun 27 17:00 tests
+[Assistant] **RED #1** — Write the first failing test for the glob matcher.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/tests/test_pr_label_assigner.py", "content": "\"\"\"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/tests/test_pr_label_assigner.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+python3 -m pytest tests/ -q 2>&1 | tail -15
+[Result] ==================================== ERRORS ====================================
+[31m[1m_ ERROR collecting workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/tests/test_pr_label_assigner.py _[0m
+[31mImportError while importing test module '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/tests/test_pr_label_assigner.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+[1m[31m/usr/lib/python3.12/importlib/__init__.py[0m:90: in import_module
+    [0m[94mreturn[39;49;00m _bootstrap._gcd_import(name[level:], package, level)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_pr_label_assigner.py[0m:14: in <module>
+    [0m[94mimport[39;49;00m [04m[96mpr_label_assigner[39;49;00m [94mas[39;49;00m [04m[96mpla[39;49;00m[90m[39;49;00m
+[1m[31mE   ModuleNotFoundError: No mod
+[Assistant] **GREEN #1** — RED confirmed (`ModuleNotFoundError`). Now write the core matcher.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/pr_label_assigner.py", "content": "#!/usr/bin/env py
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/pr_label_assigner.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+python3 -m pytest tests/test_pr_label_assigner.py -q 2>&1 | tail -8
+[Result] [32m.[0m[32m                                                                        [100%][0m
+[32m[32m[1m1 passed[0m[32m in 0.01s[0m[0m
+[Assistant] **GREEN #1 passing.** Now expand the unit-test suite to cover wildcards, the basename rule, multi-label union, priority ordering, and error handling.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/tests/test_pr_label_assigner.p
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/tests/test_pr_label_assigner.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now create the config and fixtures, then run the full unit suite.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/label-rules.json", "content": "{\n  \"_comment\": \"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/label-rules.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/fixtures/case1_docs.txt", "content": "# Test case 1:
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/fixtures/case1_docs.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/fixtures/case2_api.txt", "content": "# Test case 2: 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/fixtures/case2_api.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/fixtures/case3_mixed.txt", "content": "# Test case 3
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/fixtures/case3_mixed.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/fixtures/changed-files.txt", "content": "# Default c
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/fixtures/changed-files.txt (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+python3 -m pytest tests/test_pr_label_assigner.py -q 2>&1 | tail -15
+echo "=== smoke-test the CLI against each fixture ==="
+for f in fixtures/case1_docs.txt fixtures/case2_api.txt fixtures/case3_mixed.txt; do
+  echo -n "$f -> "; python3 pr_label_assigner.py --config label-rules.json --files "$f"
+done
+echo "=== json + stdin + error paths ==="
+python3 pr_label_assigner.py --config label-rules.json --files fixtures/case3_mixed.txt --format json
+cat fixtures/case1_docs.txt | python3 pr_label_assigner.py --config label-rules.json
+python3 pr_label_assigner.py --config /nope.json --files fixtures/case1_docs.txt; echo "exit=$?"
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                               [100%][0m
+[32m[32m[1m26 passed[0m[32m in 0.05s[0m[0m
+=== smoke-test the CLI against each fixture ===
+fixtures/case1_docs.txt -> LABELS: documentation
+fixtures/case2_api.txt -> LABELS: api, tests, source
+fixtures/case3_mixed.txt -> LABELS: api, tests, documentation, ci, source
+=== json + stdin + error paths ===
+["api", "tests", "documentation", "ci", "source"]
+LABELS: documentation
+error: config file not found: /nope.json
+exit=2
+[Assistant] All 26 unit tests pass and the CLI emits exactly my designed outputs. Now the GitHub Actions workflow.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/.github/workflows/pr-label-assigner.yml", "content":
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/.github/workflows/pr-label-assigner.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+actionlint .github/workflows/pr-label-assigner.yml; echo "actionlint exit=$?"
+[Result] actionlint exit=0
+[Assistant] actionlint passes cleanly. Now the workflow structure tests. Let me check for a YAML parser.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+python3 -c "import yaml; print('pyyaml', yaml.__version__)" 2>&1
+which actionlint
+[Result] pyyaml 6.0.1
+/home/passp/.local/bin/actionlint
+[Assistant] PyYAML is available locally. Now the workflow structure tests (note: PyYAML parses the `on:` key as boolean `True` under YAML 1.1 — I'll handle that).
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/tests/test_workflow_structure.py", "content": "\"\"\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/tests/test_workflow_structure.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+python3 -m pytest tests/ -q 2>&1 | tail -15
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                     [100%][0m
+[32m[32m[1m36 passed[0m[32m in 0.13s[0m[0m
+[Assistant] 36/36 pass (26 unit + 10 structure). Now the **act integration harness** — the part that runs every test case through the pipeline. I'll write it carefully to get it right in as few `act` runs as possible.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/run_act_tests.py", "content": "#!/usr/bin/env python
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/run_act_tests.py (file state is current in your context — no need to Read it back)
+[Assistant] Before the expensive `act` runs, a quick git check, then I'll do a single smoke run on the richest case (`case3`) to de-risk the pipeline — if it passes I'll run the other two appending, keeping total `act` invocations to exactly 3.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+git --version
+echo "=== act cached actions? ==="
+ls -la ~/.cache/act 2>/dev/null | head || echo "no ~/.cache/act"
+ls -la ~/.cache/actcache 2>/dev/null | head || echo "no actcache"
+[Result] git version 2.54.0
+=== act cached actions? ===
+total 56
+drwxr-xr-x 13 passp passp 4096 May  6 21:13 .
+drwx------ 25 passp passp 4096 Jun 26 12:46 ..
+-rw-------  1 passp passp   36 Jun 27 16:55 .notices.etag
+drwxr-xr-x 10 passp passp 4096 Apr  9 01:13 actions-checkout@v4
+drwxr-xr-x 10 passp passp 4096 May  6 20:02 actions-download-artifact@v4
+drwxr-xr-x 11 passp passp 4096 Apr 19 00:11 actions-setup-node@v4
+drwxr-xr-x  9 passp passp 4096 May  6 21:13 actions-setup-python@61a6322f88396a6271a6ee3cb4d175c0dc4ef479
+drwxr-xr-x  9 passp passp 4096 Apr 19 02:00 actions-setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+drwxr-xr-x  9 passp passp 4096 May  6 20:47 actions-setup-python@f677139bbe7f9c59b41e7462f120eb1989c08947
+total 36
+drwxr-xr-x  3 passp passp  4096 Apr  8 14:16 .
+drwx------ 25 passp passp  4096 Jun 26 12:46 ..
+-rw-r--r--  1 passp passp 32768 Jun 27 10:35 bolt.db
+drwxr-xr-x  8 passp passp  4096 Jun 26 23:04 cache
+[Assistant] `actions/checkout@v4` is already cached locally — no network needed. Running the smoke test on `case3` (act run #1).
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+timeout 300 python3 run_act_tests.py --cases case3 2>&1 | tail -40
+echo "HARNESS_EXIT=$?"
+[Result] === Running case3 (fixtures/case3_mixed.txt) via act ===
+PASS case3: found 'LABELS: api, tests, documentation, ci, source' and 2 'Job succeeded'
+
+==================== SUMMARY ====================
+  case3: PASS
+act-result.txt written to: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/act-result.txt
+HARNESS_EXIT=0
+[Assistant] Smoke run passed end-to-end. Now run the remaining two cases appending (act runs #2 and #3).
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+timeout 360 python3 run_act_tests.py --cases case1 case2 --append 2>&1 | tail -40
+echo "HARNESS_EXIT=$?"
+[Result] === Running case1 (fixtures/case1_docs.txt) via act ===
+PASS case1: found 'LABELS: documentation' and 2 'Job succeeded'
+
+=== Running case2 (fixtures/case2_api.txt) via act ===
+PASS case2: found 'LABELS: api, tests, source' and 2 'Job succeeded'
+
+==================== SUMMARY ====================
+  case1: PASS
+  case2: PASS
+act-result.txt written to: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/act-result.txt
+HARNESS_EXIT=0
+[Assistant] All 3 cases pass through act (exactly 3 `act` runs total). Let me verify the `act-result.txt` artifact contains all three cases with the expected markers.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+echo "=== file size & existence ==="
+ls -la act-result.txt
+echo "=== test case delimiters ==="
+grep -n "# TEST CASE:" act-result.txt
+echo "=== exit codes recorded ==="
+grep -n "# act exit code:" act-result.txt
+echo "=== LABELS lines (assign job stdout) ==="
+grep -n "| LABELS:" act-result.txt
+echo "=== RESULT_LABELS (report job, cross-job output) ==="
+grep -n "RESULT_LABELS:" act-result.txt
+echo "=== Job succeeded count ==="
+grep -c "Job succeeded" act-result.txt
+[Result] === file size & existence ===
+-rw-r--r-- 1 passp passp 13297 Jun 27 17:06 act-result.txt
+=== test case delimiters ===
+3:# TEST CASE: case3  (fixture: fixtures/case3_mixed.txt)
+62:# TEST CASE: case1  (fixture: fixtures/case1_docs.txt)
+117:# TEST CASE: case2  (fixture: fixtures/case2_api.txt)
+=== exit codes recorded ===
+5:# act exit code: 0
+64:# act exit code: 0
+119:# act exit code: 0
+=== LABELS lines (assign job stdout) ===
+29:[PR Label Assigner/Compute labels]   | LABELS: api, tests, documentation, ci, source
+88:[PR Label Assigner/Compute labels]   | LABELS: documentation
+143:[PR Label Assigner/Compute labels]   | LABELS: api, tests, source
+=== RESULT_LABELS (report job, cross-job output) ===
+52:[PR Label Assigner/Report labels ]   | RESULT_LABELS: api,tests,documentation,ci,source
+107:[PR Label Assigner/Report labels ]   | RESULT_LABELS: documentation
+164:[PR Label Assigner/Report labels ]   | RESULT_LABELS: api,tests,source
+=== Job succeeded count ===
+6
+[Assistant] Everything verified: 3 delimited cases, all exit 0, exact `LABELS:` lines match, cross-job outputs propagated, and 6 "Job succeeded" (2 jobs × 3 cases). Final confirmation of the full local suite + actionlint.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh"
+echo "=== pytest (unit + workflow-structure) ==="
+python3 -m pytest tests/ -q 2>&1 | tail -6
+echo "=== actionlint ==="
+actionlint .github/workflows/pr-label-assigner.yml; echo "actionlint exit=$?"
+echo "=== final file tree ==="
+find . -type f -not -path './.git/*' -not -path './.claude/*' -not -name 'benchmark-instructions-v4.md' | sort
+[Result] === pytest (unit + workflow-structure) ===
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                     [100%][0m
+[32m[32m[1m36 passed[0m[32m in 0.21s[0m[0m
+=== actionlint ===
+actionlint exit=0
+=== final file tree ===
+./.actrc
+./.github/workflows/pr-label-assigner.yml
+./__pycache__/conftest.cpython-312-pytest-9.0.3.pyc
+./__pycache__/pr_label_assigner.cpython-312.pyc
+./__pycache__/run_act_tests.cpython-312.pyc
+./act-result.txt
+./conftest.py
+./fixtures/case1_docs.txt
+./fixtures/case2_api.txt
+./fixtures/case3_mixed.txt
+./fixtures/changed-files.txt
+./label-rules.json
+./pr_label_assigner.py
+./run_act_tests.py
+./tests/__pycache__/test_pr_label_assig
+[Assistant] Everything is complete and verified. Let me write a short README documenting the solution.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/README.md", "content": "# PR Label Assigner\n\nGiven
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/default-opus48-1m-xhigh/README.md (file state is current in your context — no need to Read it back)
+[Assistant] Done. Here's a summary of the completed solution.
+
+## What was built
+
+**Language: Python 3** (default mode — chosen for stdlib-only glob/regex, pre-installed pytest, and availability in the act container).
+
+### TDD (red → green)
+Started with a failing test (`ModuleNotFoundError` → literal-match test), then implemented the matcher to pass, then grew the suite. Final: **36 tests passing** (26 unit + 10 workflow-structure), covering glob semantics (`*`, `?`, `**`, gitignore-style basename matching), multi-label union per file, priority ordering on conflict, tie-breaking, config validation, and graceful errors.
+
+### Core script — `pr_label_assigner.py`
+- `glob_to_regex` / `path_matches_glob` — path-aware globbing where `*` stays within a segment, `**` crosses directories, and a slash-less pattern (e.g. `*.test.*`) matches the basename at any depth.
+- `Rule` engine + `assign_labels` — union of matched labels across files, ordered by **descending priority**, ties alphabetical (deterministic).
+- CLI with `--config`/`--files`/`--format`, stdin support, `$GITHUB_OUTPUT`/`$GITHUB_STEP_SUMMARY` integration, and meaningful errors (`ConfigError`, exit code 2).
+
+### Workflow — `.github/workflows/pr-label-assigner.yml`
+Triggers (`pull_request`, `push`, `workflow_dispatch` w/ input override), least-privilege `permissions`, env defaults, two jobs with a dependency (`report` `needs: assign-labels`) passing the computed labels via job outputs, `actions/checkout@v4`. **actionlint exit 0.**
+
+### All testing through `act` — `run_act_tests.py` + `act-result.txt`
+Each case builds an isolated temp git repo + that case's fixture, runs `act push --rm`, appends delimited output to `act-result.txt`, and asserts **exit 0**, the **exact** `LABELS:` line, and "Job succeeded" per job.
+
+| Case | Input | Exact asserted output |
+|------|-------|----------------------|
+| case1 | docs-only | `LABELS: documentation` |
+| case2 | api+source+test | `LABELS: api, tests, source` |
+| case3 | mixed (all rules) | `LABELS: api, tests, documentation, ci, source` |
+
+**Result:** all 3 cases green through act (exit 0, exact labels, 6× "Job succeeded" = 2 jobs × 3 cases), using exactly **3 `act` runs** total. `act-result.txt` exists with all three delimited cases.

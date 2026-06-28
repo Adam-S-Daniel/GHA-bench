@@ -1,0 +1,122 @@
+name: PR Label Assigner
+
+# Compute the set of labels that apply to a change, based on its touched files
+# and the rules in labels.config. Runs on pushes and pull requests, and can be
+# triggered manually (optionally pointing at a custom changed-files list).
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      changed_files:
+        description: "Path to a newline-delimited list of changed files"
+        required: false
+        default: "fixtures/changed-files.txt"
+  schedule:
+    # Weekly dry-run so the labeler keeps working even when nothing changes.
+    - cron: "0 6 * * 1"
+
+# Least-privilege: read the repo; writing labels to a PR needs pull-requests.
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  LABEL_CONFIG: labels.config
+  CHANGED_FILES_FILE: fixtures/changed-files.txt
+
+jobs:
+  # 1) Fail fast if the script is missing or has a syntax error.
+  validate:
+    name: Validate script
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify required files exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in pr-label-assigner.sh "${LABEL_CONFIG}"; do
+            if [[ ! -f "$f" ]]; then
+              echo "Missing required file: $f" >&2
+              exit 1
+            fi
+          done
+          echo "All required files present."
+
+      - name: Syntax-check the script
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n pr-label-assigner.sh
+          echo "pr-label-assigner.sh: bash -n OK"
+
+  # 2) Compute the labels and expose them as a step output + job summary.
+  assign-labels:
+    name: Assign labels
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Determine changed files
+        id: changed
+        shell: bash
+        env:
+          CHANGED_FILES_INPUT: ${{ inputs.changed_files }}
+        run: |
+          set -euo pipefail
+          # Prefer an explicit list (workflow input or the committed fixture);
+          # otherwise derive the list from git history so the job also works in
+          # a real push/PR with no fixture present.
+          target="${CHANGED_FILES_INPUT:-$CHANGED_FILES_FILE}"
+          if [[ -f "$target" ]]; then
+            echo "Using changed-files list: $target"
+          else
+            echo "No list at '$target'; deriving from git."
+            mkdir -p "$(dirname "$target")"
+            if git rev-parse HEAD~1 >/dev/null 2>&1; then
+              git diff --name-only HEAD~1 HEAD >"$target"
+            else
+              git ls-files >"$target"
+            fi
+          fi
+          echo "file=$target" >>"$GITHUB_OUTPUT"
+
+      - name: Compute labels
+        id: assign
+        shell: bash
+        env:
+          CHANGED_FILES_LIST: ${{ steps.changed.outputs.file }}
+        run: |
+          set -euo pipefail
+          chmod +x pr-label-assigner.sh
+          echo "Changed files:"
+          cat "$CHANGED_FILES_LIST"
+          labels="$(./pr-label-assigner.sh --config "$LABEL_CONFIG" --files "$CHANGED_FILES_LIST")"
+          csv="${labels//$'\n'/,}"
+          echo "Computed label set:"
+          printf '%s\n' "$labels"
+          # Stable, easy-to-parse marker consumed by the act test harness.
+          echo "PRLABELS::${csv}::END"
+          {
+            echo "labels<<LABELS_EOF"
+            printf '%s\n' "$labels"
+            echo "LABELS_EOF"
+            echo "csv=$csv"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Write job summary
+        shell: bash
+        env:
+          CSV: ${{ steps.assign.outputs.csv }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### PR Label Assigner"
+            echo ""
+            echo "Computed labels: \`${CSV:-<none>}\`"
+          } >>"$GITHUB_STEP_SUMMARY"

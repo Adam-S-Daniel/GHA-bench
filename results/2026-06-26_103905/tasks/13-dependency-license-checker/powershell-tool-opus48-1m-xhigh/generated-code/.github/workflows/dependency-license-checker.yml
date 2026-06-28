@@ -1,0 +1,114 @@
+name: Dependency License Checker
+
+# Trigger on pushes and PRs (gate dependency changes), on a weekly schedule
+# (catch newly-denied licenses over time) and on demand.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'   # every Monday 06:00 UTC
+  workflow_dispatch:
+
+# Least privilege: the checker only reads the repository contents.
+permissions:
+  contents: read
+
+# Shared config + mock license database paths, used by every job/step.
+env:
+  LICENSE_CONFIG: license-config.json
+  LICENSE_DB: license-db.json
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: run the Pester unit tests for the checker logic, in-container, so the
+  # script logic itself is exercised through the pipeline (not just locally).
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show environment
+        shell: pwsh
+        run: |
+          "PowerShell : $($PSVersionTable.PSVersion)"
+          "Pester     : $((Get-Module -ListAvailable Pester | Select-Object -First 1).Version)"
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          Set-StrictMode -Version Latest
+          Import-Module Pester -MinimumVersion 5.0.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests/DependencyLicenseChecker.Tests.ps1'
+          $config.Run.Exit = $true            # non-zero exit if any test fails
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  # ---------------------------------------------------------------------------
+  # Job 2: run the checker against each fixture manifest (matrix), depending on
+  # the unit tests passing first. Each leg prints a stable RESULT line that the
+  # acceptance harness asserts on, and writes a markdown table to the job summary.
+  # ---------------------------------------------------------------------------
+  license-check:
+    name: License check (${{ matrix.name }})
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: clean
+            manifest: fixtures/clean/package.json
+          - name: violations
+            manifest: fixtures/violations/package.json
+          - name: mixed
+            manifest: fixtures/mixed/package.json
+          - name: requirements
+            manifest: fixtures/requirements/requirements.txt
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run dependency license check
+        shell: pwsh
+        env:
+          MANIFEST: ${{ matrix.manifest }}
+          LABEL: ${{ matrix.name }}
+        run: |
+          Set-StrictMode -Version Latest
+
+          # Dot-source the script to load its functions without triggering the
+          # script's own "main" (the guard skips main on dot-source). This keeps
+          # us inside `shell: pwsh` and lets us control the exit code ourselves.
+          . ./DependencyLicenseChecker.ps1
+
+          $result = Invoke-LicenseCheck `
+            -ManifestPath  $env:MANIFEST `
+            -ConfigPath    $env:LICENSE_CONFIG `
+            -LicenseDbPath $env:LICENSE_DB `
+            -Format        text `
+            -Label         $env:LABEL
+
+          # Human-readable report (ends with the machine-parseable RESULT line).
+          Write-Host $result.Output
+
+          if ($result.IsError) {
+            Write-Error $result.Output
+            exit 2
+          }
+
+          # Publish a markdown table to the GitHub Actions job summary.
+          if ($env:GITHUB_STEP_SUMMARY) {
+            Format-ComplianceReport -Report $result.Report -Format markdown -Label $env:LABEL |
+              Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          }
+
+          # Report-only: a denied license does NOT fail the job here. Flip the
+          # gate on in production by adding -FailOnViolation above and:
+          #   if (-not $result.Report.Compliant) { exit 1 }
+          exit 0

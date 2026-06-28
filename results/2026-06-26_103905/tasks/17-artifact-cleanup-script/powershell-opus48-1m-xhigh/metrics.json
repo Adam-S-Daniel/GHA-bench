@@ -1,0 +1,1448 @@
+{
+  "task_id": "17-artifact-cleanup-script",
+  "task_name": "Artifact Cleanup Script",
+  "task_category": "GitHub Actions / Maintenance",
+  "language_mode": "powershell",
+  "language_chosen": "powershell",
+  "language_breakdown": {
+    "powershell": 100.0
+  },
+  "interpreter_versions": {
+    "powershell": "\\$PSVersionTable.PSVersion.ToString(\u001b[36;1m)\u001b[0m"
+  },
+  "powershell_version": "\\$PSVersionTable.PSVersion.ToString(\u001b[36;1m)\u001b[0m",
+  "dotnet_version": "",
+  "model": "claude-opus-4-8[1m]",
+  "model_short": "opus48-1m",
+  "variant": "opus48-1m-xhigh",
+  "claude_code_version": "2.1.195",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-06-28T04:26:07.709497+00:00",
+  "timestamp_end": "2026-06-28T04:51:07.520438+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use PowerShell as your implementation language.\n\nTASK: Given a list of artifacts with metadata (name, size, creation date, workflow run ID \u2014 provided as mock data), apply retention policies (max age, max total size, keep-latest-N per workflow), determine which artifacts to delete, and generate a deletion plan with a summary (total space reclaimed, artifacts retained vs deleted). Support dry-run mode.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use Pester as the testing framework.\n3. All tests must be runnable with `Invoke-Pester` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/artifact-cleanup-script.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/artifact-cleanup-script.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "9b59601e-0640-4568-9845-5c24188d9b27",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 29,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1417,
+      "outputTokens": 17,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.001502,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-opus-4-8[1m]": {
+      "inputTokens": 5100,
+      "outputTokens": 96557,
+      "cacheReadInputTokens": 6652012,
+      "cacheCreationInputTokens": 163886,
+      "webSearchRequests": 0,
+      "costUSD": 7.404291,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "xhigh",
+  "timing": {
+    "grand_total_duration_ms": 1499810,
+    "total_api_duration_ms": 1251968,
+    "total_execution_duration_ms": 247649,
+    "num_turns": 92
+  },
+  "tokens": {
+    "input_tokens": 5100,
+    "output_tokens": 96557,
+    "cache_read_tokens": 6652012,
+    "cache_creation_tokens": 163886,
+    "total_context_consumed": 6820998,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 7.405793,
+    "assumed_input_cost_per_mtok": 5.0,
+    "assumed_output_cost_per_mtok": 25.0,
+    "assumed_cache_read_cost_per_mtok": 0.5,
+    "assumed_cache_write_cost_per_mtok": 6.25
+  },
+  "code_metrics": {
+    "total_lines": 1428,
+    "total_tokens_estimate": 17567,
+    "file_count": 11,
+    "files": [
+      "ArtifactCleanup.psm1",
+      "Invoke-ArtifactCleanup.ps1",
+      "README.md",
+      "act-result.txt",
+      "fixtures/age-only.json",
+      "fixtures/keep-and-size.json",
+      "fixtures/standard.json",
+      ".github/workflows/artifact-cleanup-script.yml",
+      "Tests/ArtifactCleanup.Tests.ps1",
+      "Tests/Workflow.Act.Tests.ps1",
+      "Tests/Workflow.Structure.Tests.ps1"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 1,
+    "error_details": [
+      "Exit code 1\n\u001b[31;1mParserError: \u001b[0m\n\u001b[31;1m\u001b[36;1mLine |\u001b[0m\n\u001b[31;1m\u001b[36;1m\u001b[36;1m   2 | \u001b[0m \\$PSVersionTable.PSVersion.ToString(\u001b[36;1m)\u001b[0m\n\u001b[31;1m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m     | \u001b[31;1"
+    ],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/artifact-cleanup-script.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 18468,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 91,
+    "total_tool_duration_ms": 265025,
+    "bash_tool_uses": 40,
+    "bash_total_ms": 226994,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\ncat > /tmp/runall.ps1 <<'EOF'\n$ErrorActionPreference='S",
+        "duration_ms": 25380,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\npwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/Workflo",
+        "duration_ms": 17593,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat > /tmp/runtests.ps1 <<'EOF'\n$ErrorActionPreference = 'Stop'\nImport-Module Pester -MinimumVersion 5.0.0\n$cfg = New-PesterConfiguration\n$cfg.Run.Path = $args[0]\n$cfg.Output.Verbosity = 'Detailed'\nIn",
+        "duration_ms": 16439,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\npwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/Workflo",
+        "duration_ms": 16226,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15150,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"Invoke-ArtifactCleanup|Passed:|Failed:\" | tail -4",
+        "duration_ms": 10657,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[-\\]|Passed:|Failed:\" | tail -3",
+        "duration_ms": 9080,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker images | grep -i act-ubuntu-pwsh; echo \"---\"; docker run --rm act-ubuntu-pwsh:latest pwsh -NoProfile -Command '\"pwsh ok: \" + $PSVersionTable.PSVersion.ToString(); \"Pester: \" + (Get-Module -List",
+        "duration_ms": 8876,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[-\\]|Passed:|Failed:\" | tail -6",
+        "duration_ms": 8845,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"Format-ArtifactCleanupPlan|\\[-\\]|Passed:|Failed:\" | tail -6",
+        "duration_ms": 7607,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "pwd && echo \"---LS---\" && ls -la && echo \"---ACTRC---\" && cat .actrc 2>/dev/null && echo \"---TOOLS---\" && which pwsh act actionlint docker 2>/dev/null && echo \"---PWSH VERSION---\" && pwsh -v 2>/dev/nu",
+        "duration_ms": 4857,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench && cat AGENTS.md 2>/dev/null | head -100",
+        "duration_ms": 4359,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench && sed -n '100,400p' AGENTS.md 2>/dev/null | grep -iA30 \"act\\|workflow\\|pester\\|powershell\" | head -80",
+        "duration_ms": 113,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command '\n\\$PSVersionTable.PSVersion.ToString()\n\"Pester: \" + (Get-Module -ListAvailable Pester | Select-Object -First 1 -ExpandProperty Version)\n\"powershell-yaml: \" + ((Get-Module -Li",
+        "duration_ms": 7593,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker images | grep -i act-ubuntu-pwsh; echo \"---\"; docker run --rm act-ubuntu-pwsh:latest pwsh -NoProfile -Command '\"pwsh ok: \" + $PSVersionTable.PSVersion.ToString(); \"Pester: \" + (Get-Module -List",
+        "duration_ms": 8876,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat > /tmp/check.ps1 <<'EOF'\n$PSVersionTable.PSVersion.ToString()\n\"Pester: \" + (Get-Module -ListAvailable Pester | Select-Object -First 1 -ExpandProperty Version)\n$yaml = Get-Module -ListAvailable pow",
+        "duration_ms": 1295,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p Tests fixtures .github/workflows && ls -la",
+        "duration_ms": 142,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "ToolSearch",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 3,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 535,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 896,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat > /tmp/runtests.ps1 <<'EOF'\n$ErrorActionPreference = 'Stop'\nImport-Module Pester -MinimumVersion 5.0.0\n$cfg = New-PesterConfiguration\n$cfg.Run.Path = $args[0]\n$cfg.Output.Verbosity = 'Detailed'\nIn",
+        "duration_ms": 16439,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 639,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | tail -8",
+        "duration_ms": 4051,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 503,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[\\+\\]|\\[-\\]|Passed:|Failed:\" | tail -8",
+        "duration_ms": 2489,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 484,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[\\+\\]|\\[-\\]|Passed:|Failed:\" | tail -8",
+        "duration_ms": 2603,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 501,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[\\+\\]|\\[-\\]|Passed:|Failed:\" | tail -8",
+        "duration_ms": 3996,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 723,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 517,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[\\+\\]|\\[-\\]|Passed:|Failed:\" | tail -8",
+        "duration_ms": 3035,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 479,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"max total|Passed:|Failed:\" | tail -8",
+        "duration_ms": 2827,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 508,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 479,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[\\+\\]|\\[-\\]|Passed:|Failed:\" | tail -10",
+        "duration_ms": 3258,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 533,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[\\+\\]|\\[-\\]|Passed:|Failed:\" | tail -12",
+        "duration_ms": 4975,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -A12 \"empty artifact list\"",
+        "duration_ms": 7590,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 1810,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 1052,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 1233,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[-\\]|Passed:|Failed:\" | tail -5",
+        "duration_ms": 7187,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 539,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"Format-FileSize|Passed:|Failed:\" | tail -3",
+        "duration_ms": 6558,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 464,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 502,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[-\\]|Passed:|Failed:\" | tail -3",
+        "duration_ms": 3697,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 594,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 514,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[-\\]|Passed:|Failed:\" | tail -3",
+        "duration_ms": 9080,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15150,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"Format-ArtifactCleanupPlan|\\[-\\]|Passed:|Failed:\" | tail -6",
+        "duration_ms": 7607,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 480,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[-\\]|Passed:|Failed:\" | tail -4",
+        "duration_ms": 4210,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 808,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"Invoke-ArtifactCleanup|Passed:|Failed:\" | tail -4",
+        "duration_ms": 10657,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 898,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[-\\]|Passed:|Failed:\" | tail -6",
+        "duration_ms": 8845,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -A8 \"missing required fields\"",
+        "duration_ms": 5542,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 616,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/ArtifactCleanup.Tests.ps1 2>&1 | grep -E \"\\[-\\]|Passed:|Failed:\" | tail -4",
+        "duration_ms": 4517,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 658,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 69,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 41,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 137,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\nfor f in standard age-only keep-and-size; do\n  pwsh -No",
+        "duration_ms": 5405,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 9,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 137,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\nactionlint .github/workflows/artifact-cleanup-script.ym",
+        "duration_ms": 118,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\ncat > /tmp/yamltest.ps1 <<'EOF'\nImport-Module powershel",
+        "duration_ms": 1837,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 564,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\npwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/Workflo",
+        "duration_ms": 3826,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\nact --version\necho \"--- list jobs for push ---\"\nact -l ",
+        "duration_ms": 604,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 513,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\npwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/Workflo",
+        "duration_ms": 16226,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\necho \"=== size & head ===\"; wc -l act-result.txt\necho \"",
+        "duration_ms": 98,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\ncat > /tmp/validate-parse.ps1 <<'EOF'\n$out = Get-Conten",
+        "duration_ms": 1693,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 3804,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 463,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\ncat > /tmp/Workflow.Act.Stub.Tests.ps1 <<'EOF'\n# STUB o",
+        "duration_ms": 7516,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\npwsh -NoProfile -File /tmp/runtests.ps1 ./Tests/Workflo",
+        "duration_ms": 17593,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\ncat > /tmp/runall.ps1 <<'EOF'\n$ErrorActionPreference='S",
+        "duration_ms": 25380,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-xhigh\necho \"=== act-result.txt header ===\"; sed -n '1,8p' act",
+        "duration_ms": 110,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 87,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "rm -f /tmp/check.ps1 /tmp/runtests.ps1 /tmp/runall.ps1 /tmp/yamltest.ps1 /tmp/validate-parse.ps1 /tmp/Workflow.Act.Stub.Tests.ps1 2>/dev/null\ncd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-be",
+        "duration_ms": 190,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 140369,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 37,
+    "hook_errors_caught": 0,
+    "hook_failures": 1,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "baaf7c3f-6cc5-4e62-9467-0fdb7dcd42de",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "e2dd485c-c5c6-4e28-822f-f7d4087e8557",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "baaf7c3f-6cc5-4e62-9467-0fdb7dcd42de",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "e2dd485c-c5c6-4e28-822f-f7d4087e8557",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "797e2d5c-b7f0-4231-9746-929a6e42d9fa",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "797e2d5c-b7f0-4231-9746-929a6e42d9fa",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "68daf2d9-15f6-4ca7-84c4-4cda5b40288b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "68daf2d9-15f6-4ca7-84c4-4cda5b40288b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "130e9b12-2936-4a80-a2e1-b7d06f0cd093",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "130e9b12-2936-4a80-a2e1-b7d06f0cd093",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6a74c243-c0db-4851-a58c-b945e342471c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6a74c243-c0db-4851-a58c-b945e342471c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "1ed35d17-b01c-4e11-95e7-b78f8c60d686",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "1ed35d17-b01c-4e11-95e7-b78f8c60d686",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "58501f9e-6348-45ad-97a1-a04bd05b37a8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "58501f9e-6348-45ad-97a1-a04bd05b37a8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "eced6850-dacc-49db-b566-78d7d60fed06",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "eced6850-dacc-49db-b566-78d7d60fed06",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "fd5933b3-e539-4ed3-b503-46256a04b0f5",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "fd5933b3-e539-4ed3-b503-46256a04b0f5",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ba860cf3-14b8-4c2a-b34c-7aa600756b99",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ba860cf3-14b8-4c2a-b34c-7aa600756b99",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "052eb6ec-a728-410e-a3c7-095f539b7fac",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "052eb6ec-a728-410e-a3c7-095f539b7fac",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2c041f10-6db9-45ef-b758-94b87116d652",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2c041f10-6db9-45ef-b758-94b87116d652",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "65cc8875-18c0-433f-90de-ded585b304bd",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "65cc8875-18c0-433f-90de-ded585b304bd",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "64bbb2ba-62fb-49af-903b-2d027df2dc6f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "64bbb2ba-62fb-49af-903b-2d027df2dc6f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "680ea34a-241c-4ae8-8e37-1b40b014d43e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "680ea34a-241c-4ae8-8e37-1b40b014d43e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "00a8f423-1ade-427b-bd9e-a3f408ef96a2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "00a8f423-1ade-427b-bd9e-a3f408ef96a2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "bc9d81d8-2439-4d8a-8a10-673399c46ba6",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "bc9d81d8-2439-4d8a-8a10-673399c46ba6",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4d64c036-c2a8-42c5-b408-1e1c293875b8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4d64c036-c2a8-42c5-b408-1e1c293875b8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "95668d3a-8ad3-43f7-b7ca-1bcfc49b105b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "95668d3a-8ad3-43f7-b7ca-1bcfc49b105b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "11dad270-774a-49b0-a8d6-c4df995de99b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "11dad270-774a-49b0-a8d6-c4df995de99b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7918f5af-dbdb-41aa-95b4-b28540988e63",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7918f5af-dbdb-41aa-95b4-b28540988e63",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9d084fb6-fd56-4649-ae26-55d57dad070b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9d084fb6-fd56-4649-ae26-55d57dad070b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2dbf104b-25c5-4e22-806b-88258e9fa5a8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2dbf104b-25c5-4e22-806b-88258e9fa5a8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "d947b43b-a57a-4c93-9ea1-5e84bfec9a10",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "d947b43b-a57a-4c93-9ea1-5e84bfec9a10",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "1501d948-f3f2-4850-9d9a-8f303bb35d7e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "1501d948-f3f2-4850-9d9a-8f303bb35d7e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "fe449455-e544-4c5a-917e-143a5324b0c1",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "fe449455-e544-4c5a-917e-143a5324b0c1",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b7c7c28d-2763-4627-83fa-add5f6e75371",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b7c7c28d-2763-4627-83fa-add5f6e75371",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "806d7616-531e-4ef1-ba7b-c6aa5d86fd2e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "806d7616-531e-4ef1-ba7b-c6aa5d86fd2e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b504fa47-72e5-4f33-a71a-4f9aedf54bed",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b504fa47-72e5-4f33-a71a-4f9aedf54bed",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "cb619e4e-47ac-42fe-82d4-2ead408b1c54",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "cb619e4e-47ac-42fe-82d4-2ead408b1c54",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7f92383e-1c6e-4e39-bc83-f632c4340ad0",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7f92383e-1c6e-4e39-bc83-f632c4340ad0",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ad0a08a2-536f-46ed-ae09-5b50ea06f20e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ad0a08a2-536f-46ed-ae09-5b50ea06f20e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "68bb12f9-6a25-465b-b353-f07fc319350d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "68bb12f9-6a25-465b-b353-f07fc319350d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "efb6a5c7-3f3d-4ec0-8f4e-ee5c24b05229",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "efb6a5c7-3f3d-4ec0-8f4e-ee5c24b05229",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "0ab3f924-4ff0-4661-80d4-1a0987e8d43d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "0ab3f924-4ff0-4661-80d4-1a0987e8d43d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ede75845-db2a-4a39-8755-663799d86d34",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ede75845-db2a-4a39-8755-663799d86d34",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}

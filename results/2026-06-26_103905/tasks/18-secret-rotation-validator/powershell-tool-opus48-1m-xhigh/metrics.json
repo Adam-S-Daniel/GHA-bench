@@ -1,0 +1,1203 @@
+{
+  "task_id": "18-secret-rotation-validator",
+  "task_name": "Secret Rotation Validator",
+  "task_category": "GitHub Actions / Security",
+  "language_mode": "powershell-tool",
+  "language_chosen": "powershell",
+  "language_breakdown": {
+    "powershell": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-opus-4-8[1m]",
+  "model_short": "opus48-1m",
+  "variant": "opus48-1m-xhigh",
+  "claude_code_version": "2.1.195",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-06-28T06:57:23.404914+00:00",
+  "timestamp_end": "2026-06-28T07:23:31.179576+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use PowerShell as your implementation language.\n\nTASK: Given a configuration of secrets with metadata (name, last-rotated date, rotation policy in days, required-by services \u2014 all mock data), identify secrets that are expired or expiring within a configurable warning window, generate a rotation report, and output notifications grouped by urgency (expired, warning, ok). Support multiple output formats (markdown table, JSON).\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use Pester as the testing framework.\n3. All tests must be runnable with `Invoke-Pester` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/secret-rotation-validator.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/secret-rotation-validator.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "d66278a2-eaf6-4563-9a8b-bc4781d2b110",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 29,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1417,
+      "outputTokens": 22,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.0015270000000000001,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-opus-4-8[1m]": {
+      "inputTokens": 4345,
+      "outputTokens": 102871,
+      "cacheReadInputTokens": 6292371,
+      "cacheCreationInputTokens": 170380,
+      "webSearchRequests": 0,
+      "costUSD": 7.4434854999999995,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "xhigh",
+  "timing": {
+    "grand_total_duration_ms": 1567774,
+    "total_api_duration_ms": 1324265,
+    "total_execution_duration_ms": 242569,
+    "num_turns": 78
+  },
+  "tokens": {
+    "input_tokens": 4345,
+    "output_tokens": 102871,
+    "cache_read_tokens": 6292371,
+    "cache_creation_tokens": 170380,
+    "total_context_consumed": 6467096,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 7.4450125,
+    "assumed_input_cost_per_mtok": 5.0,
+    "assumed_output_cost_per_mtok": 25.0,
+    "assumed_cache_read_cost_per_mtok": 0.5,
+    "assumed_cache_write_cost_per_mtok": 6.25
+  },
+  "code_metrics": {
+    "total_lines": 2904,
+    "total_tokens_estimate": 34070,
+    "file_count": 12,
+    "files": [
+      "Invoke-SecretRotationValidator.ps1",
+      "README.md",
+      "Run-ActTests.ps1",
+      "act-result.txt",
+      "fixtures/secrets.json",
+      "fixtures/cases/all-expired.json",
+      "fixtures/cases/all-ok.json",
+      "fixtures/cases/mixed.json",
+      "src/SecretRotation.psm1",
+      ".github/workflows/secret-rotation-validator.yml",
+      "tests/SecretRotation.Tests.ps1",
+      "meta-tests/Workflow.Tests.ps1"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 0,
+    "error_details": [],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/secret-rotation-validator.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 80112,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 77,
+    "total_tool_duration_ms": 246830,
+    "bash_tool_uses": 34,
+    "bash_total_ms": 221585,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"& ./Run-ActTests.ps1 -",
+        "duration_ms": 47207,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -File ./Run-ActTests.ps1 -Cases ",
+        "duration_ms": 26304,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 25262,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 24486,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 20305,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\necho \"=== 1) Pester (unit + structure) ===\"\npwsh",
+        "duration_ms": 17906,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 8528,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwd\necho \"=== pwsh ===\"; pwsh --version 2>/dev/null || echo \"NO PWSH\"\necho \"=== pester ===\"; pwsh -NoProfile -Command '(Get-Module -ListAvailable Pester | Select-Object -First 1).Version' 2>/dev/null\n",
+        "duration_ms": 6580,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 6243,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 5862,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench && cat AGENTS.md 2>/dev/null | head -100; echo \"=== PWD ===\"; pwd",
+        "duration_ms": 194,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "ls -la; echo \"=== .actrc ===\"; cat .actrc 2>/dev/null; echo \"=== benchmark instructions ===\"; ls -la ../ 2>/dev/null",
+        "duration_ms": 77,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwd\necho \"=== pwsh ===\"; pwsh --version 2>/dev/null || echo \"NO PWSH\"\necho \"=== pester ===\"; pwsh -NoProfile -Command '(Get-Module -ListAvailable Pester | Select-Object -First 1).Version' 2>/dev/null\n",
+        "duration_ms": 6580,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 49,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command '\n$ref = [datetime]\"202",
+        "duration_ms": 536,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\nmkdir -p src tests fixtures/cases .github/workfl",
+        "duration_ms": 154,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "ToolSearch",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 25,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 31,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "ToolSearch",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 13,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 478,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 2813,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 480,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 2824,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 621,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 25262,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 517,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 2820,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 630,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 492,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 3182,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 577,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 3584,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 475,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 5394,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 507,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 4505,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 40,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 42,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 37,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 41,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 501,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 5471,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 484,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 24486,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\necho \"===== MARKDOWN =====\"\npwsh -NoProfile -Fil",
+        "duration_ms": 2958,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 127,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\nactionlint .github/workflows/secret-rotation-val",
+        "duration_ms": 110,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 105,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 94,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\nactionlint .github/workflows/secret-rotation-val",
+        "duration_ms": 109,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\necho \"=== powershell-yaml module ===\"\npwsh -NoPr",
+        "duration_ms": 1902,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command '\nImport-Module powersh",
+        "duration_ms": 1363,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\nfor c in all-ok all-expired; do\n  echo \"===== $c",
+        "duration_ms": 2530,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\necho \"=== act -l (parse + list jobs, no containe",
+        "duration_ms": 606,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "act --help 2>&1 | grep -iE 'pull|offline|rm |--rm|no-cache' | head",
+        "duration_ms": 136,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 8528,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 5862,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 15,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 3745,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 151,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 6243,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\nactionlint .github/workflows/secret-rotation-val",
+        "duration_ms": 4763,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -File ./Run-ActTests.ps1 -Cases ",
+        "duration_ms": 26304,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -File ./Run-ActTests.ps1 -Cases ",
+        "duration_ms": 1367,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"& ./Run-ActTests.ps1 -",
+        "duration_ms": 47207,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\necho \"=== file size ===\"; ls -la act-result.txt\n",
+        "duration_ms": 81,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\nsed -n '14,40p' act-result.txt\necho \".....\"\ngrep",
+        "duration_ms": 63,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\npwsh -NoProfile -Command \"Invoke-Pester -Path ./",
+        "duration_ms": 20305,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\nrm -f MEMORY_SCRATCH.md\necho \"=== deliverable tr",
+        "duration_ms": 73,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 38,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 10,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 44,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/.claude/projects/-home-passp-repos-GHA-bench--claude-worktrees-opus48-bench-workspaces-2026-06-26-103905-18-secret-rotation-validator-powershell-tool-opus48-1m-xhigh/memory/\nls -la; ech",
+        "duration_ms": 58,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 44,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-tool-opus48-1m-xhigh\necho \"=== 1) Pester (unit + structure) ===\"\npwsh",
+        "duration_ms": 17906,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 181386,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 28,
+    "hook_errors_caught": 2,
+    "hook_failures": 0,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "dc52a0da-ac48-4ae2-8ffc-d2f6e3d7fb8d",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "e1c079a3-73f4-4dc6-93b7-4c4d47831c27",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "dc52a0da-ac48-4ae2-8ffc-d2f6e3d7fb8d",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "e1c079a3-73f4-4dc6-93b7-4c4d47831c27",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b010165f-079d-43be-8982-0f48eadd2b35",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b010165f-079d-43be-8982-0f48eadd2b35",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b3220822-7f5b-4ae8-b0bd-5806d77d0383",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b3220822-7f5b-4ae8-b0bd-5806d77d0383",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2d1bcea1-3b5e-421f-9359-35a5e04c3f0c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2d1bcea1-3b5e-421f-9359-35a5e04c3f0c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "28be01df-724f-47a0-af31-59ad9c8782e4",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "28be01df-724f-47a0-af31-59ad9c8782e4",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "cf037645-f9ef-42e8-8e87-40e731e545bf",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "cf037645-f9ef-42e8-8e87-40e731e545bf",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4ba5310b-d6bc-4715-a4ae-c3f1993badc5",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4ba5310b-d6bc-4715-a4ae-c3f1993badc5",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f07d0a1d-16d7-4557-aaff-ab71d4e4c24d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f07d0a1d-16d7-4557-aaff-ab71d4e4c24d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "60ede1f1-18d4-4db3-8351-b1d3e0502926",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "60ede1f1-18d4-4db3-8351-b1d3e0502926",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a0b6afa3-e411-4680-880d-44b0e5aba825",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a0b6afa3-e411-4680-880d-44b0e5aba825",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "22fcf1f7-bd49-4bbd-ae2a-4a5fbff08e97",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "22fcf1f7-bd49-4bbd-ae2a-4a5fbff08e97",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4bed1a46-5b83-4c93-a164-321a49844428",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4bed1a46-5b83-4c93-a164-321a49844428",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "421e2ec3-3444-4960-96fe-95cb88644490",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "421e2ec3-3444-4960-96fe-95cb88644490",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "80a77305-7618-4dbe-b220-ee5025bb8cfa",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "80a77305-7618-4dbe-b220-ee5025bb8cfa",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "c0bb0820-ea20-4862-b056-0f2af874da73",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "c0bb0820-ea20-4862-b056-0f2af874da73",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "c561ff77-0ba3-41b9-b992-6596f8c84210",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "c561ff77-0ba3-41b9-b992-6596f8c84210",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "97e1b766-156f-4cd1-9584-b042533f2692",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "97e1b766-156f-4cd1-9584-b042533f2692",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2f29bee2-9c11-44d1-850a-690d5969997c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2f29bee2-9c11-44d1-850a-690d5969997c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\n.github/workflows/secret-rotation-validator.yml:75:61: context \\\"env\\\" is not allowed here. available contexts are \\\"github\\\", \\\"inputs\\\", \\\"matrix\\\", \\\"needs\\\", \\\"secrets\\\", \\\"strategy\\\", \\\"vars\\\". see https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability for more details [expression]\\n   |\\n75 |       WARNING_DAYS: ${{ github.event.inputs.warnin",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "86510cdb-c39a-455a-bbc1-a994088bfb4b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "86510cdb-c39a-455a-bbc1-a994088bfb4b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\n.github/workflows/secret-rotation-validator.yml:73:61: context \\\"env\\\" is not allowed here. available contexts are \\\"github\\\", \\\"inputs\\\", \\\"matrix\\\", \\\"needs\\\", \\\"secrets\\\", \\\"strategy\\\", \\\"vars\\\". see https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability for more details [expression]\\n   |\\n73 |       WARNING_DAYS: ${{ github.event.inputs.warnin",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "8e1a78fd-9e5d-4148-8a6e-74c92fd5dbbc",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "8e1a78fd-9e5d-4148-8a6e-74c92fd5dbbc",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "e21354ab-ddf2-403a-a926-315a227762be",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "e21354ab-ddf2-403a-a926-315a227762be",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "3ea910bb-055a-48a1-9555-30cdb44ee771",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3ea910bb-055a-48a1-9555-30cdb44ee771",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f24a112c-ac8b-47a5-8129-6d3b32953678",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f24a112c-ac8b-47a5-8129-6d3b32953678",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "e5e4cc89-e35e-4968-abae-83f29a2122fa",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "e5e4cc89-e35e-4968-abae-83f29a2122fa",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "230dc9ab-ec3d-4fe1-ba39-1ed62476a2ea",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "230dc9ab-ec3d-4fe1-ba39-1ed62476a2ea",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "361c0a8d-41aa-4da2-bf58-3c65537fcebf",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "361c0a8d-41aa-4da2-bf58-3c65537fcebf",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b7259749-2644-48d0-a394-35fd951934b8",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b7259749-2644-48d0-a394-35fd951934b8",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}

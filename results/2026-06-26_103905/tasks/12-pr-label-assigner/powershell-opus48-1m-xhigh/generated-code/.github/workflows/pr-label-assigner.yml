@@ -1,0 +1,67 @@
+name: PR Label Assigner
+
+# Trigger on the events where a label decision is meaningful, plus manual and
+# scheduled runs so the rule set can be exercised on demand / on a cadence.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'  # weekly Monday 06:00 UTC sanity run
+
+# Least-privilege: the assembler only reads the repo. pull-requests:write is
+# declared because a real labeler would apply the computed labels via the API.
+permissions:
+  contents: read
+  pull-requests: write
+
+# Centralized, overridable inputs to the script (the "mock file list" lives in
+# the manifest at CHANGED_FILES; rules live at RULES_PATH).
+env:
+  RULES_PATH: fixtures/label-rules.json
+  CHANGED_FILES: fixtures/changed-files.txt
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          # Drive the label-assigner unit tests; exit non-zero on any failure
+          # so the job (and therefore the pipeline) fails loudly.
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests/PrLabelAssigner.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  assign-labels:
+    name: Assign labels
+    needs: test  # only assign labels once the unit tests are green
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Assign PR labels from changed files
+        id: assign
+        shell: pwsh
+        run: |
+          # Reads RULES_PATH + CHANGED_FILES, prints the per-file breakdown and
+          # the machine-parseable PR_LABELS / PR_LABEL_COUNT marker lines, and
+          # exposes the labels as a step output.
+          ./Invoke-PrLabelAssigner.ps1 -RulesPath $env:RULES_PATH -ChangedFilesPath $env:CHANGED_FILES
+
+      - name: Report resolved labels
+        shell: pwsh
+        env:
+          LABELS: ${{ steps.assign.outputs.labels }}
+          COUNT: ${{ steps.assign.outputs.count }}
+        run: |
+          Write-Output "Assigned $env:COUNT label(s): $env:LABELS"

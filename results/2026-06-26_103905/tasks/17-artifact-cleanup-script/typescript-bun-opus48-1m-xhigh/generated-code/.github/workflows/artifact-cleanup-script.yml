@@ -1,0 +1,90 @@
+name: Artifact Cleanup Script
+
+# Triggers:
+#  - push / pull_request: validate the script + run the cleanup plan in CI.
+#  - schedule: weekly housekeeping (the real-world use case for this script).
+#  - workflow_dispatch: manual run, with an optional dry-run override.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1" # Mondays at 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run in dry-run mode (no real deletion)."
+        type: boolean
+        default: true
+
+# A real artifact cleanup hits the Actions API to delete artifacts, which needs
+# `actions: write`. `contents: read` is enough to check out the repo.
+permissions:
+  contents: read
+  actions: write
+
+# Cancel superseded runs for the same ref to avoid wasted work.
+concurrency:
+  group: artifact-cleanup-${{ github.ref }}
+  cancel-in-progress: true
+
+# Path to the scenario fixture the pipeline operates on. The act test harness
+# overwrites fixtures/scenario.json with each test case's data before running.
+env:
+  SCENARIO_FILE: fixtures/scenario.json
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: validate the script logic with the unit test suite.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Run unit tests
+        run: bun test cleanup.test.ts
+
+  # ---------------------------------------------------------------------------
+  # Job 2: generate the deletion plan. Depends on the tests passing first.
+  # ---------------------------------------------------------------------------
+  cleanup-plan:
+    name: Generate cleanup plan
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      DRY_RUN_INPUT: ${{ github.event.inputs.dry_run }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Generate artifact deletion plan
+        run: |
+          # Build the argument list. The scenario file carries the policy and
+          # the dry-run default; a workflow_dispatch input can override dry-run.
+          args=(--config "$SCENARIO_FILE" --output cleanup-plan.json)
+          if [ "$DRY_RUN_INPUT" = "true" ]; then
+            args+=(--dry-run)
+          elif [ "$DRY_RUN_INPUT" = "false" ]; then
+            args+=(--no-dry-run)
+          fi
+          echo "Running: bun run cleanup.ts ${args[*]}"
+          bun run cleanup.ts "${args[@]}"
+
+      - name: Show generated plan JSON
+        run: cat cleanup-plan.json

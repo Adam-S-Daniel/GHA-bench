@@ -1,0 +1,70 @@
+name: Test Results Aggregator
+
+# Triggers: run on every push and PR (to report each build's results), on a
+# weekly schedule (to catch slow-burning flakiness), and on demand.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+# The reporter only reads the repository contents; least privilege.
+permissions:
+  contents: read
+
+env:
+  # Directory holding the JUnit XML / JSON result files to aggregate. The act
+  # test harness overwrites this directory per test case.
+  RESULTS_DIR: test-results
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    # Expose the computed totals as job outputs so dependent jobs can consume
+    # them without re-parsing anything.
+    outputs:
+      passed: ${{ steps.agg.outputs.passed }}
+      failed: ${{ steps.agg.outputs.failed }}
+      errors: ${{ steps.agg.outputs.errors }}
+      skipped: ${{ steps.agg.outputs.skipped }}
+      total: ${{ steps.agg.outputs.total }}
+      flaky_count: ${{ steps.agg.outputs.flaky_count }}
+      flaky_tests: ${{ steps.agg.outputs.flaky_tests }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        # The script is pure standard library, so the runner's system Python is
+        # all we need -- no pip install step.
+        run: python3 --version
+
+      - name: Aggregate results and write job summary
+        id: agg
+        run: |
+          python3 aggregate.py "$RESULTS_DIR" \
+            --summary "$GITHUB_STEP_SUMMARY" \
+            --github-output "$GITHUB_OUTPUT"
+
+  report:
+    name: Report aggregated totals
+    # Demonstrates a job dependency: report runs only after aggregate succeeds
+    # and consumes its outputs.
+    needs: aggregate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print cross-job report line
+        # Pass job outputs through the environment rather than interpolating
+        # them directly into the shell command.
+        env:
+          PASSED: ${{ needs.aggregate.outputs.passed }}
+          FAILED: ${{ needs.aggregate.outputs.failed }}
+          ERRORS: ${{ needs.aggregate.outputs.errors }}
+          SKIPPED: ${{ needs.aggregate.outputs.skipped }}
+          TOTAL: ${{ needs.aggregate.outputs.total }}
+          FLAKY_COUNT: ${{ needs.aggregate.outputs.flaky_count }}
+          FLAKY_TESTS: ${{ needs.aggregate.outputs.flaky_tests }}
+        run: |
+          echo "REPORT passed=$PASSED failed=$FAILED errors=$ERRORS skipped=$SKIPPED total=$TOTAL flaky_count=$FLAKY_COUNT flaky_tests=$FLAKY_TESTS"

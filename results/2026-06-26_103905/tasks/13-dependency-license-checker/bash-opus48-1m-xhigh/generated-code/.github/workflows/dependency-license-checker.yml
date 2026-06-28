@@ -1,0 +1,109 @@
+name: Dependency License Checker
+
+# Triggers: on every push / PR to the main branches, on a weekly schedule (so
+# newly-denied licenses are caught even without code changes), and on demand.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      format:
+        description: 'Report output format'
+        required: false
+        default: text
+        type: choice
+        options:
+          - text
+          - json
+
+# Principle of least privilege: the checker only needs to read the repo.
+permissions:
+  contents: read
+
+# Shared configuration. Paths are relative to the repository root so the
+# pipeline works on whatever manifest/config/db the checked-out repo provides.
+env:
+  CONFIG_FILE: licenses.config
+  DB_FILE: license-db.tsv
+  REPORT_FORMAT: text
+
+jobs:
+  license-check:
+    name: License compliance
+    runs-on: ubuntu-latest
+    outputs:
+      manifest: ${{ steps.compliance.outputs.manifest }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install test tooling (bats + shellcheck)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bats shellcheck
+          # jq ships with the runner image; fail early with a clear message if not.
+          command -v jq >/dev/null || { echo "::error::jq is required but missing"; exit 1; }
+
+      - name: Make scripts executable
+        run: chmod +x license-checker.sh tests/mocks/mock-lookup.sh
+
+      - name: Static validation (bash -n + shellcheck)
+        run: |
+          bash -n license-checker.sh
+          shellcheck license-checker.sh tests/mocks/mock-lookup.sh
+
+      - name: Run bats unit tests
+        run: bats tests/license-checker.bats
+
+      - name: Run dependency license compliance check
+        id: compliance
+        run: |
+          # Auto-detect the manifest shipped in this repo.
+          if [ -f package.json ]; then
+            MANIFEST=package.json
+          elif [ -f requirements.txt ]; then
+            MANIFEST=requirements.txt
+          else
+            echo "::error::No supported manifest (package.json / requirements.txt) found"
+            exit 1
+          fi
+          echo "Selected manifest: ${MANIFEST}"
+          echo "manifest=${MANIFEST}" >> "$GITHUB_OUTPUT"
+
+          FORMAT="${{ github.event.inputs.format }}"
+          FORMAT="${FORMAT:-${REPORT_FORMAT}}"
+
+          # Report-only mode (--no-fail) keeps the pipeline green while still
+          # printing the full compliance verdict. Drop --no-fail to turn this
+          # into an enforcing gate that fails the build on denied/unknown
+          # licenses (exit 1 / 2 respectively).
+          ./license-checker.sh \
+            --manifest "${MANIFEST}" \
+            --config "${CONFIG_FILE}" \
+            --db "${DB_FILE}" \
+            --format "${FORMAT}" \
+            --no-fail | tee compliance-report.txt
+
+          # Always emit a JSON report next to the text one for downstream tools.
+          ./license-checker.sh \
+            --manifest "${MANIFEST}" \
+            --config "${CONFIG_FILE}" \
+            --db "${DB_FILE}" \
+            --format json \
+            --no-fail > compliance-report.json
+          echo "Wrote compliance-report.txt and compliance-report.json"
+
+  summary:
+    name: Compliance summary
+    runs-on: ubuntu-latest
+    needs: license-check
+    steps:
+      - name: Announce result
+        run: |
+          echo "License compliance pipeline finished for manifest: ${{ needs.license-check.outputs.manifest }}"
+          # $GITHUB_STEP_SUMMARY may be unset under some local runners (act); guard it.
+          echo "Dependency license compliance check completed." >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
