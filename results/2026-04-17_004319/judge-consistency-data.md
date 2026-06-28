@@ -4,8 +4,8 @@
 
 ## Notes
 
-- **Generated:** 2026-05-08 01:20:33 PM ET
-- **Source:** `/home/passp/repos/GHA-bench/results/2026-04-17_004319`
+- **Generated:** 2026-06-28 07:46:07 PM ET
+- **Source:** `/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/results/2026-04-17_004319`
 - **Judges present:** haiku45, gemini31pro
 - **Score conventions:** Scores shown are the `overall` dimension from each judge (1-5). Δ column is the second judge minus the first; positive = second judge is more generous.
 

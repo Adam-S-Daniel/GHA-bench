@@ -290,30 +290,47 @@ See the docstring in `llm_providers.py` for a complete example skeleton.
 7. If you changed architecture or findings, update this file (`AGENTS.md`).
 8. If you added files or moved things, update the Files table in `README.md`.
 
-## Current state (2026-05-08)
+## Current state (2026-06-28)
 
-### opus-4.8 (1M) campaign — in progress (2026-06)
+### opus-4.8 (1M) campaign — COMPLETE; canonical dataset (2026-06)
 
-`results/2026-06-26_103905/` is an in-progress v4 campaign adding
-`claude-opus-4-8[1m]` (model short `opus48-1m`) at four effort levels —
-medium, high, xhigh, and the new **`ultracode`** (xhigh + dynamic-workflow
-orchestration; enabled via `CLAUDE_CODE_EFFORT_LEVEL=ultracode`, since `--effort`
-does not accept it) — over the same 7 tasks × 5 languages = 140 cells. Driven by
-the resilient `run-opus48-supervisor.sh` + `run-opus48-resume.sh` pair with
-single-runner locks; watch it live with `monitor.py`. When it completes it gets
-the standard panel-of-judges eval (Haiku via Claude CLI + Gemini 3.1 Pro (High)
-via `agy`) and a consolidated report, and this section's "canonical dataset"
-should be updated to point at it. Note: opus-4.8 sometimes picks JavaScript /
-PowerShell for the free-choice (default) language, not always Python.
+`results/2026-06-26_103905/` is the **canonical current dataset**: a complete v4
+campaign adding `claude-opus-4-8[1m]` (model short `opus48-1m`) at four effort
+levels — medium, high, xhigh, and the new **`ultracode`** (xhigh +
+dynamic-workflow orchestration; enabled via `CLAUDE_CODE_EFFORT_LEVEL=ultracode`,
+since `--effort` does not accept it) — over the same 7 tasks × 5 languages = **140
+cells** (136 successful; the 4 failures are xhigh PowerShell-family 30-min
+timeouts: 12/powershell-tool, 13/powershell, 16/powershell-tool,
+17/powershell-tool). CC versions: 2.1.193 (23 medium cells) + 2.1.195 (117).
+Rate-limit clean (0 overloaded/rate-limit/529 markers). ~$578 cells + $17.25 panel
+eval (Haiku via Claude CLI; Gemini 3.1 Pro (High) via `agy` = $0 on subscription).
+Standard panel-of-judges scores populated; `results/CELLS-COMPLETE.md` marks
+collection done. The cross-run report
+`results/results_2026-06-26_103905__2026-05-06_173435__2026-04-17_004319__2026-04-09_152435.md`
+pools opus-4.8 with the three prior runs and is the headline comparison artifact.
+Note: opus-4.8 sometimes picks JavaScript / PowerShell for the free-choice
+(default) language, not always Python.
 
-### v4 full-matrix benchmark — complete
+Headline findings (vs opus-4.7 1m, matched task+language): opus-4.8 is the
+strongest generation on both quality axes (opus48-1m-ultracode tops Tests
+Quality). It is +60–67% time / +64% cost at medium, compressing to ~+15% at high;
+writes more and denser tests; the 4 xhigh failures are PowerShell-family timeouts.
+**Trap caveat (see `results/analysis/opus48-trap-investigation_2026-06-28.md`):**
+opus-4.8 logs ~2× the traps of 4.7, but a hand-review of all 201 occurrences found
+this is ~99% benign (99% no circling, 86% legitimate iteration tripping count-based
+detectors, ~1% genuine distress) — dominated by a `cd`-prefix dedup measurement
+artifact + finer TDD, with a partial CC-version (2.1.131/132 vs 2.1.195) confounder.
+Read "~2× traps" as "iterates more granularly," not "fails more often." Follow-up
+work tracked in GH issues #21–#27.
 
-`results/2026-05-06_173435/` is the canonical current dataset: 280/280 runs
-across 7 tasks × 5 modes × 8 model-effort combos, $493.46 + $40.57 panel
-eval = $534.03, 38h 35m wall, 278/280 successful (2 failures).
-Single-directory, single-CC-version-line (2.1.131 → 2.1.132 mid-run);
-supersedes the `results/2026-04-17_004319/` + `results/2026-04-09_152435/`
-combined report. Standard panel-of-judges scores populated.
+### v4 full-matrix benchmark — complete (now a baseline within the combined report)
+
+`results/2026-05-06_173435/`: 280/280 runs across 7 tasks × 5 modes × 8
+model-effort combos, $493.46 + $40.57 panel eval = $534.03, 38h 35m wall, 278/280
+successful (2 failures). Single-directory, single-CC-version-line (2.1.131 →
+2.1.132 mid-run). It was the canonical dataset through 2026-06; it is now pooled
+as the **opus-4.7 baseline** inside the opus-4.8 combined report above. Standard
+panel-of-judges scores populated.
 
 The 8 model-effort combos: `haiku45` (no effort), `opus`/`sonnet` (no
 effort), `opus47-1m` at high/medium/xhigh, `opus47-200k` at medium,

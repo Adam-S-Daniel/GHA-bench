@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-05-08 01:20:30 PM ET — 245/245 runs completed, 0 remaining; total cost $360.74; total agent time 2265.0 min.
+**Last updated:** 2026-06-28 07:45:25 PM ET — 245/245 runs completed, 0 remaining; total cost $360.74; total agent time 2265.0 min.
 **Claude Code versions used:** [v2.1.112](claude-code-2.1.112.md) (70 runs), [v2.1.114](claude-code-2.1.114.md) (175 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -28,7 +28,7 @@
 
 ## Scoring
 
-Judges: panel of LLM-as-judge models — `haiku-4-5` (via Claude CLI) and `gemini-3.1-pro-preview` (via Gemini CLI). Each run's quality score is the mean of both judges, cached per-run so numbers are deterministic across regenerations. Known bias caveats live in the [Judge Consistency Summary](#judge-consistency-summary).
+Judges: panel of LLM-as-judge models — `haiku-4-5` (via Claude CLI) and `Gemini 3.1 Pro (High)` (via the Antigravity `agy` CLI). Each run's quality score is the mean of both judges, cached per-run so numbers are deterministic across regenerations. Known bias caveats live in the [Judge Consistency Summary](#judge-consistency-summary).
 
 **Tests Quality** = Overall score (1-5) for the generated **test code**.
 
@@ -282,7 +282,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Task | Language | Model | Duration | Reason | Lines | actionlint | act-result.txt |
 |------|------|-------|----------|--------|-------|------------|----------------|
-| Environment Matrix Generator | bash | haiku45-200k | 322.8min | timeout | 946 | pass | yes |
+| Environment Matrix Generator | bash | haiku45-200k | 322.8min | timeout | 377 | pass | yes |
 | Environment Matrix Generator | bash | sonnet46-200k-medium | 4.2min | cli_error | 0 | n/a | no |
 
 *2 run(s) excluded from averages below.*
@@ -1326,11 +1326,11 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | bash | opus47-200k-medium | 17.0 | 35.1 | 2.1 | 1.14 |
 | bash | sonnet46-1m-medium | 22.1 | 44.6 | 2.0 | 1.36 |
 | bash | sonnet46-200k-medium | 17.4 | 36.4 | 2.1 | 0.91 |
-| default | haiku45-200k | 12.9 | 28.1 | 2.2 | 1.29 |
-| default | opus47-1m-high | 19.7 | 43.6 | 2.2 | 1.08 |
+| default | haiku45-200k | 15.9 | 32.3 | 2.0 | 1.43 |
+| default | opus47-1m-high | 23.3 | 50.3 | 2.2 | 1.16 |
 | default | opus47-1m-medium | 17.0 | 33.3 | 2.0 | 1.64 |
 | default | opus47-1m-xhigh | 24.0 | 50.6 | 2.1 | 1.55 |
-| default | opus47-200k-medium | 15.6 | 35.1 | 2.3 | 1.57 |
+| default | opus47-200k-medium | 17.4 | 42.7 | 2.5 | 1.77 |
 | default | sonnet46-1m-medium | 30.9 | 37.7 | 1.2 | 1.26 |
 | default | sonnet46-200k-medium | 30.1 | 45.4 | 1.5 | 1.81 |
 | powershell | haiku45-200k | 5.3 | 9.9 | 1.9 | 0.28 |
@@ -1378,21 +1378,21 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | powershell | opus47-1m-high | 25.4 | 52.6 | 2.1 | 3.06 |
 | bash | opus47-1m-high | 24.9 | 49.4 | 2.0 | 1.23 |
 | default | opus47-1m-xhigh | 24.0 | 50.6 | 2.1 | 1.55 |
+| default | opus47-1m-high | 23.3 | 50.3 | 2.2 | 1.16 |
 | powershell | opus47-200k-medium | 22.6 | 47.0 | 2.1 | 8.67 |
 | bash | sonnet46-1m-medium | 22.1 | 44.6 | 2.0 | 1.36 |
 | powershell | opus47-1m-medium | 20.0 | 38.9 | 1.9 | 3.38 |
-| default | opus47-1m-high | 19.7 | 43.6 | 2.2 | 1.08 |
 | powershell-tool | opus47-200k-medium | 19.7 | 37.0 | 1.9 | 2.00 |
 | powershell-tool | opus47-1m-medium | 18.9 | 40.6 | 2.2 | 3.47 |
 | typescript-bun | opus47-1m-medium | 18.0 | 42.0 | 2.3 | 1.54 |
 | bash | sonnet46-200k-medium | 17.4 | 36.4 | 2.1 | 0.91 |
+| default | opus47-200k-medium | 17.4 | 42.7 | 2.5 | 1.77 |
 | typescript-bun | haiku45-200k | 17.3 | 40.4 | 2.3 | 0.77 |
 | bash | opus47-200k-medium | 17.0 | 35.1 | 2.1 | 1.14 |
 | default | opus47-1m-medium | 17.0 | 33.3 | 2.0 | 1.64 |
-| default | opus47-200k-medium | 15.6 | 35.1 | 2.3 | 1.57 |
+| default | haiku45-200k | 15.9 | 32.3 | 2.0 | 1.43 |
 | typescript-bun | opus47-200k-medium | 15.0 | 37.9 | 2.5 | 0.92 |
 | bash | haiku45-200k | 14.3 | 21.4 | 1.5 | 0.85 |
-| default | haiku45-200k | 12.9 | 28.1 | 2.2 | 1.29 |
 | bash | opus47-1m-medium | 11.9 | 31.7 | 2.7 | 1.21 |
 | powershell-tool | haiku45-200k | 7.4 | 14.9 | 2.0 | 0.65 |
 | powershell | haiku45-200k | 5.3 | 9.9 | 1.9 | 0.28 |
@@ -1412,6 +1412,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | typescript-bun | sonnet46-1m-medium | 31.6 | 53.7 | 1.7 | 1.07 |
 | powershell | opus47-1m-high | 25.4 | 52.6 | 2.1 | 3.06 |
 | default | opus47-1m-xhigh | 24.0 | 50.6 | 2.1 | 1.55 |
+| default | opus47-1m-high | 23.3 | 50.3 | 2.2 | 1.16 |
 | bash | opus47-1m-high | 24.9 | 49.4 | 2.0 | 1.23 |
 | powershell-tool | opus47-1m-high | 27.4 | 48.0 | 1.8 | 3.17 |
 | bash | opus47-1m-xhigh | 25.9 | 47.3 | 1.8 | 1.26 |
@@ -1420,7 +1421,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | default | sonnet46-200k-medium | 30.1 | 45.4 | 1.5 | 1.81 |
 | bash | sonnet46-1m-medium | 22.1 | 44.6 | 2.0 | 1.36 |
 | powershell | sonnet46-1m-medium | 32.1 | 44.3 | 1.4 | 1.91 |
-| default | opus47-1m-high | 19.7 | 43.6 | 2.2 | 1.08 |
+| default | opus47-200k-medium | 17.4 | 42.7 | 2.5 | 1.77 |
 | powershell-tool | sonnet46-200k-medium | 31.7 | 42.3 | 1.3 | 0.94 |
 | typescript-bun | opus47-1m-medium | 18.0 | 42.0 | 2.3 | 1.54 |
 | powershell | sonnet46-200k-medium | 27.6 | 41.1 | 1.5 | 1.38 |
@@ -1432,10 +1433,9 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | powershell-tool | opus47-200k-medium | 19.7 | 37.0 | 1.9 | 2.00 |
 | bash | sonnet46-200k-medium | 17.4 | 36.4 | 2.1 | 0.91 |
 | bash | opus47-200k-medium | 17.0 | 35.1 | 2.1 | 1.14 |
-| default | opus47-200k-medium | 15.6 | 35.1 | 2.3 | 1.57 |
 | default | opus47-1m-medium | 17.0 | 33.3 | 2.0 | 1.64 |
+| default | haiku45-200k | 15.9 | 32.3 | 2.0 | 1.43 |
 | bash | opus47-1m-medium | 11.9 | 31.7 | 2.7 | 1.21 |
-| default | haiku45-200k | 12.9 | 28.1 | 2.2 | 1.29 |
 | bash | haiku45-200k | 14.3 | 21.4 | 1.5 | 0.85 |
 | powershell-tool | haiku45-200k | 7.4 | 14.9 | 2.0 | 0.65 |
 | powershell | haiku45-200k | 5.3 | 9.9 | 1.9 | 0.28 |
@@ -1456,23 +1456,23 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | powershell-tool | opus47-200k-medium | 19.7 | 37.0 | 1.9 | 2.00 |
 | powershell | sonnet46-1m-medium | 32.1 | 44.3 | 1.4 | 1.91 |
 | default | sonnet46-200k-medium | 30.1 | 45.4 | 1.5 | 1.81 |
+| default | opus47-200k-medium | 17.4 | 42.7 | 2.5 | 1.77 |
 | typescript-bun | opus47-1m-xhigh | 30.7 | 65.6 | 2.1 | 1.73 |
 | default | opus47-1m-medium | 17.0 | 33.3 | 2.0 | 1.64 |
-| default | opus47-200k-medium | 15.6 | 35.1 | 2.3 | 1.57 |
 | default | opus47-1m-xhigh | 24.0 | 50.6 | 2.1 | 1.55 |
 | typescript-bun | opus47-1m-medium | 18.0 | 42.0 | 2.3 | 1.54 |
 | typescript-bun | opus47-1m-high | 27.6 | 61.0 | 2.2 | 1.48 |
+| default | haiku45-200k | 15.9 | 32.3 | 2.0 | 1.43 |
 | typescript-bun | sonnet46-200k-medium | 27.3 | 54.7 | 2.0 | 1.42 |
 | powershell-tool | sonnet46-1m-medium | 31.3 | 46.1 | 1.5 | 1.39 |
 | powershell | sonnet46-200k-medium | 27.6 | 41.1 | 1.5 | 1.38 |
 | bash | sonnet46-1m-medium | 22.1 | 44.6 | 2.0 | 1.36 |
-| default | haiku45-200k | 12.9 | 28.1 | 2.2 | 1.29 |
 | bash | opus47-1m-xhigh | 25.9 | 47.3 | 1.8 | 1.26 |
 | default | sonnet46-1m-medium | 30.9 | 37.7 | 1.2 | 1.26 |
 | bash | opus47-1m-high | 24.9 | 49.4 | 2.0 | 1.23 |
 | bash | opus47-1m-medium | 11.9 | 31.7 | 2.7 | 1.21 |
+| default | opus47-1m-high | 23.3 | 50.3 | 2.2 | 1.16 |
 | bash | opus47-200k-medium | 17.0 | 35.1 | 2.1 | 1.14 |
-| default | opus47-1m-high | 19.7 | 43.6 | 2.2 | 1.08 |
 | typescript-bun | sonnet46-1m-medium | 31.6 | 53.7 | 1.7 | 1.07 |
 | powershell | opus47-1m-xhigh | 28.1 | 56.7 | 2.0 | 0.99 |
 | powershell-tool | sonnet46-200k-medium | 31.7 | 42.3 | 1.3 | 0.94 |
@@ -1498,11 +1498,11 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Semantic Version Bumper | bash | opus47-200k-medium | 27 | 58 | 2.1 | 299 | 182 | 1.64 |
 | Semantic Version Bumper | bash | sonnet46-200k-medium | 20 | 43 | 2.1 | 275 | 142 | 1.94 |
 | Semantic Version Bumper | bash | sonnet46-1m-medium | 21 | 25 | 1.2 | 217 | 376 | 0.58 |
-| Semantic Version Bumper | default | haiku45-200k | 0 | 0 | 0.0 | 0 | 270 | 0.00 |
-| Semantic Version Bumper | default | opus47-1m-high | 0 | 0 | 0.0 | 0 | 0 | 0.00 |
+| Semantic Version Bumper | default | haiku45-200k | 21 | 29 | 1.4 | 210 | 217 | 0.97 |
+| Semantic Version Bumper | default | opus47-1m-high | 25 | 47 | 1.9 | 231 | 421 | 0.55 |
 | Semantic Version Bumper | default | opus47-1m-medium | 22 | 39 | 1.8 | 319 | 180 | 1.77 |
 | Semantic Version Bumper | default | opus47-1m-xhigh | 30 | 70 | 2.3 | 505 | 280 | 1.80 |
-| Semantic Version Bumper | default | opus47-200k-medium | 0 | 0 | 0.0 | 0 | 0 | 0.00 |
+| Semantic Version Bumper | default | opus47-200k-medium | 13 | 53 | 4.1 | 245 | 170 | 1.44 |
 | Semantic Version Bumper | default | sonnet46-200k-medium | 44 | 53 | 1.2 | 399 | 175 | 2.28 |
 | Semantic Version Bumper | default | sonnet46-1m-medium | 44 | 46 | 1.0 | 359 | 320 | 1.12 |
 | Semantic Version Bumper | powershell | haiku45-200k | 0 | 0 | 0.0 | 0 | 702 | 0.00 |
@@ -3775,11 +3775,11 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Judge Consistency Summary
 
-**🟢 The panel is doing its job:** Judges agree strongly on which models and which language×model combos produce better code (Spearman +0.70 on Tests Quality models, +0.90 on Workflow Craft models, +0.79 on language×model for Workflow Craft). The reversals that exist sit near the score floor, and Haiku's own-family flags actually run anti-self-preference — Haiku scores its own model lower than Gemini does, not higher.
+**🟢 The panel is doing its job:** judges agree strongly on which models produce better code (Spearman +0.90 on Workflow Craft model rankings, +0.70 on Tests Quality), Opus 4.7-1m at high/xhigh effort tops both boards, and haiku45 lands last for both judges — so the score drops on weaker configs are signal, not own-model favoritism.
 
-- 👀 **Where to look closer:** The widest disagreements (a judge scoring 1 vs 5, a 4-point gap on a 1–5 scale) cluster on Opus 4.7-1m at medium effort — e.g. 11-semantic-version-bumper / powershell / opus47-1m-medium and 15-test-results-aggregator / default / opus47-1m-medium — and on the **language** axis the two judges have zero correlation about whether bash or default flatters the models best.
-- 🤓 **Surprise finding:** Haiku is harsher on its own model family's output than Gemini is — the opposite of self-preference bias.
-- ℹ️ **Recommended next step:** Pull the eight Workflow Craft 4-point outliers and have a human adjudicate; that will also tell us whose **language**-axis ordering to trust.
+- 👀 **Where to look closer:** the widest disagreements (a judge scoring 1 vs 5, a 4-point gap on a 1–5 scale) cluster on 15-test-results-aggregator and 16-environment-matrix-generator — e.g. 15-test-results-aggregator / default / opus47-1m-medium and 16-environment-matrix-generator / powershell / opus47-1m-xhigh — where Haiku floors at 1 while Gemini ceilings at 5; a human read would tell us which judge is mis-calibrated.
+- 🤓 **Surprise finding:** the panel splits cleanly on language ordering (Spearman +0.00 on both axes) — Haiku ranks bash #1 for Workflow Craft while Gemini ranks it #4, even though all five language means sit inside a 0.2-point band, so this is calibration noise around a tight cluster.
+- ℹ️ **Recommended next step:** read three of the 4-point-gap runs end-to-end and recalibrate whichever judge is floor-clipping or ceiling-rounding borderline output.
 
 #### Provenance
 
@@ -3787,7 +3787,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 - **Inputs:** the [`judge-consistency-data.md`](judge-consistency-data.md) tables plus benchmark context (rubrics, task list, experiment setup).
 - **Script:** [`conclusions_report.py`](../../conclusions_report.py) — regenerate with `python3 generate_results.py <run_dir>`.
 - **Instruction:** [`JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT`](../../judge_consistency_report.py) in that script.
-- **Usage:** 5 input + 2341 output tokens, $0.2520.
+- **Usage:** 5 input + 2030 output tokens, $0.3373.
 
 *Full breakdown with per-model / per-language / per-language×model ranking tables and disagreement hotspots in [judge-consistency-data.md](judge-consistency-data.md).*
 

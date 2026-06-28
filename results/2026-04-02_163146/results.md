@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-05-08 01:19:50 PM ET — 144/144 runs completed, 0 remaining; total cost $436.67; total agent time 5098.1 min.
+**Last updated:** 2026-06-28 07:44:39 PM ET — 144/144 runs completed, 0 remaining; total cost $436.67; total agent time 5098.1 min.
 **Claude Code versions used:** [v2.1.81](claude-code-2.1.81.md) (139 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -26,7 +26,7 @@
 
 ## Scoring
 
-Judges: panel of LLM-as-judge models — `haiku-4-5` (via Claude CLI) and `gemini-3.1-pro-preview` (via Gemini CLI). Each run's quality score is the mean of both judges, cached per-run so numbers are deterministic across regenerations. Known bias caveats live in the [Judge Consistency Summary](#judge-consistency-summary).
+Judges: panel of LLM-as-judge models — `haiku-4-5` (via Claude CLI) and `Gemini 3.1 Pro (High)` (via the Antigravity `agy` CLI). Each run's quality score is the mean of both judges, cached per-run so numbers are deterministic across regenerations. Known bias caveats live in the [Judge Consistency Summary](#judge-consistency-summary).
 
 **Tests Quality** = Overall score (1-5) for the generated **test code**.
 
@@ -144,11 +144,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Task | Language | Model | Duration | Reason | Lines | actionlint | act-result.txt |
 |------|------|-------|----------|--------|-------|------------|----------------|
-| CSV Report Generator | csharp-script | opus46-200k | 271.2min | exit_code=-1 | 165 | n/a | no |
-| REST API Client | powershell | opus46-200k | 257.5min | exit_code=-1 | 629 | n/a | no |
-| Config File Migrator | csharp-script | opus46-200k | 54.2min | exit_code=-1 | 1899 | n/a | no |
-| Database Seed Script | csharp-script | sonnet46-200k | 28.1min | exit_code=-1 | 2013 | n/a | no |
-| Environment Matrix Generator | powershell-strict | sonnet46-200k | 30.0min | exit_code=-1 | 586 | n/a | no |
+| CSV Report Generator | csharp-script | opus46-200k | 271.2min | exit_code=-1 | 132 | n/a | no |
+| REST API Client | powershell | opus46-200k | 257.5min | exit_code=-1 | 376 | n/a | no |
+| Config File Migrator | csharp-script | opus46-200k | 54.2min | exit_code=-1 | 1701 | n/a | no |
+| Database Seed Script | csharp-script | sonnet46-200k | 28.1min | exit_code=-1 | 1850 | n/a | no |
+| Environment Matrix Generator | powershell-strict | sonnet46-200k | 30.0min | exit_code=-1 | 340 | n/a | no |
 
 *5 run(s) excluded from averages below.*
 
@@ -528,7 +528,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|-------|-----------|----------------|-----------------|---------------------|
 | csharp-script | opus46-200k | 32.0 | 71.4 | 2.2 | 1.41 |
 | csharp-script | sonnet46-200k | 23.5 | 55.1 | 2.3 | 0.77 |
-| default | opus46-200k | 32.6 | 54.9 | 1.7 | 1.27 |
+| default | opus46-200k | 34.2 | 60.7 | 1.8 | 1.41 |
 | default | sonnet46-200k | 31.7 | 55.8 | 1.8 | 1.30 |
 | powershell | opus46-200k | 39.1 | 66.8 | 1.7 | 38.36 |
 | powershell | sonnet46-200k | 25.7 | 45.3 | 1.8 | 2.47 |
@@ -543,7 +543,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|-------|-----------|----------------|-----------------|---------------------|
 | powershell | opus46-200k | 39.1 | 66.8 | 1.7 | 38.36 |
 | powershell-strict | opus46-200k | 37.5 | 71.0 | 1.9 | 76.19 |
-| default | opus46-200k | 32.6 | 54.9 | 1.7 | 1.27 |
+| default | opus46-200k | 34.2 | 60.7 | 1.8 | 1.41 |
 | csharp-script | opus46-200k | 32.0 | 71.4 | 2.2 | 1.41 |
 | default | sonnet46-200k | 31.7 | 55.8 | 1.8 | 1.30 |
 | powershell-strict | sonnet46-200k | 27.0 | 48.9 | 1.8 | 13.65 |
@@ -560,9 +560,9 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | csharp-script | opus46-200k | 32.0 | 71.4 | 2.2 | 1.41 |
 | powershell-strict | opus46-200k | 37.5 | 71.0 | 1.9 | 76.19 |
 | powershell | opus46-200k | 39.1 | 66.8 | 1.7 | 38.36 |
+| default | opus46-200k | 34.2 | 60.7 | 1.8 | 1.41 |
 | default | sonnet46-200k | 31.7 | 55.8 | 1.8 | 1.30 |
 | csharp-script | sonnet46-200k | 23.5 | 55.1 | 2.3 | 0.77 |
-| default | opus46-200k | 32.6 | 54.9 | 1.7 | 1.27 |
 | powershell-strict | sonnet46-200k | 27.0 | 48.9 | 1.8 | 13.65 |
 | powershell | sonnet46-200k | 25.7 | 45.3 | 1.8 | 2.47 |
 
@@ -577,9 +577,9 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | powershell | opus46-200k | 39.1 | 66.8 | 1.7 | 38.36 |
 | powershell-strict | sonnet46-200k | 27.0 | 48.9 | 1.8 | 13.65 |
 | powershell | sonnet46-200k | 25.7 | 45.3 | 1.8 | 2.47 |
+| default | opus46-200k | 34.2 | 60.7 | 1.8 | 1.41 |
 | csharp-script | opus46-200k | 32.0 | 71.4 | 2.2 | 1.41 |
 | default | sonnet46-200k | 31.7 | 55.8 | 1.8 | 1.30 |
-| default | opus46-200k | 32.6 | 54.9 | 1.7 | 1.27 |
 | csharp-script | sonnet46-200k | 23.5 | 55.1 | 2.3 | 0.77 |
 
 </details>
@@ -600,7 +600,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | CSV Report Generator | powershell-strict | sonnet46-200k | 24 | 39 | 1.6 | 226 | 66 | 3.42 |
 | Log File Analyzer | csharp-script | opus46-200k | 38 | 107 | 2.8 | 613 | 606 | 1.01 |
 | Log File Analyzer | csharp-script | sonnet46-200k | 34 | 100 | 2.9 | 589 | 589 | 1.00 |
-| Log File Analyzer | default | opus46-200k | 0 | 0 | 0.0 | 0 | 0 | 0.00 |
+| Log File Analyzer | default | opus46-200k | 0 | 0 | 0.0 | 0 | 812 | 0.00 |
 | Log File Analyzer | default | sonnet46-200k | 64 | 122 | 1.9 | 778 | 372 | 2.09 |
 | Log File Analyzer | powershell | opus46-200k | 33 | 55 | 1.7 | 294 | 291 | 1.01 |
 | Log File Analyzer | powershell | sonnet46-200k | 34 | 57 | 1.7 | 365 | 373 | 0.98 |
@@ -656,7 +656,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Database Seed Script | powershell-strict | sonnet46-200k | 46 | 80 | 1.7 | 454 | 137 | 3.31 |
 | Error Retry Pipeline | csharp-script | opus46-200k | 21 | 61 | 2.9 | 398 | 541 | 0.74 |
 | Error Retry Pipeline | csharp-script | sonnet46-200k | 10 | 35 | 3.5 | 266 | 481 | 0.55 |
-| Error Retry Pipeline | default | opus46-200k | 0 | 0 | 0.0 | 0 | 0 | 0.00 |
+| Error Retry Pipeline | default | opus46-200k | 29 | 104 | 3.6 | 612 | 249 | 2.46 |
 | Error Retry Pipeline | default | sonnet46-200k | 23 | 45 | 2.0 | 305 | 328 | 0.93 |
 | Error Retry Pipeline | powershell | opus46-200k | 25 | 89 | 3.6 | 420 | 245 | 1.71 |
 | Error Retry Pipeline | powershell | sonnet46-200k | 21 | 42 | 2.0 | 232 | 9 | 25.78 |
