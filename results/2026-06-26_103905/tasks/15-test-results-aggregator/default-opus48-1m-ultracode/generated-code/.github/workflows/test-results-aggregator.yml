@@ -1,0 +1,83 @@
+# Aggregates test result files (JUnit XML + JSON) produced by a matrix build
+# into a single markdown summary published to the GitHub Actions job summary.
+#
+# The `validate` job fans out over the fixture files (one matrix leg per file,
+# mirroring a real OS/version matrix) and checks each parses. The `aggregate`
+# job then `needs:` all legs and rolls them up into totals, flaky-test
+# detection, and a markdown report.
+#
+# The script (aggregator.py) is pure Python standard library, so the only
+# dependency is `python3`, which is preinstalled on ubuntu runners and in the
+# act container -- no install step is required.
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly Monday 06:00 UTC sanity run.
+    - cron: '0 6 * * 1'
+
+# Read-only: this workflow only reports, it never writes back to the repo.
+permissions:
+  contents: read
+
+env:
+  FIXTURES_DIR: fixtures
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Fan-out: validate each result file independently (simulated matrix legs).
+  # ---------------------------------------------------------------------------
+  validate:
+    name: Validate fixtures
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture:
+          - results-ubuntu.xml
+          - results-windows.json
+          - results-macos.xml
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify python3 is available
+        run: python3 --version
+
+      - name: Validate fixture parses
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: python3 aggregator.py --validate "${FIXTURES_DIR}/${FIXTURE}"
+
+  # ---------------------------------------------------------------------------
+  # Fan-in: aggregate all results once every leg has validated.
+  # ---------------------------------------------------------------------------
+  aggregate:
+    name: Aggregate results
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify python3 is available
+        run: python3 --version
+
+      - name: Generate markdown summary
+        run: python3 aggregator.py "${FIXTURES_DIR}" --output summary.md
+
+      - name: Generate machine-readable totals
+        run: python3 aggregator.py "${FIXTURES_DIR}" --format json --output totals.json
+
+      - name: Print reports to the build log
+        run: |
+          echo '----- MARKDOWN SUMMARY -----'
+          cat summary.md
+          echo '----- JSON TOTALS -----'
+          cat totals.json
+
+      - name: Publish to the GitHub job summary
+        run: cat summary.md >> "$GITHUB_STEP_SUMMARY"
