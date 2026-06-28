@@ -1,0 +1,95 @@
+name: Environment Matrix Generator
+
+# Real-world CI/CD usage: a "generate-matrix" job expands a configuration into a
+# GitHub Actions strategy matrix (validating its size), publishes it as a job
+# output, and a downstream "build" job consumes that matrix via fromJSON to fan
+# out across every generated combination.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly sanity run (Mondays 06:00 UTC) so config drift is caught early.
+    - cron: '0 6 * * 1'
+
+# Least-privilege: the generator only reads repository contents.
+permissions:
+  contents: read
+
+env:
+  # Directory holding the matrix configuration fixtures consumed below.
+  FIXTURE_DIR: fixtures
+
+jobs:
+  generate-matrix:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      # Published for the downstream build job to consume.
+      matrix: ${{ steps.basic.outputs.matrix }}
+      count: ${{ steps.basic.outputs.count }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure PowerShell is available
+        shell: bash
+        run: |
+          if command -v pwsh >/dev/null 2>&1; then
+            echo "pwsh present: $(pwsh --version)"
+          else
+            echo "::error::PowerShell (pwsh) is required but was not found"
+            exit 1
+          fi
+
+      - name: Generate basic matrix (and publish as job output)
+        id: basic
+        shell: pwsh
+        run: |
+          ./Invoke-MatrixGenerator.ps1 `
+            -ConfigPath "$env:FIXTURE_DIR/basic.config.json" `
+            -Summary -GitHubOutput
+
+      - name: Generate matrix with exclude rules
+        shell: pwsh
+        run: |
+          ./Invoke-MatrixGenerator.ps1 `
+            -ConfigPath "$env:FIXTURE_DIR/exclude.config.json" -Summary
+
+      - name: Generate matrix with include rules
+        shell: pwsh
+        run: |
+          ./Invoke-MatrixGenerator.ps1 `
+            -ConfigPath "$env:FIXTURE_DIR/include.config.json" -Summary
+
+      - name: Validate oversized matrix is rejected
+        shell: pwsh
+        run: |
+          Import-Module ./MatrixGenerator.psm1 -Force
+          $config = Read-MatrixConfig -Path "$env:FIXTURE_DIR/oversize.config.json"
+          try {
+            $null = Get-BuildMatrix -Config $config
+            Write-Output "OVERSIZE_REJECTED=false"
+            throw "Oversized matrix was accepted but should have been rejected."
+          }
+          catch [System.InvalidOperationException] {
+            Write-Output "OVERSIZE_REJECTED=true"
+            Write-Output "OVERSIZE_MESSAGE=$($_.Exception.Message)"
+          }
+
+  build:
+    name: Build
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    # Consume the generated matrix exactly as a real pipeline would. This proves
+    # the generator's output is a valid strategy.matrix.
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Show resolved build combination
+        shell: pwsh
+        run: |
+          Write-Output "BUILD_COMBO os=${{ matrix.os }} node=${{ matrix.node }}"
+          Write-Output "Total combinations in matrix: ${{ needs.generate-matrix.outputs.count }}"
