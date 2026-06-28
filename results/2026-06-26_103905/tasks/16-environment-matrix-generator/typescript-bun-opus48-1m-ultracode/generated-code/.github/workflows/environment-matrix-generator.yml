@@ -1,0 +1,146 @@
+# Environment Matrix Generator pipeline.
+#
+# Runs the Bun/TypeScript generator (matrix-generator.ts) against a
+# configuration file, producing a GitHub Actions strategy.matrix as JSON. The
+# generated matrix is exposed as a job output and consumed by a downstream
+# `report` job via fromJSON — exactly how a real "dynamic matrix" pipeline wires
+# a generated matrix into later jobs.
+#
+# Which config file is used is controlled by the CONFIG_FILE environment
+# variable (falling back to a workflow_dispatch input, then to a checked-in
+# fixture). The test harness sets CONFIG_FILE per test case via `act --env`.
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: Path to the matrix configuration JSON file
+        required: false
+        default: fixtures/basic.config.json
+  schedule:
+    # Weekly sanity run (Mondays 06:00 UTC).
+    - cron: "0 6 * * 1"
+
+# Least-privilege: the pipeline only needs to read the repository contents.
+permissions:
+  contents: read
+
+jobs:
+  generate-matrix:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+      size: ${{ steps.generate.outputs.size }}
+      within-limit: ${{ steps.generate.outputs.within-limit }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Generate matrix
+        id: generate
+        env:
+          # CONFIG_FILE (from `act --env` or the runner env) wins; otherwise use
+          # the workflow_dispatch input; otherwise the default fixture.
+          DEFAULT_CONFIG: ${{ github.event.inputs.config || 'fixtures/basic.config.json' }}
+        run: |
+          set -euo pipefail
+          CONFIG_FILE="${CONFIG_FILE:-$DEFAULT_CONFIG}"
+          echo "Using configuration file: $CONFIG_FILE"
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "::error::Config file not found: $CONFIG_FILE"
+            exit 1
+          fi
+          echo "----- input config -----"
+          cat "$CONFIG_FILE"
+          echo "------------------------"
+
+          # Generate the matrix JSON (non-strict: an over-size matrix is reported
+          # via the within-limit flag rather than failing the build).
+          bun run matrix-generator.ts "$CONFIG_FILE" > matrix.json
+
+          echo "===MATRIX_JSON_BEGIN==="
+          cat matrix.json
+          echo "===MATRIX_JSON_END==="
+
+          # Extract the values the test harness asserts on.
+          SIZE=$(jq -r '.size' matrix.json)
+          WITHIN_LIMIT=$(jq -r '."within-limit"' matrix.json)
+          MAX_SIZE=$(jq -r '."max-size"' matrix.json)
+          FAIL_FAST=$(jq -r '.strategy."fail-fast"' matrix.json)
+          MAX_PARALLEL=$(jq -r '.strategy."max-parallel" // "none"' matrix.json)
+          INCLUDE_COUNT=$(jq -r '.strategy.matrix.include | length' matrix.json)
+
+          echo "MATRIX_SIZE=$SIZE"
+          echo "WITHIN_LIMIT=$WITHIN_LIMIT"
+          echo "MAX_SIZE=$MAX_SIZE"
+          echo "FAIL_FAST=$FAIL_FAST"
+          echo "MAX_PARALLEL=$MAX_PARALLEL"
+          echo "INCLUDE_COUNT=$INCLUDE_COUNT"
+          # Single-line compact array so the harness can assert the exact value
+          # even after act prefixes every output line.
+          echo "INCLUDE_JSON=$(jq -c '.strategy.matrix.include' matrix.json)"
+
+          # Expose the matrix (and a couple of summary values) to downstream jobs.
+          {
+            echo "matrix=$(jq -c '.strategy.matrix' matrix.json)"
+            echo "size=$SIZE"
+            echo "within-limit=$WITHIN_LIMIT"
+          } >> "$GITHUB_OUTPUT"
+
+          # Human-readable job summary for the Actions UI.
+          {
+            echo "## Build matrix"
+            echo ""
+            echo "| Property | Value |"
+            echo "| --- | --- |"
+            echo "| Combinations | $SIZE |"
+            echo "| Max size | $MAX_SIZE |"
+            echo "| Within limit | $WITHIN_LIMIT |"
+            echo "| fail-fast | $FAIL_FAST |"
+            echo "| max-parallel | $MAX_PARALLEL |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce matrix size limit
+        run: |
+          set -euo pipefail
+          WITHIN_LIMIT="${{ steps.generate.outputs.within-limit }}"
+          if [ "$WITHIN_LIMIT" = "true" ]; then
+            echo "Matrix size is within the configured limit."
+          else
+            echo "::warning::Matrix exceeds the configured max-size; review the configuration."
+          fi
+          echo "SIZE_CHECK_DONE=true"
+
+  report:
+    name: Report matrix
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consume the generated matrix
+        env:
+          MATRIX: ${{ needs.generate-matrix.outputs.matrix }}
+          SIZE: ${{ needs.generate-matrix.outputs.size }}
+          WITHIN_LIMIT: ${{ needs.generate-matrix.outputs.within-limit }}
+        run: |
+          set -euo pipefail
+          echo "Received matrix output from the generate-matrix job:"
+          echo "$MATRIX" | jq .
+          REPORT_INCLUDE_COUNT=$(echo "$MATRIX" | jq '.include | length')
+          echo "REPORT_SIZE=$SIZE"
+          echo "REPORT_WITHIN_LIMIT=$WITHIN_LIMIT"
+          echo "REPORT_INCLUDE_COUNT=$REPORT_INCLUDE_COUNT"
+          # The downstream view of the matrix must agree with the reported size.
+          if [ "$REPORT_INCLUDE_COUNT" != "$SIZE" ]; then
+            echo "::error::include count ($REPORT_INCLUDE_COUNT) != reported size ($SIZE)"
+            exit 1
+          fi
+          echo "Report complete."
