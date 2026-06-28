@@ -1,0 +1,68 @@
+name: Dependency License Checker
+
+# Triggers: on every push and PR, on a weekly schedule (catch newly-flagged
+# licenses), and on-demand via the Actions tab.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+# Least privilege: the checker only reads the repository.
+permissions:
+  contents: read
+
+# Shared configuration. INPUT_DIR holds the manifest + policy + license database
+# the checker consumes; override it per environment if needed.
+env:
+  INPUT_DIR: ci-input
+
+jobs:
+  # Job 1: prove the checker logic is correct via the Pester unit tests.
+  validate:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          # Pester ships in the runner image; only install if somehow missing
+          # (guarded so we never hit the gallery / network in CI).
+          if (-not (Get-Module -ListAvailable -Name Pester)) {
+            Install-Module Pester -Force -Scope CurrentUser -SkipPublisherCheck
+          }
+          $v = (Get-Module -ListAvailable -Name Pester | Select-Object -First 1).Version
+          Write-Output "Using Pester $v"
+
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          # Run ONLY the pure unit tests here. The workflow/act harness tests are
+          # deliberately excluded to avoid running act inside act.
+          $result = Invoke-Pester -Path tests/DependencyLicenseChecker.Tests.ps1 -Output Detailed -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) unit test(s) failed."
+          }
+
+  # Job 2: run the actual compliance check. Depends on the unit tests passing.
+  license-check:
+    name: License compliance check
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run dependency license checker
+        shell: pwsh
+        run: |
+          # The script auto-detects the manifest (package.json / requirements.txt)
+          # inside INPUT_DIR, reads policy.json + licenses.json there, prints a
+          # deterministic report to stdout, and writes a markdown summary to the
+          # GitHub Actions job summary. Report mode (no -FailOnViolation) keeps the
+          # job green while still reporting denied/unknown licenses.
+          ./Invoke-DependencyLicenseCheck.ps1 -InputDir '${{ env.INPUT_DIR }}' -Format text
