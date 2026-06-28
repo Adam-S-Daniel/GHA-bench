@@ -1,0 +1,76 @@
+name: Test Results Aggregator
+
+# Run on pushes and PRs, on a nightly schedule, and on demand.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+# Least-privilege: the job only needs to read the repo contents.
+permissions:
+  contents: read
+
+env:
+  # Path the aggregator writes its Markdown summary to.
+  SUMMARY_FILE: test-summary.md
+  # Directory of result files to aggregate. Overridable (the act test harness
+  # points this at per-case fixture data); defaults to the bundled samples.
+  FIXTURE_DIR: ./fixtures
+
+jobs:
+  # First job: run the Pester unit tests for the aggregator itself.
+  unit-tests:
+    name: Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Pester is pre-installed in the container; import whatever is available.
+          Import-Module Pester -MinimumVersion 5.0.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = './TestResultsAggregator.Tests.ps1'
+          $config.Output.Verbosity = 'Detailed'
+          $config.Run.Throw = $true
+          Invoke-Pester -Configuration $config
+
+  # Second job: actually use the aggregator on the fixture data and publish a
+  # GitHub Actions job summary. Depends on the unit tests passing first.
+  aggregate:
+    name: Aggregate fixture results
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Aggregate test results and build summary
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Run the aggregator against the selected fixture directory. The script
+          # also appends to $GITHUB_STEP_SUMMARY automatically when set.
+          ./TestResultsAggregator.ps1 -Path $env:FIXTURE_DIR -OutputPath $env:SUMMARY_FILE
+
+      - name: Verify the summary file and echo it
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path $env:SUMMARY_FILE)) {
+            throw "Expected summary file '$($env:SUMMARY_FILE)' was not created"
+          }
+          $md = Get-Content $env:SUMMARY_FILE -Raw
+
+          # Echo the summary between markers so the act harness can parse and
+          # assert exact aggregate values for each test case's fixture data.
+          Write-Host '----- BEGIN SUMMARY -----'
+          Write-Host $md
+          Write-Host '----- END SUMMARY -----'

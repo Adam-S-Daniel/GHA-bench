@@ -1,0 +1,87 @@
+name: Environment Matrix Generator
+
+# Trigger on code changes, PRs, a manual button, and a nightly run so the
+# generated build matrix is always validated.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: Path to the matrix config JSON
+        required: false
+        default: fixtures/active.json
+  schedule:
+    - cron: '0 6 * * 1'
+
+# Least privilege: the script only needs to read the checked-out repo.
+permissions:
+  contents: read
+
+# The config the generator reads. The test harness swaps fixtures into
+# fixtures/active.json; a manual dispatch can override the path.
+env:
+  MATRIX_CONFIG: ${{ github.event.inputs.config || 'fixtures/active.json' }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # generate: run the generator on the configured fixture, validate the size
+  # guard, and publish the resulting strategy/matrix as job outputs.
+  # ---------------------------------------------------------------------------
+  generate:
+    runs-on: ubuntu-latest
+    outputs:
+      strategy: ${{ steps.gen.outputs.strategy }}
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq jq
+          fi
+          jq --version
+
+      - name: Generate matrix
+        id: gen
+        run: |
+          set -euo pipefail
+          echo "Using config: $MATRIX_CONFIG"
+          # Run the generator; capture stdout (strategy JSON) and the stderr note.
+          strategy="$(bash matrix-gen.sh "$MATRIX_CONFIG")"
+          compact="$(printf '%s' "$strategy" | jq -c '.')"
+          matrix="$(printf '%s' "$strategy" | jq -c '.matrix')"
+
+          # Emit clearly delimited output for the test harness to assert on.
+          echo "MATRIX_STRATEGY_BEGIN"
+          echo "$compact"
+          echo "MATRIX_STRATEGY_END"
+          echo "FAIL_FAST=$(printf '%s' "$strategy" | jq -c '.["fail-fast"]')"
+          echo "AXIS_COUNT=$(printf '%s' "$matrix" | jq '[to_entries[] | select(.key != "include" and .key != "exclude")] | length')"
+
+          # Publish as job outputs for downstream consumption.
+          {
+            echo "strategy=$compact"
+            echo "matrix=$matrix"
+          } >>"$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------------------
+  # consume: a downstream job that depends on the generated matrix, simulating
+  # how another workflow stage would use strategy.matrix output.
+  # ---------------------------------------------------------------------------
+  consume:
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consume generated matrix
+        run: |
+          set -euo pipefail
+          matrix='${{ needs.generate.outputs.matrix }}'
+          echo "Received matrix: $matrix"
+          # Validate the downstream payload is well-formed JSON with axes.
+          axes="$(printf '%s' "$matrix" | jq '[to_entries[] | select(.key != "include" and .key != "exclude")] | length')"
+          echo "DOWNSTREAM_AXES=$axes"
+          test "$axes" -ge 1
+          echo "Matrix consumed successfully."

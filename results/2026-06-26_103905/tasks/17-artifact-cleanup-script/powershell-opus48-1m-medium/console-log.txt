@@ -1,0 +1,271 @@
+[Tool: Bash] ls -la && echo "---ACTRC---" && cat .actrc 2>/dev/null && echo "---PWSH---" && which pwsh actionlint act && echo "---PESTER---" && pwsh -c '(Get-Module -ListAvailable Pester).Version'
+[Result] total 44
+drwxr-xr-x 4 passp passp  4096 Jun 27 11:39 .
+drwxr-xr-x 4 passp passp  4096 Jun 27 11:39 ..
+-rw-r--r-- 1 passp passp    40 Jun 27 11:39 .actrc
+drwxr-xr-x 2 passp passp  4096 Jun 27 11:39 .claude
+drwxr-xr-x 6 passp passp  4096 Jun 27 11:39 .git
+-rw-r--r-- 1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---PWSH---
+/snap/bin/pwsh
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+---PESTER---
+
+[32;1mMajor [0m[32;1m Minor [0m[32;1m Build [0m[32;1m Revision[0m
+[32;1m----- [0m [32;1m----- [0m [32;1m----- [0m [32;1m--------[0m
+5      7      1      -1
+[Assistant] Environment is ready: Pester 5.7.1, pwsh, actionlint, act all present. Let me build this with TDD. First, let me set up the structure and write a failing test.
+[Tool: Bash] cd "$(pwd)" && mkdir -p src tests fixtures .github/workflows && ls
+[Result] benchmark-instructions-v4.md
+fixtures
+src
+tests
+[Assistant] Now let me write the first failing test (red phase):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/ArtifactCleanup.Tests.ps1", "content
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/ArtifactCleanup.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now run the tests to confirm they fail (red phase):
+[Tool: Bash] cd "$(pwd)" && pwsh -c "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1 -Output Minimal 2>&1 | Select-Object -Last 8"
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 14 tests in 665ms.[0m
+[95mRunning tests.[0m
+[91m[-] Import-ArtifactData.loads artifacts from a JSON file and normalises the fields[0m[90m 1.15s (1.07s|77ms)[0m
+[91m CommandNotFoundException: The term 'Import-ArtifactData' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91m Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/ArtifactCleanup.Tests.ps1:50[0m
+[91m[-] Import-ArtifactData.throws a meaningful error when the file does not exist[0m[90m 1.19s (1.18s|7ms)[0m
+[91m Expected an exception with message like '*not found*' to be thrown, but the message was 'The term 'Import-ArtifactData' is not recognized as a name of a cmdlet, function, script
+[Assistant] Red phase confirmed: all 14 tests fail. Now the green phase — implement the module:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.psm1", "content": "<#\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.psm1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -c "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1 -Output Minimal 2>&1 | Select-Object -Last 20"
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 14 tests in 410ms.[0m
+[95mRunning tests.[0m
+[91m[-] Get-ArtifactRetentionPlan - no policies.keeps every artifact when no policy is supplied[0m[90m 109ms (70ms|38ms)[0m
+[91m PropertyNotFoundException: The property 'Sum' cannot be found on this object. Verify that the property exists.
+[91m at Get-ArtifactRetentionPlan, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.psm1:197
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/ArtifactCleanup.Tests.ps1:86[0m
+[91m[-] Get-ArtifactRetentionPlan - MaxAgeDays policy.treats an artifact exactly at the cutoff age as retained (boundary)[0m[90m 11ms (8ms|3ms)[0m
+[91m PropertyNotFoundException: The property 'Sum' cannot be found on this 
+[Assistant] Two small bugs in the green code. Fix the `Measure-Object` empty-pipeline issue (StrictMode) and the summary spacing:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] That edit is messy. Let me do it cleanly with a helper function instead:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now add the `Get-SizeSum` helper and fix the summary spacing:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/src/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -c "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1 -Output Minimal 2>&1 | Select-Object -Last 6"
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 14 tests in 255ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/ArtifactCleanup.Tests.ps1[0m[90m 1.37s (634ms|520ms)[0m
+[97mTests completed in 1.41s[0m
+[32mTests Passed: 14, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 14 green. Now the CLI entry point, fixtures, and workflow:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/Invoke-Cleanup.ps1", "content": "#!/usr/bi
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/Invoke-Cleanup.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now the fixtures and the GitHub Actions workflow. Let me create a default fixture and the workflow:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/fixtures/sample.json", "content": "[\n  { 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/fixtures/sample.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/.github/workflows/artifact-cleanup-script.
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/.github/workflows/artifact-cleanup-script.yml (file state is current in your context — no need to Read it back)
+[Assistant] Let me validate with actionlint and test the CLI locally first:
+[Tool: Bash] cd "$(pwd)" && actionlint .github/workflows/artifact-cleanup-script.yml && echo "ACTIONLINT_OK exit=$?" && echo "---CLI RUN---" && pwsh ./Invoke-Cleanup.ps1 -Path fixtures/sample.json -MaxAgeDays 30 -KeepLatestPerWorkflow 2 -MaxTotalSizeBytes 2500 -DryRun -ReferenceTime '2026-06-27T00:00:00Z'
+[Result] ACTIONLINT_OK exit=0
+---CLI RUN---
+===== Artifact Cleanup Plan =====
+DELETE  ci-old             1000 bytes  [exceeds max age]
+DELETE  ci-mid              500 bytes  [beyond keep-latest-N for its workflow]
+KEEP    ci-new              500 bytes
+KEEP    ci-newer            500 bytes
+DELETE  release-1          2000 bytes  [over max total size budget]
+---------------------------------
+Artifacts total: 5
+Artifacts deleted: 3
+Artifacts retained: 2
+Space reclaimed: 3500 bytes (3.42 KB)
+Retained size: 1000 bytes (1000 B)
+=================================
+
+RESULT:DRY_RUN=True
+RESULT:DELETED_COUNT=3
+RESULT:RETAINED_COUNT=2
+RESULT:SPACE_RECLAIMED=3500
+RESULT:RETAINED_SIZE=1000
+RESULT:DELETE=ci-mid
+RESULT:DELETE=ci-old
+RESULT:DELETE=release-1
+[Assistant] actionlint passes and CLI output exactly matches expectations. Let me check the act container image exists before building the harness:
+[Tool: Bash] docker images | grep -E 'act-ubuntu-pwsh|REPOSITORY' ; echo "---"; docker image inspect act-ubuntu-pwsh:latest >/dev/null 2>&1 && echo "IMAGE_PRESENT" || echo "IMAGE_MISSING"
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+---
+IMAGE_PRESENT
+[Assistant] Image present. Now let me write the act integration harness and a workflow-structure Pester test. First the structure tests:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/Workflow.Tests.ps1", "content": "<#\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/Workflow.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now the act integration harness:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/Invoke-ActTests.ps1", "content": "#!
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/Invoke-ActTests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Let me run the fast structure tests first, then launch the act harness (the 3 act runs):
+[Tool: Bash] cd "$(pwd)" && pwsh -c "Invoke-Pester -Path tests/Workflow.Tests.ps1 -Output Minimal 2>&1 | Select-Object -Last 8"
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 11 tests in 311ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/Workflow.Tests.ps1[0m[90m 1.41s (725ms|415ms)[0m
+[97mTests completed in 1.44s[0m
+[32mTests Passed: 11, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Structure tests pass. Now run the act integration harness (3 act runs):
+[Tool: Bash] cd "$(pwd)" && pwsh ./tests/Invoke-ActTests.ps1 2>&1 | tail -40
+[Result] === Running act case: full-policy-dry-run ===
+act push --rm -P ubuntu-latest=act-ubuntu-pwsh:latest --env MAXSIZE=2500 --env MAXAGE=30 --env DRYRUN=true --env KEEPLATEST=2
+
+=== Running act case: max-age-only-execute ===
+act push --rm -P ubuntu-latest=act-ubuntu-pwsh:latest --env MAXSIZE=0 --env MAXAGE=30 --env DRYRUN=false --env KEEPLATEST=0
+
+=== Running act case: nothing-to-delete ===
+act push --rm -P ubuntu-latest=act-ubuntu-pwsh:latest --env MAXSIZE=0 --env MAXAGE=0 --env DRYRUN=true --env KEEPLATEST=5
+
+=== ACT INTEGRATION SUMMARY ===
+FAIL: [full-policy-dry-run] act exited 1 (expected 0)
+FAIL: [max-age-only-execute] act exited 1 (expected 0)
+FAIL: [nothing-to-delete] act exited 1 (expected 0)
+[31;1mException: [0m/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/Invoke-ActTests.ps1:205[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m 205 | [0m     [36;1mthrow "Act integrat
+[Assistant] All three failed identically — a setup issue, not per-case. Let me diagnose from the captured output:
+[Tool: Bash] cd "$(pwd)" && sed -n '1,80p' act-result.txt
+[Result] ACT INTEGRATION TEST RESULTS
+
+
+========================================
+TEST CASE: full-policy-dry-run
+ENV: MAXSIZE=2500 MAXAGE=30 DRYRUN=true KEEPLATEST=2
+ACT EXIT CODE: 1
+----------------------------------------
+time="2026-06-27T11:47:10-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[Artifact Cleanup/unit-tests] ⭐ Run Set up job
+[Artifact Cleanup/unit-tests] 🚀  Start image=act-ubuntu-pwsh:latest
+[Artifact Cleanup/unit-tests]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=true
+[Artifact Cleanup/unit-tests] using DockerAuthConfig authentication for docker pull
+[Artifact Cleanup/unit-tests] Error response from daemon: authentication required - incorrect username or password
+Error: Error response from daemon: authentication required - incorrect username or password
+[Artifact Cleanup/unit-tests]   ❌  Failure - Set up job
+[Artifact Cleanup/unit-tests] 🏁  Job failed
+
+
+====================
+[Assistant] The image exists locally but act tries to force-pull it and fails registry auth. Fix: add `--pull=false`. Let me update the harness:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/Invoke-ActTest
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/Invoke-ActTests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh ./tests/Invoke-ActTests.ps1 2>&1 | tail -40
+[Result] === Running act case: full-policy-dry-run ===
+act push --rm --pull=false -P ubuntu-latest=act-ubuntu-pwsh:latest --env KEEPLATEST=2 --env MAXAGE=30 --env DRYRUN=true --env MAXSIZE=2500
+  OK  DRY_RUN=True
+  OK  DELETED_COUNT=3
+  OK  RETAINED_COUNT=2
+  OK  SPACE_RECLAIMED=3500
+  OK  RETAINED_SIZE=1000
+  OK  Deletes=[ci-mid,ci-old,release-1]
+
+=== Running act case: max-age-only-execute ===
+act push --rm --pull=false -P ubuntu-latest=act-ubuntu-pwsh:latest --env KEEPLATEST=0 --env MAXAGE=30 --env DRYRUN=false --env MAXSIZE=0
+  OK  DRY_RUN=False
+  OK  DELETED_COUNT=1
+  OK  RETAINED_COUNT=1
+  OK  SPACE_RECLAIMED=400
+  OK  RETAINED_SIZE=100
+  OK  Deletes=[delete-me]
+
+=== Running act case: nothing-to-delete ===
+act push --rm --pull=false -P ubuntu-latest=act-ubuntu-pwsh:latest --env KEEPLATEST=5 --env MAXAGE=0 --env DRYRUN=true --env MAXSIZE=0
+  OK  DRY_RUN=True
+  OK  DELETED_COUNT=0
+  OK  RETAINED_COUNT=2
+  OK  SPACE_RECLAIMED=0
+  OK  RETAINED_SIZE=300
+  OK  Deletes=[]
+
+=== ACT INTEGRATION SUM
+[Assistant] All 3 act cases pass with exact expected values. Let me verify both jobs reported success in the captured output and confirm the final state of everything:
+[Tool: Bash] cd "$(pwd)" && echo "=== Job succeeded count ===" && grep -c "Job succeeded" act-result.txt && echo "=== cleanup-plan job markers ===" && grep -E "cleanup-plan\].*(Job succeeded|Run Generate)" act-result.txt | head && echo "" && echo "=== Full unit-tests + Workflow Pester run ===" && pwsh -c "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1,tests/Workflow.Tests.ps1 -Output Minimal 2>&1 | Select-Object -Last 4"
+[Result] === Job succeeded count ===
+6
+=== cleanup-plan job markers ===
+[Artifact Cleanup/cleanup-plan] 🏁  Job succeeded
+[Artifact Cleanup/cleanup-plan] 🏁  Job succeeded
+[Artifact Cleanup/cleanup-plan] 🏁  Job succeeded
+
+=== Full unit-tests + Workflow Pester run ===
+[95m
+[95mStarting discovery in 2 files.[0m
+[95mDiscovery found 25 tests in 247ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/ArtifactCleanup.Tests.ps1[0m[90m 1.05s (527ms|355ms)[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/tests/Workflow.Tests.ps1[0m[90m 538ms (432ms|87ms)[0m
+[97mTests completed in 1.61s[0m
+[32mTests Passed: 25, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Everything passes. Let me add a brief README and confirm final structure:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/README.md", "content": "# Artifact Cleanup
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/powershell-opus48-1m-medium/README.md (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && echo "=== Files ===" && find . -type f -not -path './.git/*' -not -name 'benchmark-instructions*' | sort && echo "" && echo "=== act-result.txt exists ===" && ls -la act-result.txt
+[Result] === Files ===
+./.actrc
+./.claude/settings.json
+./.github/workflows/artifact-cleanup-script.yml
+./Invoke-Cleanup.ps1
+./README.md
+./act-result.txt
+./fixtures/sample.json
+./src/ArtifactCleanup.psm1
+./tests/ArtifactCleanup.Tests.ps1
+./tests/Invoke-ActTests.ps1
+./tests/Workflow.Tests.ps1
+
+=== act-result.txt exists ===
+-rw-r--r-- 1 passp passp 26687 Jun 27 11:48 act-result.txt
+[Assistant] Everything is complete and verified. Here's a summary of what was delivered:
+
+## Summary
+
+Built a PowerShell artifact-cleanup solution using red/green TDD, with a fully validated GitHub Actions pipeline.
+
+### Core engine (`src/ArtifactCleanup.psm1`)
+Four public functions:
+- **`Import-ArtifactData`** — loads/validates JSON artifact metadata (graceful errors for missing files, malformed JSON, missing fields).
+- **`Get-ArtifactRetentionPlan`** — pure engine applying three policies in order: **max age** → **keep-latest-N per workflow** → **max total size** (oldest-first eviction). Returns per-artifact decisions + a summary.
+- **`Format-CleanupSummary`** — human-readable report.
+- **`Invoke-ArtifactCleanup`** — wraps it all with **dry-run** and a `-DeleteAction` callback for execute mode.
+
+### TDD process
+- Wrote `tests/ArtifactCleanup.Tests.ps1` **first** → confirmed all 14 fail (red) → implemented module → green. Covers every policy, boundary conditions, combined policies, dry-run vs execute, error handling, and empty input.
+
+### GitHub Actions (`.github/workflows/artifact-cleanup-script.yml`)
+- Triggers: `push`, `pull_request`, `schedule` (nightly), `workflow_dispatch`.
+- Least-privilege `permissions: contents: read`, deterministic `ARTIFACT_REF_TIME` env.
+- Two jobs with dependency: `unit-tests` → `cleanup-plan` (`needs:`), both using `shell: pwsh` and `actions/checkout@v4`.
+- **actionlint: exit 0.**
+
+### Testing through `act`
+- `tests/Invoke-ActTests.ps1` runs **3 test cases** (full-policy dry-run, age-only execute, no-op), each in a throwaway git repo, via `act push --rm`. The image-pull auth error was diagnosed and fixed with `--pull=false`.
+- All cases: **act exit 0**, both jobs **"Job succeeded"** (6 total), and **exact** expected RESULT values asserted (counts, bytes reclaimed, deleted artifact names).
+- `act-result.txt` (26 KB) written with all three delimited runs.
+
+### Results
+- **25 Pester tests pass** (14 unit + 11 workflow-structure).
+- **3/3 act cases pass** with exact-value assertions.
+
+The one judgment call worth flagging: the task listed metadata as "workflow run ID," but "keep-latest-N **per workflow**" only makes sense grouped across runs — so fixtures include a `workflowName` field used for that grouping (run ID is retained too). This is documented in the README and module header.

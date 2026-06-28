@@ -1,0 +1,67 @@
+name: PR Label Assigner
+
+# Trigger on PRs (the real use case), on pushes (so `act push` can exercise it),
+# manually via the Actions UI, and on a weekly schedule as a safety re-scan.
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      files_path:
+        description: "Path to a newline-delimited changed-file list fixture"
+        required: false
+        default: "fixtures/changed-files.txt"
+  schedule:
+    - cron: "0 6 * * 1"
+
+# Least-privilege by default; `pull-requests: write` is what a real labeling
+# step would need to apply the computed labels to the PR.
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  CONFIG_FILE: .github/labeler-config.json
+  CHANGED_FILES_FILE: fixtures/changed-files.txt
+
+jobs:
+  assign-labels:
+    name: Assign labels from changed paths
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Run unit tests
+        run: bun test src/
+
+      - name: Compute labels from changed files
+        id: labeler
+        env:
+          # workflow_dispatch can override the fixture path; otherwise use env default.
+          FILES_PATH: ${{ github.event.inputs.files_path || env.CHANGED_FILES_FILE }}
+        run: |
+          echo "Using config:  $CONFIG_FILE"
+          echo "Using files:   $FILES_PATH"
+          bun run src/cli.ts --config "$CONFIG_FILE" --files "$FILES_PATH" | tee labeler-output.txt
+          # Extract the machine-parseable LABELS= line and expose it as a step output.
+          labels_line="$(grep '^LABELS=' labeler-output.txt | tail -n1)"
+          labels="${labels_line#LABELS=}"
+          echo "labels=$labels" >> "$GITHUB_OUTPUT"
+          {
+            echo "## PR Label Assigner"
+            echo ""
+            echo "Computed labels: \`${labels:-<none>}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Echo computed labels
+        run: echo "Final labels => ${{ steps.labeler.outputs.labels }}"

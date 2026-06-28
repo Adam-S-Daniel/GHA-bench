@@ -1,0 +1,60 @@
+name: PR Label Assigner
+
+# Trigger on PRs (the real use case), on pushes (so `act push` can exercise it
+# locally / in CI), and manually via the Actions UI.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+# Least-privilege: the assigner only needs to read the repo contents; in a real
+# deployment it would also need pull-requests:write to apply the labels.
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  # Default rules file, overridable per environment.
+  RULES_FILE: label-rules.conf
+
+jobs:
+  assign:
+    name: Assign labels
+    runs-on: ubuntu-latest
+    strategy:
+      # Run every fixture even if one fails, so the harness sees all results.
+      fail-fast: false
+      matrix:
+        fixture: [docs-only, api-tests, mixed, config-tie, no-match]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate the assigner script
+        run: |
+          bash -n label-assigner.sh
+          echo "syntax OK"
+
+      - name: Assign labels for fixture "${{ matrix.fixture }}"
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          set -euo pipefail
+          files="fixtures/${FIXTURE}.files"
+          if [[ ! -f "$files" ]]; then
+            echo "::error::fixture file not found: $files"
+            exit 1
+          fi
+          labels="$(bash label-assigner.sh --rules "$RULES_FILE" --files "$files" --format csv)"
+          # Emit a stable, parseable marker. Brackets make an empty set explicit.
+          echo "RESULT ${FIXTURE}: [${labels}]"
+
+  summary:
+    name: Summarize
+    runs-on: ubuntu-latest
+    needs: assign
+    steps:
+      - name: Report completion
+        run: echo "All label-assignment jobs completed successfully."

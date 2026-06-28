@@ -1,0 +1,84 @@
+name: Environment Matrix Generator
+
+# Triggers:
+#   push / pull_request - validate the generator on every change.
+#   workflow_dispatch   - let a maintainer run it on demand.
+#   schedule            - a weekly sanity run to catch toolchain drift.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+# Principle of least privilege: the generator only needs to read the repo.
+permissions:
+  contents: read
+
+# Where the matrix configuration lives. The test harness drops a fixture here
+# before each run; the committed default keeps a manual run reproducible.
+env:
+  MATRIX_CONFIG: matrix-config.json
+
+jobs:
+  # Job 1: run the unit tests, then resolve the configuration into a concrete
+  # matrix and expose it as a job output for the downstream build job.
+  generate:
+    name: Generate matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+      fail-fast: ${{ steps.gen.outputs.fail-fast }}
+      max-parallel: ${{ steps.gen.outputs.max-parallel }}
+      size: ${{ steps.gen.outputs.size }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = './BuildMatrix.Tests.ps1'
+          $cfg.Run.Exit = $true
+          $cfg.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $cfg
+
+      - name: Generate build matrix
+        id: gen
+        shell: pwsh
+        run: |
+          ./Generate-Matrix.ps1 -ConfigPath $env:MATRIX_CONFIG
+
+  # Job 2: consume the generated matrix dynamically. GitHub expands the
+  # include-only matrix into one job per resolved combination.
+  build:
+    name: Build
+    needs: generate
+    runs-on: ubuntu-latest
+    # The build job's own fail-fast is kept static so every combination is
+    # exercised; the *configured* fail-fast/max-parallel values are surfaced as
+    # outputs of the generate job (see the "Report strategy settings" step).
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate.outputs.matrix) }}
+    steps:
+      - name: Show combination
+        shell: pwsh
+        run: |
+          # Echo the exact resolved values for this combination so the test
+          # harness can assert on them.
+          Write-Output "BUILD_COMBO os=${{ matrix.os }} node=${{ matrix.node }}"
+
+  # Job 3: echo the strategy-level settings once, after the matrix is known.
+  report:
+    name: Report strategy settings
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print settings
+        shell: pwsh
+        run: |
+          Write-Output "STRATEGY_FAIL_FAST=${{ needs.generate.outputs.fail-fast }}"
+          Write-Output "STRATEGY_MAX_PARALLEL=${{ needs.generate.outputs.max-parallel }}"
+          Write-Output "STRATEGY_SIZE=${{ needs.generate.outputs.size }}"

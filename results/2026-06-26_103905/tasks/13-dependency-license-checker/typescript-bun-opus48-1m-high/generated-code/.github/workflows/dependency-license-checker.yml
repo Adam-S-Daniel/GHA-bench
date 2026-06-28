@@ -1,0 +1,67 @@
+name: Dependency License Checker
+
+# Trigger on code changes, PRs, a weekly scheduled audit, and manual runs.
+on:
+  push:
+  pull_request:
+  schedule:
+    # Weekly compliance audit, Mondays at 06:00 UTC.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+# Least-privilege: the checker only needs to read the checked-out source.
+permissions:
+  contents: read
+
+# Default fixture locations. The compliance step auto-detects whether the
+# manifest is a package.json or a requirements.txt under fixtures/.
+env:
+  POLICY_FILE: fixtures/policy.json
+  DATABASE_FILE: fixtures/licenses.json
+
+jobs:
+  license-check:
+    name: License compliance check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # Run the unit tests INSIDE the pipeline. We scope to tests/ so the
+      # act-harness (which itself drives `act`) is never picked up here and
+      # cannot recurse inside the container.
+      - name: Run unit tests
+        run: bun test tests/
+
+      # Run the license checker against the fixture manifest. The compliance
+      # verdict is DATA (printed to the log), not a job failure: a denied
+      # license must not crash the pipeline, so we capture the checker's exit
+      # code into CHECKER_EXIT for downstream assertions instead of letting it
+      # abort the step.
+      - name: Run license compliance check
+        run: |
+          if [ -f fixtures/requirements.txt ]; then
+            MANIFEST=fixtures/requirements.txt
+          elif [ -f fixtures/package.json ]; then
+            MANIFEST=fixtures/package.json
+          else
+            echo "ERROR: no manifest fixture found under fixtures/" >&2
+            exit 1
+          fi
+          echo "Using manifest: ${MANIFEST}"
+
+          status=0
+          bun run src/cli.ts \
+            --manifest "${MANIFEST}" \
+            --policy "${POLICY_FILE}" \
+            --database "${DATABASE_FILE}" > report.txt 2>&1 || status=$?
+
+          echo "----- BEGIN COMPLIANCE REPORT -----"
+          cat report.txt
+          echo "----- END COMPLIANCE REPORT -----"
+          echo "CHECKER_EXIT=${status}"

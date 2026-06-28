@@ -1,0 +1,64 @@
+name: Environment Matrix Generator
+
+# Triggers: run on pushes and PRs (validate the matrix config in CI), allow
+# manual runs with a custom config path, and refresh weekly on a schedule.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      config:
+        description: Path to the matrix config JSON file
+        required: false
+        default: matrix-config.json
+  schedule:
+    - cron: "0 6 * * 1"
+
+# Least privilege: the generator only reads files from the checkout.
+permissions:
+  contents: read
+
+env:
+  # Use the manual input when present, otherwise the committed default config.
+  MATRIX_CONFIG: ${{ github.event.inputs.config || 'matrix-config.json' }}
+
+jobs:
+  # Job 1: run the generator and expose the expanded matrix as job outputs.
+  generate-matrix:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+      size: ${{ steps.gen.outputs.size }}
+      fail-fast: ${{ steps.gen.outputs.fail-fast }}
+      max-parallel: ${{ steps.gen.outputs.max-parallel }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Python runtime
+        run: python3 --version
+
+      - name: Generate matrix
+        id: gen
+        run: |
+          echo "Using config: ${MATRIX_CONFIG}"
+          python3 matrix_generator.py --config "${MATRIX_CONFIG}" --set-output
+
+  # Job 2: consume the generated matrix via a dynamic fromJSON strategy.
+  # This depends on job 1 (needs) and demonstrates real downstream usage.
+  build:
+    name: Build
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      # A single failing leg must not cancel the others while we test.
+      fail-fast: false
+      # max-parallel is computed by the generator from the config.
+      max-parallel: ${{ fromJSON(needs.generate-matrix.outputs.max-parallel) }}
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Show resolved environment
+        run: |
+          echo "BUILD os=${{ matrix.os }} version=${{ matrix.version }} feature=${{ matrix.feature }}"

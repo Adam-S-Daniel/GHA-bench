@@ -1,0 +1,106 @@
+name: Semantic Version Bumper
+
+# Triggers:
+#   - push / pull_request: validate the bumper on every change.
+#   - workflow_dispatch: lets a maintainer run it on demand (with a dry-run knob).
+#   - schedule: a weekly cadence so a release version is computed regularly.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Compute the next version without writing files"
+        type: boolean
+        default: false
+  schedule:
+    # 03:00 UTC every Monday.
+    - cron: "0 3 * * 1"
+
+# Least-privilege: the bumper only reads the repo. It does NOT push commits or
+# tags, so no write scope (and no secrets) are required — which keeps it runnable
+# in an isolated `act` container.
+permissions:
+  contents: read
+
+# File locations are env-driven so the same workflow works for real history and
+# for test-fixture data dropped into the repo by the harness.
+env:
+  VERSION_FILE: version.txt
+  COMMIT_LOG: commits.log
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  bump:
+    name: Bump semantic version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        # Default (shallow) checkout — robust under `act`. Real deployments that
+        # rely on the git-history fallback below may set `fetch-depth: 0`.
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Show Bun version
+        run: bun --version
+
+      - name: Install dependencies
+        # The project has no third-party dependencies, but this mirrors a real
+        # pipeline and is a no-op fast-path when there is nothing to install.
+        run: bun install --no-save || true
+
+      - name: Run unit tests
+        # Only the fast, pure-logic unit tests run in CI. The act-based harness
+        # is deliberately excluded here (it would require Docker-in-Docker).
+        run: bun test version-bumper.test.ts
+
+      - name: Prepare commit log
+        # If no fixture commit log is present, derive one from real git history
+        # (0x1e-separated full messages, matching the script's git format).
+        run: |
+          if [ ! -f "$COMMIT_LOG" ]; then
+            echo "No fixture commit log found; deriving from git history."
+            git log --format='%B%x1e' -n 100 > "$COMMIT_LOG"
+          else
+            echo "Using fixture commit log: $COMMIT_LOG"
+          fi
+
+      - name: Bump version
+        id: bump
+        run: |
+          if [ "${{ inputs.dry-run }}" = "true" ]; then
+            bun run version-bumper.ts \
+              --version-file "$VERSION_FILE" \
+              --commits "$COMMIT_LOG" \
+              --changelog "$CHANGELOG_FILE" \
+              --dry-run
+          else
+            bun run version-bumper.ts \
+              --version-file "$VERSION_FILE" \
+              --commits "$COMMIT_LOG" \
+              --changelog "$CHANGELOG_FILE"
+          fi
+
+      - name: Summarize result
+        run: |
+          echo "New version: ${{ steps.bump.outputs.new-version }}"
+          echo "Bump type:   ${{ steps.bump.outputs.bump-type }}"
+          echo "Changed:     ${{ steps.bump.outputs.changed }}"
+          {
+            echo "## Semantic Version Bump"
+            echo ""
+            echo "- Previous: \`${{ steps.bump.outputs.previous-version }}\`"
+            echo "- New:      \`${{ steps.bump.outputs.new-version }}\`"
+            echo "- Bump:     \`${{ steps.bump.outputs.bump-type }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "----- $VERSION_FILE -----"
+          cat "$VERSION_FILE"
+          if [ -f "$CHANGELOG_FILE" ]; then
+            echo "----- $CHANGELOG_FILE -----"
+            cat "$CHANGELOG_FILE"
+          fi

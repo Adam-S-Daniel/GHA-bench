@@ -1,0 +1,100 @@
+name: Semantic Version Bumper
+
+# Trigger on the usual CI events plus a manual dispatch (with an overridable
+# commit-log fixture) and a weekly schedule for automated release cuts.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      commit_log_file:
+        description: "Path to a commit-log fixture (one conventional commit per line)"
+        required: false
+        default: "commits.txt"
+  schedule:
+    # Mondays at 06:00 UTC — cut a release from the week's merged commits.
+    - cron: "0 6 * * 1"
+
+# The pipeline only reads the repository (it computes + writes files inside the
+# workspace but does not push), so read access is sufficient and no secrets are
+# required. This keeps it runnable in an isolated container / under act.
+permissions:
+  contents: read
+
+# Inputs to the bumper. COMMIT_LOG_FILE is overridable via workflow_dispatch and
+# defaults to the committed fixture; CHANGELOG_FILE is where entries are written.
+env:
+  COMMIT_LOG_FILE: ${{ inputs.commit_log_file || 'commits.txt' }}
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Stage 1: prove the bumper library is correct with the Pester unit tests.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester 5 is available
+        shell: pwsh
+        run: |
+          # Idempotent: the act container ships Pester 5; real runners may not.
+          if (-not (Get-Module -ListAvailable Pester | Where-Object { $_.Version -ge [version]'5.0.0' })) {
+            Install-Module Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+          }
+          Import-Module Pester -MinimumVersion 5.0.0
+          Write-Host "Using Pester $((Get-Module Pester).Version)"
+
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          # Each run-step is a fresh pwsh session, so import Pester here too.
+          Import-Module Pester -MinimumVersion 5.0.0
+          # Run only the library unit tests here; the workflow-structure tests
+          # need host tooling (actionlint, powershell-yaml) and run on the host.
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests/SemanticVersionBumper.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  # ---------------------------------------------------------------------------
+  # Stage 2: run the bumper for real against the (fixture) commit log. Depends
+  # on the unit tests passing first.
+  # ---------------------------------------------------------------------------
+  bump:
+    name: Bump version
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Compute and apply the version bump
+        id: bump
+        shell: pwsh
+        run: |
+          # bump-version.ps1 reads COMMIT_LOG_FILE / CHANGELOG_FILE from the
+          # environment, auto-detects the version file, and prints the
+          # PREVIOUS_VERSION / BUMP_TYPE / NEW_VERSION contract to stdout.
+          ./bump-version.ps1 -RepositoryPath .
+
+      - name: Report the result
+        shell: pwsh
+        run: |
+          # Echo the job outputs to confirm they propagated through GITHUB_OUTPUT.
+          Write-Host "BUMP_RESULT: ${{ steps.bump.outputs.previous_version }} -> ${{ steps.bump.outputs.new_version }} (${{ steps.bump.outputs.bump_type }})"
+          Write-Host "NEW_VERSION=${{ steps.bump.outputs.new_version }}"
+
+      - name: Show updated changelog
+        shell: pwsh
+        run: |
+          if (Test-Path $env:CHANGELOG_FILE) {
+            Write-Host "----- $env:CHANGELOG_FILE -----"
+            Get-Content $env:CHANGELOG_FILE | Select-Object -First 25 | ForEach-Object { Write-Host $_ }
+          }

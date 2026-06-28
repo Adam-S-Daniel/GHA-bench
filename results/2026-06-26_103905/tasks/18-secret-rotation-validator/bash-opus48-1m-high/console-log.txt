@@ -1,0 +1,347 @@
+[Assistant] I'll start by exploring the environment and understanding the project context.
+[Tool: Bash] pwd && ls -la && echo "---ACTRC---" && cat .actrc 2>/dev/null && echo "---bats---" && which bats shellcheck actionlint act docker bash jq 2>/dev/null
+[Result] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high
+total 44
+drwxr-xr-x  4 passp passp  4096 Jun 27 14:43 .
+drwxr-xr-x 10 passp passp  4096 Jun 27 14:43 ..
+-rw-r--r--  1 passp passp    40 Jun 27 14:43 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 27 14:43 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 27 14:43 .git
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---bats---
+/home/passp/.npm-global/bin/bats
+/home/passp/.local/bin/shellcheck
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/usr/bin/docker
+/usr/bin/bash
+/home/passp/.local/bin/jq
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Assistant] This is a benchmark task. Let me check the act container setup and tooling availability.
+[Tool: Bash] cat /home/passp/repos/GHA-bench/Dockerfile.act 2>/dev/null; echo "---IMAGES---"; docker images | grep -i act; echo "---check jq in container---"; docker run --rm act-ubuntu-pwsh:latest bash -c "which jq bash date; echo OK" 2>&1 | tail -10
+[Result] # Custom act container image with PowerShell and Pester pre-installed.
+# Matches what real GitHub-hosted ubuntu-latest runners provide.
+#
+# Build:  docker build -t act-ubuntu-pwsh:latest -f Dockerfile.act .
+# Use:    act push -P ubuntu-latest=act-ubuntu-pwsh:latest
+# Or:     echo '-P ubuntu-latest=act-ubuntu-pwsh:latest' > .actrc
+
+FROM catthehacker/ubuntu:act-latest
+
+# Install PowerShell from Microsoft's APT repo
+RUN apt-get update -qq \
+    && apt-get install -y -qq wget apt-transport-https software-properties-common \
+    && wget -q "https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb" \
+    && dpkg -i packages-microsoft-prod.deb \
+    && apt-get update -qq \
+    && apt-get install -y -qq powershell \
+    && rm -f packages-microsoft-prod.deb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Pester 5 (PowerShell testing framework, pre-installed on GitHub runners)
+RUN pwsh -NoProfile -Command " \
+    Set-PSRepository -Name PSGallery -Inst
+[Assistant] jq, bash, and date are all in the container. Now let me start the TDD process. First, the failing test (RED).
+[Tool: Bash] mkdir -p test fixtures .github/workflows
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/rotation.bats", "content": "#!/usr/bin/env 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/rotation.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(git rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null; bats test/rotation.bats 2>&1 | head -30
+[Result] 1..1
+not ok 1 classifies an overdue secret as expired (json output)
+# (in test file test/rotation.bats, line 36)
+#   `[ "$status" -eq 0 ]' failed
+
+The following warnings were encountered during tests:
+BW01: `run`'s command `/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/secret-rotation-validator.sh --config /tmp/bats-run-FOkavJ/test/1/config.json --now 2024-06-01 --format json` exited with code 127, indicating 'Command not found'. Use run's return code checks, e.g. `run -127`, to fix this message.
+      (from function `run' in file /home/passp/.npm-global/lib/node_modules/bats/lib/bats-core/test_functions.bash, line 420,
+       in test file test/rotation.bats, line 35)
+[Assistant] RED confirmed (exit 127). Now GREEN — let me write the script.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/secret-rotation-validator.sh", "content": "#!/us
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/secret-rotation-validator.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; chmod +x secret-rotation-validator.sh; bash -n secret-rotation-validator.sh && echo "syntax OK"; shellcheck secret-rotation-validator.sh && echo "shellcheck OK"; bats test/rotation.bats 2>&1 | head -20
+[Result] syntax OK
+shellcheck OK
+1..1
+ok 1 classifies an overdue secret as expired (json output)
+[Assistant] GREEN. Now let me expand the test suite to cover all functionality.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/rotation.bats", "content": "#!/usr/bin/env 
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/rotation.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; bats test/rotation.bats 2>&1 | tail -40
+[Result] 1..26
+ok 1 classifies an overdue secret as expired (json output)
+ok 2 classifies a secret inside the warning window as warning
+ok 3 classifies a secret well before its due date as ok
+ok 4 a secret due exactly today is a warning, not expired
+ok 5 computes the due date as last_rotated + rotation_days
+ok 6 the warning window is configurable via --warning-days
+ok 7 summary counts secrets per urgency group
+ok 8 json output preserves required_by services as an array
+ok 9 report records the reference date and warning window
+ok 10 markdown is the default output format
+ok 11 markdown groups secrets under Expired / Warning / OK headings
+ok 12 markdown shows _None_ for an empty group
+ok 13 strict mode exits 2 when an expired secret exists
+ok 14 strict mode exits 0 when nothing is expired
+ok 15 errors when --config is omitted
+ok 16 errors when the config file does not exist
+ok 17 errors on invalid JSON
+ok 18 errors when the top-level JSON is not an array
+ok 19 errors when a secret is missing a req
+[Assistant] All 26 unit tests pass. Now let me create the fixtures and the GitHub Actions workflow.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/fixtures/secrets.json", "content": "[\n  { \"nam
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/fixtures/secrets.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/fixtures/cases/all-ok.json", "content": "[\n  { 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/fixtures/cases/all-ok.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/fixtures/cases/all-expired.json", "content": "[\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/fixtures/cases/all-expired.json (file state is current in your context — no need to Read it back)
+[Assistant] Now the workflow file:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/.github/workflows/secret-rotation-validator.yml"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/.github/workflows/secret-rotation-validator.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; actionlint .github/workflows/secret-rotation-validator.yml && echo "ACTIONLINT OK exit=$?"
+[Result] ACTIONLINT OK exit=0
+[Assistant] actionlint passes. Let me validate the workflow plan with a dry run (doesn't execute containers) before spending real act runs.
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; echo "TOPLEVEL=$(pwd)"; act push -n 2>&1 | head -40
+[Result] TOPLEVEL=/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high
+time="2026-06-27T14:48:11-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+time="2026-06-27T14:48:11-04:00" level=warning msg="unable to get git ref: reference not found"
+time="2026-06-27T14:48:11-04:00" level=warning msg="unable to get git revision: reference not found"
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation] ⭐ Run Set up job
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation] 🚀  Start image=act-ubuntu-pwsh:latest
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=true
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation]   🐳  docker create image=act-ubuntu-pwsh:latest platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="host"
+*DRYRUN* 
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; act push -n 2>&1 | grep -E "Run Main|Summarize|Success - Main|Job succeeded|summarize" | head -40
+[Result] *DRYRUN* [Secret Rotation Validator/Validate secret rotation] ⭐ Run Main Check out repository
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation]   ✅  Success - Main Check out repository [23.947653ms]
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation] ⭐ Run Main Install jq
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation]   ✅  Success - Main Install jq [73.051887ms]
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation] ⭐ Run Main Make validator executable
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation]   ✅  Success - Main Make validator executable [68.253931ms]
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation] ⭐ Run Main Generate Markdown rotation report
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation]   ✅  Success - Main Generate Markdown rotation report [67.566646ms]
+*DRYRUN* [Secret Rotation Validator/Validate secret rotation] ⭐ Run Main Generate JSON report and export summary
+*DRYRUN* [Secret Rotation V
+[Assistant] Both jobs plan cleanly. Now I'll build the act harness as a standalone script (runs the 3 cases through act, writes `act-result.txt`) plus a bats file that asserts on the captured output and workflow structure. This keeps act runs to exactly 3.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/run-act-cases.sh", "content": "#!/usr/bin/e
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/run-act-cases.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; chmod +x test/run-act-cases.sh; bash -n test/run-act-cases.sh && echo "syntax OK"; shellcheck test/run-act-cases.sh && echo "shellcheck OK"
+[Result] syntax OK
+shellcheck OK
+[Assistant] Now the bats workflow tests (structure + assertions on captured act output):
+[Tool: Bash] python3 -c "import yaml; print('pyyaml OK')" 2>&1; python3 --version 2>&1
+[Result] pyyaml OK
+Python 3.12.3
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/workflow.bats", "content": "#!/usr/bin/env 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/workflow.bats (file state is current in your context — no need to Read it back)
+[Assistant] Let me run the structure tests first (act tests will skip until the harness runs):
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; bats test/workflow.bats 2>&1 | tail -40
+[Result] 1..20
+ok 1 workflow file exists
+ok 2 workflow is valid YAML
+ok 3 actionlint passes with exit code 0
+ok 4 workflow declares all expected triggers
+ok 5 workflow defines the validate and summarize jobs
+ok 6 summarize job depends on validate job
+ok 7 workflow sets least-privilege contents:read permission
+ok 8 workflow references the validator script that exists on disk
+ok 9 workflow's CONFIG_FILE fixture exists on disk
+ok 10 workflow uses actions/checkout@v4
+ok 11 all case fixtures referenced by the harness exist
+ok 12 act-result.txt artifact exists and is non-empty # skip act harness not run yet; run: bash test/run-act-cases.sh
+ok 13 act-result.txt records exit_code 0 for every case # skip act harness not run yet; run: bash test/run-act-cases.sh
+ok 14 act mixed case: both jobs succeed # skip act harness not run yet; run: bash test/run-act-cases.sh
+ok 15 act mixed case: exact summary 1 expired / 1 warning / 1 ok / 3 total # skip act harness not run yet; run: bash test/run-act-cases.sh
+ok 1
+[Assistant] All structure tests pass. Now the real act harness — this is my 3 act runs (one per case). This takes a few minutes.
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; bash test/run-act-cases.sh 2>&1 | tail -25; echo "HARNESS_EXIT=$?"
+[Result] >>> Running act case: mixed (fixture: fixtures/secrets.json)
+!!! act exited 1 for case mixed
+!!! no 'Job succeeded' found for case mixed
+>>> Running act case: all-ok (fixture: fixtures/cases/all-ok.json)
+!!! act exited 1 for case all-ok
+!!! no 'Job succeeded' found for case all-ok
+>>> Running act case: all-expired (fixture: fixtures/cases/all-expired.json)
+!!! act exited 1 for case all-expired
+!!! no 'Job succeeded' found for case all-expired
+One or more act cases failed. See /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/act-result.txt
+HARNESS_EXIT=0
+[Assistant] All three failed identically — a systemic issue. Let me diagnose from the captured output.
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; sed -n '1,80p' test/.act-out/mixed.txt
+[Result] time="2026-06-27T14:50:28-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[Secret Rotation Validator/Validate secret rotation] ⭐ Run Set up job
+[Secret Rotation Validator/Validate secret rotation] 🚀  Start image=act-ubuntu-pwsh:latest
+[Secret Rotation Validator/Validate secret rotation]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=true
+[Secret Rotation Validator/Validate secret rotation] using DockerAuthConfig authentication for docker pull
+[Secret Rotation Validator/Validate secret rotation] Error response from daemon: authentication required - incorrect username or password
+[Secret Rotation Validator/Validate secret rotation]   ❌  Failure - Set up job
+[Secret Rotation Validator/Validate secret rotation] 🏁  Job failed
+Error: Error response from daemon: authentication required - incorrect username or password
+[Assistant] The image pull fails because `act-ubuntu-pwsh:latest` is a local-only image and act forces a pull. Fix: add `--pull=false`. Let me first de-risk by running the script directly in the container (no act run consumed), then apply the fix.
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; docker run --rm -e ROTATION_NOW=2024-04-01 -e WARNING_DAYS=14 -v "$PWD":/w -w /w act-ubuntu-pwsh:latest bash -c './secret-rotation-validator.sh --config fixtures/secrets.json --warning-days "$WARNING_DAYS" --format json | jq -c .summary' 2>&1 | tail -5
+[Result] {"expired":1,"warning":1,"ok":1,"total":3}
+[Assistant] The script works correctly inside the container. Now apply the `--pull=false` fix:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/run-act-cases.sh", "o
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/test/run-act-cases.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; shellcheck test/run-act-cases.sh && echo SC_OK; bash test/run-act-cases.sh; echo "HARNESS_EXIT=$?"
+[Result] SC_OK
+>>> Running act case: mixed (fixture: fixtures/secrets.json)
+>>> Running act case: all-ok (fixture: fixtures/cases/all-ok.json)
+>>> Running act case: all-expired (fixture: fixtures/cases/all-expired.json)
+All act cases completed successfully. Artifact: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/act-result.txt
+HARNESS_EXIT=0
+[Assistant] All three act cases succeeded. Now let me verify the captured output and run the full bats suite:
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; echo "=== SUMMARY/RESULT lines per case ==="; grep -hE "SUMMARY |RESULT |Job succeeded" test/.act-out/*.txt | sort | uniq -c; echo; echo "=== exit codes in artifact ==="; grep "^exit_code:" act-result.txt; echo; echo "=== act-result.txt size ==="; wc -l act-result.txt
+[Result] === SUMMARY/RESULT lines per case ===
+      1 [Secret Rotation Validator/Summarize rotation status]   | RESULT expired=0 warning=0 ok=2 total=2
+      1 [Secret Rotation Validator/Summarize rotation status]   | RESULT expired=1 warning=1 ok=1 total=3
+      1 [Secret Rotation Validator/Summarize rotation status]   | RESULT expired=2 warning=0 ok=0 total=2
+      3 [Secret Rotation Validator/Summarize rotation status]   | ROTATION SUMMARY (from validate job)
+      3 [Secret Rotation Validator/Summarize rotation status] 🏁  Job succeeded
+      1 [Secret Rotation Validator/Validate secret rotation]   | SUMMARY expired=0 warning=0 ok=2 total=2
+      1 [Secret Rotation Validator/Validate secret rotation]   | SUMMARY expired=1 warning=1 ok=1 total=3
+      1 [Secret Rotation Validator/Validate secret rotation]   | SUMMARY expired=2 warning=0 ok=0 total=2
+      3 [Secret Rotation Validator/Validate secret rotation] 🏁  Job succeeded
+
+=== exit codes in artifact ===
+exit_code: 0
+exit_code: 0
+exit_cod
+[Assistant] Exact values all present. Now run the complete bats suite:
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; bats test/ 2>&1 | tail -55
+[Result] 1..46
+ok 1 classifies an overdue secret as expired (json output)
+ok 2 classifies a secret inside the warning window as warning
+ok 3 classifies a secret well before its due date as ok
+ok 4 a secret due exactly today is a warning, not expired
+ok 5 computes the due date as last_rotated + rotation_days
+ok 6 the warning window is configurable via --warning-days
+ok 7 summary counts secrets per urgency group
+ok 8 json output preserves required_by services as an array
+ok 9 report records the reference date and warning window
+ok 10 markdown is the default output format
+ok 11 markdown groups secrets under Expired / Warning / OK headings
+ok 12 markdown shows _None_ for an empty group
+ok 13 strict mode exits 2 when an expired secret exists
+ok 14 strict mode exits 0 when nothing is expired
+ok 15 errors when --config is omitted
+ok 16 errors when the config file does not exist
+ok 17 errors on invalid JSON
+ok 18 errors when the top-level JSON is not an array
+ok 19 errors when a secret is missing a req
+[Assistant] All 46 tests pass. Let me run a final consolidated validation and a sample render:
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; echo "=== shellcheck ==="; shellcheck secret-rotation-validator.sh test/run-act-cases.sh && echo "shellcheck: clean"; echo "=== bash -n ==="; bash -n secret-rotation-validator.sh && bash -n test/run-act-cases.sh && echo "syntax: clean"; echo "=== actionlint ==="; actionlint .github/workflows/secret-rotation-validator.yml && echo "actionlint: clean (exit 0)"; echo "=== artifact ==="; ls -la act-result.txt; echo "=== sample markdown ==="; ./secret-rotation-validator.sh --config fixtures/secrets.json --now 2024-04-01
+[Result] === shellcheck ===
+shellcheck: clean
+=== bash -n ===
+syntax: clean
+=== actionlint ===
+actionlint: clean (exit 0)
+=== artifact ===
+-rw-r--r-- 1 passp passp 23920 Jun 27 14:51 act-result.txt
+=== sample markdown ===
+# Secret Rotation Report
+
+_Generated: 2024-04-01 | Warning window: 14 days_
+
+## Summary
+
+- Expired: 1
+- Warning: 1
+- OK: 1
+- Total: 3
+
+## Expired
+
+| Secret | Last Rotated | Policy (days) | Due Date | Days Remaining | Required By |
+| --- | --- | --- | --- | --- | --- |
+| db-password | 2024-01-01 | 90 | 2024-03-31 | -1 | api, worker |
+
+## Warning
+
+| Secret | Last Rotated | Policy (days) | Due Date | Days Remaining | Required By |
+| --- | --- | --- | --- | --- | --- |
+| api-token | 2024-01-01 | 100 | 2024-04-10 | 9 | api, billing |
+
+## OK
+
+| Secret | Last Rotated | Policy (days) | Due Date | Days Remaining | Required By |
+| --- | --- | --- | --- | --- | --- |
+| tls-cert-key | 2024-01-01 | 361 | 2024-12-27 | 270 | gateway |
+[Assistant] Everything passes. Let me add a concise README to document the deliverable:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/README.md", "content": "# Secret Rotation Valida
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/bash-opus48-1m-high/README.md (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(git rev-parse --show-toplevel)"; find . -path ./.git -prune -o -type f -print | grep -v '^\./\.git' | grep -vE '\.act-out|benchmark-instructions|\.claude' | sort
+[Result] ./.actrc
+./README.md
+./act-result.txt
+./fixtures/cases/all-expired.json
+./fixtures/cases/all-ok.json
+./fixtures/secrets.json
+./secret-rotation-validator.sh
+./test/rotation.bats
+./test/run-act-cases.sh
+./test/workflow.bats
+[Assistant] The task is complete. Here's a summary of what was delivered.
+
+## Solution
+
+**`secret-rotation-validator.sh`** — a Bash tool that reads a JSON config of secrets (name, last-rotated date, rotation policy in days, required-by services), classifies each as **expired** / **warning** / **ok** against a configurable warning window, and emits a grouped report as a Markdown table or JSON. Date math runs in UTC to avoid DST off-by-one errors; the `--now` flag (and `$ROTATION_NOW`) makes results deterministic for CI/tests. Passes `shellcheck` and `bash -n` cleanly.
+
+## TDD methodology
+Started with a single failing test (RED, exit 127), wrote the minimal script to pass (GREEN), then expanded to **26 unit tests** in `test/rotation.bats` covering classification boundaries, summary counts, both output formats, strict mode, and 10 error paths — all with pinned dates for determinism.
+
+## GitHub Actions
+`.github/workflows/secret-rotation-validator.yml`:
+- Triggers: `push`, `pull_request`, `schedule` (daily cron), `workflow_dispatch` (with defaulted inputs)
+- `permissions: contents: read` (least privilege)
+- Two jobs with a dependency: `validate` generates the report and exports per-urgency counts as job outputs; `summarize` (`needs: validate`) consumes them and annotates the run
+- Passes `actionlint` with exit 0
+
+## act integration (all testing through the pipeline)
+`test/run-act-cases.sh` builds an isolated temp git repo per fixture, runs `act push --rm` end-to-end, and appends delimited output to **`act-result.txt`**. `test/workflow.bats` adds 20 tests: static structure checks + exact-value assertions on the captured act output.
+
+**3 fixtures, exact assertions** (now=2024-04-01, 14-day window):
+| Case | expired | warning | ok | total |
+|---|---|---|---|---|
+| mixed | 1 | 1 | 1 | 3 |
+| all-ok | 0 | 0 | 2 | 2 |
+| all-expired | 2 | 0 | 0 | 2 |
+
+All three exited 0 with both jobs showing "Job succeeded".
+
+## Diagnostic note
+The first act invocation failed (all 3 cases, identical error: `authentication required` on `docker pull`). The local-only `act-ubuntu-pwsh` image was being force-pulled. I diagnosed from `act-result.txt` rather than re-running blindly, verified the script itself works inside the container with a direct `docker run`, then added `--pull=false`. The re-run succeeded on all three cases.
+
+**Final state:** `bats test/` → **46/46 passing**; `act-result.txt` present (264 lines); shellcheck/bash -n/actionlint all clean.

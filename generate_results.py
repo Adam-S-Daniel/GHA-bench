@@ -736,7 +736,6 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
                 "model_full": model,  # retained for legend/grouping use
                 "n": n,
                 "avg_dur": sum(m["timing"]["grand_total_duration_ms"] for m in mm) / n / 1000,
-                "avg_lines": sum(m["code_metrics"]["total_lines"] for m in mm) / n,
                 "avg_errors": sum(m["quality"]["error_count"] for m in mm) / n,
                 "avg_turns": sum(m["timing"]["num_turns"] for m in mm) / n,
                 "avg_cost": sum(m["cost"]["total_cost_usd"] for m in mm) / n,
@@ -789,7 +788,6 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
                 "excluded": excl_total,
                 "n": n_total,
                 "avg_dur": _wavg("avg_dur"),
-                "avg_lines": _wavg("avg_lines"),
                 "avg_errors": _wavg("avg_errors"),
                 "avg_turns": _wavg("avg_turns"),
                 "avg_cost": _wavg("avg_cost"),
@@ -1100,15 +1098,20 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         lines.append("")
         lines.append("| Task | Language | Model | Duration | Reason | Lines | actionlint | act-result.txt |")
         lines.append("|------|------|-------|----------|--------|-------|------------|----------------|")
+        from test_quality import compute_structural_metrics
         for m in failed:
             dur = m["timing"]["grand_total_duration_ms"] / 1000
             reason = m.get("failure_reason", "exit_code=" + str(m.get("exit_code", "?")))
             alint_val = m.get("quality", {}).get("actionlint_pass")
             alint = "pass" if alint_val else ("fail" if alint_val is False else "n/a")
             act = "yes" if m.get("quality", {}).get("act_result_txt_exists") else "no"
+            # Lines = authored code (impl + tests + workflow), not the runner's
+            # whole-dir count (which includes fixtures / act-result.txt).
+            gen_dir = run_dir / "tasks" / m["task_id"] / f"{m['language_mode']}-{_path_label(m)}" / "generated-code"
+            code_lines = compute_structural_metrics(gen_dir).get("code_lines", 0)
             lines.append(
                 f"| {m['task_name'][:30]} | {m['language_mode']} | {_strip_cli(_label(m))} "
-                f"| {_dur(dur)} | {reason} | {m['code_metrics']['total_lines']} | {alint} | {act} |")
+                f"| {_dur(dur)} | {reason} | {code_lines} | {alint} | {act} |")
         lines.append("")
         lines.append(f"*{len(failed)} run(s) excluded from averages below.*")
         lines.append("")
@@ -1907,7 +1910,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         scoring_block = [
             "## Scoring",
             "",
-            "Judges: panel of LLM-as-judge models — `haiku-4-5` (via Claude CLI) and `gemini-3.1-pro-preview` (via Gemini CLI). Each run's quality score is the mean of both judges, cached per-run so numbers are deterministic across regenerations. Known bias caveats live in the [Judge Consistency Summary](#judge-consistency-summary).",
+            "Judges: panel of LLM-as-judge models — `haiku-4-5` (via Claude CLI) and `Gemini 3.1 Pro (High)` (via the Antigravity `agy` CLI). Each run's quality score is the mean of both judges, cached per-run so numbers are deterministic across regenerations. Known bias caveats live in the [Judge Consistency Summary](#judge-consistency-summary).",
             "",
             "**Tests Quality** = Overall score (1-5) for the generated **test code**.",
             "",

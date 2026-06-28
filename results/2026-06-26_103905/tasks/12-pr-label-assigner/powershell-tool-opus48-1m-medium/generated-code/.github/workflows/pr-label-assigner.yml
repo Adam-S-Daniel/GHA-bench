@@ -1,0 +1,73 @@
+name: PR Label Assigner
+
+# Trigger on PR events (the real use case), on pushes (used by the `act` test
+# harness), on a daily schedule (re-label stale PRs) and manually.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      rules_path:
+        description: 'Path to the JSON rules file'
+        required: false
+        default: 'fixtures/rules.json'
+      changed_files_path:
+        description: 'Path to the newline-delimited changed-files list'
+        required: false
+        default: 'fixtures/changed-files.txt'
+
+# Least-privilege: the assigner only needs to read repo contents; in a real PR
+# run it would also need `pull-requests: write` to apply the labels via the API.
+permissions:
+  contents: read
+  pull-requests: write
+
+# Default fixture locations; workflow_dispatch inputs override them when present.
+env:
+  RULES_PATH: ${{ github.event.inputs.rules_path || 'fixtures/rules.json' }}
+  CHANGED_FILES_PATH: ${{ github.event.inputs.changed_files_path || 'fixtures/changed-files.txt' }}
+
+jobs:
+  test:
+    name: Run Pester test suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module Pester -MinimumVersion 5.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  assign-labels:
+    name: Assign PR labels
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Assign labels from changed files
+        id: assign
+        shell: pwsh
+        run: |
+          ./src/Invoke-PRLabelAssigner.ps1 `
+            -RulesPath $env:RULES_PATH `
+            -ChangedFilesPath $env:CHANGED_FILES_PATH
+
+      - name: Show resolved labels
+        shell: pwsh
+        run: |
+          Write-Host "Resolved labels: $('${{ steps.assign.outputs.labels }}')"
+          Write-Host "Label count: $('${{ steps.assign.outputs.label_count }}')"

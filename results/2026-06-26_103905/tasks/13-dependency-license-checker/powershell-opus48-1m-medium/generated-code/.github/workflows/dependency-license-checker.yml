@@ -1,0 +1,74 @@
+name: Dependency License Checker
+
+# Run on pushes and PRs, on a weekly schedule (catch newly-flagged licenses),
+# and on manual dispatch.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      manifest:
+        description: 'Manifest file to check'
+        required: false
+        default: 'fixtures/package.json'
+
+# Least-privilege: the checker only needs to read the repository contents.
+permissions:
+  contents: read
+
+# Defaults shared by every job. Per-case overrides are supplied by the act
+# harness via `--env` so the same workflow can be reused for many fixtures.
+env:
+  MANIFEST_FILE: ${{ github.event.inputs.manifest || 'fixtures/package.json' }}
+  CONFIG_FILE: config/license-config.json
+  DB_FILE: config/license-db.json
+
+jobs:
+  # Job 1: run the Pester unit/test suite for the module.
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module Pester -MinimumVersion 5.0.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests/LicenseChecker.Tests.ps1'
+          $config.Output.Verbosity = 'Detailed'
+          $config.Run.Exit = $true
+          Invoke-Pester -Configuration $config
+
+  # Job 2: run the actual license compliance check. Depends on the tests passing.
+  compliance:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run dependency license compliance check
+        shell: pwsh
+        env:
+          MANIFEST_FILE: ${{ env.MANIFEST_FILE }}
+          CONFIG_FILE: ${{ env.CONFIG_FILE }}
+          DB_FILE: ${{ env.DB_FILE }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # A test harness can drop a `.ci-manifest` pointer file into the repo to
+          # select which fixture to check; otherwise fall back to the env default.
+          $manifest = $env:MANIFEST_FILE
+          if (Test-Path '.ci-manifest') {
+            $manifest = (Get-Content '.ci-manifest' -Raw).Trim()
+          }
+          Write-Host "Checking manifest: $manifest"
+          ./src/Invoke-LicenseCheck.ps1 `
+            -ManifestPath $manifest `
+            -ConfigPath $env:CONFIG_FILE `
+            -LicenseDbPath $env:DB_FILE

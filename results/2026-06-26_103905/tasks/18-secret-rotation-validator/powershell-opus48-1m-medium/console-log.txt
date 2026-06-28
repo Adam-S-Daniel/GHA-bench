@@ -1,0 +1,237 @@
+[Assistant] I'll start by examining the existing files in the working directory to understand what's already there.
+[Tool: Bash] ls -la && echo "---ACTRC---" && cat .actrc 2>/dev/null && echo "---SECRETS---" && cat secrets.json 2>/dev/null
+[Result] total 124
+drwxr-xr-x 6 passp passp  4096 Jun 26 23:28 .
+drwxr-xr-x 4 passp passp  4096 Jun 26 23:21 ..
+-rw-r--r-- 1 passp passp    40 Jun 26 23:29 .actrc
+drwxr-xr-x 2 passp passp  4096 Jun 26 23:21 .claude
+drwxr-xr-x 6 passp passp  4096 Jun 26 23:21 .git
+drwxr-xr-x 3 passp passp  4096 Jun 26 23:26 .github
+-rw-r--r-- 1 passp passp  6773 Jun 26 23:28 Act.Tests.ps1
+-rw-r--r-- 1 passp passp  8212 Jun 26 23:25 SecretRotationValidator.Tests.ps1
+-rw-r--r-- 1 passp passp 10618 Jun 26 23:24 SecretRotationValidator.ps1
+-rw-r--r-- 1 passp passp  3781 Jun 26 23:26 WorkflowStructure.Tests.ps1
+-rw-r--r-- 1 passp passp 24053 Jun 26 23:29 act-result.txt
+-rw-r--r-- 1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+drwxr-xr-x 2 passp passp  4096 Jun 26 23:25 fixtures
+-rw-r--r-- 1 passp passp   363 Jun 26 23:25 secrets.json
+-rw-r--r-- 1 passp passp  6154 Jun 26 23:29 testResults.xml
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---SECRETS---
+{
+  "secrets": [
+    { "name": "db-password",
+[Assistant] It appears substantial work already exists. Let me review all the existing files to understand the current state.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-opus48-1m-medium/SecretRotationValidator.ps1"}
+[Result] 1	#requires -Version 7.0
+2	<#
+3	.SYNOPSIS
+4	    Secret rotation validator.
+5	
+6	.DESCRIPTION
+7	    Reads a configuration of secrets (name, last-rotated date, rotation policy in
+8	    days, and the services that require each secret), determines which secrets are
+9	    expired or expiring within a configurable warning window, and emits a rotation
+10	    report grouped by urgency (Expired / Warning / Ok) in either Markdown or JSON.
+11	
+12	    The file is designed for testability:
+13	      * Every unit of behaviour lives in its own function.
+14	      * Functions take an explicit -ReferenceDate so "now" is injectable and tests
+15	        stay deterministic.
+16	      * The main entry point at the bottom only runs when the script is *invoked*
+17	        (not when it is dot-sourced), so tests can dot-source it to get the
+18	        functions without triggering execution.
+19	
+20	.PARAMETER ConfigPath
+21	    Path to the JSON secrets configuration file.
+22	
+23	.PARAMETER WarningDays
+24	    Size o
+[Assistant] The script looks complete. Let me review the test files and the workflow.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-opus48-1m-medium/SecretRotationValidator.Tests.ps1"}
+[Result] 1	#requires -Modules Pester
+2	
+3	# Unit tests for the Secret Rotation Validator.
+4	#
+5	# Developed red/green/refactor: each Describe block was written as a failing
+6	# test first, then the minimum implementation was added to SecretRotationValidator.ps1
+7	# to make it pass. The tests are deliberately deterministic — every test pins a
+8	# fixed -ReferenceDate so "now" never drifts and assertions stay exact.
+9	
+10	BeforeAll {
+11	    # Dot-source the implementation under test. The script is written so that
+12	    # dot-sourcing only defines functions (the main entry point is guarded), which
+13	    # makes every function independently testable.
+14	    . "$PSScriptRoot/SecretRotationValidator.ps1"
+15	
+16	    # A small, fully-known set of mock secrets used across tests. All dates are
+17	    # chosen relative to the fixed reference date 2026-06-26 so the resulting
+18	    # status (Expired / Warning / Ok) is unambiguous.
+19	    $script:RefDate = [datetime]'2026-06-26'
+20	    $script:MockSecrets
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-opus48-1m-medium/Act.Tests.ps1"}
+[Result] 1	#requires -Modules Pester
+2	
+3	# End-to-end test harness: EVERY test case is exercised through the GitHub Actions
+4	# workflow via `act` (nektos/act), never by calling the script directly.
+5	#
+6	# For each case we:
+7	#   1. Build an isolated temp git repo containing the project files + that case's
+8	#      fixture committed as secrets.json (the path the workflow's CONFIG_PATH points at).
+9	#   2. Run `act push --rm`, capturing combined stdout/stderr.
+10	#   3. Append the run's output to act-result.txt (clearly delimited per case).
+11	#   4. Assert act exited 0.
+12	#   5. Assert every job reported "Job succeeded".
+13	#   6. Parse the output and assert on EXACT expected values for that fixture.
+14	
+15	BeforeAll {
+16	    $script:Root      = $PSScriptRoot
+17	    $script:ResultLog = Join-Path $PSScriptRoot 'act-result.txt'
+18	
+19	    # Start with a fresh aggregate log for this harness run.
+20	    Set-Content -LiteralPath $script:ResultLog -Value "act test harness results`n" -Encoding utf8
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-opus48-1m-medium/.github/workflows/secret-rotation-valida
+[Result] 1	name: Secret Rotation Validator
+2	
+3	# Triggers:
+4	#   * push / pull_request  -> validate rotation status on every change
+5	#   * schedule             -> daily drift check (secrets expire over calendar time)
+6	#   * workflow_dispatch     -> on-demand manual runs
+7	on:
+8	  push:
+9	  pull_request:
+10	  schedule:
+11	    - cron: '0 8 * * *'
+12	  workflow_dispatch:
+13	    inputs:
+14	      warning_days:
+15	        description: 'Warning window in days'
+16	        required: false
+17	        default: '7'
+18	
+19	# Least-privilege: the validator only reads the repository contents.
+20	permissions:
+21	  contents: read
+22	
+23	# Shared configuration. REFERENCE_DATE is pinned so report output is
+24	# deterministic in CI (and assertable by the act test harness). In a real
+25	# deployment you would drop REFERENCE_DATE so the script uses the current date.
+26	env:
+27	  CONFIG_PATH: secrets.json
+28	  WARNING_DAYS: '7'
+29	  REFERENCE_DATE: '2026-06-26'
+30	
+31	jobs:
+32	  # Job 1: red/green unit tests must 
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-opus48-1m-medium/WorkflowStructure.Tests.ps1"}
+[Result] 1	#requires -Modules Pester
+2	
+3	# Structural tests for the GitHub Actions workflow. These parse the YAML and
+4	# assert the workflow has the expected triggers, jobs and steps, references the
+5	# script files that actually exist, and passes actionlint.
+6	
+7	BeforeAll {
+8	    Import-Module powershell-yaml -ErrorAction Stop
+9	
+10	    $script:Root         = $PSScriptRoot
+11	    $script:WorkflowPath = Join-Path $PSScriptRoot '.github/workflows/secret-rotation-validator.yml'
+12	    $script:Workflow     = Get-Content -LiteralPath $script:WorkflowPath -Raw | ConvertFrom-Yaml
+13	}
+14	
+15	Describe 'Workflow file' {
+16	    It 'exists' {
+17	        Test-Path -LiteralPath $script:WorkflowPath | Should -BeTrue
+18	    }
+19	
+20	    It 'is valid YAML that parses to a mapping' {
+21	        $script:Workflow | Should -BeOfType ([System.Collections.IDictionary])
+22	    }
+23	}
+24	
+25	Describe 'Triggers' {
+26	    BeforeAll { $script:On = $script:Workflow['on'] }
+27	
+28	    It 'defines the expected trigger e
+[Tool: Bash] ls -la fixtures/ && echo "===FIXTURES===" && for f in fixtures/*.json; do echo "--- $f ---"; cat "$f"; echo; done
+[Result] total 20
+drwxr-xr-x 2 passp passp 4096 Jun 26 23:25 .
+drwxr-xr-x 6 passp passp 4096 Jun 26 23:28 ..
+-rw-r--r-- 1 passp passp  252 Jun 26 23:25 case-all-expired.json
+-rw-r--r-- 1 passp passp  261 Jun 26 23:25 case-all-ok.json
+-rw-r--r-- 1 passp passp  363 Jun 26 23:25 case-mixed.json
+===FIXTURES===
+--- fixtures/case-all-expired.json ---
+{
+  "secrets": [
+    { "name": "legacy-key",    "lastRotated": "2025-01-01", "rotationPolicyDays": 30, "requiredBy": ["legacy-api"] },
+    { "name": "old-cert",      "lastRotated": "2024-06-01", "rotationPolicyDays": 90, "requiredBy": ["edge"] }
+  ]
+}
+
+--- fixtures/case-all-ok.json ---
+{
+  "secrets": [
+    { "name": "service-token", "lastRotated": "2026-06-01", "rotationPolicyDays": 365, "requiredBy": ["billing"] },
+    { "name": "signing-key",   "lastRotated": "2026-06-20", "rotationPolicyDays": 30,  "requiredBy": ["auth", "mobile"] }
+  ]
+}
+
+--- fixtures/case-mixed.json ---
+{
+  "secrets": [
+    { "name": "db-password", "lastRotated": "2026-01-01", "rota
+[Assistant] Let me check the result of the last act run and verify everything passes.
+[Tool: Bash] grep -n "act exit code\|Job succeeded\|ROTATION_SUMMARY\|unit tests passed\|Error\|FAIL" act-result.txt | head -60
+[Result] 5:act exit code: 0
+27:[Secret Rotation Validator/Unit tests (Pester)]   | All 17 unit tests passed.
+32:[Secret Rotation Validator/Unit tests (Pester)] 🏁  Job succeeded
+82:[Secret Rotation Validator/Generate rotation report]   | ROTATION_SUMMARY expired=1 warning=1 ok=1 total=3
+87:[Secret Rotation Validator/Generate rotation report] 🏁  Job succeeded
+91:act exit code: 0
+113:[Secret Rotation Validator/Unit tests (Pester)]   | All 17 unit tests passed.
+118:[Secret Rotation Validator/Unit tests (Pester)] 🏁  Job succeeded
+165:[Secret Rotation Validator/Generate rotation report]   | ROTATION_SUMMARY expired=0 warning=0 ok=2 total=2
+170:[Secret Rotation Validator/Generate rotation report] 🏁  Job succeeded
+174:act exit code: 0
+196:[Secret Rotation Validator/Unit tests (Pester)]   | All 17 unit tests passed.
+201:[Secret Rotation Validator/Unit tests (Pester)] 🏁  Job succeeded
+248:[Secret Rotation Validator/Generate rotation report]   | ROTATION_SUMMARY expired=2 warning=0 ok=0 total=2
+253:[Secre
+[Assistant] All three act cases passed (exit 0, both jobs succeeded, exact summaries match). The solution is already complete. Let me verify the test suites pass cleanly to confirm the final state.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-opus48-1m-medium" && actionlint .github/workflows/secret-rotation-validator.yml && echo "ACTIONLINT_OK exit=$?"
+[Result] ACTIONLINT_OK exit=0
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-opus48-1m-medium" && pwsh -NoProfile -Command "Invoke-Pester -Path ./SecretRotationValidator.Tests.ps1, ./WorkflowStructure.Tests.ps1 -Output Minimal" 2>&1 | tail -20
+[Result] [95m
+[95mStarting discovery in 2 files.[0m
+[95mDiscovery found 31 tests in 336ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-opus48-1m-medium/SecretRotationValidator.Tests.ps1[0m[90m 1.38s (592ms|532ms)[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/18-secret-rotation-validator/powershell-opus48-1m-medium/WorkflowStructure.Tests.ps1[0m[90m 797ms (656ms|107ms)[0m
+[97mTests completed in 2.21s[0m
+[32mTests Passed: 31, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] The solution is complete and fully verified. Here's the final state:
+
+## Summary
+
+All components are in place and passing:
+
+**Implementation** — `SecretRotationValidator.ps1`
+- Four composable, individually-testable functions: `ConvertFrom-SecretConfig` (load/validate JSON), `Get-SecretRotationStatus` (compute expiry + Expired/Warning/Ok classification), `New-RotationReport` (group by urgency with summary counts), `Format-RotationReport` (Markdown table or JSON).
+- Injectable `-ReferenceDate` makes "now" deterministic; dot-source guard keeps the main block from running under tests; graceful, named error messages throughout.
+
+**Tests (TDD, Pester)** — 31 unit/structure tests + 3 end-to-end act cases, all green:
+- `SecretRotationValidator.Tests.ps1` — 17 unit tests (classification, boundary inclusivity, configurable window, error handling, JSON round-trip).
+- `WorkflowStructure.Tests.ps1` — 14 tests parsing the YAML for triggers, jobs, dependencies, script references, actionlint pass.
+- `Act.Tests.ps1` — runs every case through the real workflow via `act`, asserting exact values.
+
+**GitHub Actions** — `.github/workflows/secret-rotation-validator.yml`
+- Triggers: push, pull_request, schedule (daily cron), workflow_dispatch; least-privilege `contents: read`; `test` → `report` job dependency; `shell: pwsh` throughout.
+- **actionlint: exit 0.**
+
+**act results** (`act-result.txt`, all exit 0, both jobs "Job succeeded"):
+- mixed: `expired=1 warning=1 ok=1 total=3`
+- all-ok: `expired=0 warning=0 ok=2 total=2`
+- all-expired: `expired=2 warning=0 ok=0 total=2`
+
+Everything required by the task — TDD methodology, Pester tests, multi-format output, error handling, the validated workflow, all-tests-through-act, and the `act-result.txt` artifact — is present and verified passing.

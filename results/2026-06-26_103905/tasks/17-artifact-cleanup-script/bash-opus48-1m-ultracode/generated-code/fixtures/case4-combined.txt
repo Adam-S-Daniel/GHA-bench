@@ -1,0 +1,18 @@
+# Case 4 — all three policies combined (reference now = 2026-06-28T00:00:00Z).
+#   max-age-days=30, keep-latest=2 per run, max-total-size=8,000,000.
+#
+# Step 1 (max-age>30): c1 (88d) -> DELETE(max-age).
+# Step 2 (keep-latest=2): run 4001 has c1,c2,c5 (newest c5,c2 kept; c1 already
+#   deleted). run 4002 has c3,c4 (both kept). No new deletions.
+# Step 3 (size cap 8,000,000): survivors c2(2M)+c5(1M)+c3(4M)+c4(2.5M)=9.5M>8M.
+#   Delete oldest survivor first: c3 (06-10, 4M) -> total 5.5M, fits. Stop.
+# Final: delete c1 (max-age) + c3 (max-total-size).
+#   deleted=2  reclaimed=7000000  retained=3  retained_bytes=5500000
+# policy: max-age-days=30 keep-latest=2 max-total-size=8000000
+#
+# name|size_bytes|created_iso8601|run_id
+c1|3000000|2026-04-01T00:00:00Z|4001
+c2|2000000|2026-06-20T00:00:00Z|4001
+c5|1000000|2026-06-26T00:00:00Z|4001
+c3|4000000|2026-06-10T00:00:00Z|4002
+c4|2500000|2026-06-15T00:00:00Z|4002

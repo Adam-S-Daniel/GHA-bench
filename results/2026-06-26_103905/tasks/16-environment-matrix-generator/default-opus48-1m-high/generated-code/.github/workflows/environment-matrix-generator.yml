@@ -1,0 +1,84 @@
+name: Environment Matrix Generator
+
+# Triggers: run on pushes and PRs (to validate matrix config changes), on a
+# weekly schedule (catch drift), and on manual dispatch (let an operator point
+# the generator at an arbitrary config file).
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      config:
+        description: "Path to the matrix configuration JSON file"
+        required: false
+        default: "config.json"
+
+# Least-privilege: the generator only reads the checked-out repository.
+permissions:
+  contents: read
+
+env:
+  # Default config path; overridable via workflow_dispatch input.
+  CONFIG_FILE: ${{ github.event.inputs.config || 'config.json' }}
+
+jobs:
+  # ----------------------------------------------------------------------- #
+  # Job 1: run the generator and expose the resulting matrix as a job output.
+  # ----------------------------------------------------------------------- #
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+      size: ${{ steps.gen.outputs.size }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        run: python3 --version
+
+      - name: Generate build matrix
+        id: gen
+        run: |
+          set -euo pipefail
+          echo "Using config file: ${CONFIG_FILE}"
+          # Produce the full result, then split it into discrete outputs/markers.
+          python3 matrix_generator.py --config "${CONFIG_FILE}" --compact > result.json
+          cat result.json
+
+          matrix=$(jq -c '.matrix' result.json)
+          size=$(jq -r '.size' result.json)
+          fail_fast=$(jq -r 'if has("fail-fast") then (."fail-fast"|tostring) else "unset" end' result.json)
+          max_parallel=$(jq -r 'if has("max-parallel") then (."max-parallel"|tostring) else "unset" end' result.json)
+
+          # Job outputs consumed by the downstream build job.
+          {
+            echo "matrix=${matrix}"
+            echo "size=${size}"
+          } >> "$GITHUB_OUTPUT"
+
+          # Stable, greppable markers asserted on by the act test harness.
+          echo "MATRIX_SIZE=${size}"
+          echo "MATRIX_JSON=${matrix}"
+          echo "FAIL_FAST=${fail_fast}"
+          echo "MAX_PARALLEL=${max_parallel}"
+
+  # ----------------------------------------------------------------------- #
+  # Job 2: consume the generated matrix as a real dynamic strategy.matrix.
+  # Each combination becomes its own job, proving the output is usable.
+  # ----------------------------------------------------------------------- #
+  build:
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    env:
+      ENTRY: ${{ toJSON(matrix) }}
+    steps:
+      - name: Report this matrix combination
+        run: |
+          echo "COMBO_ENTRY=${ENTRY}"
+          echo "COMBO_DONE"

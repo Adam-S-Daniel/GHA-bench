@@ -1,0 +1,101 @@
+name: Test Results Aggregator
+
+# Triggers: on every push and PR, on a weekly schedule, and on manual dispatch.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays at 06:00 UTC
+  workflow_dispatch:
+
+# Least privilege: the workflow only reads the repository contents.
+permissions:
+  contents: read
+
+# Directory the aggregator reads test result files from. Overridable per run.
+env:
+  RESULTS_DIR: fixtures
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    # Expose the computed totals so dependent jobs can consume them.
+    outputs:
+      passed: ${{ steps.aggregate.outputs.passed }}
+      failed: ${{ steps.aggregate.outputs.failed }}
+      skipped: ${{ steps.aggregate.outputs.skipped }}
+      total: ${{ steps.aggregate.outputs.total }}
+      flaky: ${{ steps.aggregate.outputs.flaky }}
+      duration: ${{ steps.aggregate.outputs.duration }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure jq is available
+        shell: bash
+        run: |
+          # jq is preinstalled on GitHub-hosted runners and in the act image;
+          # install defensively only if it is somehow missing.
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq jq
+          fi
+          jq --version
+
+      - name: Aggregate results and publish job summary
+        id: aggregate
+        shell: bash
+        run: |
+          chmod +x ./aggregate-test-results.sh
+          ./aggregate-test-results.sh \
+            --title "Test Results Summary" \
+            --counts-file counts.env \
+            --output summary.md \
+            "${RESULTS_DIR}"
+
+          echo "----- summary.md -----"
+          cat summary.md
+          echo "----- counts.env -----"
+          cat counts.env
+
+          # Publish the Markdown to the GitHub Actions job summary panel.
+          cat summary.md >> "${GITHUB_STEP_SUMMARY}"
+
+          # Re-export the totals as step outputs for the dependent job.
+          while IFS='=' read -r key value; do
+            [ -n "${key}" ] && echo "${key}=${value}" >> "${GITHUB_OUTPUT}"
+          done < counts.env
+
+  gate:
+    name: Report and gate on totals
+    needs: aggregate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Summarise aggregated totals
+        shell: bash
+        env:
+          PASSED: ${{ needs.aggregate.outputs.passed }}
+          FAILED: ${{ needs.aggregate.outputs.failed }}
+          SKIPPED: ${{ needs.aggregate.outputs.skipped }}
+          TOTAL: ${{ needs.aggregate.outputs.total }}
+          FLAKY: ${{ needs.aggregate.outputs.flaky }}
+          DURATION: ${{ needs.aggregate.outputs.duration }}
+        run: |
+          echo "Aggregated test totals across the matrix:"
+          echo "  passed=${PASSED} failed=${FAILED} skipped=${SKIPPED}"
+          echo "  total=${TOTAL} flaky=${FLAKY} duration=${DURATION}s"
+
+          # Sanity gate: a run that parsed zero tests almost certainly means a
+          # broken upload, so fail loudly rather than reporting an empty matrix.
+          if [ "${TOTAL:-0}" -eq 0 ]; then
+            echo "::error::No test results were aggregated (total=0)."
+            exit 1
+          fi
+
+          if [ "${FLAKY:-0}" -gt 0 ]; then
+            echo "::warning::${FLAKY} flaky test(s) detected across the matrix."
+          fi
+          echo "GATE_RESULT=ok"

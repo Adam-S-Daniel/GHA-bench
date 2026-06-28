@@ -1,0 +1,67 @@
+name: Dependency License Checker
+
+# Run on code changes, on a weekly schedule (catch newly-flagged licenses),
+# and on demand.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      enforce:
+        description: "Fail the job when a dependency is denied or unknown"
+        required: false
+        default: "false"
+
+# Least privilege: the checker only needs to read repository contents.
+permissions:
+  contents: read
+
+env:
+  MANIFEST: fixtures/package.json
+  LICENSE_CONFIG: fixtures/license-config.json
+  LICENSE_DB: fixtures/license-db.json
+  # Default to report-only; flip to "true" to gate merges on violations.
+  LICENSE_ENFORCE: ${{ github.event.inputs.enforce || 'false' }}
+
+jobs:
+  license-check:
+    name: Check dependency licenses
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Bun is available
+        run: bun --version
+
+      - name: Run unit tests
+        run: bun test
+
+      - name: Generate compliance report
+        id: report
+        run: |
+          echo "REPORT_BEGIN"
+          bun run src/cli.ts \
+            --manifest "$MANIFEST" \
+            --config "$LICENSE_CONFIG" \
+            --db "$LICENSE_DB" \
+            --format text | tee report.txt
+          status=${PIPESTATUS[0]}
+          echo "REPORT_END"
+          echo "compliant_exit=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce policy (optional)
+        run: |
+          status="${{ steps.report.outputs.compliant_exit }}"
+          if [ "$LICENSE_ENFORCE" = "true" ] && [ "$status" != "0" ]; then
+            echo "License policy violation detected (enforcement on)." >&2
+            exit 1
+          fi
+          echo "Enforcement=$LICENSE_ENFORCE, checker exit=$status — not failing build."

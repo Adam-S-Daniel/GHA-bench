@@ -1,0 +1,81 @@
+name: PR Label Assigner
+
+# Triggers:
+#   pull_request      - the real use case: label a PR from its changed files.
+#   push              - lets the test harness exercise the pipeline via `act push`.
+#   workflow_dispatch - manual runs, with overridable fixture inputs.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      changed_files:
+        description: 'Path to the changed-files JSON fixture'
+        required: false
+        default: 'fixtures/changed-files.json'
+      config:
+        description: 'Path to the rules config JSON'
+        required: false
+        default: 'fixtures/config.json'
+
+# Least privilege: only need to read repo contents to run the script.
+# (A real labeler would add `pull-requests: write` to apply the labels.)
+permissions:
+  contents: read
+
+env:
+  # Fixture paths default to the repo's fixtures. The test harness overrides
+  # CHANGED_FILES per test case by swapping the file at this path. workflow_dispatch
+  # inputs (when present) take precedence so manual runs can point elsewhere.
+  CHANGED_FILES: ${{ github.event.inputs.changed_files || 'fixtures/changed-files.json' }}
+  CONFIG: ${{ github.event.inputs.config || 'fixtures/config.json' }}
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure PowerShell is available
+        shell: pwsh
+        run: |
+          # No-op on GitHub-hosted runners and the act container (pwsh + Pester
+          # pre-installed). Present for portability / clear failure if missing.
+          $PSVersionTable.PSVersion.ToString()
+          if (-not (Get-Module -ListAvailable -Name Pester)) {
+            Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          }
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./PrLabelAssigner.Tests.ps1 -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "Pester reported $($result.FailedCount) failing test(s)."
+          }
+
+  label:
+    name: Assign labels
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute PR labels
+        id: assign
+        shell: pwsh
+        run: |
+          # Run the assigner against the configured fixture. The script writes a
+          # "Labels: ..." line to stdout (asserted by the harness) and a
+          # `labels=` step output for downstream consumers.
+          Write-Host "Changed files: $env:CHANGED_FILES"
+          Write-Host "Config:        $env:CONFIG"
+          ./PrLabelAssigner.ps1 -ChangedFiles $env:CHANGED_FILES -Config $env:CONFIG
+
+      - name: Show resolved label output
+        shell: pwsh
+        run: |
+          Write-Host "Resolved labels => $('${{ steps.assign.outputs.labels }}')"

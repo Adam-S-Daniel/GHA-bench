@@ -1,0 +1,79 @@
+name: Artifact Cleanup Script
+
+# Maintenance workflow: compute (and on a schedule, would apply) artifact
+# retention. Runs on pushes/PRs (CI for the script), on a weekly schedule
+# (the real maintenance cadence), and on demand via the Actions UI.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Weekly on Sunday at 03:00 UTC — a sensible artifact-cleanup cadence.
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Plan only; do not perform deletions"
+        type: boolean
+        default: true
+
+# Least privilege: the planner only reads the repo. A real deletion step would
+# additionally need `actions: write` to call the artifacts API.
+permissions:
+  contents: read
+
+# Default reference time so age-based policies are deterministic in CI. The
+# fixtures also pin their own "now"; this env documents the override mechanism.
+env:
+  CLEANUP_NOW: "2026-01-01T00:00:00Z"
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Run unit tests (logic + CLI)
+        # Run only the deterministic, self-contained suites. The act-based and
+        # actionlint-based suites are intentionally excluded here: they require
+        # Docker/actionlint and would recurse inside this container.
+        run: bun test tests/cleanup.test.ts tests/format.test.ts tests/config.test.ts tests/cli.test.ts
+
+  cleanup-plan:
+    name: Generate cleanup plan
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      # workflow_dispatch supplies a boolean; other events leave it empty, so we
+      # default to a safe dry run.
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Generate deletion plans for all fixtures
+        run: |
+          echo "# Artifact Cleanup Plans" >> "$GITHUB_STEP_SUMMARY"
+          echo "Mode: DRY_RUN=${DRY_RUN}" >> "$GITHUB_STEP_SUMMARY"
+          for fixture in fixtures/basic.json fixtures/size-pressure.json fixtures/keep-n.json fixtures/all-fresh.json; do
+            echo "----- PLAN: ${fixture} -----"
+            if [ "${DRY_RUN}" = "true" ]; then
+              bun run artifact-cleanup.ts "${fixture}" --dry-run | tee -a "$GITHUB_STEP_SUMMARY"
+            else
+              bun run artifact-cleanup.ts "${fixture}" | tee -a "$GITHUB_STEP_SUMMARY"
+            fi
+            echo "----- END: ${fixture} -----"
+          done

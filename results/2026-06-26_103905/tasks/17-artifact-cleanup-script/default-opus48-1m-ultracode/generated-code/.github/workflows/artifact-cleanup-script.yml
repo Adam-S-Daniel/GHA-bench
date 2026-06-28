@@ -1,0 +1,72 @@
+name: Artifact Cleanup
+
+# Triggers: run on pushes / PRs that touch the tool, on a weekly maintenance
+# schedule (the real-world use case for artifact cleanup), and on demand.
+on:
+  push:
+    paths:
+      - "artifact_cleanup.py"
+      - "fixtures/**"
+      - ".github/workflows/artifact-cleanup-script.yml"
+  pull_request:
+    paths:
+      - "artifact_cleanup.py"
+      - "fixtures/**"
+  schedule:
+    - cron: "0 3 * * 1" # 03:00 UTC every Monday
+  workflow_dispatch:
+
+# Least-privilege permissions. `actions: write` is what a real run would need to
+# delete artifacts via the REST API; `contents: read` is for checkout.
+permissions:
+  contents: read
+  actions: write
+
+env:
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  cleanup:
+    name: cleanup (${{ matrix.case }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # One job per fixture case; a single `act push` exercises them all.
+      matrix:
+        case: [keep_n, age, size, combined, empty]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # python3 is pre-installed on GitHub-hosted ubuntu runners and in the act
+      # image; this step just records the version for the log.
+      - name: Show Python version
+        run: python3 --version
+
+      - name: Run artifact cleanup (dry-run)
+        env:
+          CASE: ${{ matrix.case }}
+        run: |
+          echo "=== CASE: ${CASE} ==="
+          python3 artifact_cleanup.py --input "fixtures/${CASE}.json" --format text --dry-run
+          echo "=== END CASE: ${CASE} ==="
+
+      - name: Append to job summary
+        env:
+          CASE: ${{ matrix.case }}
+        run: |
+          {
+            echo "### Artifact cleanup: ${CASE}"
+            echo '```'
+            python3 artifact_cleanup.py --input "fixtures/${CASE}.json" --format json --dry-run
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Dependent job: only runs after every matrix case succeeds.
+  summary:
+    name: summary
+    needs: cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report completion
+        run: echo "All artifact-cleanup cases completed successfully."

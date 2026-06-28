@@ -1,0 +1,86 @@
+name: Artifact Cleanup
+
+# Real CI/CD usage of the artifact retention tooling:
+#   * push / pull_request -> validate the logic (unit tests) and preview a plan
+#   * schedule            -> weekly housekeeping run
+#   * workflow_dispatch   -> manual run with a toggle to actually delete
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Every Monday at 03:00 UTC.
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Plan only; when false the deletion side effect would run"
+        type: boolean
+        default: true
+
+# Least privilege: this demo only reads the repo. Real deletion of artifacts via
+# the GitHub API would additionally require `actions: write`.
+permissions:
+  contents: read
+
+env:
+  # Resolve dry-run: always true except when explicitly disabled via the manual
+  # workflow_dispatch input. Pushes, PRs and the schedule are therefore safe.
+  DRY_RUN: ${{ github.event_name != 'workflow_dispatch' || inputs.dry_run }}
+
+jobs:
+  # 1) Prove the retention logic is correct before we let it touch anything.
+  unit-tests:
+    name: Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify project files are present
+        shell: pwsh
+        run: |
+          $required = @(
+            './ArtifactCleanup.psm1',
+            './Invoke-ArtifactCleanup.ps1',
+            './Tests/ArtifactCleanup.Tests.ps1'
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path $path)) { throw "Missing required project file: $path" }
+            Write-Host "Found $path"
+          }
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './Tests/ArtifactCleanup.Tests.ps1'
+          $config.Run.Exit = $true          # non-zero exit on any failure -> fails the job
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  # 2) Run the script through the pipeline over every fixture and emit a plan.
+  cleanup-plan:
+    name: Generate cleanup plan
+    runs-on: ubuntu-latest
+    needs: unit-tests          # only run if the logic is verified
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate retention plan for each fixture
+        shell: pwsh
+        run: |
+          $dryRun = $env:DRY_RUN -eq 'true'
+          Write-Host "Dry-run mode: $dryRun"
+          Write-Host "Event: $env:GITHUB_EVENT_NAME"
+
+          $fixtures = Get-ChildItem -Path './fixtures' -Filter '*.json' | Sort-Object Name
+          if (-not $fixtures) { throw "No fixtures found under ./fixtures" }
+
+          foreach ($fixture in $fixtures) {
+            $params = @{ FixturePath = $fixture.FullName }
+            if ($dryRun) { $params.DryRun = $true }
+            ./Invoke-ArtifactCleanup.ps1 @params
+          }

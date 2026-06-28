@@ -36,6 +36,7 @@ from pathlib import Path
 TEST_FILE_PATTERNS = {
     "python": [r"test_.*\.py$", r".*_test\.py$", r"run_tests\.py$"],
     "typescript": [r".*\.test\.ts$", r".*\.spec\.ts$"],
+    "javascript": [r".*\.test\.(js|mjs|cjs)$", r".*\.spec\.(js|mjs|cjs)$"],
     "powershell": [r".*\.Tests\.ps1$"],
     "bash": [r".*\.bats$", r"run_tests\.sh$"],
     "csharp": [r".*Tests\.cs$", r"^tests\.cs$"],
@@ -44,6 +45,7 @@ TEST_FILE_PATTERNS = {
 IMPL_FILE_PATTERNS = {
     "python": [r"(?!test_)(?!.*_test)(?!run_tests).*\.py$"],
     "typescript": [r"(?!.*\.test\.)(?!.*\.spec\.).*\.ts$"],
+    "javascript": [r"(?!.*\.test\.)(?!.*\.spec\.).*\.(js|mjs|cjs)$"],
     "powershell": [r"(?!.*\.Tests\.).*\.ps1$"],
     "bash": [r"(?!.*\.bats$)(?!run_tests\.).*\.sh$"],
     "csharp": [r"(?!.*Tests).*\.cs$"],
@@ -69,6 +71,8 @@ def _detect_language(files: list[str]) -> str:
             return "powershell"
         if f.endswith(".test.ts") or f.endswith(".spec.ts"):
             return "typescript"
+        if re.search(r"\.(test|spec)\.(js|mjs|cjs)$", f):
+            return "javascript"
         if re.search(r"test_.*\.py$|.*_test\.py$|run_tests\.py$", f):
             return "python"
         if f.endswith("Tests.cs") or f == "tests.cs":
@@ -79,6 +83,8 @@ def _detect_language(files: list[str]) -> str:
             return "powershell"
         if f.endswith(".ts"):
             return "typescript"
+        if re.search(r"\.(js|mjs|cjs)$", f):
+            return "javascript"
         if f.endswith(".sh"):
             return "bash"
         if f.endswith(".cs"):
@@ -107,7 +113,7 @@ def _is_impl_file(filepath: str, language: str) -> bool:
 
 def _is_code_file(filepath: str) -> bool:
     """Check if a file is any kind of source code."""
-    return filepath.endswith((".py", ".ts", ".ps1", ".sh", ".bats", ".cs"))
+    return filepath.endswith((".py", ".ts", ".js", ".mjs", ".cjs", ".ps1", ".sh", ".bats", ".cs"))
 
 
 # ---------------------------------------------------------------------------
@@ -162,6 +168,21 @@ def _count_typescript(content: str) -> dict:
     # test("name", ...) or it("name", ...)
     tests = len(re.findall(r"(?:^|\s)(?:test|it)\s*\(", content, re.MULTILINE))
     asserts = len(re.findall(r"\bexpect\s*\(", content))
+    return {"tests": tests, "assertions": asserts}
+
+
+def _count_javascript(content: str) -> dict:
+    """Count tests and assertions in JavaScript code.
+
+    Covers both common stacks the agents use for the default (free-choice)
+    language: node:test / Jest / Vitest (`test(...)`, `it(...)`) with either
+    `expect(...)` matchers or node:assert (`assert(...)`, `assert.equal(...)`,
+    `assert.strictEqual(...)`, etc.).
+    """
+    tests = len(re.findall(r"(?:^|\s)(?:test|it)\s*\(", content, re.MULTILINE))
+    asserts = len(re.findall(r"\bexpect\s*\(", content))
+    # node:assert — bare assert(...) and assert.<method>(...)
+    asserts += len(re.findall(r"\bassert(?:\.\w+)?\s*\(", content))
     return {"tests": tests, "assertions": asserts}
 
 
@@ -228,6 +249,7 @@ def _count_csharp(content: str) -> dict:
 COUNTERS = {
     "python": _count_python,
     "typescript": _count_typescript,
+    "javascript": _count_javascript,
     "powershell": _count_powershell,
     "bash": _count_bash,
     "csharp": _count_csharp,
@@ -300,6 +322,21 @@ def compute_structural_metrics(generated_code_dir: Path) -> dict:
             continue
         impl_lines += len(content.splitlines())
 
+    # The GitHub Actions workflow YAML (the core deliverable) lives under
+    # .github/workflows/ and isn't an impl/test source file, so count it
+    # separately. `code_lines` = the authored solution (impl + tests +
+    # workflow); this is the single source of truth for "total lines" in the
+    # reports and the monitor (NOT the runner's code_metrics.total_lines, which
+    # also counts fixtures, README, helper scripts, and the act-result.txt log).
+    wf_files = [f for f in all_files
+                if re.search(r"\.github/workflows/[^/]+\.ya?ml$", f.replace(os.sep, "/"))]
+    workflow_lines = 0
+    for f in wf_files:
+        try:
+            workflow_lines += len((generated_code_dir / f).read_text(errors="replace").splitlines())
+        except Exception:
+            pass
+
     return {
         "language": language,
         "test_file_count": len(test_files),
@@ -308,6 +345,9 @@ def compute_structural_metrics(generated_code_dir: Path) -> dict:
         "impl_files": impl_files,
         "test_lines": test_lines,
         "impl_lines": impl_lines,
+        "workflow_file_count": len(wf_files),
+        "workflow_lines": workflow_lines,
+        "code_lines": impl_lines + test_lines + workflow_lines,
         "test_to_code_ratio": round(test_lines / impl_lines, 2) if impl_lines > 0 else 0,
         "test_count": total_tests,
         "assertion_count": total_assertions,
@@ -321,6 +361,7 @@ def _empty_structural() -> dict:
         "test_file_count": 0, "impl_file_count": 0,
         "test_files": [], "impl_files": [],
         "test_lines": 0, "impl_lines": 0,
+        "workflow_file_count": 0, "workflow_lines": 0, "code_lines": 0,
         "test_to_code_ratio": 0,
         "test_count": 0, "assertion_count": 0,
         "assertions_per_test": 0,
@@ -373,11 +414,15 @@ JUDGES: dict[str, dict] = {
                         "do not assume it is missing solely because you "
                         "did not see its contents in this prompt."
                     )},
-    # Gemini is invoked via the OAuth-authenticated `gemini` CLI (no API
-    # key needed, no free-tier billing gate). Preview tag on the model
-    # name reflects the current actual model ID exposed by the CLI as of
-    # April 2026; CLI's reported stats give us the usage/cost numbers.
-    "gemini31pro": {"provider": "gemini-cli", "model": "gemini-3.1-pro-preview"},
+    # Gemini 3.1 Pro is invoked via the OAuth-authenticated Antigravity CLI
+    # (`agy`). Google retired Gemini Code Assist for individuals, so the old
+    # `gemini` CLI now returns IneligibleTierError (UNSUPPORTED_CLIENT); `agy`
+    # is its successor. The model "Gemini 3.1 Pro (High)" matches the model and
+    # (high) thinking depth the previous report's `gemini-3.1-pro-preview` judge
+    # used, so the panel stays comparable across reports. (The pre-agy
+    # gemini-cli provider was removed on 2026-06-26 — see the removal note in
+    # llm_providers.py; restore it from git history to reproduce a pre-agy run.)
+    "gemini31pro": {"provider": "agy", "model": "Gemini 3.1 Pro (High)"},
 }
 DEFAULT_JUDGES = ("haiku45", "gemini31pro")
 

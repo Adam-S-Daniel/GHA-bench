@@ -1,0 +1,125 @@
+name: Environment Matrix Generator
+
+# Realistic CI/CD pipeline:
+#   1. test           - run the Pester unit suite for the generator.
+#   2. generate-matrix - turn a config fixture into a build matrix and expose
+#                        the matrix dimensions as a job output (the canonical
+#                        GitHub Actions "dynamic matrix" pattern).
+#   3. build          - consume that output via fromJson() and fan out, proving
+#                        the generated matrix actually drives downstream jobs.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      fixture:
+        description: Name of the fixture (under fixtures/) to build the matrix from.
+        default: basic
+        type: string
+  schedule:
+    # Weekly Monday 06:00 UTC sanity run.
+    - cron: '0 6 * * 1'
+
+# Least-privilege: the generator only reads the checked-out repo.
+permissions:
+  contents: read
+
+env:
+  # Default fixture used when not overridden via workflow_dispatch input.
+  PRIMARY_FIXTURE: basic
+  # Hard ceiling echoed for visibility; the per-fixture maxSize still wins.
+  MAX_MATRIX_SIZE: '256'
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $config = New-PesterConfiguration
+          $config.Run.Path = './BuildMatrix.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  generate-matrix:
+    name: Generate build matrix
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      # The matrix dimensions for the chosen fixture, consumed by the build job.
+      matrix: ${{ steps.generate.outputs.matrix }}
+      job-count: ${{ steps.generate.outputs.job-count }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate and verify every fixture
+        id: generate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Write-Host "Max matrix size (env): $env:MAX_MATRIX_SIZE"
+
+          # Verify every fixture so a single push run exercises all cases. Each
+          # fixture is delimited with machine-parseable markers for the test
+          # harness to assert exact expected values against.
+          $fixtures = Get-ChildItem -Path ./fixtures -Filter *.json | Sort-Object Name
+          foreach ($f in $fixtures) {
+            $name = $f.BaseName
+            Write-Host "::FIXTURE:: $name"
+            try {
+              # Run the real generator script just as a consumer would.
+              $json = & ./New-BuildMatrix.ps1 -ConfigPath $f.FullName
+              if ($LASTEXITCODE -ne 0) { throw "generator exited $LASTEXITCODE" }
+              $result = $json | ConvertFrom-Json
+              Write-Host "JOB_COUNT=$($result.'job-count')"
+              Write-Host "FAIL_FAST=$($result.'fail-fast')"
+              Write-Host "MAX_PARALLEL=$($result.'max-parallel')"
+              foreach ($job in $result.jobs) {
+                $pairs = $job.PSObject.Properties | ForEach-Object { "$($_.Name)=$($_.Value)" }
+                Write-Host ("JOB= " + ($pairs -join '; '))
+              }
+            }
+            catch {
+              # Oversize / invalid fixtures are expected to be rejected. The job
+              # still succeeds; we surface the validation message for assertion.
+              Write-Host "VALIDATION_REJECTED= $($_.Exception.Message)"
+            }
+            Write-Host "::END:: $name"
+          }
+
+          # Resolve which fixture feeds the downstream build job.
+          $fixture = '${{ github.event.inputs.fixture }}'
+          if ([string]::IsNullOrWhiteSpace($fixture)) { $fixture = $env:PRIMARY_FIXTURE }
+          Write-Host "Selected fixture for build job: $fixture"
+
+          $sel = & ./New-BuildMatrix.ps1 -ConfigPath "./fixtures/$fixture.json" | ConvertFrom-Json
+          # Emit the matrix dimensions (compact, single line) as a job output so
+          # the build job can consume it with fromJson().
+          $matrixJson = $sel.matrix | ConvertTo-Json -Depth 10 -Compress
+          "matrix=$matrixJson" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "job-count=$($sel.'job-count')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "MATRIX_OUTPUT= $matrixJson"
+
+  build:
+    name: Build (${{ matrix.os }} / ${{ matrix.node }})
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      # Do not cancel sibling jobs on first failure; show the full matrix.
+      fail-fast: false
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Report this matrix combination
+        shell: pwsh
+        run: |
+          # runs-on is fixed to ubuntu so this works in act; matrix.os is data.
+          Write-Host "BUILD_JOB= os=${{ matrix.os }}; node=${{ matrix.node }}"
+          Write-Host "Total jobs in matrix: ${{ needs.generate-matrix.outputs.job-count }}"

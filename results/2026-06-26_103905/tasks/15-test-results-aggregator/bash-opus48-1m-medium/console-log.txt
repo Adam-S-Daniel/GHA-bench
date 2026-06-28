@@ -1,0 +1,339 @@
+[Assistant] I'll start by exploring the environment and understanding the constraints.
+[Tool: Bash] ls -la && echo "---ACTRC---" && cat .actrc 2>/dev/null && echo "---" && which bats shellcheck actionlint act jq 2>/dev/null
+[Result] total 44
+drwxr-xr-x 4 passp passp  4096 Jun 26 13:00 .
+drwxr-xr-x 5 passp passp  4096 Jun 26 13:00 ..
+-rw-r--r-- 1 passp passp    40 Jun 26 13:00 .actrc
+drwxr-xr-x 2 passp passp  4096 Jun 26 13:00 .claude
+drwxr-xr-x 6 passp passp  4096 Jun 26 13:00 .git
+-rw-r--r-- 1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---
+/home/passp/.npm-global/bin/bats
+/home/passp/.local/bin/shellcheck
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/home/passp/.local/bin/jq
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Assistant] This is a self-contained scripting task. Let me look at the act setup and benchmark instructions briefly, then build.
+[Tool: Bash] docker images | grep -i act-ubuntu 2>/dev/null; echo "---"; act --version; echo "---jq---"; jq --version; bats --version
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+---
+act version 0.2.87
+---jq---
+jq-1.7.1
+Bats 1.13.0
+[Tool: Bash] grep -n -iE "act-result|exact|flaky|assert|act push" /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/benchmark-instructions-v4.md 2>/dev/null | head -40
+[Result] 66:1. For each test case: set up a temp git repo with your project files + that case's fixture data, run `act push --rm`, capture the output
+67:2. Save all act output to `act-result.txt` in the current working directory (append each test case's output, clearly delimited)
+68:3. Assert that act exited with code 0 for each case
+69:4. Parse the act output and assert on EXACT EXPECTED VALUES -- not just that output appeared, but that it matches the known-good result for that test case's input. For example: if your workflow bumps version 1.1.0 with a feat commit, assert the output contains exactly "1.2.0", not just "a version number"
+70:5. Assert every job shows "Job succeeded"
+72:The `act-result.txt` file MUST exist when done. It is a required artifact. `act` and Docker are pre-installed.
+78:- Verify actionlint passes (assert exit code 0)
+146:### Act: Limit `act push` invocations
+148:Each `act push` run takes 30-90 seconds (container startup + workflow execution). In v3, agents that ran `ac
+[Tool: Bash] sed -n '290,340p' /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/benchmark-instructions-v4.md
+[Result] The workflow must:
+- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)
+- Reference your script correctly
+- Pass actionlint validation (valid YAML, valid action references, correct syntax)
+- Include appropriate permissions, environment variables, and job dependencies
+
+The workflow WILL be executed in a Docker container via `act push` after you finish.
+It must complete without errors. Design your workflow so that its steps work in an
+isolated container environment — use `actions/checkout@v4`, install any dependencies
+your script needs, and run the script. Avoid steps that require external services or
+secrets unless they have sensible defaults/fallbacks.
+
+IMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead
+of invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues
+and works correctly in act containers. pwsh and Pester are pre-installed in the
+container.
+
+WORKFLOW VALIDATION:
+You MUST validate you
+[Assistant] Now I have a clear picture. Let me build the solution. First, the main aggregator script.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/aggregate.sh", "content": "#!/usr/bin/env bash\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/aggregate.sh (file state is current in your context — no need to Read it back)
+[Assistant] Now the fixtures with known totals:
+[Tool: Bash] mkdir -p fixtures tests .github/workflows
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/fixtures/run1.xml", "content": "<?xml version=\"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/fixtures/run1.xml (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/fixtures/run2.json", "content": "{\n  \"_comment
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/fixtures/run2.json (file state is current in your context — no need to Read it back)
+[Assistant] Let me validate the script and verify output locally:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+chmod +x aggregate.sh
+bash -n aggregate.sh && echo "SYNTAX OK"
+shellcheck aggregate.sh && echo "SHELLCHECK OK"
+echo "=== parse-junit ==="; ./aggregate.sh parse-junit fixtures/run1.xml
+echo "=== parse-json ==="; ./aggregate.sh parse-json fixtures/run2.json
+echo "=== summary ==="; ./aggregate.sh summary fixtures/run1.xml fixtures/run2.json
+[Result] SYNTAX OK
+SHELLCHECK OK
+=== parse-junit ===
+auth	passed	0.5
+auth	passed	0.3
+pay	failed	1.2
+exp	skipped	0.0
+=== parse-json ===
+test_login	passed	0.4
+test_logout	failed	0.6
+test_payment	passed	1.0
+test_extra	passed	0.2
+=== summary ===
+# Test Results Summary
+
+| Metric | Count |
+| --- | --- |
+| Passed | 5 |
+| Failed | 2 |
+| Skipped | 1 |
+| Total | 8 |
+| Duration | 4.20s |
+
+## Flaky Tests
+
+None detected.
+
+**Result: FAILED**
+[Assistant] The `name` attribute extraction is matching `classname`. Let me fix the awk `attr` function to respect attribute boundaries:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/aggregate.sh", "old_string
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/aggregate.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+shellcheck aggregate.sh && echo "SHELLCHECK OK"
+echo "=== parse-junit ==="; ./aggregate.sh parse-junit fixtures/run1.xml
+echo "=== summary ==="; ./aggregate.sh summary fixtures/run1.xml fixtures/run2.json
+[Result] SHELLCHECK OK
+=== parse-junit ===
+test_login	passed	0.5
+test_logout	passed	0.3
+test_payment	failed	1.2
+test_experimental	skipped	0.0
+=== summary ===
+# Test Results Summary
+
+| Metric | Count |
+| --- | --- |
+| Passed | 5 |
+| Failed | 2 |
+| Skipped | 1 |
+| Total | 8 |
+| Duration | 4.20s |
+
+## Flaky Tests
+
+Detected 2 flaky test(s) (passed in some runs, failed in others):
+
+- test_logout
+- test_payment
+
+**Result: FAILED**
+[Assistant] Both totals and flaky detection are correct. Now let me add a machine-readable `totals` subcommand to make the workflow's job outputs clean:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/aggregate.sh", "old_string
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/aggregate.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/aggregate.sh", "old_string
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/aggregate.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+shellcheck aggregate.sh && echo "SHELLCHECK OK"
+echo "=== totals ==="; ./aggregate.sh totals fixtures/run1.xml fixtures/run2.json
+[Result] SHELLCHECK OK
+=== totals ===
+passed=5
+failed=2
+skipped=1
+total=8
+duration=4.20
+flaky=test_logout,test_payment
+[Assistant] Now the workflow file with two jobs (aggregate → verify), permissions, env vars, and dependencies:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/.github/workflows/test-results-aggregator.yml", 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/.github/workflows/test-results-aggregator.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+actionlint .github/workflows/test-results-aggregator.yml && echo "ACTIONLINT OK (exit $?)"
+[Result ERROR] Exit code 1
+.github/workflows/test-results-aggregator.yml:53:9: shellcheck reported issue in this script: SC2086:info:10:23: Double quote to prevent globbing and word splitting [shellcheck]
+   |
+53 |         run: |
+   |         ^~~~
+.github/workflows/test-results-aggregator.yml:53:9: shellcheck reported issue in this script: SC2086:info:5:35: Double quote to prevent globbing and word splitting [shellcheck]
+   |
+53 |         run: |
+   |         ^~~~
+[Assistant] `${FIXTURES}` is intentionally word-split into multiple file args. Let me add shellcheck disable directives:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/.github/workflows/test-res
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/.github/workflows/test-results-aggregator.yml has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+actionlint .github/workflows/test-results-aggregator.yml && echo "ACTIONLINT OK (exit $?)"
+[Result] ACTIONLINT OK (exit 0)
+[Assistant] actionlint passes. Let me verify the act container has `jq` (so the workflow's install step doesn't need network):
+[Tool: Bash] docker run --rm --entrypoint sh act-ubuntu-pwsh:latest -c 'command -v jq && jq --version; command -v bash; command -v git' 2>&1 | head
+[Result] /usr/bin/jq
+jq-1.6
+/usr/bin/bash
+/usr/bin/git
+[Assistant] `jq` is present (1.6), so no network needed. Now let me check what's available for YAML parsing in tests:
+[Tool: Bash] command -v yq python3 2>/dev/null; python3 -c "import yaml; print('pyyaml ok')" 2>&1 | head -1
+[Result] /usr/bin/python3
+pyyaml ok
+[Assistant] Now the bats test harness. It runs `act` once in `setup_file`, captures to `act-result.txt`, and asserts exact values:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/tests/aggregator.bats", "content": "#!/usr/bin/e
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/tests/aggregator.bats (file state is current in your context — no need to Read it back)
+[Assistant] Now let me run the full bats suite. This triggers the one `act` run:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+bats tests/aggregator.bats 2>&1 | tail -60
+[Result] not ok 2 act exited with code 0
+# (in test file tests/aggregator.bats, line 81)
+#   `[ "${ACT_EXIT_CODE}" -eq 0 ]' failed
+not ok 3 both jobs report 'Job succeeded'
+# (in test file tests/aggregator.bats, line 87)
+#   `[ "${output}" -ge 2 ]' failed
+ok 4 aggregate job ran
+not ok 5 verify job ran
+# (in test file tests/aggregator.bats, line 95)
+#   `grep -qF "Verify aggregated totals" "${ACT_RESULT}"' failed
+not ok 6 summary reports exactly 5 passed
+# (in test file tests/aggregator.bats, line 99)
+#   `grep -qF "| Passed | 5 |" "${ACT_RESULT}"' failed
+not ok 7 summary reports exactly 2 failed
+# (in test file tests/aggregator.bats, line 103)
+#   `grep -qF "| Failed | 2 |" "${ACT_RESULT}"' failed
+not ok 8 summary reports exactly 1 skipped
+# (in test file tests/aggregator.bats, line 107)
+#   `grep -qF "| Skipped | 1 |" "${ACT_RESULT}"' failed
+not ok 9 summary reports exactly 8 total
+# (in test file tests/aggregator.bats, line 111)
+#   `grep -qF "| Total | 8 |" "${ACT_RESULT}"' failed
+not ok 10 
+[Assistant] act failed. Let me read the captured output to diagnose:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+grep -nE "error|Error|fail|Fail|✗|❌|cannot|No such|not found|level=" act-result.txt | head -40
+echo "=== tail ==="
+tail -25 act-result.txt
+[Result] 4:time="2026-06-26T13:05:44-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+9:[Test Results Aggregator/Aggregate test results] Error response from daemon: pull access denied for act-ubuntu-pwsh, repository does not exist or may require 'docker login'
+10:[Test Results Aggregator/Aggregate test results]   ❌  Failure - Set up job
+11:[Test Results Aggregator/Aggregate test results] 🏁  Job failed
+12:Error: Error response from daemon: pull access denied for act-ubuntu-pwsh, repository does not exist or may require 'docker login'
+=== tail ===
+============================================================
+ACT CASE: matrix-build (fixtures/run1.xml + fixtures/run2.json)
+============================================================
+time="2026-06-26T13:05:44-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[Test Results Aggregator/Aggregate test results] ⭐ R
+[Assistant] act force-pulls the local-only image. I need `--pull=false`. Let me fix that and the `grep "-..."` option-parsing bug:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/tests/aggregator.bats", "o
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium/tests/aggregator.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+sed -i 's/grep -qF "- test_logout"/grep -qF -- "- test_logout"/; s/grep -qF "- test_payment"/grep -qF -- "- test_payment"/' tests/aggregator.bats
+grep -n 'grep -qF -- "- test' tests/aggregator.bats
+[Result] 121:	grep -qF -- "- test_logout" "${ACT_RESULT}"
+125:	grep -qF -- "- test_payment" "${ACT_RESULT}"
+[Assistant] Now re-run the suite (act run #2):
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+bats tests/aggregator.bats 2>&1 | tail -40
+[Result] 1..25
+ok 1 act-result.txt artifact exists and is non-empty
+ok 2 act exited with code 0
+ok 3 both jobs report 'Job succeeded'
+ok 4 aggregate job ran
+ok 5 verify job ran
+ok 6 summary reports exactly 5 passed
+ok 7 summary reports exactly 2 failed
+ok 8 summary reports exactly 1 skipped
+ok 9 summary reports exactly 8 total
+ok 10 summary reports exactly 4.20s duration
+ok 11 summary lists test_logout as flaky
+ok 12 summary lists test_payment as flaky
+ok 13 summary detects exactly 2 flaky tests
+ok 14 overall result line is FAILED (failures present)
+ok 15 verify job confirmed all totals
+ok 16 verify job asserted exact passed output
+ok 17 verify job asserted exact flaky output
+ok 18 workflow file exists
+ok 19 workflow YAML parses and has expected triggers
+ok 20 workflow has aggregate and verify jobs with a dependency
+ok 21 workflow steps use checkout and reference aggregate.sh
+ok 22 script files referenced by the workflow exist on disk
+ok 23 actionlint passes with exit code 0
+ok 24 aggregate.sh 
+[Assistant] All 25 tests pass. Let me verify the artifact and do final validation:
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/bash-opus48-1m-medium
+echo "=== act-result.txt exists ==="; ls -l act-result.txt
+echo "=== Job succeeded lines ==="; grep -c "Job succeeded" act-result.txt
+echo "=== final validation ==="
+bash -n aggregate.sh && echo "bash -n OK"
+shellcheck aggregate.sh && echo "shellcheck OK"
+actionlint .github/workflows/test-results-aggregator.yml && echo "actionlint OK"
+echo "=== files ==="; ls -R fixtures .github
+[Result] === act-result.txt exists ===
+-rw-r--r-- 1 passp passp 6768 Jun 26 13:06 act-result.txt
+=== Job succeeded lines ===
+2
+=== final validation ===
+bash -n OK
+shellcheck OK
+actionlint OK
+=== files ===
+.github:
+workflows
+
+.github/workflows:
+test-results-aggregator.yml
+
+fixtures:
+run1.xml
+run2.json
+[Assistant] Everything passes. The solution is complete. Here's a summary of what I built:
+
+## Deliverables
+
+**`aggregate.sh`** — the Bash aggregator (passes `bash -n` and `shellcheck`). It normalizes every input format to a TSV stream (`name<TAB>status<TAB>duration`), so aggregation/flaky-detection is format-agnostic. Subcommands:
+- `parse-junit` — awk-based JUnit XML parser (handles `<failure>`/`<error>`/`<skipped>`, self-closing tags, multi-line testcases; correctly distinguishes `name=` from `classname=`)
+- `parse-json` — jq-based parser with status normalization (pass/ok→passed, etc.)
+- `parse` — auto-detects format by extension/content
+- `summary` — Markdown report (totals table + flaky-test list + overall result) for `$GITHUB_STEP_SUMMARY`
+- `totals` — machine-readable `KEY=VALUE` lines for `$GITHUB_OUTPUT`
+
+It handles errors gracefully (missing/unreadable files, invalid JSON, missing `tests` array, unknown command).
+
+**`fixtures/run1.xml` + `fixtures/run2.json`** — a simulated matrix build with known totals: **passed=5, failed=2, skipped=1, total=8, duration=4.20s**, flaky = `test_logout`, `test_payment` (each passed in one run, failed in the other).
+
+**`.github/workflows/test-results-aggregator.yml`** — passes `actionlint` cleanly. Triggers on push/PR/schedule/workflow_dispatch; least-privilege `contents: read`; `FIXTURES` env var; two jobs with a dependency (`verify` `needs: aggregate`), passing totals between jobs via step outputs. Uses `actions/checkout@v4`, installs `jq` only if missing, runs the script, and the `verify` job asserts every total against known-good values inside CI.
+
+**`tests/aggregator.bats`** — 25 tests, all passing. Functional cases run through `act` (one expensive run in `setup_file`, output captured to `act-result.txt`), asserting exact values (not just "a number"), exit code 0, and both jobs showing "Job succeeded". Structure tests parse the YAML (triggers/jobs/dependency/permissions), verify referenced script paths exist, and assert `actionlint`/`shellcheck`/`bash -n` exit 0.
+
+**`act-result.txt`** — the required artifact (6.8 KB, exit code 0, 2 "Job succeeded").
+
+I stayed within the 3-run `act` budget (2 runs: one revealed the local-image force-pull issue, fixed with `--pull=false`, the second passed everything).

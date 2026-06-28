@@ -1,0 +1,77 @@
+name: Dependency License Checker
+
+# Trigger on code changes (which may change dependencies), on PRs (to gate
+# merges), on a weekly schedule (to catch newly-published license changes), and
+# manually via the Actions UI.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays at 06:00 UTC
+  workflow_dispatch:
+
+# Least-privilege: the checker only needs to read the repository contents.
+permissions:
+  contents: read
+
+env:
+  CONFIG_PATH: compliance.config.json
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: run the Pester unit tests for the checker logic.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          # Pester 5+ is pre-installed on GitHub-hosted runners and in the act
+          # container, so this is normally a near-instant no-op. Install only as
+          # a portability fallback.
+          $pester = Get-Module -ListAvailable -Name Pester |
+            Where-Object { $_.Version -ge [version]'5.0.0' } |
+            Select-Object -First 1
+          if (-not $pester) {
+            Write-Host 'Pester 5+ not found; installing...'
+            Install-Module -Name Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0 -SkipPublisherCheck
+            $pester = Get-Module -ListAvailable -Name Pester | Select-Object -First 1
+          }
+          Write-Host "Using Pester $($pester.Version)"
+
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './DependencyLicenseChecker.Tests.ps1'
+          $config.Run.Exit = $true           # non-zero exit if any test fails
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  # ---------------------------------------------------------------------------
+  # Job 2: run the license compliance check. Depends on the tests passing.
+  # ---------------------------------------------------------------------------
+  compliance:
+    name: License compliance report
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify PowerShell is available
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell $($PSVersionTable.PSVersion)"
+
+      - name: Run dependency license checker
+        shell: pwsh
+        run: |
+          Write-Host "Running dependency license checker with config '$env:CONFIG_PATH'..."
+          ./DependencyLicenseChecker.ps1 -ConfigPath $env:CONFIG_PATH -Format Text

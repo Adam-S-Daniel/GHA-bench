@@ -9,6 +9,7 @@ import pytest
 from test_quality import (
     _count_bash,
     _count_csharp,
+    _count_javascript,
     _count_powershell,
     _count_python,
     _count_typescript,
@@ -36,6 +37,18 @@ class TestDetectLanguage:
 
     def test_typescript_from_test_file(self):
         assert _detect_language(["app.test.ts", "app.ts"]) == "typescript"
+
+    def test_javascript_from_test_file(self):
+        # opus-4.8 at high effort chose JS for the default (free-choice) language
+        assert _detect_language(["bumper.test.js", "src/bumper.js"]) == "javascript"
+        assert _detect_language(["app.spec.mjs", "app.mjs"]) == "javascript"
+
+    def test_javascript_fallback_to_impl_extension(self):
+        assert _detect_language(["src/cli.js"]) == "javascript"
+
+    def test_typescript_test_beats_javascript(self):
+        # a .test.ts present should still resolve to typescript, not javascript
+        assert _detect_language(["a.test.ts", "b.js"]) == "typescript"
 
     def test_powershell_from_test_file(self):
         assert _detect_language(["Foo.Tests.ps1", "Foo.ps1"]) == "powershell"
@@ -319,6 +332,48 @@ it("should subtract", () => {
 
 
 # =========================================================================
+# JavaScript counter
+# =========================================================================
+
+class TestCountJavaScript:
+    def test_jest_style_expect(self):
+        code = """
+test("adds", () => {
+    expect(add(1, 2)).toBe(3);
+});
+it("subtracts", () => {
+    expect(sub(3, 1)).toBe(2);
+    expect(sub(0, 0)).toBe(0);
+});
+"""
+        r = _count_javascript(code)
+        assert r["tests"] == 2
+        assert r["assertions"] == 3
+
+    def test_node_assert_style(self):
+        # node:test + node:assert (what opus-4.8 high produced)
+        code = """
+import test from 'node:test';
+import assert from 'node:assert';
+test('bumps major', () => {
+    assert.strictEqual(bump('1.0.0', 'major'), '2.0.0');
+    assert.equal(typeof bump, 'function');
+});
+test('throws on bad input', () => {
+    assert.throws(() => bump(null));
+});
+"""
+        r = _count_javascript(code)
+        assert r["tests"] == 2
+        assert r["assertions"] == 3   # strictEqual + equal + throws
+
+    def test_empty(self):
+        r = _count_javascript("")
+        assert r["tests"] == 0
+        assert r["assertions"] == 0
+
+
+# =========================================================================
 # PowerShell counter
 # =========================================================================
 
@@ -533,6 +588,34 @@ class TestComputeStructuralMetrics:
         assert r["impl_file_count"] == 0
         assert r["impl_lines"] == 0
         assert r["test_to_code_ratio"] == 0  # no ZeroDivisionError
+
+    def test_workflow_lines_and_code_lines(self, tmp_path):
+        # code_lines = impl + test + workflow (the authored-code total used by
+        # the reports' "Lines" and the monitor's "total").
+        (tmp_path / "app.py").write_text("def add(a, b):\n    return a + b\n")        # 2
+        (tmp_path / "test_app.py").write_text(
+            "def test_add():\n    assert add(1, 2) == 3\n"
+            "def test_zero():\n    assert add(0, 0) == 0\n"                            # 4
+        )
+        wf = tmp_path / ".github" / "workflows"
+        wf.mkdir(parents=True)
+        (wf / "ci.yml").write_text("name: ci\non: push\njobs: {}\n")                  # 3
+        r = compute_structural_metrics(tmp_path)
+        assert r["workflow_file_count"] == 1
+        assert r["workflow_lines"] == 3
+        assert r["code_lines"] == r["impl_lines"] + r["test_lines"] + r["workflow_lines"]
+        assert r["code_lines"] == 2 + 4 + 3
+
+    def test_code_lines_excludes_fixtures_docs_and_logs(self, tmp_path):
+        # The whole point of the redefinition: fixtures / act-result.txt / README
+        # must NOT inflate code_lines.
+        (tmp_path / "app.py").write_text("x = 1\n")                       # 1 impl line
+        (tmp_path / "act-result.txt").write_text("\n".join(str(i) for i in range(50)))
+        (tmp_path / "README.md").write_text("# doc\nblah\n")
+        (tmp_path / "fixtures").mkdir()
+        (tmp_path / "fixtures" / "data.json").write_text('{"a": 1}\n')
+        r = compute_structural_metrics(tmp_path)
+        assert r["code_lines"] == 1  # only app.py — no tests, no workflow, no noise
 
     def test_zero_tests_no_crash(self, tmp_path):
         (tmp_path / "app.py").write_text("def add(a, b): return a + b\n")

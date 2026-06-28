@@ -1,11 +1,93 @@
 """Unit tests for runner.select_tasks — --tasks CLI argument resolution."""
 
+import json
 import subprocess
 import sys
 import threading
 import time
 
-from runner import TASKS, PROMPT_TEMPLATES, select_tasks
+from runner import TASKS, PROMPT_TEMPLATES, select_tasks, _metrics_valid
+
+
+class TestMetricsValid:
+    """A resumed run must re-run cells whose metrics.json is missing/empty/corrupt
+    (e.g. a write interrupted by a teardown), not skip them forever."""
+
+    def test_missing_file(self, tmp_path):
+        assert _metrics_valid(tmp_path / "metrics.json") is False
+
+    def test_empty_file(self, tmp_path):
+        p = tmp_path / "metrics.json"
+        p.write_text("")
+        assert _metrics_valid(p) is False
+
+    def test_corrupt_json(self, tmp_path):
+        p = tmp_path / "metrics.json"
+        p.write_text("{not valid json")
+        assert _metrics_valid(p) is False
+
+    def test_valid_json(self, tmp_path):
+        p = tmp_path / "metrics.json"
+        p.write_text(json.dumps({"run_success": True}))
+        assert _metrics_valid(p) is True
+
+    def test_valid_even_when_run_failed(self, tmp_path):
+        # a recorded timeout/failure is still a completed cell — keep it as data
+        p = tmp_path / "metrics.json"
+        p.write_text(json.dumps({"run_success": False, "failure_reason": "timeout"}))
+        assert _metrics_valid(p) is True
+
+
+class TestSingleRunnerLock:
+    """Two runners must never run concurrently — concurrent cells compete for
+    CPU/Docker and confound each other's timing/cost. acquire_single_runner_lock
+    must let the first holder proceed and make any second runner exit(2)."""
+
+    def test_second_runner_refused(self, tmp_path):
+        import os
+        import runner as runner_mod
+        repo = os.path.dirname(os.path.abspath(runner_mod.__file__))
+        prog = (
+            "import sys, time\n"
+            f"sys.path.insert(0, {repo!r})\n"
+            "from pathlib import Path\n"
+            "from runner import acquire_single_runner_lock\n"
+            f"acquire_single_runner_lock(Path({str(tmp_path)!r}))\n"
+            "print('LOCKED', flush=True)\n"
+            "time.sleep(5)\n"
+        )
+        holder = subprocess.Popen([sys.executable, "-c", prog],
+                                  stdout=subprocess.PIPE, text=True)
+        try:
+            assert holder.stdout.readline().strip() == "LOCKED"  # first acquired
+            second = subprocess.run([sys.executable, "-c", prog],
+                                    capture_output=True, text=True, timeout=20)
+            assert second.returncode == 2
+            assert "already holds" in second.stderr
+        finally:
+            holder.terminate()
+            try:
+                holder.wait(timeout=5)
+            except Exception:
+                holder.kill()
+
+    def test_lock_released_allows_next(self, tmp_path):
+        # after the holder exits, a fresh runner can acquire the lock
+        import os
+        import runner as runner_mod
+        repo = os.path.dirname(os.path.abspath(runner_mod.__file__))
+        prog = (
+            "import sys\n"
+            f"sys.path.insert(0, {repo!r})\n"
+            "from pathlib import Path\n"
+            "from runner import acquire_single_runner_lock\n"
+            f"acquire_single_runner_lock(Path({str(tmp_path)!r}))\n"
+            "print('OK')\n"
+        )
+        first = subprocess.run([sys.executable, "-c", prog], capture_output=True, text=True, timeout=20)
+        assert first.returncode == 0
+        second = subprocess.run([sys.executable, "-c", prog], capture_output=True, text=True, timeout=20)
+        assert second.returncode == 0  # lock freed on first's exit
 
 
 class TestSelectTasks:

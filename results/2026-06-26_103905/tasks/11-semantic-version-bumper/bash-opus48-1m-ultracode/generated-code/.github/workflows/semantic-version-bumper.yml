@@ -1,0 +1,109 @@
+---
+# Semantic Version Bumper pipeline.
+#
+# Runs semantic-version-bumper.sh inside an isolated container: it reads the
+# current version, inspects conventional-commit messages, computes the next
+# version, writes the changelog, and surfaces the result as job outputs.
+#
+# The job reads fixture data from the repository (VERSION + commits.txt by
+# default, overridable via workflow_dispatch inputs) so it is fully
+# self-contained and needs no external services or secrets.
+name: Semantic Version Bumper
+
+# A version bumper is useful on pushes/PRs (preview the next version), on a
+# schedule (nightly release check), and on demand (manual release dry-run).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    # Weekly on Monday at 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      version_file:
+        description: Path to the version file (plain file or package.json).
+        required: false
+        default: VERSION
+      commits_file:
+        description: File with one conventional-commit header per line.
+        required: false
+        default: commits.txt
+      release_date:
+        description: Date for the changelog entry (YYYY-MM-DD). Defaults to today.
+        required: false
+        default: ''
+
+# Least privilege: the job only reads the checked-out source and computes the
+# next version. (A real release flow would add `contents: write` plus a commit
+# step to push the bumped files and tag.)
+permissions:
+  contents: read
+
+# Defaults used for push / pull_request / schedule events.
+env:
+  VERSION_FILE: VERSION
+  COMMITS_FILE: commits.txt
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  bump:
+    name: Compute next version
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_type: ${{ steps.bump.outputs.bump_type }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate the bumper script
+        run: bash -n semantic-version-bumper.sh
+
+      - name: Compute and apply the version bump
+        id: bump
+        env:
+          # workflow_dispatch inputs (empty for other events -> fall back to env).
+          INPUT_VERSION_FILE: ${{ github.event.inputs.version_file }}
+          INPUT_COMMITS_FILE: ${{ github.event.inputs.commits_file }}
+          INPUT_DATE: ${{ github.event.inputs.release_date }}
+        run: |
+          set -euo pipefail
+          version_file="${INPUT_VERSION_FILE:-$VERSION_FILE}"
+          commits_file="${INPUT_COMMITS_FILE:-$COMMITS_FILE}"
+
+          # Build the optional --date argument only when a date was supplied.
+          date_args=()
+          if [ -n "${INPUT_DATE:-}" ]; then
+            date_args=(--date "$INPUT_DATE")
+          fi
+
+          echo "Using version file: $version_file"
+          echo "Using commits file: $commits_file"
+
+          bash semantic-version-bumper.sh \
+            --version-file "$version_file" \
+            --commits-file "$commits_file" \
+            --changelog-file "$CHANGELOG_FILE" \
+            "${date_args[@]}"
+
+      - name: Show generated changelog
+        run: |
+          set -euo pipefail
+          if [ -f "$CHANGELOG_FILE" ]; then
+            echo "----- $CHANGELOG_FILE -----"
+            cat "$CHANGELOG_FILE"
+          else
+            echo "No changelog generated (no version bump required)."
+          fi
+
+  report:
+    name: Report result
+    needs: bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce the computed version
+        run: |
+          set -euo pipefail
+          echo "RESULT_VERSION=${{ needs.bump.outputs.new_version }}"
+          echo "RESULT_BUMP=${{ needs.bump.outputs.bump_type }}"

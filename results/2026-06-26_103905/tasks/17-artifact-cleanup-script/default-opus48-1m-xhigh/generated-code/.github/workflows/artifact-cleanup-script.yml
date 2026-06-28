@@ -1,0 +1,92 @@
+name: Artifact Cleanup
+
+# Triggers:
+#   push / pull_request - validate the cleanup planner on every change
+#   schedule            - run the maintenance plan weekly (Mondays 03:00 UTC)
+#   workflow_dispatch   - run on demand, optionally in execute (non-dry-run) mode
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Plan only - do not (mock-)delete anything'
+        type: boolean
+        default: true
+
+# Least privilege: the planner only reads repo files and mock data. A real
+# implementation that deletes live artifacts would additionally need
+# `actions: write`, but this pipeline never calls the GitHub API.
+permissions:
+  contents: read
+
+# Default fixture locations + a frozen reference time so the max-age policy is
+# deterministic in CI. The test harness overwrites these fixture files per case.
+env:
+  ARTIFACTS_FILE: fixtures/artifacts.json
+  POLICY_FILE: fixtures/policy.json
+  CLEANUP_NOW: '2026-06-28T12:00:00Z'
+
+jobs:
+  # First job: cheap validation that the script and fixture data are present and
+  # well-formed. The cleanup job depends on this passing.
+  validate:
+    name: Validate inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify script and fixtures
+        run: |
+          set -euo pipefail
+          python3 --version
+          test -f artifact_cleanup.py
+          test -f "$ARTIFACTS_FILE"
+          test -f "$POLICY_FILE"
+          # Confirm both fixture files are valid JSON before the real run.
+          python3 -c 'import json,sys; [json.load(open(p)) for p in sys.argv[1:]]; print("fixtures parse OK")' \
+            "$ARTIFACTS_FILE" "$POLICY_FILE"
+
+  # Second job: run the cleanup planner and publish the plan to the job summary.
+  cleanup:
+    name: Plan cleanup
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run artifact cleanup planner
+        id: plan
+        env:
+          # workflow_dispatch boolean; empty on push/schedule (defaults to dry-run).
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          # Build args as an array so the optional --dry-run flag is added
+          # cleanly (avoids unquoted-expansion / shellcheck SC2086 issues).
+          args=(
+            --artifacts "$ARTIFACTS_FILE"
+            --policy "$POLICY_FILE"
+            --now "$CLEANUP_NOW"
+            --format text
+          )
+          if [ "$DRY_RUN" != "false" ]; then
+            args+=(--dry-run)
+          fi
+          python3 artifact_cleanup.py "${args[@]}" > plan.txt
+          cat plan.txt
+
+      - name: Publish plan to job summary
+        run: |
+          set -euo pipefail
+          {
+            echo '## Artifact Cleanup Plan'
+            echo ''
+            echo '```'
+            cat plan.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

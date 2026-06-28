@@ -1,0 +1,57 @@
+name: Artifact Cleanup
+
+# Triggers: validate on every push/PR, allow manual runs, and run on a schedule
+# (the natural cadence for a retention/cleanup job).
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # 03:17 UTC daily.
+    - cron: '17 3 * * *'
+
+# Least privilege. The job only reads the repo; a real deployment that calls the
+# GitHub API to delete artifacts would additionally request `actions: write`.
+permissions:
+  contents: read
+
+env:
+  # Scenario file consumed by the cleanup CLI. The test harness overwrites this
+  # path with each test case's fixture before invoking the workflow.
+  SCENARIO_PATH: fixtures/scenario.json
+
+jobs:
+  # Job 1: red/green unit tests for the cleanup library (Pester).
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './ArtifactCleanup.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  # Job 2: run the cleanup CLI against the scenario fixture. Depends on tests.
+  cleanup:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate deletion plan
+        shell: pwsh
+        env:
+          SCENARIO_PATH: ${{ env.SCENARIO_PATH }}
+        run: |
+          if (-not (Test-Path $env:SCENARIO_PATH)) {
+            Write-Error "Scenario file '$env:SCENARIO_PATH' not found."
+            exit 1
+          }
+          ./Invoke-Cleanup.ps1 -ScenarioPath $env:SCENARIO_PATH

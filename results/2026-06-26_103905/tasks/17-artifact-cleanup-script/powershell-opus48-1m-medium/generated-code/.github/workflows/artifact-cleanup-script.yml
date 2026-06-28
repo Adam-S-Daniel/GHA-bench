@@ -1,0 +1,81 @@
+name: Artifact Cleanup
+
+# Triggers: run on pushes / PRs that might touch the cleanup logic, on a daily
+# schedule (the real-world use case: prune artifacts every night), and on demand.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no deletion executed)'
+        type: boolean
+        default: true
+
+# Least privilege: the cleanup only needs to read the repo contents.
+permissions:
+  contents: read
+
+jobs:
+  # Job 1: red/green unit tests must pass before we trust the engine.
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests/ArtifactCleanup.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  # Job 2: run the cleanup engine itself. Depends on the unit tests passing.
+  cleanup-plan:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    env:
+      # Deterministic reference time so age-based output is reproducible in CI.
+      ARTIFACT_REF_TIME: '2026-06-27T00:00:00Z'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required script files exist
+        shell: pwsh
+        run: |
+          foreach ($f in 'Invoke-Cleanup.ps1', 'src/ArtifactCleanup.psm1') {
+            if (-not (Test-Path $f)) { throw "Required file missing: $f" }
+            Write-Host "Found $f"
+          }
+
+      - name: Generate artifact deletion plan
+        shell: pwsh
+        run: |
+          # Test-harness overrides come in via process env vars (act --env ...).
+          # Sensible defaults let a plain `act push` run end-to-end too.
+          $fixture     = if ($env:FIXTURE)     { $env:FIXTURE }     else { 'fixtures/sample.json' }
+          $maxAge      = if ($env:MAXAGE)      { [int]$env:MAXAGE } else { 30 }
+          $keepLatest  = if ($env:KEEPLATEST)  { [int]$env:KEEPLATEST } else { 2 }
+          $maxSize     = if ($env:MAXSIZE)     { [long]$env:MAXSIZE } else { 2500 }
+          $dryRun      = if ($env:DRYRUN -eq 'false') { $false } else { $true }
+
+          Write-Host "Fixture=$fixture MaxAge=$maxAge KeepLatest=$keepLatest MaxSize=$maxSize DryRun=$dryRun"
+
+          $params = @{
+            Path                  = $fixture
+            MaxAgeDays            = $maxAge
+            KeepLatestPerWorkflow = $keepLatest
+            MaxTotalSizeBytes     = $maxSize
+          }
+          if ($dryRun) { $params.DryRun = $true }
+
+          ./Invoke-Cleanup.ps1 @params
+          if ($LASTEXITCODE -ne 0) { throw "Cleanup script failed with exit code $LASTEXITCODE" }

@@ -49,6 +49,7 @@ Each benchmark version defines a set of scripting tasks, language modes, and mod
 | `runner.py` | Benchmark harness — invokes `claude -p`, collects metrics |
 | `generate_results.py` | Generates `results.md` reports from metrics; updates this README |
 | `combine_results.py` | Combines metrics from multiple run directories into a single comparison report (with pooled aggregates + per-CLI legend) |
+| `monitor.py` | Live, read-only dashboard for an *in-flight* run: per-variant run-health + structural code/test metrics + live traps, an **automatic strongest-model-vs-strongest-model** head-to-head (current run's most powerful model+version vs the previous report's) broken down **per scripting language**, and (on subscription auth) the **weekly subscription allowance** (same data as `/usage`). Complements the post-run `generate_results.py` and the `watchdog.sh` process supervisor |
 | `judge_consistency_report.py` | Produces the `Judge Consistency` panel summary from per-judge score caches |
 | `conclusions_report.py` | Produces the combined Conclusions prose using a max-effort Claude CLI call |
 | `results/analysis/` | Dated follow-up analyses (e.g. judge-disagreement spot-checks) referenced from the main reports |
@@ -95,6 +96,20 @@ To resume a crashed/interrupted run:
 ./run-benchmark.sh --resume 2026-04-02_181500
 ```
 
+To watch a run while it is still in progress (read-only live dashboard):
+```bash
+python3 monitor.py --total 140 --watch 30        # newest run; refresh every 30s
+```
+It prints per-variant run-health + structural code/test metrics + live traps, and an
+automatic head-to-head between the **strongest model+version in this run** and the
+**strongest in the previous report** (the newest completed run), broken down **per
+scripting language** with the significant per-language differences called out.
+Override the auto-selection with `--baseline DIR` and/or `--pair RUNVAR=BASEVAR`.
+The ETA is pace-based (a floor — later, higher-effort tranches run slower). When the
+session uses Claude-subscription auth (not an API key), it also reports the **weekly
+subscription allowance** (the same five-hour + weekly limits as `/usage`); pass
+`--no-usage` to skip that lookup.
+
 To regenerate all results reports:
 ```bash
 python3 generate_results.py --all
@@ -127,8 +142,10 @@ The LLM-as-judge uses a pluggable provider system (`llm_providers.py`). The benc
 
 **Current providers:**
 - `claude-cli` — pre-authenticated Claude Code CLI. No API key or secrets needed.
-- `gemini-cli` — pre-authenticated Gemini CLI; bypasses billing gate.
+- `agy` — pre-authenticated Antigravity CLI (`agy`). The Gemini path used by the panel's `gemini31pro` seat (default model `Gemini 3.1 Pro (High)`). No API key needed.
 - `gemini-api` — `google-genai` SDK; requires `GEMINI_API_KEY` and a paid-tier Google AI Studio account.
+
+> The `gemini-cli` provider was **removed on 2026-06-26**. Per Google: *"On June 18, 2026, Gemini CLI and Gemini Code Assist IDE extensions will stop serving requests for Google AI Pro and Ultra, as well as those using it free of charge using Gemini Code Assist for individuals."* ([source](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/)). Use `agy` (its Antigravity successor) instead; the old implementation is in git history.
 
 **To add a new provider** (e.g., Anthropic API with key, OpenAI, Codex CLI):
 

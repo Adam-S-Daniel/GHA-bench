@@ -1,0 +1,842 @@
+{
+  "task_id": "15-test-results-aggregator",
+  "task_name": "Test Results Aggregator",
+  "task_category": "GitHub Actions / CI Reporting",
+  "language_mode": "powershell-tool",
+  "language_chosen": "powershell",
+  "language_breakdown": {
+    "powershell": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-opus-4-8[1m]",
+  "model_short": "opus48-1m",
+  "variant": "opus48-1m-ultracode",
+  "claude_code_version": "2.1.195",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-06-28T14:56:48.342423+00:00",
+  "timestamp_end": "2026-06-28T15:17:20.228966+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use PowerShell as your implementation language.\n\nTASK: Parse test result files in multiple formats (JUnit XML, and JSON), aggregate results across multiple files (simulating a matrix build), compute totals (passed, failed, skipped, duration), identify flaky tests (passed in some runs, failed in others), and generate a markdown summary suitable for a GitHub Actions job summary. Create sample test result files as fixtures.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use Pester as the testing framework.\n3. All tests must be runnable with `Invoke-Pester` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/test-results-aggregator.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/test-results-aggregator.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "95090066-bc6a-4207-ae3b-3b907f5e96d2",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 29,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1420,
+      "outputTokens": 19,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.001515,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-opus-4-8[1m]": {
+      "inputTokens": 3489,
+      "outputTokens": 88083,
+      "cacheReadInputTokens": 4085281,
+      "cacheCreationInputTokens": 126805,
+      "webSearchRequests": 0,
+      "costUSD": 5.530210499999999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "ultracode",
+  "timing": {
+    "grand_total_duration_ms": 1231886,
+    "total_api_duration_ms": 1110036,
+    "total_execution_duration_ms": 121133,
+    "num_turns": 47
+  },
+  "tokens": {
+    "input_tokens": 3489,
+    "output_tokens": 88083,
+    "cache_read_tokens": 4085281,
+    "cache_creation_tokens": 126805,
+    "total_context_consumed": 4215575,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 5.531725499999999,
+    "assumed_input_cost_per_mtok": 5.0,
+    "assumed_output_cost_per_mtok": 25.0,
+    "assumed_cache_read_cost_per_mtok": 0.5,
+    "assumed_cache_write_cost_per_mtok": 6.25
+  },
+  "code_metrics": {
+    "code_lines": 699,
+    "total_tokens_estimate": 19380,
+    "file_count": 12,
+    "files": [
+      "Invoke-Aggregator.ps1",
+      "README.md",
+      "TestResultsAggregator.psm1",
+      "act-result.txt",
+      "fixtures/junit-ubuntu.xml",
+      "fixtures/junit-windows.xml",
+      "fixtures/results-macos.json",
+      ".github/workflows/test-results-aggregator.yml",
+      "tests/TestResultsAggregator.Tests.ps1",
+      "tests/Workflow.Tests.ps1",
+      "tests/cases/clean/clean-a.xml",
+      "tests/cases/clean/clean-b.json"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 0,
+    "error_details": [],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/test-results-aggregator.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 28065,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 46,
+    "total_tool_duration_ms": 129409,
+    "bash_tool_uses": 26,
+    "bash_total_ms": 120068,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && timeout 400 pwsh -NoProfile -Command '\n$c",
+        "duration_ms": 32409,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\nPROJ=\"$PWD\"\nTMP=\"$(mktemp -d /tmp/act-valida",
+        "duration_ms": 9704,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && echo \"===== COMPREHENSIVE (fixtures/) ===",
+        "duration_ms": 7576,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command '\nImport-Module ",
+        "duration_ms": 7328,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command 'Invoke-Pester -",
+        "duration_ms": 6836,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"--- powershell-yaml module? ---\"; pwsh -NoProfile -Command 'Get-Module -ListAvailable powershell-yaml | Select-Object Name,Version' 2>&1 | tail -5\necho \"--- python yaml? ---\"; python3 -c \"import",
+        "duration_ms": 5881,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command '\n$p = Get-Module -ListAvailable Pester | Select-Object Name, Version, Path\n$p | Format-Table -AutoSize | Out-String | Write-Host\nWrite-Host \"--- xml support ---\"\n[xml]$x = \"<",
+        "duration_ms": 5248,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command 'Invoke-Pester -",
+        "duration_ms": 4983,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"--- act image present? ---\"; docker images | grep -i act || echo \"no act image\"; echo \"--- git config ---\"; git config user.name; git config user.email",
+        "duration_ms": 4812,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\npwsh -NoProfile -Command '\n$cfg = New-Pester",
+        "duration_ms": 4626,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 16,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwd && ls -la && cat .actrc 2>/dev/null && echo \"---PWSH---\" && which pwsh && pwsh --version && echo \"---ACT---\" && which act && act --version && echo \"---ACTIONLINT---\" && which actionlint && actionl",
+        "duration_ms": 3904,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command '\n$p = Get-Module -ListAvailable Pester | Select-Object Name, Version, Path\n$p | Format-Table -AutoSize | Out-String | Write-Host\nWrite-Host \"--- xml support ---\"\n[xml]$x = \"<",
+        "duration_ms": 5248,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"--- act image present? ---\"; docker images | grep -i act || echo \"no act image\"; echo \"--- git config ---\"; git config user.name; git config user.email",
+        "duration_ms": 4812,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "timeout 60 docker run --rm act-ubuntu-pwsh:latest bash -lc 'which pwsh && pwsh -NoProfile -c \"(Get-Module -ListAvailable Pester | Select-Object -First 1).Version; Write-Host PESTER_OK\"' 2>&1 | tail -2",
+        "duration_ms": 1726,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 567,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command 'Invoke-Pester -",
+        "duration_ms": 2791,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 3574,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command 'Invoke-Pester -",
+        "duration_ms": 4249,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 523,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command 'Invoke-Pester -",
+        "duration_ms": 6836,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command '\nImport-Module ",
+        "duration_ms": 937,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 489,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command 'Invoke-Pester -",
+        "duration_ms": 3331,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 492,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 616,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 609,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command 'Invoke-Pester -",
+        "duration_ms": 4983,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 483,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 89,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 46,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 33,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 38,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 53,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && echo \"===== COMPREHENSIVE (fixtures/) ===",
+        "duration_ms": 7576,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 259,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && actionlint .github/workflows/test-results",
+        "duration_ms": 199,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"--- powershell-yaml module? ---\"; pwsh -NoProfile -Command 'Get-Module -ListAvailable powershell-yaml | Select-Object Name,Version' 2>&1 | tail -5\necho \"--- python yaml? ---\"; python3 -c \"import",
+        "duration_ms": 5881,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\nPROJ=\"$PWD\"\nTMP=\"$(mktemp -d /tmp/act-valida",
+        "duration_ms": 905,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 9,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"--- act action cache ---\"; ls -la ~/.cache/act 2>/dev/null || echo \"no act cache\"; ls ~/.cache/act/actions-checkout@v4 2>/dev/null && echo \"checkout@v4 CACHED\" || echo \"checkout@v4 not cached\"",
+        "duration_ms": 73,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\nPROJ=\"$PWD\"\nTMP=\"$(mktemp -d /tmp/act-valida",
+        "duration_ms": 9704,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\necho \"===== AGGREGATE_STATS / FLAKY / Job su",
+        "duration_ms": 81,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command '\nImport-Module ",
+        "duration_ms": 7328,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 613,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && pwsh -NoProfile -Command '\n$cfg = New-Pes",
+        "duration_ms": 3002,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && timeout 360 pwsh -NoProfile -Command '\n$c",
+        "duration_ms": 3711,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 788,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\" && timeout 400 pwsh -NoProfile -Command '\n$c",
+        "duration_ms": 32409,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\necho \"=== act-result.txt exists ===\"; ls -la",
+        "duration_ms": 59,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\nrm -f .act-manual.txt\npwsh -NoProfile -Comma",
+        "duration_ms": 1692,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\npwsh -NoProfile -Command '\n$cfg = New-Pester",
+        "duration_ms": 4626,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\npwsh -NoProfile -Command '\nif (-not (Get-Mod",
+        "duration_ms": 704,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 38,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/15-test-results-aggregator/powershell-tool-opus48-1m-ultracode\"\necho \"===== Deliverable file tree =====\"\nfin",
+        "duration_ms": 3301,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 22190,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 19,
+    "hook_errors_caught": 0,
+    "hook_failures": 0,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "8da4d8b6-d23a-4033-96f0-9e748f6edff9",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "8c9ccd49-bbf2-41cb-bf48-8ee558148774",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "8da4d8b6-d23a-4033-96f0-9e748f6edff9",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "8c9ccd49-bbf2-41cb-bf48-8ee558148774",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f0f02308-c859-4f1e-b631-e764e9966603",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f0f02308-c859-4f1e-b631-e764e9966603",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7c4bca34-dde1-4a43-a5e3-779092c6531c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7c4bca34-dde1-4a43-a5e3-779092c6531c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9bb7866a-4ba8-4cf0-a97d-c6a76f1ba4c6",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9bb7866a-4ba8-4cf0-a97d-c6a76f1ba4c6",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f054b109-4e64-4157-b8a1-8d7df1e868a2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f054b109-4e64-4157-b8a1-8d7df1e868a2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9f34811b-95a7-46a6-b124-8c359693e248",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9f34811b-95a7-46a6-b124-8c359693e248",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "e7a04d48-3f73-43cd-8128-885f76a3ae26",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "e7a04d48-3f73-43cd-8128-885f76a3ae26",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "e8dc4e33-9c25-4c6d-8ed8-1add5c3d0e07",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "e8dc4e33-9c25-4c6d-8ed8-1add5c3d0e07",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4afd8c61-2cbd-4a84-b7b5-2d42c7bcc96d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4afd8c61-2cbd-4a84-b7b5-2d42c7bcc96d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b10cd1da-a27a-42c0-948f-89f1d6abb198",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b10cd1da-a27a-42c0-948f-89f1d6abb198",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ed4c4280-4127-42f8-bf5b-2ea3c0b64f9b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ed4c4280-4127-42f8-bf5b-2ea3c0b64f9b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "eb431841-3331-427c-b86a-3715d6ff1625",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "eb431841-3331-427c-b86a-3715d6ff1625",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ed6df4d7-3ef8-401e-af69-1fbd4f411980",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ed6df4d7-3ef8-401e-af69-1fbd4f411980",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6d59ec30-b4e8-4741-96c4-2035f9f9e973",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6d59ec30-b4e8-4741-96c4-2035f9f9e973",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7639a94b-d7b7-4f8a-94de-d6535f3ff682",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7639a94b-d7b7-4f8a-94de-d6535f3ff682",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "fb267f76-314e-42e9-990a-1ccbdeb452ae",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "fb267f76-314e-42e9-990a-1ccbdeb452ae",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "c01f7269-9842-45b8-9b3f-dd208d6b2278",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "c01f7269-9842-45b8-9b3f-dd208d6b2278",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "3136b19f-6c6d-46b0-a0fd-aac4f3ddbfcb",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3136b19f-6c6d-46b0-a0fd-aac4f3ddbfcb",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}

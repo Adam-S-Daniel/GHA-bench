@@ -1,0 +1,93 @@
+name: Test Results Aggregator
+
+# Trigger on pushes and PRs (validate the aggregator + run it on the bundled
+# fixtures), on a weekly schedule (catch environment drift), and on manual
+# dispatch (allowing an alternate results directory to be aggregated).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      results_dir:
+        description: "Directory containing test result files to aggregate"
+        required: false
+        default: "test/fixtures"
+
+# Least-privilege: the job only reads the checked-out code and writes a job
+# summary (which needs no extra token scope).
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    env:
+      # Default results directory; overridable at runtime via the
+      # RESULTS_DIR environment variable or the workflow_dispatch input.
+      DEFAULT_RESULTS_DIR: test/fixtures
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (bats, shellcheck)
+        run: |
+          set -euo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          if [ "$(id -u)" -eq 0 ]; then
+            apt-get update -qq
+            apt-get install -y -qq bats shellcheck jq
+          else
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq bats shellcheck jq
+          fi
+          echo "bats:       $(bats --version)"
+          echo "shellcheck: $(shellcheck --version | awk '/version:/{print $2}')"
+          echo "jq:         $(jq --version)"
+
+      - name: Lint and syntax-check the aggregator script
+        run: |
+          set -euo pipefail
+          chmod +x aggregate.sh
+          bash -n aggregate.sh
+          shellcheck aggregate.sh
+
+      - name: Run bats unit tests (every test case runs here, in CI)
+        run: |
+          set -euo pipefail
+          bats test/aggregate.bats
+
+      - name: Aggregate test results and write the job summary
+        env:
+          INPUT_RESULTS_DIR: ${{ github.event.inputs.results_dir }}
+        run: |
+          set -euo pipefail
+          # Resolve the results directory. Precedence:
+          #   1. workflow_dispatch "results_dir" input
+          #   2. RESULTS_DIR environment variable
+          #   3. ./ci-results/ if a test harness staged one
+          #   4. the bundled default (test/fixtures)
+          dir="${INPUT_RESULTS_DIR:-${RESULTS_DIR:-}}"
+          if [ -z "${dir}" ]; then
+            if [ -d ci-results ]; then dir="ci-results"; else dir="${DEFAULT_RESULTS_DIR}"; fi
+          fi
+          echo "Aggregating test results from: ${dir}"
+          # Markdown summary goes to a file; the compact totals line (stderr)
+          # is captured so it can be surfaced in the CI log for assertions.
+          ./aggregate.sh "${dir}" --output summary.md 2> totals.log
+          echo "===== BEGIN JOB SUMMARY ====="
+          cat summary.md
+          echo "===== END JOB SUMMARY ====="
+          echo "===== TOTALS ====="
+          cat totals.log
+          # Publish to the real GitHub Actions job summary panel.
+          cat summary.md >> "${GITHUB_STEP_SUMMARY}"
+          echo "Job summary written."

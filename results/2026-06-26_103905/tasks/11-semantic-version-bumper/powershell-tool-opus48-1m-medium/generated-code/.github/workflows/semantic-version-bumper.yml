@@ -1,0 +1,72 @@
+name: Semantic Version Bumper
+
+# Run on code changes, PRs, manual dispatch, and a nightly schedule so the
+# next-version calculation stays current. act drives the `push` event.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      version_file:
+        description: Path to the version file (plain text or package.json)
+        required: false
+        default: version.txt
+  schedule:
+    - cron: '0 3 * * 1' # Monday 03:00 UTC
+
+# Least privilege: the bump step only needs to read the checkout. Real releases
+# that commit the bump would raise this to `contents: write`.
+permissions:
+  contents: read
+
+env:
+  # Defaults can be overridden per environment; the run step auto-detects
+  # package.json when present.
+  VERSION_FILE: version.txt
+  COMMIT_LOG: commits.txt
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  bump:
+    name: Compute next version
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_type: ${{ steps.bump.outputs.bump_type }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify required scripts exist
+        shell: pwsh
+        run: |
+          # Fail fast with a clear message if the toolkit is missing.
+          foreach ($p in @('Invoke-Bumper.ps1', 'src/SemanticVersionBumper.psm1')) {
+            if (-not (Test-Path $p)) { throw "Required script not found: $p" }
+          }
+          Write-Host "Scripts present."
+
+      - name: Run semantic version bumper
+        id: bump
+        shell: pwsh
+        run: |
+          # Auto-detect the version source: prefer package.json, else the env default.
+          $versionFile = if (Test-Path 'package.json') { 'package.json' } else { $env:VERSION_FILE }
+          if (-not (Test-Path $versionFile)) { throw "Version file '$versionFile' not found." }
+          if (-not (Test-Path $env:COMMIT_LOG)) { throw "Commit log '$($env:COMMIT_LOG)' not found." }
+
+          Write-Host "Bumping version from '$versionFile' using commits in '$($env:COMMIT_LOG)'."
+          ./Invoke-Bumper.ps1 -VersionPath $versionFile `
+                              -CommitLogPath $env:COMMIT_LOG `
+                              -ChangelogPath $env:CHANGELOG_FILE
+
+      - name: Show resulting changelog
+        shell: pwsh
+        run: |
+          if (Test-Path $env:CHANGELOG_FILE) {
+            Write-Host "----- $($env:CHANGELOG_FILE) -----"
+            Get-Content $env:CHANGELOG_FILE | Write-Host
+          }
+          Write-Host "Resolved new version: $('${{ steps.bump.outputs.new_version }}')"

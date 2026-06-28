@@ -276,54 +276,60 @@ class GeminiAPIProvider(LLMProvider):
 
 
 # ---------------------------------------------------------------------------
-# Gemini CLI provider (OAuth-authenticated, no API key needed)
+# Gemini CLI provider — REMOVED 2026-06-26
 # ---------------------------------------------------------------------------
-# The official `gemini` CLI handles auth via OAuth (Google account login).
-# Avoids the billing gate on the Developer API — our user has this
-# installed and logged in. The CLI doesn't take a separate system prompt
-# so we merge system + user into one `-p` argument; we run from a fresh
-# temp dir to avoid loading any local GEMINI.md / tool config.
+# The `gemini-cli` provider (class GeminiCLIProvider, name "gemini-cli") was
+# deleted after Google retired the Gemini CLI for subscription and individual
+# use:
+#
+#   "On June 18, 2026, Gemini CLI and Gemini Code Assist IDE extensions will
+#    stop serving requests for Google AI Pro and Ultra, as well as those using
+#    it free of charge using Gemini Code Assist for individuals."
+#   — https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/
+#
+# Its replacement is the Antigravity CLI provider (`agy`, AgyCLIProvider below),
+# which the `gemini31pro` judge now uses. `gemini-api` remains for hosts with a
+# paid Google AI Studio key. The pre-removal implementation is in git history.
 
-class GeminiCLIProvider(LLMProvider):
-    """LLM provider using the pre-authenticated Gemini CLI.
 
-    Uses `gemini -p <prompt> -m <model> -o json --approval-mode plan`.
-    The `plan` approval mode is read-only and prevents the CLI from
-    executing any tool actions — we want pure prompt→JSON behaviour.
+# The Antigravity CLI (`agy`) — Google's successor for individuals after Gemini
+# Code Assist for individuals was retired (the `gemini` CLI now returns
+# IneligibleTierError: UNSUPPORTED_CLIENT). Like the former gemini-cli provider
+# it runs one prompt non-interactively, but `agy -p` prints the response text
+# directly (there is no `-o json` envelope), so stdout *is* the response. We run
+# from a fresh temp dir so no local workspace/config is loaded, and
+# --dangerously-skip-permissions so the headless call never blocks on a prompt
+# (the judge prompt is self-contained, so no tools are actually invoked). `agy
+# --print` does not report token stats, so cost/tokens are 0 here — the run's
+# authoritative cost is the Claude CLI's, and judge cost is informational only.
+
+class AgyCLIProvider(LLMProvider):
+    """LLM provider using the pre-authenticated Antigravity CLI (`agy`).
+
+    Drop-in replacement for the removed gemini-cli provider. The default model
+    "Gemini 3.1 Pro (High)" matches the model and (high) thinking depth the
+    previous report's `gemini-3.1-pro-preview` judge used — agy exposes Gemini
+    3.1 Pro as explicit (Low)/(High) effort tiers; (High) corresponds to the
+    preview's default full-thinking behaviour.
     """
 
-    name = "gemini-cli"
+    name = "agy"
 
     def is_available(self) -> bool:
-        return shutil.which("gemini") is not None
+        return shutil.which("agy") is not None
 
     def judge(self, system_prompt: str, user_message: str,
-              model: str = "gemini-3.1-pro-preview",
+              model: str = "Gemini 3.1 Pro (High)",
               timeout_s: int | None = None) -> dict | None:
-        # Env override lets callers (e.g. the retry pass on Gemini
-        # timeouts) bump the ceiling without threading a kwarg through
-        # every layer.
         if timeout_s is None:
-            import os
-            timeout_s = int(os.environ.get("GEMINI_CLI_TIMEOUT_S", "180"))
-        # The Gemini CLI doesn't expose a --system-prompt flag. Merge the
-        # two with a clear separator so the model treats the system block
-        # as leading instructions.
+            timeout_s = int(os.environ.get("AGY_TIMEOUT_S", "300"))
         combined = f"{system_prompt}\n\n---\n\n{user_message}"
-        judge_dir = tempfile.mkdtemp(prefix="gemini-judge-")
+        judge_dir = tempfile.mkdtemp(prefix="agy-judge-")
         try:
             result = subprocess.run(
-                [
-                    "gemini",
-                    "-p", combined,
-                    "-m", model,
-                    "-o", "json",
-                    "--approval-mode", "plan",  # read-only; no tool execution
-                ],
-                capture_output=True,
-                text=True,
-                timeout=timeout_s,
-                cwd=judge_dir,
+                ["agy", "-p", combined, "--model", model,
+                 "--dangerously-skip-permissions"],
+                capture_output=True, text=True, timeout=timeout_s, cwd=judge_dir,
             )
         except subprocess.TimeoutExpired:
             print(f"  [{self.name}] timed out ({timeout_s}s)", file=sys.stderr)
@@ -340,45 +346,18 @@ class GeminiCLIProvider(LLMProvider):
                   file=sys.stderr)
             return None
 
-        try:
-            envelope = json.loads(result.stdout)
-        except json.JSONDecodeError:
-            print(f"  [{self.name}] non-JSON output: {result.stdout[:200]}",
-                  file=sys.stderr)
-            return None
-
-        raw = envelope.get("response", "")
+        raw = result.stdout.strip()
         # Strip any markdown fences the model added despite the instruction.
-        text = re.sub(r"^```(?:json)?\s*\n?", "", raw.strip())
+        text = re.sub(r"^```(?:json)?\s*\n?", "", raw)
         text = re.sub(r"\n?```\s*$", "", text).strip()
-
-        # Pull token usage + cost out of the stats block. The CLI reports
-        # a detailed per-model stats breakdown; we aggregate across all
-        # reported models in case multiple are touched in a single call.
-        in_tok = 0
-        out_tok = 0
-        cost = 0.0
-        stats = envelope.get("stats", {})
-        for m_name, m_stats in (stats.get("models") or {}).items():
-            toks = m_stats.get("tokens", {}) or {}
-            in_tok += int(toks.get("input", 0) or 0)
-            out_tok += int(toks.get("candidates", 0) or 0)
-            rates = _GEMINI_PRICE_PER_MTOK.get(m_name)
-            if rates is None:
-                # Strip common suffixes like `-preview` to hit the base price.
-                base = re.sub(r"-preview.*$", "", m_name)
-                rates = _GEMINI_PRICE_PER_MTOK.get(base)
-            if rates is None:
-                # Fall back to 3.1 Pro rates; better to over-estimate than miss.
-                rates = (2.0, 12.0)
-            cost += (toks.get("input", 0) / 1_000_000) * rates[0]
-            cost += (toks.get("candidates", 0) / 1_000_000) * rates[1]
-
+        if not text:
+            print(f"  [{self.name}] empty response", file=sys.stderr)
+            return None
         return {
             "text": text,
-            "cost_usd": round(cost, 6),
-            "input_tokens": in_tok,
-            "output_tokens": out_tok,
+            "cost_usd": 0.0,      # agy --print does not report token stats
+            "input_tokens": 0,
+            "output_tokens": 0,
         }
 
 
@@ -389,7 +368,7 @@ class GeminiCLIProvider(LLMProvider):
 PROVIDERS: dict[str, type[LLMProvider]] = {
     "claude-cli": ClaudeCLIProvider,
     "gemini-api": GeminiAPIProvider,
-    "gemini-cli": GeminiCLIProvider,
+    "agy": AgyCLIProvider,
 }
 
 DEFAULT_PROVIDER = "claude-cli"

@@ -1,0 +1,67 @@
+name: Dependency License Checker
+
+# Trigger on code changes, PRs, a weekly audit schedule, and manual runs.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  schedule:
+    # Weekly compliance audit, Mondays 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+# Least-privilege: the checker only needs to read the checked-out source.
+permissions:
+  contents: read
+
+# Shared, deterministic configuration. MANIFEST_PATH is intentionally NOT set
+# here so it can be overridden per run via `act --env MANIFEST_PATH=...`; the
+# run step falls back to the default fixture when it is unset.
+env:
+  CONFIG_PATH: config/license-config.json
+  DB_PATH: config/license-db.json
+  DEFAULT_MANIFEST: fixtures/package.json
+
+jobs:
+  unit-tests:
+    name: Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Run Pester test suite
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module Pester -MinimumVersion 5.0
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = 'tests'
+          $cfg.Run.Exit = $true
+          $cfg.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $cfg
+
+  compliance-report:
+    name: License compliance report
+    # Only generate the report once the unit tests have passed.
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Generate license compliance report
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = if ($env:MANIFEST_PATH) { $env:MANIFEST_PATH } else { $env:DEFAULT_MANIFEST }
+          Write-Host "Scanning manifest: $manifest"
+          ./Invoke-LicenseChecker.ps1 `
+            -ManifestPath $manifest `
+            -ConfigPath $env:CONFIG_PATH `
+            -LicenseDbPath $env:DB_PATH `
+            -OutputJsonPath compliance-report.json
+
+      - name: Show machine-readable report
+        shell: pwsh
+        run: Get-Content compliance-report.json -Raw | Write-Host

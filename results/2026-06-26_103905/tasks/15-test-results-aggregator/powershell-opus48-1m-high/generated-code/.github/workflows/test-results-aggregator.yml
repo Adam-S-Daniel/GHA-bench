@@ -1,0 +1,62 @@
+name: Test Results Aggregator
+
+# Trigger on pushes and PRs (CI), a weekly schedule (catch environmental flakes),
+# and manual dispatch (on-demand re-aggregation).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'   # 06:00 UTC every Monday
+  workflow_dispatch:
+
+# Least-privilege: the aggregator only reads the repo and writes a job summary.
+permissions:
+  contents: read
+
+# Directory the aggregator scans for result files. Centralized so both jobs and
+# the act test harness agree on one location.
+env:
+  RESULTS_DIR: fixtures
+
+jobs:
+  # Job 1: run the Pester unit tests that cover the aggregator library.
+  unit-tests:
+    name: Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # pwsh + Pester are pre-installed in the runner/container image.
+          $config = New-PesterConfiguration
+          $config.Run.Path = './Tests'
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $result = Invoke-Pester -Configuration $config
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) unit test(s) failed."
+          }
+          Write-Host "All $($result.PassedCount) unit tests passed."
+
+  # Job 2: aggregate the result fixtures and publish the markdown summary.
+  # Depends on unit-tests so we never publish a summary from broken code.
+  aggregate:
+    name: Aggregate test results
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Aggregate results and write job summary
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # The aggregator prints markdown to stdout (captured in the CI log)
+          # and appends it to $GITHUB_STEP_SUMMARY for the job summary page.
+          ./Invoke-Aggregator.ps1 -Path $env:RESULTS_DIR

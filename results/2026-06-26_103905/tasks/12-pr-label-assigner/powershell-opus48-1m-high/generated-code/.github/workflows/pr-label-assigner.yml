@@ -1,0 +1,61 @@
+name: PR Label Assigner
+
+# Trigger on PRs (the real use case), direct pushes, a nightly audit, and
+# manual runs. `act push` exercises the push trigger locally.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '0 3 * * 1'   # weekly audit, Mondays 03:00 UTC
+  workflow_dispatch:
+
+# Least-privilege defaults; pull-requests:write lets a real deployment apply
+# labels via the API (this demo only computes them).
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  LABELER_RULES_FILE: rules.json
+  LABELER_CHANGED_FILES: fixtures/changed-files.txt
+
+jobs:
+  unit-tests:
+    name: Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module Pester -MinimumVersion 5.0.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests/LabelAssigner.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  assign-labels:
+    name: Compute PR labels
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Assign labels from changed files
+        id: labeler
+        shell: pwsh
+        run: |
+          ./Assign-Labels.ps1 -RulesPath "$env:LABELER_RULES_FILE" -ChangedFilesPath "$env:LABELER_CHANGED_FILES"
+
+      - name: Show computed labels
+        shell: pwsh
+        run: |
+          Write-Host "Resolved labels: $('${{ steps.labeler.outputs.labels }}')"
+          Write-Host "Label count:     $('${{ steps.labeler.outputs.count }}')"

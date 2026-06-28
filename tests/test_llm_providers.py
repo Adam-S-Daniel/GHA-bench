@@ -2,8 +2,11 @@
 
 import pytest
 
+import inspect
+
 from llm_providers import (
     ClaudeCLIProvider,
+    AgyCLIProvider,
     LLMProvider,
     PROVIDERS,
     DEFAULT_PROVIDER,
@@ -26,6 +29,11 @@ class TestProviderRegistry:
             assert isinstance(p, LLMProvider)
         except RuntimeError:
             pytest.skip("claude CLI not available in this environment")
+
+    def test_agy_registered(self):
+        # Antigravity CLI provider (gemini-cli replacement after Google retired
+        # Gemini Code Assist for individuals).
+        assert "agy" in PROVIDERS
 
     def test_get_provider_unknown_raises(self):
         with pytest.raises(ValueError, match="Unknown provider"):
@@ -52,6 +60,32 @@ class TestClaudeCLIProvider:
     def test_provider_has_judge_method(self):
         p = ClaudeCLIProvider()
         assert callable(p.judge)
+
+
+class TestAgyCLIProvider:
+    def test_name(self):
+        assert AgyCLIProvider().name == "agy"
+
+    def test_is_available_returns_bool(self):
+        assert isinstance(AgyCLIProvider().is_available(), bool)
+
+    def test_provider_has_judge_method(self):
+        assert callable(AgyCLIProvider().judge)
+
+    def test_default_model_matches_previous_report(self):
+        # Gemini 3.1 Pro at the (High) tier — matches the prior report's
+        # gemini-3.1-pro-preview model + default high thinking.
+        default = inspect.signature(AgyCLIProvider().judge).parameters["model"].default
+        assert default == "Gemini 3.1 Pro (High)"
+
+
+class TestGeminiJudgeWiring:
+    def test_gemini31pro_judge_uses_agy(self):
+        # The cross-family panel's Gemini seat must run through agy now.
+        from test_quality import JUDGES
+        cfg = JUDGES["gemini31pro"]
+        assert cfg["provider"] == "agy"
+        assert cfg["model"] == "Gemini 3.1 Pro (High)"
 
 
 class TestLLMProviderInterface:

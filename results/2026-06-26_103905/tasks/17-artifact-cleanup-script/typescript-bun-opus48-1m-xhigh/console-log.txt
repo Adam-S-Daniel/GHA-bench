@@ -1,0 +1,583 @@
+[Assistant] I'll start by understanding the environment and the task requirements. Let me look at the key files first.
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -200; echo "=== BENCHMARK INSTRUCTIONS ==="; cat /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/benchmark-instructions-v4.md 2>/dev/null
+[Result] <persisted-output>
+Output too large (33.7KB). Full output saved to: /home/passp/.claude/projects/-home-passp-repos-GHA-bench--claude-worktrees-opus48-bench-workspaces-2026-06-26-103905-17-artifact-cleanup-script-typescript-bun-opus48-1m-xhigh/e4001e1f-5258-4d18-8671-e7909857f18a/tool-results/b8z0q8ztu.txt
+
+Preview (first 2KB):
+# Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+py
+[Assistant] The AGENTS.md is about the benchmark harness itself. My task is clearly specified in the prompt. Let me look at my working directory.
+[Tool: Bash] echo "=== PWD ===" && pwd && echo "=== LS -la ===" && ls -la && echo "=== .actrc ===" && cat .actrc 2>/dev/null && echo "=== bun version ===" && bun --version && echo "=== actionlint ===" && which actionlint && actionlint --version && echo "=== act ===" && which act && act --version && echo "=== docker ===" && docker --version
+[Result] === PWD ===
+/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+=== LS -la ===
+total 44
+drwxr-xr-x  4 passp passp  4096 Jun 28 01:39 .
+drwxr-xr-x 17 passp passp  4096 Jun 28 01:39 ..
+-rw-r--r--  1 passp passp    40 Jun 28 01:39 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 28 01:39 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 28 01:39 .git
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+=== .actrc ===
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+=== bun version ===
+1.3.11
+=== actionlint ===
+/home/passp/.local/bin/actionlint
+1.7.12
+installed by downloading from release page
+built with go1.26.1 compiler for linux/amd64
+=== act ===
+/home/passp/.local/bin/act
+act version 0.2.87
+=== docker ===
+Docker version 29.4.3, build 055a478
+[Tool: Bash] echo "=== docker images ===" && docker images | head -20 && echo "=== benchmark instructions ===" && cat benchmark-instructions-v4.md
+[Result] === docker images ===
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+IMAGE                                           ID             DISK USAGE   CONTENT SIZE   EXTRA
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+alpine:latest                                   5b10f432ef3d       13.1MB         3.95MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+catthehacker/ubuntu:full-latest                 9327301aea27       67.7GB         16.8GB        
+civic-terraform-mcp:latest                      84776a24bc66       1.28GB          265MB        
+ghcr.io/catthehacker/ubuntu:act-latest          eb153df03ca8       2.04GB          297MB        
+ghcr.io/catthehacker/ubuntu:full-latest         9327301aea27       67.7GB         16.8GB        
+[Assistant] Now I have a clear picture of the task. This is **Task 17: Artifact Cleanup Script** in TypeScript/Bun. Let me check what's available inside the act container before designing the workflow (this is the biggest risk factor and uses `docker`, not `act`, so no act-budget impact).
+[Tool: Bash] echo "=== Check bun/node/git in act-ubuntu-pwsh container ===" 
+docker run --rm act-ubuntu-pwsh:latest bash -c 'echo "bun: $(which bun 2>/dev/null || echo MISSING)"; echo "node: $(which node 2>/dev/null || echo MISSING) $(node --version 2>/dev/null)"; echo "npm: $(which npm 2>/dev/null || echo MISSING)"; echo "git: $(which git 2>/dev/null)"; echo "curl: $(which curl 2>/dev/null)"; echo "unzip: $(which unzip 2>/dev/null || echo MISSING)"; echo "jq: $(which jq 2>/dev/null || echo MISSING)"; echo "pwsh: $(which pwsh 2>/dev/null || echo MISSING)"' 2>&1 | head -40
+[Result] === Check bun/node/git in act-ubuntu-pwsh container ===
+bun: MISSING
+node: /opt/acttoolcache/node/24.15.0/x64/bin/node v24.15.0
+npm: /opt/acttoolcache/node/24.15.0/x64/bin/npm
+git: /usr/bin/git
+curl: /usr/bin/curl
+unzip: /usr/bin/unzip
+jq: /usr/bin/jq
+pwsh: /usr/bin/pwsh
+[Assistant] Bun is missing but Node 24, curl, unzip, jq are present. I'll need to install bun in the workflow. Let me verify network access from the container and check act's action cache.
+[Tool: Bash] echo "=== Network test from container (bun.sh + github) ===" 
+docker run --rm act-ubuntu-pwsh:latest bash -c 'curl -fsSL --max-time 15 -o /dev/null -w "bun.sh status: %{http_code}\n" https://bun.sh/install 2>&1; curl -fsSL --max-time 15 -o /dev/null -w "github status: %{http_code}\n" https://github.com 2>&1' 2>&1 | head -20
+echo "=== act action cache ==="
+ls -la ~/.cache/act 2>/dev/null | head -30 || echo "no ~/.cache/act"
+echo "=== look for cached actions ==="
+find ~/.cache/act -maxdepth 2 -type d 2>/dev/null | head -40
+[Result] === Network test from container (bun.sh + github) ===
+bun.sh status: 200
+github status: 200
+=== act action cache ===
+total 56
+drwxr-xr-x 13 passp passp 4096 May  6 21:13 .
+drwx------ 25 passp passp 4096 Jun 26 12:46 ..
+-rw-------  1 passp passp   36 Jun 28 01:38 .notices.etag
+drwxr-xr-x 10 passp passp 4096 Apr  9 01:13 actions-checkout@v4
+drwxr-xr-x 10 passp passp 4096 May  6 20:02 actions-download-artifact@v4
+drwxr-xr-x 11 passp passp 4096 Apr 19 00:11 actions-setup-node@v4
+drwxr-xr-x  9 passp passp 4096 May  6 21:13 actions-setup-python@61a6322f88396a6271a6ee3cb4d175c0dc4ef479
+drwxr-xr-x  9 passp passp 4096 Apr 19 02:00 actions-setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+drwxr-xr-x  9 passp passp 4096 May  6 20:47 actions-setup-python@f677139bbe7f9c59b41e7462f120eb1989c08947
+drwxr-xr-x  9 passp passp 4096 Apr 10 01:58 actions-setup-python@v5
+drwxr-xr-x  9 passp passp 4096 May  6 19:17 actions-setup-python@v5.0.0
+drwxr-xr-x 12 passp passp 4096 Apr 24 18:54 actions-upload-art
+[Assistant] Network works (both GitHub and bun.sh return 200), and crucially `oven-sh/setup-bun@v2` and `actions/checkout@v4` are already cached in act. Let me quickly inspect how setup-bun resolves the version so I can decide between the action and a direct curl install.
+[Tool: Bash] echo "=== setup-bun@v2 action.yml ===" 
+cat ~/.cache/act/oven-sh-setup-bun@v2/action.yml 2>/dev/null | head -60
+echo "=== does dist reference api.github.com? ==="
+grep -rl "api.github.com" ~/.cache/act/oven-sh-setup-bun@v2/dist/ 2>/dev/null | head
+echo "=== grep for download url pattern ==="
+grep -roh "https://[a-zA-Z0-9./_-]*bun[a-zA-Z0-9./_-]*" ~/.cache/act/oven-sh-setup-bun@v2/dist/index.js 2>/dev/null | sort -u | head -20
+[Result] === setup-bun@v2 action.yml ===
+name: Setup Bun
+description: Download, install, and setup Bun to your path.
+author: robobun
+
+branding:
+  icon: play-circle
+  color: white
+
+inputs:
+  bun-version:
+    description: The version of Bun to install. (e.g. "latest", "canary", "1.0.0", "1.0.x", <sha>)
+    required: false
+  bun-version-file:
+    description: The version of Bun to install from file. (e.g. "package.json", ".bun-version", ".tool-versions")
+    default: null
+    required: false
+  bun-download-url:
+    description: Override the URL to download Bun from. This skips version resolution and verifying AVX2 support.
+    required: false
+  registries:
+    description: |
+      List of package registries with authentication support. Format:
+      - Default registry: https://registry.npmjs.org/
+      - Default with token: https://registry.npmjs.org/|token
+      - Scoped registry: @scope:https://registry.example.com/
+      - Scoped with token: @scope:https://registry.example.com/|token
+      - Sc
+[Assistant] Excellent. Key findings that shape my design:
+- **Bun is missing** in the act container, but **Node 24, curl, unzip, jq are present**, and **network works** (bun.sh + GitHub return 200). So I'll install bun via `curl https://bun.sh/install | bash` (robust, auto-detects baseline CPU, no GitHub API rate-limit risk).
+- `actions/checkout@v4` is cached in act.
+
+My plan:
+1. Scaffold project (package.json, tsconfig, @types/bun for the tsc hook).
+2. TDD the core logic in `cleanup.ts` + `cleanup.test.ts`.
+3. Build the CLI + 3 self-contained scenario fixtures with exact computed expected values.
+4. Write the workflow (2 jobs with dependency), validate with actionlint.
+5. Write `workflow-structure.test.ts` and `act-harness.test.ts`.
+6. Run the act harness once (3 cases = 3 act runs) → produce `act-result.txt`.
+
+Let me scaffold the project.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+echo "HOME=$HOME"; cat "$HOME/.actrc" 2>/dev/null && echo "--- has home actrc ---" || echo "no home actrc"
+git config user.email "benchmark@example.com" 2>/dev/null; git config user.name "benchmark" 2>/dev/null
+echo "git configured"
+[Result] HOME=/home/passp
+-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:pwsh-latest
+--- has home actrc ---
+git configured
+[Assistant] There's a `$HOME/.actrc` pointing to a different image, but my local `.actrc` (and the one the grader uses from cwd) points to `act-ubuntu-pwsh:latest` which I've tested. I'll explicitly pass `-P ubuntu-latest=act-ubuntu-pwsh:latest` in my harness to remove ambiguity.
+
+Let me scaffold the project.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/package.json", "content": "{\n  \"name\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/package.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/tsconfig.json", "content": "{\n  \"comp
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/tsconfig.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/.gitignore", "content": "node_modules/\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/.gitignore (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bun add -d @types/bun 2>&1 | tail -10
+echo "--- exit: $? ---"
+ls -la
+[Result] [0m[1mbun add [0m[2mv1.3.11 (af24e281)[0m
+Resolving dependencies
+Resolved, downloaded and extracted [3]
+Saved lockfile
+
+[0m[32minstalled[0m [1m@types/bun[0m[2m@1.3.14[0m
+
+[32m4[0m packages[0m installed [0m[2m[[1m183.00ms[0m[2m][0m[0m
+--- exit: 0 ---
+total 64
+drwxr-xr-x  5 passp passp  4096 Jun 28 01:46 .
+drwxr-xr-x 17 passp passp  4096 Jun 28 01:39 ..
+-rw-r--r--  1 passp passp    40 Jun 28 01:39 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 28 01:39 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 28 01:46 .git
+-rw-r--r--  1 passp passp    45 Jun 28 01:46 .gitignore
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+-rw-r--r--  1 passp passp   947 Jun 28 01:46 bun.lock
+drwxr-xr-x  5 passp passp  4096 Jun 28 01:46 node_modules
+-rw-r--r--  1 passp passp   257 Jun 28 01:46 package.json
+-rw-r--r--  1 passp passp   384 Jun 28 01:46 tsconfig.json
+[Assistant] Now the TDD cycle. **RED first**: I'll write the initial failing test and a stub that throws, then run `bun test` to confirm it fails.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.ts", "content": "/**\n * Artifa
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.ts (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.test.ts", "content": "import { 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bun test cleanup.test.ts 2>&1 | tail -20
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+[0m
+cleanup.test.ts:
+[0m[1m51 |[0m [0m[35mexport[0m [0m[35mfunction[0m planCleanup(
+[0m[1m52 |[0m   _artifacts: Artifact[],
+[0m[1m53 |[0m   _policy: RetentionPolicy,
+[0m[1m54 |[0m   _options: PlanOptions = {},
+[0m[1m55 |[0m ): DeletionPlan {
+[0m[1m56 |[0m   [0m[35mthrow[0m [0m[35mnew[0m [0m[1mError[0m([0m[32m"not implemented"[0m)[0m[2m;[0m
+                                        [31m[1m^[0m
+[0m[31merror[0m[2m:[0m [1mnot implemented[0m
+[0m      [2mat [0m[0m[1m[3mplanCleanup[0m[2m ([0m[0m[36m[2m/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/[0m[36mcleanup.ts[0m[2m:[0m[33m56[0m[2m:[33m36[0m[2m)[0m
+[0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m[2m/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-sc
+[Assistant] RED confirmed. Now **GREEN**: implement the full `planCleanup` algorithm. I'll write the complete, well-commented implementation including input validation.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.ts", "content": "/**\n * Artifa
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bun test cleanup.test.ts 2>&1 | tail -8
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 1 pass[0m
+[0m[2m 0 fail[0m
+ 3 expect() calls
+Ran 1 test across 1 file. [0m[2m[[1m18.00ms[0m[2m][0m
+[Assistant] GREEN. Now let me expand the test suite to cover all functionality — keep-latest-N, max-total-size eviction, combined policies (mirroring the exact fixture scenarios), dry-run, validation/error handling, and determinism.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.test.ts", "content": "import { 
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bun test cleanup.test.ts 2>&1 | tail -15
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 18 pass[0m
+[0m[2m 0 fail[0m
+ 44 expect() calls
+Ran 18 tests across 1 file. [0m[2m[[1m114.00ms[0m[2m][0m
+[Assistant] All 18 unit tests pass and the logic matches my fixture scenarios exactly. Now let me add the CLI layer to `cleanup.ts` (arg parsing, scenario-file loading, text + markdown output, graceful errors).
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.ts", "old
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now the scenario fixtures. Let me create the three test-case fixtures with the exact data matching my unit-tested scenarios, plus a default `scenario.json`.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/fixtures/case-max-age.json", "content":
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/fixtures/case-max-age.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/fixtures/case-keep-latest.json", "conte
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/fixtures/case-keep-latest.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/fixtures/case-combined.json", "content"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/fixtures/case-combined.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/fixtures/scenario.json", "content": "{\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/fixtures/scenario.json (file state is current in your context — no need to Read it back)
+[Assistant] Now let me verify the CLI produces exactly the expected output for all three fixtures locally, before touching act. This is critical for first-try act success.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+for f in case-max-age case-keep-latest case-combined; do
+  echo "================= $f ================="
+  bun run cleanup.ts --config "fixtures/$f.json"
+  echo "(exit: $?)"
+done
+[Result] ================= case-max-age =================
+=== Artifact Cleanup Plan ===
+Mode: dry-run
+Total artifacts: 5
+Retained count: 2
+Deleted count: 3
+Total size bytes: 15500
+Space reclaimed bytes: 12500
+Retained size bytes: 3000
+Space reclaimed human: 12.21 KiB
+
+Artifacts to delete (3):
+  - a3 | old-bundle | 4000 bytes | 2026-05-01T00:00:00Z | reasons: max-age
+  - a4 | ancient-dump | 8000 bytes | 2026-01-01T00:00:00Z | reasons: max-age
+  - a5 | edge-just-over | 500 bytes | 2026-05-28T00:00:00Z | reasons: max-age
+
+Artifacts to retain (2):
+  - a1 | build-logs | 1000 bytes | 2026-06-27T00:00:00Z
+  - a2 | coverage | 2000 bytes | 2026-06-01T00:00:00Z
+=== End Artifact Cleanup Plan ===
+(exit: 0)
+================= case-keep-latest =================
+=== Artifact Cleanup Plan ===
+Mode: live
+Total artifacts: 7
+Retained count: 4
+Deleted count: 3
+Total size bytes: 7000
+Space reclaimed bytes: 1300
+Retained size bytes: 5700
+Space reclaimed human: 1.27 KiB
+
+Artifacts to delete (3):
+  - c1 | ci-1 | 100 by
+[Assistant] All three fixtures produce exactly the expected output. Let me quickly verify error handling and the `GITHUB_STEP_SUMMARY` / `--output` paths work too.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+echo "=== missing file (expect exit 1 + message) ==="
+bun run cleanup.ts --config fixtures/nope.json; echo "exit: $?"
+echo "=== step summary + output + override flags ==="
+TMP=$(mktemp); export GITHUB_STEP_SUMMARY="$TMP"
+bun run cleanup.ts --config fixtures/case-combined.json --no-dry-run --keep-latest 5 --output /tmp/plan.json >/dev/null; echo "exit: $?"
+echo "--- step summary head ---"; head -8 "$TMP"
+echo "--- plan.json keys ---"; jq 'keys, .summary' /tmp/plan.json
+rm -f "$TMP" /tmp/plan.json; unset GITHUB_STEP_SUMMARY
+echo "=== --help ==="
+bun run cleanup.ts --help | head -3; echo "exit: $?"
+[Result] === missing file (expect exit 1 + message) ===
+[0m[31mError: input file not found: fixtures/nope.json[0m
+exit: 1
+=== step summary + output + override flags ===
+exit: 0
+--- step summary head ---
+## 🧹 Artifact Cleanup Plan (live)
+
+| Metric | Value |
+| --- | --- |
+| Total artifacts | 8 |
+| Retained | 2 |
+| Deleted | 6 |
+| Space reclaimed | 18.55 KiB (19000 bytes) |
+--- plan.json keys ---
+[
+  "dryRun",
+  "summary",
+  "toDelete",
+  "toRetain"
+]
+{
+  "totalArtifacts": 8,
+  "retainedCount": 2,
+  "deletedCount": 6,
+  "totalSizeBytes": 23000,
+  "spaceReclaimedBytes": 19000,
+  "retainedSizeBytes": 4000
+}
+=== --help ===
+Artifact Cleanup Script
+
+Usage:
+exit: 0
+[Assistant] CLI is fully working — error handling, overrides, step summary, JSON output, and help all behave correctly. Let me confirm the type-checker is clean, then write the workflow.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bunx tsc --noEmit 2>&1 | head -20; echo "tsc exit: ${PIPESTATUS[0]}"
+[Result] Resolving dependencies
+Resolved, downloaded and extracted [2]
+Saved lockfile
+tsc exit: 0
+[Assistant] Type-check is clean. Now let me write the GitHub Actions workflow — two jobs (test → cleanup-plan) with a dependency, proper triggers, permissions, and env.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/.github/workflows/artifact-cleanup-scri
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/.github/workflows/artifact-cleanup-script.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+actionlint .github/workflows/artifact-cleanup-script.yml; echo "actionlint exit: $?"
+[Result] actionlint exit: 0
+[Assistant] actionlint passes cleanly. Now I need a YAML parser for the structure test. Let me check whether Bun has a built-in YAML parser (avoids adding a dependency).
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bun -e 'console.log("Bun.YAML:", typeof (Bun as any).YAML); try { const y=(Bun as any).YAML?.parse?.("a:\n  b: 1\n"); console.log("parsed:", JSON.stringify(y)); } catch(e){ console.log("err", (e as Error).message);} '
+[Result] Bun.YAML: object
+parsed: {"a":{"b":1}}
+[Assistant] `Bun.YAML.parse` works — no dependency needed. Let me check how it handles the `on:` key (YAML's notorious `on`→`true` boolean coercion) by parsing the actual workflow.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bun -e '
+const txt = await Bun.file(".github/workflows/artifact-cleanup-script.yml").text();
+const doc:any = (Bun as any).YAML.parse(txt);
+console.log("top-level keys:", Object.keys(doc));
+console.log("has on key:", "on" in doc, " has true key:", true in doc);
+console.log("on value:", JSON.stringify(doc["on"] ?? doc[true as any]));
+console.log("jobs keys:", Object.keys(doc.jobs));
+console.log("cleanup needs:", JSON.stringify(doc.jobs["cleanup-plan"].needs));
+'
+[Result] top-level keys: [ [0m[32m"name"[0m[0m[0m[2m,[0m [0m[32m"on"[0m[0m[0m[2m,[0m [0m[32m"permissions"[0m[0m[0m[2m,[0m [0m[32m"concurrency"[0m[0m[0m[2m,[0m [0m[32m"env"[0m[0m[0m[2m,[0m [0m[32m"jobs"[0m[0m ]
+has on key: [0m[33mtrue[0m  has true key: [0m[33mfalse[0m
+on value: {"push":{"branches":["**"]},"pull_request":null,"schedule":[{"cron":"0 3 * * 1"}],"workflow_dispatch":{"inputs":{"dry_run":{"description":"Run in dry-run mode (no real deletion).","type":"boolean","default":true}}}}
+jobs keys: [ [0m[32m"test"[0m[0m[0m[2m,[0m [0m[32m"cleanup-plan"[0m[0m ]
+cleanup needs: "test"
+[Assistant] `Bun.YAML.parse` preserves `on` as a string key and parses everything correctly. Now let me write the workflow-structure test.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/workflow-structure.test.ts", "content":
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/workflow-structure.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bun test workflow-structure.test.ts 2>&1 | tail -20
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 9 pass[0m
+[0m[2m 0 fail[0m
+ 23 expect() calls
+Ran 9 tests across 1 file. [0m[2m[[1m109.00ms[0m[2m][0m
+[Assistant] Workflow-structure tests pass (9/9). Now the act harness — the critical end-to-end piece. Let me write it carefully so it runs act once per case (3 cases = 3 runs total), captures everything to `act-result.txt`, and asserts exact values.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/act-harness.test.ts", "content": "/**\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/act-harness.test.ts (file state is current in your context — no need to Read it back)
+[Assistant] Let me fix the ANSI-strip regex to properly target escape sequences, then type-check everything.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/act-harness.test.
+[Result ERROR] <tool_use_error>String to replace not found in file.
+String: /** Strip ANSI color codes so substring assertions are reliable. */
+function stripAnsi(s: string): string {
+  // eslint-disable-next-line no-control-regex
+  return s.replace(/\[[0-9;]*m/g, "");
+}</tool_use_error>
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+grep -n "stripAnsi\|replace(" act-harness.test.ts
+[Result] 101:function stripAnsi(s: string): string {
+103:  return s.replace(/\[[0-9;]*m/g, "");
+108:  const output = stripAnsi(proc.stdout.toString() + proc.stderr.toString());
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/act-harness.test.ts", "offset": 100, "l
+[Result] 100	/** Strip ANSI color codes so substring assertions are reliable. */
+101	function stripAnsi(s: string): string {
+102	  // eslint-disable-next-line no-control-regex
+103	  return s.replace(/\[[0-9;]*m/g, "");
+104	}
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/act-harness.test.
+[Result ERROR] <tool_use_error>String to replace not found in file.
+String:   // eslint-disable-next-line no-control-regex
+  return s.replace(/\[[0-9;]*m/g, "");</tool_use_error>
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/act-harness.test.
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/act-harness.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Let me fix the regex line robustly using `perl` (backslash handling in the Edit tool is fighting me here), replacing it with a `RegExp` constructor that properly targets the ESC sequence.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+perl -0pi -e 's/  return s\.replace\(\/\\\[\[0-9;\]\*m\/g, ""\);/  const ansi = new RegExp(String.fromCharCode(27) + "\\\\[[0-9;]*m", "g");\n  return s.replace(ansi, "");/' act-harness.test.ts
+sed -n '100,106p' act-harness.test.ts
+[Result] /** Strip ANSI color codes so substring assertions are reliable. */
+function stripAnsi(s: string): string {
+  // Matches ESC[…m sequences.
+  return s.replace(/\[[0-9;]*m/g, "");
+}
+
+function run(cmd: string[], cwd: string): ActRun {
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+perl -ni -e 'if (/return s\.replace/) { print "  const ansi = new RegExp(String.fromCharCode(27) + \"\\\\[[0-9;]*m\", \"g\");\n"; print "  return s.replace(ansi, \"\");\n"; } else { print; }' act-harness.test.ts
+sed -n '100,106p' act-harness.test.ts
+[Result] /** Strip ANSI color codes so substring assertions are reliable. */
+function stripAnsi(s: string): string {
+  // Matches ESC[…m sequences.
+  const ansi = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g");
+  return s.replace(ansi, "");
+}
+[Assistant] Now let me type-check all files and run the non-act tests together to confirm everything is green before the act run.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+echo "=== tsc ===" && bunx tsc --noEmit 2>&1 | grep -v "Resolving\|Resolved\|Saved" ; echo "tsc exit: ${PIPESTATUS[0]}"
+echo "=== unit + structure tests ===" && bun test cleanup.test.ts workflow-structure.test.ts 2>&1 | tail -6
+[Result] === tsc ===
+tsc exit: 0
+=== unit + structure tests ===
+[0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 27 pass[0m
+[0m[2m 0 fail[0m
+ 67 expect() calls
+Ran 27 tests across 2 files. [0m[2m[[1m110.00ms[0m[2m][0m
+[Assistant] All 27 non-act tests pass; tsc and actionlint clean. Before spending act runs, let me simulate the exact bash from the cleanup step locally (with `DRY_RUN_INPUT` empty, as on a push event) to confirm the command and output are correct.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+# Simulate the workflow's cleanup step exactly, for the keep-latest (live) case.
+cp fixtures/case-keep-latest.json fixtures/scenario.json
+export SCENARIO_FILE="fixtures/scenario.json"
+export DRY_RUN_INPUT=""   # empty on push events
+args=(--config "$SCENARIO_FILE" --output cleanup-plan.json)
+if [ "$DRY_RUN_INPUT" = "true" ]; then args+=(--dry-run); elif [ "$DRY_RUN_INPUT" = "false" ]; then args+=(--no-dry-run); fi
+echo "Running: bun run cleanup.ts ${args[*]}"
+bun run cleanup.ts "${args[@]}" | grep -E "Mode:|Total artifacts:|Deleted count:|Space reclaimed bytes:"
+echo "--- restore default scenario (combined) ---"
+git checkout -- fixtures/scenario.json 2>/dev/null || cp fixtures/case-combined.json fixtures/scenario.json
+rm -f cleanup-plan.json
+grep -c '"id"' fixtures/scenario.json && echo "scenario restored"
+[Result] Running: bun run cleanup.ts --config fixtures/scenario.json --output cleanup-plan.json
+Mode: live
+Total artifacts: 7
+Deleted count: 3
+Space reclaimed bytes: 1300
+--- restore default scenario (combined) ---
+8
+scenario restored
+[Assistant] The simulation confirms the live-mode case works exactly. Everything offline is validated: 27 tests pass, tsc clean, actionlint clean, CLI output exact for all 3 fixtures, bash step logic correct. 
+
+Now I'll run the act harness — this performs my 3 act runs (one per case). Running it once.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bun test act-harness.test.ts 2>&1 | tail -60
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 4 pass[0m
+[0m[2m 0 fail[0m
+ 34 expect() calls
+Ran 4 tests across 1 file. [0m[2m[[1m55.47s[0m[2m][0m
+[Assistant] All 4 act harness tests passed on the first run (3 act push runs, 55s total). Let me verify `act-result.txt` was created correctly and inspect the captured output.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+echo "=== act-result.txt size & case markers ==="
+ls -la act-result.txt
+grep -n "TEST CASE:\|act exit code:" act-result.txt
+echo "=== Job succeeded counts per case ==="
+grep -c "Job succeeded" act-result.txt
+echo "=== sample: cleanup plan summary lines captured (combined case) ==="
+grep -E "Total artifacts:|Deleted count:|Space reclaimed bytes:|Mode:|Job succeeded" act-result.txt | head -40
+[Result] === act-result.txt size & case markers ===
+-rw-r--r-- 1 passp passp 72488 Jun 28 01:58 act-result.txt
+4:TEST CASE: max-age  (fixture: case-max-age.json)
+5:act exit code: 0
+217:TEST CASE: keep-latest  (fixture: case-keep-latest.json)
+218:act exit code: 0
+446:TEST CASE: combined  (fixture: case-combined.json)
+447:act exit code: 0
+=== Job succeeded counts per case ===
+6
+=== sample: cleanup plan summary lines captured (combined case) ===
+[Artifact Cleanup Script/Unit tests] 🏁  Job succeeded
+[Artifact Cleanup Script/Generate cleanup plan]   | Mode: dry-run
+[Artifact Cleanup Script/Generate cleanup plan]   | Total artifacts: 5
+[Artifact Cleanup Script/Generate cleanup plan]   | Deleted count: 3
+[Artifact Cleanup Script/Generate cleanup plan]   | Space reclaimed bytes: 12500
+[Artifact Cleanup Script/Generate cleanup plan] 🏁  Job succeeded
+[Artifact Cleanup Script/Unit tests] 🏁  Job succeeded
+[Artifact Cleanup Script/Generate cleanup plan]   | Mode: live
+[Artifact Cleanup Script/Generate clean
+[Assistant] The pipeline works exactly as designed:
+- `act-result.txt` (72KB) contains all 3 cases, each with `act exit code: 0`.
+- **6 "Job succeeded"** = both jobs (Unit tests + Generate cleanup plan) succeeded across all 3 cases.
+- Exact expected values present: max-age (5 artifacts/3 deleted/12500B/dry-run), keep-latest (7/3/1300B/live), combined (8/6/19000B/dry-run).
+
+Now a final full `bun test` run — exactly as the grader invokes it — to confirm the complete suite is green together. This is the definitive verification of the core "all tests pass" requirement.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+bun test 2>&1 | tail -15
+echo "=== act-result.txt present? ==="
+ls -la act-result.txt && grep -c "Job succeeded" act-result.txt
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 31 pass[0m
+[0m[2m 0 fail[0m
+ 101 expect() calls
+Ran 31 tests across 3 files. [0m[2m[[1m50.92s[0m[2m][0m
+=== act-result.txt present? ===
+-rw-r--r-- 1 passp passp 70073 Jun 28 01:59 act-result.txt
+6
+[Assistant] The full suite passes: **31 tests across 3 files, 0 failures**, and `act-result.txt` exists with 6 "Job succeeded". 
+
+Let me do final housekeeping. First, I'll remove `act-result.txt` from `.gitignore` since it's a required deliverable artifact that shouldn't be excluded, then add a README and do a final actionlint check.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/.gitignore", "content": "node_modules/\
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/.gitignore has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/README.md", "content": "# Artifact Clea
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh/README.md (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/17-artifact-cleanup-script/typescript-bun-opus48-1m-xhigh
+echo "=== final actionlint ===" && actionlint .github/workflows/artifact-cleanup-script.yml; echo "actionlint exit: $?"
+echo "=== final tsc ===" && bunx tsc --noEmit 2>&1 | grep -vE "Resolving|Resolved|Saved" ; echo "tsc exit: ${PIPESTATUS[0]}"
+echo "=== deliverable file tree (excluding node_modules/.git) ==="
+find . -type f -not -path './node_modules/*' -not -path './.git/*' -not -name 'benchmark-instructions-v4.md' | sort
+[Result] === final actionlint ===
+actionlint exit: 0
+=== final tsc ===
+tsc exit: 0
+=== deliverable file tree (excluding node_modules/.git) ===
+./.actrc
+./.claude/settings.json
+./.github/workflows/artifact-cleanup-script.yml
+./.gitignore
+./README.md
+./act-harness.test.ts
+./act-result.txt
+./bun.lock
+./cleanup.test.ts
+./cleanup.ts
+./fixtures/case-combined.json
+./fixtures/case-keep-latest.json
+./fixtures/case-max-age.json
+./fixtures/scenario.json
+./package.json
+./tsconfig.json
+./workflow-structure.test.ts
+[Assistant] Everything is complete and validated. Here's the final state:
+
+## Summary
+
+I built **Task 17: Artifact Cleanup Script** in TypeScript/Bun using red/green TDD, with a fully working GitHub Actions pipeline verified end-to-end through `act`.
+
+### Deliverables
+| File | Role |
+|------|------|
+| `cleanup.ts` | Library (`planCleanup`) + CLI. Pure, dependency-free planner with injectable `now`, full input validation, and three output formats (text / JSON / Markdown step-summary). |
+| `cleanup.test.ts` | 18 unit tests (TDD red→green) covering each policy, combinations, dry-run, edge cases, error handling, and deterministic tie-breaking. |
+| `fixtures/*.json` | 3 self-contained scenarios + a default, with hand-computed exact expected values. |
+| `.github/workflows/artifact-cleanup-script.yml` | 2 jobs (`test` → `cleanup-plan` dependency), triggers on push/PR/schedule/dispatch, `contents:read`+`actions:write` permissions, concurrency, env config. |
+| `workflow-structure.test.ts` | 9 tests parsing the YAML (via `Bun.YAML`), checking triggers/jobs/deps/paths, asserting actionlint exit 0. |
+| `act-harness.test.ts` | Runs each case through the real workflow via `act`, writes `act-result.txt`, asserts exit 0, ≥2 "Job succeeded", and exact plan values. |
+| `act-result.txt` | Required artifact (70KB), all 3 cases delimited, 6 "Job succeeded". |
+
+### Retention logic (deterministic order)
+1. **max-age** → flag older than `now − maxAgeDays`
+2. **keep-latest-N** → per workflow, flag past the N newest
+3. **max-total-size** → evict oldest survivors until under the cap
+
+Each deleted artifact records *why* (e.g. `max-age,keep-latest-n`).
+
+### Verification (all green)
+- **`bun test`: 31/31 pass** across 3 files (101 assertions)
+- **actionlint: exit 0**
+- **tsc --noEmit: exit 0**
+- **act: 3/3 cases exit 0** — pipeline installs Bun (via `curl bun.sh/install`, since the container has Node/curl/unzip but no Bun), runs unit tests, then generates the plan with exact values: max-age (5→3 deleted/12500B, dry-run), keep-latest (7→3/1300B, live), combined (8→6/19000B, dry-run).
+
+The first act-harness run passed clean on the first attempt — no debugging loops were needed.

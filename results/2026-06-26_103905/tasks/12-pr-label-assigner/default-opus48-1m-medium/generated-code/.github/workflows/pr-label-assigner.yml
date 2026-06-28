@@ -1,0 +1,62 @@
+name: PR Label Assigner
+
+# Triggers:
+#  - pull_request: the real-world use case (label PRs by their changed files)
+#  - push:         lets `act push` exercise the pipeline in CI / locally
+#  - workflow_dispatch: manual runs
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+# Least-privilege default; the assign job needs write to apply labels on a PR.
+permissions:
+  contents: read
+
+env:
+  RULES_PATH: ${{ github.workspace }}/fixtures/rules.json
+  CHANGED_FILES_PATH: ${{ github.workspace }}/fixtures/changed-files.txt
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: run the Pester unit tests for the label-assigner library.
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./PRLabelAssigner.Tests.ps1 -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            Write-Host "Pester reported $($result.FailedCount) failing test(s)."
+            exit 1
+          }
+          Write-Host "All $($result.PassedCount) Pester tests passed."
+
+  # ---------------------------------------------------------------------------
+  # Job 2: run the assigner against the fixture data and emit the labels.
+  # Depends on the unit tests passing first.
+  # ---------------------------------------------------------------------------
+  assign-labels:
+    name: Assign labels from changed files
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compute labels
+        id: compute
+        shell: pwsh
+        run: |
+          Write-Host "Using rules:        $env:RULES_PATH"
+          Write-Host "Using changed list: $env:CHANGED_FILES_PATH"
+          ./Assign-Labels.ps1 -RulesPath $env:RULES_PATH -ChangedFilesPath $env:CHANGED_FILES_PATH

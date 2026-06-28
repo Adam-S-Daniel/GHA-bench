@@ -1,0 +1,148 @@
+---
+# Semantic Version Bumper -- CI/CD pipeline
+#
+# Runs ./semver-bump.sh against the committed fixture scenarios in an isolated
+# container. Each scenario prints a parseable RESULT line so the test harness can
+# assert on EXACT expected versions. Two jobs are used so that a real job
+# dependency (and data hand-off via job outputs) is exercised:
+#   1. version-bump  -- bump every fixture scenario, expose the "minor" result
+#   2. summary       -- consume the previous job's output and write a job summary
+name: Semantic Version Bumper
+
+# Trigger on the usual CI events plus a weekly schedule and manual dispatch.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_date:
+        description: "Release date used in the changelog entry (YYYY-MM-DD)"
+        required: false
+        default: "2026-06-27"
+  schedule:
+    # Weekly cut on Monday 06:00 UTC (e.g. a scheduled release-prep run).
+    - cron: "0 6 * * 1"
+
+# Read-only is sufficient: the workflow only computes versions on throw-away
+# copies of the fixtures; it never pushes commits or tags.
+permissions:
+  contents: read
+
+# Workflow-level environment shared by all jobs/steps.
+env:
+  FIXTURES_DIR: fixtures
+  # Fall back to a fixed date on non-dispatch events so changelog output is
+  # deterministic in CI. `github.event.inputs` is null outside workflow_dispatch.
+  RELEASE_DATE: ${{ github.event.inputs.release_date || '2026-06-27' }}
+
+jobs:
+  version-bump:
+    name: Bump versions from conventional commits
+    runs-on: ubuntu-latest
+    outputs:
+      # Hand the "minor" scenario result to the dependent summary job.
+      new_version: ${{ steps.primary.outputs.new_version }}
+      old_version: ${{ steps.primary.outputs.old_version }}
+      bump: ${{ steps.primary.outputs.bump }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure dependencies (bash + jq)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # jq is pre-installed on GitHub-hosted runners and in the act image;
+          # install only if it is somehow missing (keeps the workflow portable).
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -y && sudo apt-get install -y jq
+          fi
+          echo "bash: ${BASH_VERSION}"
+          jq --version
+
+      - name: Make the bumper executable
+        shell: bash
+        run: chmod +x ./semver-bump.sh
+
+      - name: Bump every fixture scenario
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::group::Semantic version bump per fixture scenario"
+          count=0
+          # Iterate scenarios in a stable, sorted order.
+          for dir in "${FIXTURES_DIR}"/*/; do
+            name=$(basename "${dir}")
+            # Version source: prefer package.json, fall back to a VERSION file.
+            if [ -f "${dir}package.json" ]; then
+              vf="package.json"
+            else
+              vf="VERSION"
+            fi
+            # Operate on a throw-away copy so the committed fixtures stay pristine.
+            work=$(mktemp -d)
+            cp -r "${dir}." "${work}/"
+            outfile=$(mktemp)
+            new=$(GITHUB_OUTPUT="${outfile}" bash ./semver-bump.sh \
+                    --version-file "${work}/${vf}" \
+                    --commits "${work}/commits.txt" \
+                    --changelog "${work}/CHANGELOG.md" \
+                    --date "${RELEASE_DATE}")
+            old=$(grep '^old_version=' "${outfile}" | cut -d= -f2-)
+            bump=$(grep '^bump=' "${outfile}" | cut -d= -f2-)
+            # The harness greps these exact RESULT lines for known-good values.
+            echo "RESULT scenario=${name} old=${old} new=${new} bump=${bump}"
+            count=$((count + 1))
+            rm -rf "${work}" "${outfile}"
+          done
+          echo "RESULT_COUNT=${count}"
+          echo "::endgroup::"
+          echo "JOB_OK version-bump"
+
+      - name: Compute primary version (minor scenario)
+        id: primary
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Run a single scenario against the *real* $GITHUB_OUTPUT so the script
+          # populates step outputs (old_version/new_version/bump) that become job
+          # outputs consumed by the summary job.
+          work=$(mktemp -d)
+          cp -r "${FIXTURES_DIR}/minor/." "${work}/"
+          bash ./semver-bump.sh \
+            --version-file "${work}/VERSION" \
+            --commits "${work}/commits.txt" \
+            --changelog "${work}/CHANGELOG.md" \
+            --date "${RELEASE_DATE}"
+          rm -rf "${work}"
+
+  summary:
+    name: Publish bump summary
+    needs: version-bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Render summary from the previous job's output
+        shell: bash
+        # Pass job outputs through the environment to avoid any expression-in-shell
+        # injection and quoting issues.
+        env:
+          NEW_VERSION: ${{ needs.version-bump.outputs.new_version }}
+          OLD_VERSION: ${{ needs.version-bump.outputs.old_version }}
+          BUMP: ${{ needs.version-bump.outputs.bump }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NEW_VERSION}" ]; then
+            echo "ERROR: did not receive a new_version from the version-bump job" >&2
+            exit 1
+          fi
+          echo "Primary scenario bump: ${OLD_VERSION} -> ${NEW_VERSION} (${BUMP})"
+          {
+            echo "## Semantic Version Bump"
+            echo ""
+            echo "| field | value |"
+            echo "| ----- | ----- |"
+            echo "| old version | ${OLD_VERSION} |"
+            echo "| new version | ${NEW_VERSION} |"
+            echo "| bump type | ${BUMP} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "JOB_OK summary"

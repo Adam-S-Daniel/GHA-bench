@@ -1,0 +1,102 @@
+name: PR Label Assigner
+
+# Triggers:
+#   push / pull_request -> exercise the labeler in CI on every change
+#   workflow_dispatch   -> allow a manual run with a custom config path
+#   schedule            -> a daily sanity run of the pipeline
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      config:
+        description: "Path to the labeler config JSON"
+        required: false
+        default: "config/labeler-config.json"
+
+# Least-privilege: read the repo; pull-requests:write is what a real labeler
+# would need to apply the computed labels to a PR.
+permissions:
+  contents: read
+  pull-requests: write
+
+# Shared defaults for every job/step.
+env:
+  LABELER_CONFIG: config/labeler-config.json
+  FIXTURES_DIR: fixtures
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure PowerShell is available
+        # pwsh is pre-installed on GitHub-hosted runners and in the act image,
+        # so this is a near-instant verification rather than a real install.
+        shell: bash
+        run: |
+          if command -v pwsh >/dev/null 2>&1; then
+            echo "pwsh present: $(pwsh --version)"
+          else
+            echo "::error::pwsh is required but was not found"
+            exit 1
+          fi
+
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [version]'5.0.0' })) {
+            Write-Host "Installing Pester 5..."
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
+          }
+          $v = (Get-Module -ListAvailable -Name Pester | Sort-Object Version -Descending | Select-Object -First 1).Version
+          Write-Host "Pester $v ready"
+
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = './tests/PRLabelAssigner.Tests.ps1'
+          $cfg.Run.Exit = $true
+          $cfg.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $cfg
+
+  assign-labels:
+    name: Assign labels for fixtures
+    # Only run the labeler once the unit tests have passed.
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assign labels for all fixtures
+        id: assign
+        shell: pwsh
+        env:
+          # Empty on push/PR/schedule; set only on a manual workflow_dispatch.
+          INPUT_CONFIG: ${{ inputs.config }}
+        run: |
+          $config = if ([string]::IsNullOrWhiteSpace($env:INPUT_CONFIG)) {
+            $env:LABELER_CONFIG
+          } else {
+            $env:INPUT_CONFIG
+          }
+          Write-Host "Resolving labels using config '$config'"
+          ./scripts/Invoke-AllFixtures.ps1 -FixturesDir $env:FIXTURES_DIR -ConfigPath $config
+
+      - name: Write job summary
+        if: always()
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_STEP_SUMMARY) {
+            "## PR Label Assigner" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+            "Processed fixtures in ``$env:FIXTURES_DIR`` using ``$env:LABELER_CONFIG``." |
+              Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          }

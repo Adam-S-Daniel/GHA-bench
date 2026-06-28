@@ -1,0 +1,98 @@
+name: Environment Matrix Generator
+
+# Trigger on code changes, PRs, a weekly schedule (to catch drift), and manual
+# runs (which can point at an alternative configuration file).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      config_path:
+        description: 'Path to the matrix configuration JSON to resolve'
+        required: false
+        default: 'matrix-config.json'
+
+# Least-privilege: the pipeline only needs to read the repository contents.
+permissions:
+  contents: read
+
+# Default configuration file, overridable by the workflow_dispatch input.
+env:
+  MATRIX_CONFIG_PATH: matrix-config.json
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: run the unit tests, then resolve the build matrix and expose it as
+  # job outputs for the downstream matrix job to consume.
+  # ---------------------------------------------------------------------------
+  generate:
+    name: Validate and generate matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+      size: ${{ steps.generate.outputs.size }}
+      max_parallel: ${{ steps.generate.outputs.max_parallel }}
+      fail_fast: ${{ steps.generate.outputs.fail_fast }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module Pester -MinimumVersion 5.0
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = './MatrixGenerator.Tests.ps1'
+          $cfg.Run.Exit = $true
+          $cfg.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $cfg
+
+      - name: Generate build matrix
+        id: generate
+        shell: pwsh
+        env:
+          MATRIX_CONFIG_PATH: ${{ github.event.inputs.config_path || 'matrix-config.json' }}
+        run: |
+          ./Generate-Matrix.ps1
+
+  # ---------------------------------------------------------------------------
+  # Job 2: consume the generated matrix via fromJson(). This is the canonical
+  # "dynamic matrix" pattern and demonstrates the output in a real pipeline.
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build ${{ matrix.os }}
+    needs: generate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.generate.outputs.matrix) }}
+    steps:
+      - name: Show resolved combination
+        shell: pwsh
+        run: |
+          Write-Host "Resolved combination ->"
+          Write-Host "  os           = ${{ matrix.os }}"
+          Write-Host "  node         = ${{ matrix.node }}"
+          Write-Host "  python       = ${{ matrix.python }}"
+          Write-Host "  experimental = ${{ matrix.experimental }}"
+
+  # ---------------------------------------------------------------------------
+  # Job 3: a small summary that depends on both prior jobs, proving the matrix
+  # metadata (size / max-parallel / fail-fast) flowed through as outputs.
+  # ---------------------------------------------------------------------------
+  summary:
+    name: Matrix summary
+    needs: [generate, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print matrix metadata
+        shell: pwsh
+        run: |
+          Write-Host "MATRIX_SIZE=${{ needs.generate.outputs.size }}"
+          Write-Host "MAX_PARALLEL=${{ needs.generate.outputs.max_parallel }}"
+          Write-Host "FAIL_FAST=${{ needs.generate.outputs.fail_fast }}"
+          Write-Host "All matrix jobs completed."

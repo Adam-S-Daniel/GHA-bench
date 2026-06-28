@@ -1,0 +1,91 @@
+name: Dependency License Checker
+
+# Trigger on code changes, on a weekly schedule (catch newly-denied licenses),
+# and allow manual runs with a custom manifest.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      manifest:
+        description: Path to the dependency manifest to check
+        required: false
+        default: test/fixtures/package.json
+
+# Read-only: this workflow only inspects the repository contents.
+permissions:
+  contents: read
+
+# Default config paths. MANIFEST can be overridden per run via the
+# workflow_dispatch input or by injecting the MANIFEST env var (act --env).
+env:
+  ALLOW_LIST: test/fixtures/allow-list.txt
+  DENY_LIST: test/fixtures/deny-list.txt
+  LICENSE_DB: test/fixtures/license-db.csv
+
+jobs:
+  license-check:
+    name: Check dependency licenses
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.check.outputs.result }}
+      summary: ${{ steps.check.outputs.summary }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure jq is available
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+          jq --version
+
+      - name: Run license compliance check
+        id: check
+        env:
+          # Precedence: workflow_dispatch input > injected MANIFEST > default.
+          INPUT_MANIFEST: ${{ github.event.inputs.manifest }}
+        run: |
+          manifest="${INPUT_MANIFEST:-${MANIFEST:-test/fixtures/package.json}}"
+          echo "Checking manifest: ${manifest}"
+
+          # --no-fail keeps the job green so the report is always produced;
+          # the policy result is surfaced as a step output for downstream gating.
+          bash license-checker.sh \
+            --manifest "${manifest}" \
+            --allow-list "${ALLOW_LIST}" \
+            --deny-list "${DENY_LIST}" \
+            --license-db "${LICENSE_DB}" \
+            --no-fail | tee compliance-report.txt
+
+          summary="$(grep '^Summary:' compliance-report.txt || true)"
+          result="$(grep '^Result:' compliance-report.txt | awk '{print $2}')"
+          {
+            echo "summary=${summary}"
+            echo "result=${result}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Display compliance report
+        run: cat compliance-report.txt
+
+  enforce-policy:
+    name: Enforce license policy
+    needs: license-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report compliance result
+        env:
+          RESULT: ${{ needs.license-check.outputs.result }}
+          SUMMARY: ${{ needs.license-check.outputs.summary }}
+        run: |
+          echo "Compliance ${SUMMARY}"
+          echo "Compliance gate result: ${RESULT}"
+          if [ "${RESULT}" = "PASS" ]; then
+            echo "All dependency licenses are approved."
+          else
+            echo "::warning::Non-compliant licenses detected (${RESULT})."
+          fi

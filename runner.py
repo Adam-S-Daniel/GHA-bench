@@ -5,6 +5,7 @@ Invokes Claude Code CLI subagents on scripting tasks under different language co
 """
 
 import argparse
+import fcntl
 import json
 import os
 import re
@@ -371,7 +372,15 @@ WORKFLOW STRUCTURE TESTS (also required):
 # Helpers
 # ---------------------------------------------------------------------------
 
-PUSH_INTERVAL = 60  # seconds between incremental git pushes
+# The pusher thread wakes every PUSH_CHECK_INTERVAL seconds but only commits
+# when at least one new cell has *completed* since the last commit. That makes
+# the trigger "a cell finished" rather than a fixed wall-clock timer, so there
+# is roughly one commit per result instead of a commit every minute that also
+# captures in-progress workspace-before.txt noise. Each commit is still pushed
+# immediately. (Was: commit + push unconditionally every 60s — an absurd number
+# of near-empty commits, a holdover from when commits were the remote-monitoring
+# channel; monitor.py now serves that purpose without touching git.)
+PUSH_CHECK_INTERVAL = 90  # seconds between checks for newly-completed cells
 INCREMENTAL_PREFIX = "Incremental benchmark results:"
 
 # Directories to skip in workspace walkers (noise that inflates metrics)
@@ -381,6 +390,57 @@ SKIP_DIRS = {"node_modules", "__pycache__", ".pytest_cache", ".mypy_cache", "obj
 def log(msg: str) -> None:
     """Print progress to stderr."""
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", file=sys.stderr, flush=True)
+
+
+def _metrics_valid(path: Path) -> bool:
+    """True only if `path` is a non-empty, parseable metrics.json.
+
+    `--resume` treats a completed cell as one whose metrics.json exists. A bare
+    existence check is unsafe: a write interrupted mid-flush (e.g. a session
+    teardown killing the runner) leaves a 0-byte/corrupt metrics.json that would
+    then be SKIPPED forever, silently leaving a hole in the matrix. Requiring a
+    valid file means such a cell is re-run instead.
+    """
+    try:
+        if not path.exists() or path.stat().st_size == 0:
+            return False
+        json.loads(path.read_text())
+        return True
+    except Exception:
+        return False
+
+
+# Held for the process lifetime so the advisory lock is released automatically
+# on exit (even on SIGKILL) — no stale-lock cleanup needed.
+_RUNNER_LOCK_FD = None
+
+
+def acquire_single_runner_lock(repo_root: Path) -> None:
+    """Guarantee only ONE runner.py runs at a time on this machine/repo.
+
+    Two concurrent runners would execute benchmark cells simultaneously, and
+    cells competing for CPU/Docker/PowerShell inflate each other's timing and
+    cost — silently confounding the results. This happened once when a watchdog
+    and a manual launch both started a runner. We take an exclusive, non-blocking
+    advisory lock (flock) on a repo-level lockfile; a second runner refuses to
+    start rather than corrupt the timing data. The lock auto-releases when the
+    holder exits.
+    """
+    global _RUNNER_LOCK_FD
+    lock_path = repo_root / ".runner.lock"
+    _RUNNER_LOCK_FD = open(lock_path, "w")
+    try:
+        fcntl.flock(_RUNNER_LOCK_FD, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        print(
+            f"ERROR: another runner.py already holds {lock_path}. Refusing to "
+            "start a second concurrent runner — concurrent cells would confound "
+            "timing/cost. Exiting.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    _RUNNER_LOCK_FD.write(f"{os.getpid()}\n")
+    _RUNNER_LOCK_FD.flush()
 
 
 # Lock protects all git operations so the PeriodicPusher background thread
@@ -429,11 +489,20 @@ def git_push_results(
             )
 
             push_args = ["git", "push", "-u", "origin", branch]
-            subprocess.run(push_args, capture_output=True, timeout=60, cwd=str(repo_root))
-
-            log(f"  [push] Pushed results ({run_count}/{total_runs} done{', FINAL' if final else ''})")
+            push = subprocess.run(push_args, capture_output=True, text=True,
+                                  timeout=60, cwd=str(repo_root))
+            tag = f"{run_count}/{total_runs} done{', FINAL' if final else ''}"
+            if push.returncode == 0:
+                log(f"  [push] Pushed results ({tag})")
+            else:
+                # Do NOT claim success on a failed push — a silently-failing
+                # push (e.g. a broken pre-push hook) once hid 8h of un-backed-up
+                # commits. Commits are local and safe; surface the failure.
+                err = (push.stderr or push.stdout or "(no output)").strip().splitlines()
+                log(f"  [push] WARNING: push FAILED ({tag}); committed locally only. "
+                    f"git push exit {push.returncode}: {err[-1] if err else '?'}")
         except Exception as e:
-            log(f"  [push] Warning: push failed: {e}")
+            log(f"  [push] Warning: commit/push failed: {e}")
 
 
 class PeriodicPusher:
@@ -461,12 +530,16 @@ class PeriodicPusher:
         self._thread.join(timeout=120)
 
     def _run(self):
-        while not self._stop.wait(PUSH_INTERVAL):
+        last_pushed = 0
+        while not self._stop.wait(PUSH_CHECK_INTERVAL):
+            if self.run_count <= last_pushed:
+                continue  # no new completed cell since last commit — don't churn git
             try:
                 generate_results_md(self.run_dir, self.all_metrics, self.total_runs, self.run_count)
             except Exception as e:
                 log(f"  [push] Warning: results.md generation failed: {e}")
             git_push_results(self.repo_root, self.branch, self.run_count, self.total_runs)
+            last_pushed = self.run_count
 
 
 def capture_workspace_listing(workspace: Path) -> str:
@@ -508,21 +581,6 @@ def copy_generated_files(workspace: Path, dest: Path) -> list[str]:
             except Exception as e:
                 log(f"  Warning: could not copy {rel}: {e}")
     return copied
-
-
-def count_lines(directory: Path) -> int:
-    """Count total lines of code in a directory."""
-    total = 0
-    for root, dirs, files in os.walk(directory):
-        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in SKIP_DIRS]
-        for f in files:
-            if f.startswith("."):
-                continue
-            try:
-                total += len((Path(root) / f).read_text(errors="replace").splitlines())
-            except Exception:
-                pass
-    return total
 
 
 def estimate_tokens(text: str) -> int:
@@ -910,7 +968,12 @@ def run_single_task(
         "--mcp-config", '{"mcpServers":{}}',
         "--strict-mcp-config",
     ]
-    if effort:
+    # `ultracode` is not a valid value for the `--effort` CLI flag (the flag
+    # rejects it with a warning and falls back to the default). It is a
+    # session-level effort setting (xhigh + standing dynamic-workflow
+    # orchestration) enabled via the CLAUDE_CODE_EFFORT_LEVEL env var below.
+    # The 5 standard levels (low/medium/high/xhigh/max) go through the flag.
+    if effort and effort != "ultracode":
         cmd.extend(["--effort", effort])
 
     # Record timing
@@ -936,6 +999,16 @@ def run_single_task(
         env["CLAUDE_CODE_USE_POWERSHELL_TOOL"] = "1"
     elif mode == "powershell":
         env["CLAUDE_CODE_USE_POWERSHELL_TOOL"] = "0"
+
+    # The `ultracode` effort level is a session feature, not a `--effort` flag
+    # value: it pins the session to xhigh effort plus standing dynamic-workflow
+    # orchestration (requires a workflow-capable model). Enable it the same way
+    # the interactive `/effort ultracode` command does — via the session effort
+    # env var — and make sure the Workflow tool is available so the agent can
+    # actually orchestrate.
+    if effort == "ultracode":
+        env["CLAUDE_CODE_EFFORT_LEVEL"] = "ultracode"
+        env["CLAUDE_CODE_WORKFLOWS"] = "1"
 
     # Execute with real-time line timestamping
     timestamped_lines: list[tuple[int, str]] = []  # (epoch_ms, line)
@@ -1047,8 +1120,11 @@ def run_single_task(
     act_result_txt_exists = act_result_path.exists()
     act_result_txt_size = act_result_path.stat().st_size if act_result_txt_exists else 0
 
-    # Code metrics
-    total_lines = count_lines(gen_dir) if gen_dir.exists() else 0
+    # Code metrics. "code_lines" = authored code (impl + tests + workflow) via
+    # compute_structural_metrics — NOT a whole-dir count (which would also tally
+    # fixtures, README, helper scripts, and the captured act-result.txt log).
+    from test_quality import compute_structural_metrics
+    code_lines = compute_structural_metrics(gen_dir).get("code_lines", 0) if gen_dir.exists() else 0
     all_code = get_all_code_text(gen_dir) if gen_dir.exists() else ""
     total_tokens_est = estimate_tokens(all_code)
     language_breakdown = compute_language_breakdown(gen_dir) if gen_dir.exists() else {}
@@ -1143,7 +1219,7 @@ def run_single_task(
             "assumed_cache_write_cost_per_mtok": cost_rates.get("cache_write", 0),
         },
         "code_metrics": {
-            "total_lines": total_lines,
+            "code_lines": code_lines,
             "total_tokens_estimate": total_tokens_est,
             "file_count": len(generated_files),
             "files": generated_files,
@@ -1245,7 +1321,7 @@ def print_summary_table(all_metrics: list[dict]) -> None:
             f"{m['model_short']:<8} "
             f"{duration_s:>9.1f}s "
             f"{m['timing']['num_turns']:>6} "
-            f"{m['code_metrics']['total_lines']:>6} "
+            f"{m['code_metrics'].get('code_lines', m['code_metrics'].get('total_lines', 0)):>6} "
             f"{m['quality']['error_count']:>7} "
             f"${m['cost']['total_cost_usd']:>9.4f} "
             f"{m['language_chosen'][:11]:<12}"
@@ -1365,8 +1441,8 @@ def main():
         help="Resume a previous run by providing its timestamp directory name (e.g., 2026-04-02_181500). Skips runs that already have metrics.json."
     )
     parser.add_argument(
-        "--effort", default=None, choices=["low", "medium", "high", "xhigh", "max"],
-        help="Reasoning effort level passed to claude CLI (default: not set, uses CLI default)"
+        "--effort", default=None, choices=["low", "medium", "high", "xhigh", "max", "ultracode"],
+        help="Reasoning effort level (default: not set, uses CLI default). low/medium/high/xhigh/max are passed via the --effort CLI flag; ultracode (xhigh + dynamic-workflow orchestration) is enabled via CLAUDE_CODE_EFFORT_LEVEL since the flag does not accept it."
     )
     parser.add_argument(
         "--timeout", default=30, type=int,
@@ -1388,6 +1464,9 @@ def main():
 
     # Create or resume run directory
     repo_root = Path(__file__).parent.resolve()
+    # Single-runner guard: never let two runners execute cells concurrently
+    # (concurrent cells confound timing/cost). Released automatically on exit.
+    acquire_single_runner_lock(repo_root)
     if args.resume:
         run_timestamp = args.resume
         run_dir = repo_root / "results" / run_timestamp
@@ -1467,7 +1546,7 @@ def main():
                 for mode in selected_modes:
                     variant = f"{model_short}-{args.effort}" if args.effort else model_short
                     existing = run_dir / "tasks" / task["id"] / f"{mode}-{variant}" / "metrics.json"
-                    if not existing.exists():
+                    if not _metrics_valid(existing):
                         runs_to_do += 1
         total_runs_for_report = len(all_metrics) + runs_to_do
 
@@ -1485,7 +1564,7 @@ def main():
     pusher = PeriodicPusher(repo_root, git_branch, total_runs_for_report, run_dir)
     pusher.update(len(all_metrics), all_metrics)
     pusher.start()
-    log(f"Periodic git push enabled every {PUSH_INTERVAL}s to branch {git_branch}")
+    log(f"Git commit+push on each newly-completed cell (checked every {PUSH_CHECK_INTERVAL}s) to branch {git_branch}")
 
     for task in selected_tasks:
         for model_short, model_id in selected_models:
@@ -1495,7 +1574,7 @@ def main():
                 # as run_single_task's result_dir construction.
                 variant = f"{model_short}-{args.effort}" if args.effort else model_short
                 existing_metrics = run_dir / "tasks" / task["id"] / f"{mode}-{variant}" / "metrics.json"
-                if existing_metrics.exists():
+                if _metrics_valid(existing_metrics):
                     log(f"Run {run_count}/{total_runs} — SKIPPED (already completed): {task['id']} | {mode} | {model_short}")
                     pusher.update(run_count, all_metrics)
                     continue
@@ -1538,7 +1617,8 @@ def main():
             "model": m["model_short"],
             "duration_s": m["timing"]["grand_total_duration_ms"] / 1000,
             "cost_usd": m["cost"]["total_cost_usd"],
-            "lines": m["code_metrics"]["total_lines"],
+            # tolerate both new (code_lines) and resumed old (total_lines) cells
+            "lines": m["code_metrics"].get("code_lines", m["code_metrics"].get("total_lines", 0)),
             "errors": m["quality"]["error_count"],
             "language": m["language_chosen"],
             "turns": m["timing"]["num_turns"],
@@ -1551,7 +1631,6 @@ def main():
         if mode_metrics:
             summary["by_mode"][mode] = {
                 "avg_duration_s": sum(m["timing"]["grand_total_duration_ms"] for m in mode_metrics) / len(mode_metrics) / 1000,
-                "avg_lines": sum(m["code_metrics"]["total_lines"] for m in mode_metrics) / len(mode_metrics),
                 "avg_errors": sum(m["quality"]["error_count"] for m in mode_metrics) / len(mode_metrics),
                 "total_cost_usd": sum(m["cost"]["total_cost_usd"] for m in mode_metrics),
             }
@@ -1562,7 +1641,6 @@ def main():
         if model_metrics:
             summary["by_model"][model_short] = {
                 "avg_duration_s": sum(m["timing"]["grand_total_duration_ms"] for m in model_metrics) / len(model_metrics) / 1000,
-                "avg_lines": sum(m["code_metrics"]["total_lines"] for m in model_metrics) / len(model_metrics),
                 "avg_errors": sum(m["quality"]["error_count"] for m in model_metrics) / len(model_metrics),
                 "total_cost_usd": sum(m["cost"]["total_cost_usd"] for m in model_metrics),
             }

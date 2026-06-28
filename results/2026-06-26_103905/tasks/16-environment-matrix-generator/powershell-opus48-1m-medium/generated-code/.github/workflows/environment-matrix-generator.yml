@@ -1,0 +1,85 @@
+name: Environment Matrix Generator
+
+# Trigger on code changes, PRs, a weekly schedule and manual dispatch so the
+# matrix generator is continuously validated.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      config_file:
+        description: 'Path to the matrix config JSON fixture'
+        required: false
+        default: 'fixtures/config.json'
+
+# Least-privilege: the workflow only reads the repository.
+permissions:
+  contents: read
+
+# CONFIG_FILE points at the fixture the generator consumes. The test harness
+# overrides the file's contents per test case; the path stays constant.
+env:
+  CONFIG_FILE: ${{ github.event.inputs.config_file || 'fixtures/config.json' }}
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          # Run the full Pester suite and fail the job on any test failure.
+          $config = New-PesterConfiguration
+          $config.Run.Path = './MatrixGenerator.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  generate:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate matrix from fixture
+        shell: pwsh
+        run: |
+          $cfg = $env:CONFIG_FILE
+          if (-not (Test-Path -LiteralPath $cfg)) {
+            throw "Config fixture not found: $cfg"
+          }
+
+          # Invoke the generator; it prints the matrix JSON to stdout.
+          $json = ./MatrixGenerator.ps1 -ConfigPath $cfg
+          Write-Host '----- BEGIN GENERATED MATRIX JSON -----'
+          Write-Host $json
+          Write-Host '----- END GENERATED MATRIX JSON -----'
+
+          # Emit parseable, deterministic summary lines so the test harness can
+          # assert on EXACT expected values from the act output.
+          $obj = $json | ConvertFrom-Json
+          Write-Host "GENERATED_MATRIX_SIZE=$($obj.size)"
+          Write-Host "GENERATED_INCLUDE_COUNT=$(@($obj.matrix.include).Count)"
+          Write-Host "GENERATED_FAIL_FAST=$($obj.'fail-fast')"
+          if ($null -ne $obj.'max-parallel') {
+            Write-Host "GENERATED_MAX_PARALLEL=$($obj.'max-parallel')"
+          }
+
+      - name: Publish matrix to step output
+        id: matrix
+        shell: pwsh
+        run: |
+          # Demonstrate real-world use: expose the matrix as a job output that a
+          # downstream job could consume via `strategy.matrix`.
+          $json = ./MatrixGenerator.ps1 -ConfigPath $env:CONFIG_FILE
+          $compact = ($json | ConvertFrom-Json).matrix | ConvertTo-Json -Depth 10 -Compress
+          "matrix=$compact" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Published matrix output ($($compact.Length) chars)."

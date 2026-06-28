@@ -1,0 +1,288 @@
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench/AGENTS.md"}
+[Result] 1	# Agent Instructions
+2	
+3	All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+4	reference here. If you are a Claude Code agent, you have already loaded this
+5	via `CLAUDE.md`. Other agents: read this file directly.
+6	
+7	## Build and test
+8	
+9	```bash
+10	# Run unit tests (REQUIRED before every PR)
+11	pip install pytest  # if not already installed
+12	python3 -m pytest tests/ -v
+13	
+14	# Validate imports
+15	python3 -c "from runner import main"
+16	python3 -c "from generate_results import generate_results_md"
+17	python3 -c "from test_quality import compute_structural_metrics"
+18	python3 -c "from llm_providers import get_provider"
+19	python3 -c "from version_docs import build_doc, main"
+20	python3 -c "from combine_results import combine"
+21	
+22	# Regenerate all reports
+23	python3 generate_results.py --all
+24	
+25	# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+26	# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+27	# a 
+[Assistant] This is a benchmark task where I produce a solution autonomously. Let me check my working directory and the act setup.
+[Tool: Bash] pwd && ls -la && cat .actrc 2>/dev/null && echo "---ACT---" && which act actionlint docker python3 && docker images | grep -i act
+[Result] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium
+total 44
+drwxr-xr-x 4 passp passp  4096 Jun 26 13:23 .
+drwxr-xr-x 3 passp passp  4096 Jun 26 13:23 ..
+-rw-r--r-- 1 passp passp    40 Jun 26 13:23 .actrc
+drwxr-xr-x 2 passp passp  4096 Jun 26 13:23 .claude
+drwxr-xr-x 6 passp passp  4096 Jun 26 13:23 .git
+-rw-r--r-- 1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---ACT---
+/home/passp/.local/bin/act
+/home/passp/.local/bin/actionlint
+/usr/bin/docker
+/usr/bin/python3
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          5
+[Assistant] This is a Python-mode task. I'll build an environment matrix generator with TDD. Let me start with the red phase: a failing test plus a stub module.
+[Tool: Bash] cd "$(pwd)" && mkdir -p tests fixtures .github/workflows && python3 --version && python3 -m pytest --version 2>/dev/null || pip install pytest -q 2>&1 | tail -1
+[Result] Python 3.12.3
+pytest 9.0.3
+[Assistant] Now the red phase — stub module and first failing test:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/matrix_generator.py", "content": "\"\"\"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/matrix_generator.py (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/tests/test_matrix_generator.py", "conten
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/tests/test_matrix_generator.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && python3 -m pytest tests/ -q 2>&1 | tail -15
+[Result] ==================================== ERRORS ====================================
+[31m[1m_ ERROR collecting workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/tests/test_matrix_generator.py _[0m
+[31mImportError while importing test module '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/tests/test_matrix_generator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+[1m[31m/usr/lib/python3.12/importlib/__init__.py[0m:90: in import_module
+    [0m[94mreturn[39;49;00m _bootstrap._gcd_import(name[level:], package, level)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_matrix_generator.py[0m:15: in <module>
+    [0m[94mfrom[39;49;00m [04m[96mmatrix_generator[39;49;00m [94mimport[39;49;00m generate_matrix, MatrixError[90m[39;49;00m
+[1m[31mE   I
+[Assistant] Red confirmed. Now the green phase — implement the module:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/matrix_generator.py", "content": "#!/usr
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && python3 -m pytest tests/ -q -p no:cacheprovider --rootdir="$(pwd)" 2>&1 | tail -15
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                       [100%][0m
+[32m[32m[1m18 passed[0m[32m in 0.06s[0m[0m
+[Assistant] Green — all 18 pass. Now let me create the fixtures and compute their exact expected outputs:
+[Tool: Bash] cd "$(pwd)"
+cat > fixtures/primary.json <<'EOF'
+{
+  "axes": {
+    "os": ["ubuntu-latest", "windows-latest"],
+    "language": ["3.11", "3.12"]
+  },
+  "max_parallel": 2,
+  "fail_fast": false,
+  "max_size": 10
+}
+EOF
+cat > fixtures/exclude.json <<'EOF'
+{
+  "axes": {
+    "os": ["ubuntu-latest", "macos-latest"],
+    "language": ["3.11", "3.12"]
+  },
+  "exclude": [{"os": "macos-latest", "language": "3.11"}],
+  "fail_fast": true
+}
+EOF
+cat > fixtures/include.json <<'EOF'
+{
+  "axes": {
+    "fruit": ["apple", "pear"],
+    "animal": ["cat", "dog"]
+  },
+  "include": [
+    {"color": "green"},
+    {"color": "pink", "animal": "cat"},
+    {"fruit": "apple", "shape": "circle"},
+    {"fruit": "banana"},
+    {"fruit": "banana", "animal": "cat"}
+  ]
+}
+EOF
+cat > fixtures/features.json <<'EOF'
+{
+  "axes": {
+    "os": ["ubuntu-latest"],
+    "language": ["3.12"],
+    "features": ["fast", "safe"]
+  },
+  "max_parallel": 4
+}
+EOF
+cat > fixtures/error_maxsize.json <<'EOF'
+{
+  "axes": {
+    "a": [1, 2, 3, 4, 5, 6],
+    "b": [1, 2, 3, 4, 5, 6]
+  },
+  "max_size": 10
+}
+EOF
+echo "fixtures created"; ls fixtures
+[Result] fixtures created
+error_maxsize.json
+exclude.json
+features.json
+include.json
+primary.json
+[Tool: Bash] cd "$(pwd)"
+for f in primary exclude include features; do
+  echo "=== $f ==="
+  python3 matrix_generator.py fixtures/$f.json | tee fixtures/$f.expected.txt
+  echo
+done
+echo "=== error_maxsize (expect exit1) ==="
+python3 matrix_generator.py fixtures/error_maxsize.json; echo "exit=$?"
+[Result] === primary ===
+{"fail-fast": false, "matrix": {"include": [{"language": "3.11", "os": "ubuntu-latest"}, {"language": "3.12", "os": "ubuntu-latest"}, {"language": "3.11", "os": "windows-latest"}, {"language": "3.12", "os": "windows-latest"}]}, "max-parallel": 2}
+
+=== exclude ===
+{"fail-fast": true, "matrix": {"include": [{"language": "3.11", "os": "ubuntu-latest"}, {"language": "3.12", "os": "ubuntu-latest"}, {"language": "3.12", "os": "macos-latest"}]}}
+
+=== include ===
+{"matrix": {"include": [{"animal": "cat", "color": "pink", "fruit": "apple", "shape": "circle"}, {"animal": "dog", "color": "green", "fruit": "apple", "shape": "circle"}, {"animal": "cat", "color": "pink", "fruit": "pear"}, {"animal": "dog", "color": "green", "fruit": "pear"}, {"fruit": "banana"}, {"animal": "cat", "fruit": "banana"}]}}
+
+=== features ===
+{"matrix": {"include": [{"features": "fast", "language": "3.12", "os": "ubuntu-latest"}, {"features": "safe", "language": "3.12", "os": "ubuntu-latest"}]}, "max-parall
+[Assistant] Now the workflow. Let me write it to loop fixtures, run a negative test, and feed a dynamic matrix to a downstream job:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/.github/workflows/environment-matrix-gen
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/.github/workflows/environment-matrix-generator.yml (file state is current in your context — no need to Read it back)
+[Assistant] Let me simplify the fragile negative-test step:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/.github/workflows/
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/.github/workflows/environment-matrix-generator.yml has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && actionlint .github/workflows/environment-matrix-generator.yml; echo "actionlint exit=$?"
+[Result] actionlint exit=0
+[Assistant] Let me check the act container's Python before spending an act run:
+[Tool: Bash] docker run --rm act-ubuntu-pwsh:latest bash -c "python3 --version; which python3" 2>&1 | tail -5
+[Result] Python 3.12.3
+/usr/bin/python3
+[Assistant] Container has system Python 3.12. Now let me write the act harness and the workflow-structure pytest:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/run_act_tests.py", "content": "#!/usr/bi
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/run_act_tests.py (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/tests/test_workflow_structure.py", "cont
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/tests/test_workflow_structure.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && python3 -c "import yaml" 2>/dev/null && echo "yaml ok" || pip install pyyaml -q 2>&1 | tail -1
+python3 -m pytest tests/ -q --rootdir="$(pwd)" 2>&1 | tail -15
+[Result] yaml ok
+[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33ms[0m[32m                                               [100%][0m
+[32m[32m[1m25 passed[0m, [33m1 skipped[0m[32m in 0.14s[0m[0m
+[Assistant] All structure tests pass. Now the first act run (run 1 of 3):
+[Tool: Bash] cd "$(pwd)" && timeout 300 python3 run_act_tests.py 2>&1 | tail -40; echo "HARNESS_EXIT=${PIPESTATUS[0]}"
+[Result] $ act push --rm
+  FAIL: act exited 0 (got 1)
+  FAIL: at least 5 'Job succeeded' (got 0)
+Traceback (most recent call last):
+  File "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/run_act_tests.py", line 62, in extract_block
+    i = lines.index(start)
+        ^^^^^^^^^^^^^^^^^^
+ValueError: '===FIXTURE: primary===' is not in list
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/run_act_tests.py", line 128, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/run_act_tests.py", line 91, in main
+    block = extract_block(output, name)
+    
+[Assistant] act failed. Let me diagnose from the saved output rather than re-running:
+[Tool: Bash] cd "$(pwd)" && grep -nE "level=error|Error:|❌|failure|Failed|fixtures/|setup-python|checkout|Job succeeded|exit code" act-result.txt | head -40
+[Result] 4:exit code: 1
+11:[Environment Matrix Generator/generate]   ❌  Failure - Set up job
+17:Error: Error response from daemon: pull access denied for act-ubuntu-pwsh, repository does not exist or may require 'docker login'
+[Assistant] The custom local image isn't pulled by act. Add `--pull=false`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/run_act_tests.py",
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/run_act_tests.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] docker run --rm act-ubuntu-pwsh:latest bash -c "ls /opt/hostedtoolcache/Python 2>/dev/null || echo 'no toolcache'" 2>&1 | tail
+[Result] no toolcache
+[Assistant] No tool cache — `setup-python` would need a network download in act (flaky). My script has zero pip dependencies and `ubuntu-latest` ships Python 3 preinstalled, so system `python3` is the robust, legitimate choice. Removing `setup-python`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/.github/workflows/
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/.github/workflows/environment-matrix-generator.yml has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/tests/test_workflo
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-medium/tests/test_workflow_structure.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && actionlint .github/workflows/environment-matrix-generator.yml && echo "actionlint OK" && python3 -m pytest tests/ -q --rootdir="$(pwd)" 2>&1 | tail -5
+[Result] actionlint OK
+
+[1m[31mtests/test_workflow_structure.py[0m:111: AssertionError
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/test_workflow_structure.py::[1mtest_act_result_exact_values[0m - AssertionError: act must have exited 0
+[31m[31m[1m1 failed[0m, [32m25 passed[0m[31m in 0.18s[0m[0m
+[Assistant] Stale failed-run artifact. Let me clear it and run act again (run 2 of 3):
+[Tool: Bash] cd "$(pwd)" && rm -f act-result.txt && timeout 400 python3 run_act_tests.py 2>&1 | tail -30; echo "HARNESS_EXIT=${PIPESTATUS[0]}"
+[Result] $ act push --rm --pull=false
+  PASS: act exited 0 (got 0)
+  PASS: at least 5 'Job succeeded' (got 5)
+  PASS: fixture 'primary' matches expected JSON exactly
+  PASS: fixture 'exclude' matches expected JSON exactly
+  PASS: fixture 'include' matches expected JSON exactly
+  PASS: fixture 'features' matches expected JSON exactly
+  PASS: max-size guard error message present
+  PASS: max-size negative test reported success
+  PASS: build job ran combination os=ubuntu-latest
+  PASS: build job ran combination os=windows-latest
+
+All act assertions PASSED
+HARNESS_EXIT=0
+[Assistant] All act assertions pass. Now the full pytest suite including act-result validation:
+[Tool: Bash] cd "$(pwd)" && python3 -m pytest tests/ -q --rootdir="$(pwd)" 2>&1 | tail -8 && echo "--- act-result.txt ---" && wc -l act-result.txt && grep -c "Job succeeded" act-result.txt
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                               [100%][0m
+[32m[32m[1m26 passed[0m[32m in 0.17s[0m[0m
+--- act-result.txt ---
+312 act-result.txt
+5
+[Assistant] All 26 tests pass; `act-result.txt` exists with 5 "Job succeeded". Let me confirm the artifact contains the delimited fixture blocks:
+[Tool: Bash] cd "$(pwd)" && grep -nE "===FIXTURE|===END FIXTURE|max_size of 10|Building os=" act-result.txt | head -30
+[Result] 78:[Environment Matrix Generator/generate]   | ===FIXTURE: primary===
+80:[Environment Matrix Generator/generate]   | ===END FIXTURE: primary===
+81:[Environment Matrix Generator/generate]   | ===FIXTURE: exclude===
+83:[Environment Matrix Generator/generate]   | ===END FIXTURE: exclude===
+84:[Environment Matrix Generator/generate]   | ===FIXTURE: include===
+86:[Environment Matrix Generator/generate]   | ===END FIXTURE: include===
+87:[Environment Matrix Generator/generate]   | ===FIXTURE: features===
+89:[Environment Matrix Generator/generate]   | ===END FIXTURE: features===
+111:[Environment Matrix Generator/generate]   | ===FIXTURE: error_maxsize===
+112:[Environment Matrix Generator/generate]   | Error: generated matrix has 36 combinations, which exceeds the configured max_size of 10. Reduce axis values, add exclude rules, or raise max_size.
+114:[Environment Matrix Generator/generate]   | ===END FIXTURE: error_maxsize===
+265:[Environment Matrix Generator/build-4 ]   | Building os=windows-
+[Assistant] Everything works end-to-end. The task is complete. Here's a summary of what I built.
+
+## Solution overview
+
+**`matrix_generator.py`** — the generator. Takes a declarative config (`axes`, `include`, `exclude`, `max_parallel`, `fail_fast`, `max_size`) and emits a GitHub-Actions `strategy` object as JSON. It faithfully mirrors GitHub's own semantics:
+1. Cartesian product of axes (declaration order, last axis fastest)
+2. `exclude` rules applied first (subset-matching drops every matching combo)
+3. `include` rules applied with GitHub's documented merge-or-append algorithm (verified against GitHub's own example in a test)
+4. `max_size` validation with an actionable error message
+5. Output as `matrix.include` — the canonical shape for a *dynamically generated* matrix, directly consumable via `fromJSON`
+
+CLI errors go to stderr with non-zero exit and meaningful messages.
+
+## TDD methodology
+- **Red:** wrote `tests/test_matrix_generator.py` first against a stub → import/assertion failures.
+- **Green:** implemented the module → 18 tests pass.
+- Tests cover expansion, exclude, include (incl. GitHub's documented example), strategy passthrough, max-size validation, every error path, and the CLI.
+
+## GitHub Actions pipeline
+**`.github/workflows/environment-matrix-generator.yml`** — triggers on push/pull_request/workflow_dispatch/schedule, least-privilege `contents: read`, two jobs:
+- `generate`: checkout → run generator over all fixtures (delimited output) → negative max-size test → export primary matrix as a job output
+- `build` (`needs: generate`): consumes the matrix via `strategy.matrix: ${{ fromJSON(...) }}`, fanning out one real job per combination
+
+Removed `setup-python` deliberately — the generator has zero deps and `ubuntu-latest` ships Python 3.12, making the workflow robust in act with no network download.
+
+## Validation results
+- `actionlint` → exit 0
+- `run_act_tests.py` runs the whole suite through **one `act push` run** (all fixtures in a single run to respect the run limit; 2 runs used total), writes **`act-result.txt`**, and asserts: act exit 0, ≥5 "Job succeeded", **exact expected JSON per fixture**, the max-size guard message, and that the dynamic `build` job ran each combination — all PASS.
+- `pytest tests/` → **26 passed** (generator + CLI + workflow structure + actionlint + exact act-result value checks).

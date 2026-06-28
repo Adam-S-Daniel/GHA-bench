@@ -1,0 +1,109 @@
+name: Dependency License Checker
+
+# Trigger on code changes, PRs, a weekly schedule (to catch newly published
+# license changes) and manual dispatch (so a specific manifest can be checked).
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1' # every Monday 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      manifest:
+        description: 'Path (relative to repo root) of the manifest to check'
+        required: false
+        default: 'examples/package.json'
+
+# Least-privilege: the checker only needs to read the repository contents.
+permissions:
+  contents: read
+
+# Fixed inputs shared by the jobs. MANIFEST_FILE is intentionally NOT defined
+# here so that an injected environment variable (e.g. `act --env MANIFEST_FILE=...`)
+# or the workflow_dispatch input can select the manifest at run time.
+env:
+  CONFIG_FILE: config/license-config.json
+  LICENSE_DB_FILE: fixtures/license-db.json
+  DEFAULT_MANIFEST: examples/package.json
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: run the Pester unit tests for the checker library.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester 5 is available
+        shell: pwsh
+        run: |
+          $pester = Get-Module -ListAvailable -Name Pester |
+            Where-Object { $_.Version -ge [version]'5.0.0' }
+          if (-not $pester) {
+            Write-Host 'Pester 5 not found - installing from PSGallery...'
+            Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.0.0
+          } else {
+            Write-Host "Using Pester $($pester[0].Version)"
+          }
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path tests/LicenseChecker.Tests.ps1 -Output Detailed -PassThru
+          Write-Host "Passed: $($result.PassedCount)  Failed: $($result.FailedCount)"
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) unit test(s) failed"
+          }
+
+  # ---------------------------------------------------------------------------
+  # Job 2: run the actual license compliance check. Depends on the tests.
+  # ---------------------------------------------------------------------------
+  license-check:
+    name: License compliance check
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      # Populated only for workflow_dispatch; empty for other events so the
+      # injected MANIFEST_FILE / default is used instead.
+      DISPATCH_MANIFEST: ${{ github.event.inputs.manifest }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve manifest to analyse
+        id: resolve
+        shell: pwsh
+        run: |
+          # Precedence: injected MANIFEST_FILE -> workflow_dispatch input -> default.
+          # MANIFEST_FILE wins so an injected env var (CI/test harness) is always
+          # honoured regardless of any workflow_dispatch input default.
+          $manifest = $env:MANIFEST_FILE
+          if ([string]::IsNullOrWhiteSpace($manifest)) { $manifest = $env:DISPATCH_MANIFEST }
+          if ([string]::IsNullOrWhiteSpace($manifest)) { $manifest = $env:DEFAULT_MANIFEST }
+          Write-Host "Selected manifest: $manifest"
+          "manifest=$manifest" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Run dependency license checker
+        shell: pwsh
+        run: |
+          $manifest = '${{ steps.resolve.outputs.manifest }}'
+          Write-Host "Checking $manifest against policy $env:CONFIG_FILE"
+          ./Invoke-LicenseCheck.ps1 `
+            -ManifestPath $manifest `
+            -ConfigPath $env:CONFIG_FILE `
+            -LicenseDbPath $env:LICENSE_DB_FILE `
+            -OutputPath compliance-report.txt
+
+      - name: Publish report to step summary
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path compliance-report.txt) {
+            "## Dependency License Compliance Report" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            Get-Content compliance-report.txt | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          }

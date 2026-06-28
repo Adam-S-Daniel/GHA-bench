@@ -1,0 +1,115 @@
+name: Semantic Version Bumper
+
+# Trigger on pushes and PRs (so version impact is visible in review), on a
+# weekly schedule (a periodic release cut), and manually via the Actions UI.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      fail_on_no_bump:
+        description: "Fail the run if no conventional commits warrant a bump"
+        required: false
+        default: "false"
+
+# Least-privilege: this pipeline only reads the repository contents. A real
+# deployment that commits the bumped version back would elevate to
+# `contents: write`, but we keep it read-only so the workflow needs no
+# secrets and runs cleanly in an isolated container.
+permissions:
+  contents: read
+
+env:
+  CHANGELOG_FILE: CHANGELOG.md
+  COMMIT_LOG_FILE: commits.txt
+
+jobs:
+  bump:
+    name: Compute next version
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_type: ${{ steps.bump.outputs.bump_type }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        shell: pwsh
+        run: |
+          "PowerShell $($PSVersionTable.PSVersion)"
+          $pester = Get-Module -ListAvailable Pester | Select-Object -First 1
+          "Pester $($pester.Version)"
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          # Gate the pipeline on the unit test suite (red/green TDD output).
+          $result = Invoke-Pester -Path ./SemanticVersionBumper.Tests.ps1 -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "Unit tests failed: $($result.FailedCount) failing test(s)."
+          }
+          "Unit tests passed: $($result.PassedCount)"
+
+      - name: Determine version file
+        id: detect
+        shell: pwsh
+        run: |
+          # Auto-detect the source of truth for the current version.
+          $versionFile = if (Test-Path 'package.json') { 'package.json' }
+                         elseif (Test-Path 'version.txt') { 'version.txt' }
+                         else { throw 'No version file found (expected package.json or version.txt).' }
+          "Using version file: $versionFile"
+          "version_file=$versionFile" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Ensure commit log exists
+        shell: pwsh
+        run: |
+          # In CI the commit log is normally generated from git history. The
+          # test harness supplies it as a fixture; if it is absent we fall
+          # back to the real history so the workflow is usable in production.
+          if (-not (Test-Path $env:COMMIT_LOG_FILE)) {
+            "No $($env:COMMIT_LOG_FILE) found; generating from git log."
+            git log --pretty=format:'%s' -n 50 | Out-File -FilePath $env:COMMIT_LOG_FILE -Encoding utf8
+          }
+          "--- commit log ---"
+          Get-Content $env:COMMIT_LOG_FILE
+
+      - name: Bump version and update changelog
+        id: bump
+        shell: pwsh
+        run: |
+          $failFlag = '${{ github.event.inputs.fail_on_no_bump }}' -eq 'true'
+          $vf = '${{ steps.detect.outputs.version_file }}'
+          $params = @{
+            VersionFile   = $vf
+            CommitLogFile = $env:COMMIT_LOG_FILE
+            ChangelogFile = $env:CHANGELOG_FILE
+          }
+          if ($failFlag) { $params.FailOnNoBump = $true }
+          ./Invoke-Bump.ps1 @params
+
+      - name: Show changelog
+        shell: pwsh
+        run: |
+          if (Test-Path $env:CHANGELOG_FILE) {
+            "===== $($env:CHANGELOG_FILE) ====="
+            Get-Content $env:CHANGELOG_FILE
+          }
+
+  report:
+    name: Report release
+    needs: bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce new version
+        shell: pwsh
+        run: |
+          # Consume the upstream job's outputs to demonstrate job dependencies.
+          $version = '${{ needs.bump.outputs.new_version }}'
+          $type = '${{ needs.bump.outputs.bump_type }}'
+          "Release report: new version is $version (bump type: $type)"
+          "REPORT_VERSION=$version"

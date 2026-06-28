@@ -27,6 +27,13 @@ python3 generate_results.py --all
 # a wrapper script (see run-fresh-matrix-2026-05-06.sh).
 python3 runner.py --tasks 11,12,13,15,16,17,18 --modes default,powershell,powershell-tool,bash,typescript-bun --models opus,sonnet
 
+# Watch a run while it is still in progress (read-only live dashboard). Reads
+# whatever metrics.json files exist so far; never touches the run. The head-to-head
+# is automatic: the strongest model+version in this run vs the strongest in the
+# previous report (newest completed run), broken down per scripting language.
+# Override the auto-pick with --baseline DIR and/or --pair RUNVAR=BASEVAR.
+python3 monitor.py --total 140 --watch 30                 # newest run, refresh 30s
+
 # Build per-CC-version reference docs in each run dir (system prompt +
 # tool descriptions + sliced changelog). Idempotent; caches under
 # .cache/cc-versions/.
@@ -37,7 +44,7 @@ python3 version_docs.py results/<run-dir> # one run
 python3 test_quality.py results/2026-04-09_152435
 
 # Evaluate test + deliverable quality with the default panel of judges
-# (Haiku 4.5 via claude-cli + Gemini 3.1 Pro via gemini-cli). Each judge
+# (Haiku 4.5 via claude-cli + Gemini 3.1 Pro via the agy CLI). Each judge
 # writes its own cache file: test-quality-{short}.json and
 # deliverable-quality-{short}.json. 8-worker thread pool by default;
 # bump `--workers` if your CLIs + account limits allow more concurrency.
@@ -82,16 +89,21 @@ execution modes; "language" is the concept readers expect.
 ### Key files
 
 - `models.py` — single source of truth for model IDs and token pricing. Update here when Anthropic changes prices.
-- `runner.py` — benchmark harness. Runs agents via `claude -p`, collects metrics, pushes results. Imports from `models.py` and `generate_results.py`.
+- `runner.py` — benchmark harness. Runs agents via `claude -p`, collects metrics, pushes results. Imports from `models.py` and `generate_results.py`. Robustness invariants added 2026-06:
+  - **Single-runner lock.** On startup it takes an exclusive non-blocking `flock` on `<repo>/.runner.lock` (`acquire_single_runner_lock`); a second runner exits(2) rather than execute cells concurrently — concurrent cells compete for CPU/Docker/pwsh and confound each other's timing/cost. (Released automatically on exit.)
+  - **Resume validity.** `--resume` skips a cell only when its `metrics.json` is non-empty + parseable (`_metrics_valid`), so a write interrupted by a crash/teardown is re-run rather than skipped forever, leaving a hole.
+  - **Honest push logging + commit-per-cell.** The `PeriodicPusher` thread commits+pushes `results/` **once per newly-completed cell** (wakes every `PUSH_CHECK_INTERVAL`s, commits only when `run_count` increased) — one commit per result, each pushed immediately. `git_push_results` checks the push exit code and logs an explicit WARNING on failure instead of always printing "Pushed results".
 - `generate_results.py` — generates `results.md` reports and updates `README.md`. Can run standalone: `python3 generate_results.py --all`. Each results.md opens with a "Claude Code versions used" line linking to the per-version docs (see `version_docs.py`).
 - `combine_results.py` — produces cross-run combined reports `results/results_<dirA>__<dirB>[__<dirC>...].md`. Same table layout as per-run reports plus a CLI Version Legend; uses `judge_consistency_report.py` for the JCS section and `conclusions_report.py` for the Opus-max Conclusions prose. Standalone: `python3 combine_results.py <dirA> <dirB> [<dirC> ...]`.
-- `test_quality.py` — test + deliverable quality evaluation. Structural metrics (always) + panel-of-judges LLM evaluation (`--llm-judge` for test-quality judge, `--deliverable-judge` for workflow+scripts judge). The default panel is Haiku 4.5 + Gemini 3.1 Pro (configured in the module-level `JUDGES` dict). Each judge writes its own per-run cache file; `load_panel_scores(variant_dir, kind)` reads them and returns a mean-aggregated score dict for the reporting layer. Legacy single-Sonnet `*-llm.json` caches still read for backward compat. Imported by `generate_results.py` for the "Test Quality Evaluation" section.
-- `llm_providers.py` — pluggable LLM provider abstraction for evaluation tasks (see "Adding LLM providers" below). Currently registered: `claude-cli` (pre-authenticated Claude Code CLI), `gemini-cli` (pre-authenticated Gemini CLI, bypasses billing gate), `gemini-api` (google-genai SDK, requires `GEMINI_API_KEY` and a paid-tier Google AI Studio account).
+- `monitor.py` — read-only **live** dashboard for an in-flight run. Groups completed cells by `variant` and prints per-variant run-health (duration, cost, turns, errors, actionlint, hooks, test-exec time), structural code metrics (impl files/lines, workflow files/lines, total lines — all non-LLM), structural test metrics (test files/lines, tests, assertions, assertions/test, test:code ratio — all non-LLM), and live-detected traps. The head-to-head is **automatic and always strongest-vs-strongest**: `strongest_model_short` (ranked by `model_power` — family, then version, then 1m>200k context) picks the most powerful model+version in *this* run and in the *previous report* (auto-detected: newest run with a `summary.json` older than this one), then matches them by task+language at each shared effort. It also breaks the comparison down **per scripting language** and flags languages whose deltas differ significantly (≥1.5σ and ≥25 pts) from the cross-language mean. Override the auto-pick with `--baseline DIR` (which prior run; `none` to skip) and/or `--pair RUNVAR=BASEVAR` (exact variant pairing); for full cross-model rollups use `combine_results.py` post-run. On Claude-subscription auth it also prints the **weekly subscription allowance** via `GET /api/oauth/usage` (the endpoint behind the CLI's `/usage`): five-hour + weekly limits from the `limits[]` array, annotating which weekly cap an Opus run draws from, plus `extra_usage`. It reads the OAuth token from `~/.claude/.credentials.json`, never logs it, degrades gracefully (skipped when there are no OAuth creds — e.g. API-key auth has no weekly cap — or on HTTP error), and can be disabled with `--no-usage`. `--total N` enables a pace-based ETA (a floor — later tranches run slower); `--watch SECS` refreshes. Pure logic (`aggregate`, `match_pairs`, `group_by_variant`, `model_power`, `strongest_model_short`, `flag_outliers`, `format_usage`) is unit-tested in `tests/test_monitor.py`; the `fetch_usage` network call and the structural/trap helpers (which reuse `test_quality.compute_structural_metrics` and `generate_results._detect_traps`) are best-effort and not unit-tested. Distinct from `watchdog.sh` (process supervision) and `generate_results.py` (post-run report).
+- `test_quality.py` — test + deliverable quality evaluation. Structural metrics (always) + panel-of-judges LLM evaluation (`--llm-judge` for test-quality judge, `--deliverable-judge` for workflow+scripts judge). `compute_structural_metrics` returns `impl_lines`, `test_lines`, `workflow_lines`, and **`code_lines` = impl + test + workflow** (the authored-code total). The reports' Failed-Runs "Lines" column and the monitor's "total" now use `code_lines`, NOT the runner's `code_metrics.total_lines` (a whole-dir count that also includes fixtures, README, helper scripts, and the `act-result.txt` log). None of these line counts feed any quality score — those come from the LLM panel (which reads the code) + the structural test:code ratio (`test_lines/impl_lines`). The default panel is Haiku 4.5 + Gemini 3.1 Pro (configured in the module-level `JUDGES` dict). Each judge writes its own per-run cache file; `load_panel_scores(variant_dir, kind)` reads them and returns a mean-aggregated score dict for the reporting layer. Legacy single-Sonnet `*-llm.json` caches still read for backward compat. Imported by `generate_results.py` for the "Test Quality Evaluation" section.
+- `llm_providers.py` — pluggable LLM provider abstraction for evaluation tasks (see "Adding LLM providers" below). Currently registered: `claude-cli` (pre-authenticated Claude Code CLI), `agy` (pre-authenticated Antigravity CLI — the Gemini path the `gemini31pro` judge uses; `agy -p` prints the response text directly, default model `Gemini 3.1 Pro (High)`), `gemini-api` (google-genai SDK, requires `GEMINI_API_KEY` and a paid-tier Google AI Studio account). The `gemini-cli` provider was **removed 2026-06-26** — per Google, *"On June 18, 2026, Gemini CLI and Gemini Code Assist IDE extensions will stop serving requests for Google AI Pro and Ultra, as well as those using it free of charge using Gemini Code Assist for individuals."* (https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/); `agy` is its successor. See the removal note in `llm_providers.py`.
 - `version_docs.py` — for each unique Claude Code version observed in a run dir's `metrics.json` files, writes `claude-code-<version>.md` with the full system prompt (concatenated from `Piebald-AI/claude-code-system-prompts` at tag `v<version>`), every default-tool description sorted alphabetically, and the slice of `anthropics/claude-code` `CHANGELOG.md` from the lowest CC version observed in any benchmark in this repo through that version. Standalone: `python3 version_docs.py [<run-dir>]`. Caches upstream content under `.cache/cc-versions/` (gitignored). Output files are referenced by name in each `results.md`'s prominent "Claude Code versions used" line.
 - `benchmark-instructions-v*.md` — per-version specs given to agents during runs.
 - `hooks/syntax-check.py` — PostToolUse hook for syntax/lint checking.
 - `Dockerfile.act` — custom act container image with pwsh + Pester pre-installed. Build with `docker build -t act-ubuntu-pwsh:latest -f Dockerfile.act .`. Runner.py auto-detects it and injects `.actrc` into workspaces.
 - `run-fresh-matrix-*.sh` — per-campaign wrapper scripts that drive multiple sequential `runner.py` invocations (one per model-effort combo) into a single results dir using `--resume`. Use when the matrix needs more than one effort level; `runner.py` accepts a single `--effort` per invocation by design. See `run-fresh-matrix-2026-05-06.sh` for the canonical 8-invocation full-matrix template.
+- `run-opus48-resume.sh` + `run-opus48-supervisor.sh` — the **resilient** per-campaign runner for the opus-4.8 (1M) campaign (run dir `2026-06-26_103905`; 7 tasks × 5 languages × 4 efforts medium/high/xhigh/ultracode = 140 cells). `run-opus48-resume.sh` runs all four tranches with `--resume` (re-runnable; skips valid cells). `run-opus48-supervisor.sh` is the entry point — launch via `setsid bash run-opus48-supervisor.sh` so it survives a session teardown; it restarts the resume worker whenever the runner dies, until all 140 cells are done. It takes an `flock` on `.supervisor.lock` (and `runner.py` on `.runner.lock`) so no two runners ever run concurrently. This pattern supersedes a plain one-shot launcher for multi-day runs that must survive crashes/reboots; pair it with `monitor.py` for live status (the supervisor and runner never need git for monitoring).
 - `skills/` — agent skills following [agentskills.io](https://agentskills.io/specification) spec.
 
 ### Adding new trap detectors
@@ -279,6 +291,20 @@ See the docstring in `llm_providers.py` for a complete example skeleton.
 8. If you added files or moved things, update the Files table in `README.md`.
 
 ## Current state (2026-05-08)
+
+### opus-4.8 (1M) campaign — in progress (2026-06)
+
+`results/2026-06-26_103905/` is an in-progress v4 campaign adding
+`claude-opus-4-8[1m]` (model short `opus48-1m`) at four effort levels —
+medium, high, xhigh, and the new **`ultracode`** (xhigh + dynamic-workflow
+orchestration; enabled via `CLAUDE_CODE_EFFORT_LEVEL=ultracode`, since `--effort`
+does not accept it) — over the same 7 tasks × 5 languages = 140 cells. Driven by
+the resilient `run-opus48-supervisor.sh` + `run-opus48-resume.sh` pair with
+single-runner locks; watch it live with `monitor.py`. When it completes it gets
+the standard panel-of-judges eval (Haiku via Claude CLI + Gemini 3.1 Pro (High)
+via `agy`) and a consolidated report, and this section's "canonical dataset"
+should be updated to point at it. Note: opus-4.8 sometimes picks JavaScript /
+PowerShell for the free-choice (default) language, not always Python.
 
 ### v4 full-matrix benchmark — complete
 

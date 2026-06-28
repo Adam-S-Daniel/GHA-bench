@@ -1,0 +1,112 @@
+name: Test Results Aggregator
+
+# Triggers: run on pushes and PRs, on a nightly schedule, and on demand.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    # Nightly at 03:17 UTC (off-peak to avoid the top-of-hour stampede).
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      results_dir:
+        description: Directory containing JUnit XML / JSON test result files.
+        required: false
+        default: fixtures
+
+# Least privilege: the jobs only need to read the repository contents.
+permissions:
+  contents: read
+
+env:
+  # Default location of the matrix test result files. Overridable via the
+  # workflow_dispatch input.
+  RESULTS_DIR: ${{ github.event.inputs.results_dir || 'fixtures' }}
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    outputs:
+      passed: ${{ steps.aggregate.outputs.passed }}
+      failed: ${{ steps.aggregate.outputs.failed }}
+      skipped: ${{ steps.aggregate.outputs.skipped }}
+      total: ${{ steps.aggregate.outputs.total }}
+      flaky: ${{ steps.aggregate.outputs.flaky }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (jq)
+        shell: bash
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y jq
+          fi
+          jq --version
+
+      - name: Aggregate test results into the job summary
+        id: aggregate
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./aggregate.sh
+
+          # Render the Markdown report once, then reuse it for the GitHub job
+          # summary, the run log (so `act` captures it), and step outputs.
+          report="$(./aggregate.sh "${RESULTS_DIR}")"
+
+          # GitHub Actions job summary.
+          printf '%s\n' "$report" >> "$GITHUB_STEP_SUMMARY"
+
+          # Echo to the log so the run is verifiable from captured output.
+          echo "----- BEGIN REPORT -----"
+          printf '%s\n' "$report"
+          echo "----- END REPORT -----"
+
+          # Extract headline metrics and expose them as step outputs.
+          passed=$(printf  '%s\n' "$report" | sed -n 's/^| Passed | \([0-9]*\) |$/\1/p')
+          failed=$(printf  '%s\n' "$report" | sed -n 's/^| Failed | \([0-9]*\) |$/\1/p')
+          skipped=$(printf '%s\n' "$report" | sed -n 's/^| Skipped | \([0-9]*\) |$/\1/p')
+          total=$(printf   '%s\n' "$report" | sed -n 's/^| Total | \([0-9]*\) |$/\1/p')
+          flaky=$(printf   '%s\n' "$report" | sed -n 's/^| Flaky | \([0-9]*\) |$/\1/p')
+
+          {
+            echo "passed=${passed}"
+            echo "failed=${failed}"
+            echo "skipped=${skipped}"
+            echo "total=${total}"
+            echo "flaky=${flaky}"
+          } >> "$GITHUB_OUTPUT"
+
+          # Single machine-greppable line for external verification.
+          echo "AGGREGATE_RESULT passed=${passed} failed=${failed} skipped=${skipped} total=${total} flaky=${flaky}"
+
+  report:
+    name: Report aggregated totals
+    needs: aggregate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emit final status line
+        shell: bash
+        env:
+          PASSED: ${{ needs.aggregate.outputs.passed }}
+          FAILED: ${{ needs.aggregate.outputs.failed }}
+          SKIPPED: ${{ needs.aggregate.outputs.skipped }}
+          TOTAL: ${{ needs.aggregate.outputs.total }}
+          FLAKY: ${{ needs.aggregate.outputs.flaky }}
+        run: |
+          set -euo pipefail
+          # Basic sanity: the upstream job must have produced a total.
+          if [ -z "${TOTAL}" ]; then
+            echo "aggregate job produced no total — failing" >&2
+            exit 1
+          fi
+          echo "FINAL_REPORT passed=${PASSED} failed=${FAILED} skipped=${SKIPPED} total=${TOTAL} flaky=${FLAKY}"
+          if [ "${FAILED:-0}" -gt 0 ] || [ "${FLAKY:-0}" -gt 0 ]; then
+            echo "FINAL_STATUS=ATTENTION (failures and/or flaky tests present)"
+          else
+            echo "FINAL_STATUS=GREEN"
+          fi

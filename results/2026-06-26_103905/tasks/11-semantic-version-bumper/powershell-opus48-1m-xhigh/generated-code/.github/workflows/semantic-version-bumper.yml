@@ -1,0 +1,102 @@
+name: Semantic Version Bumper
+
+# Triggers:
+#   * push / pull_request  - validate the bumper on every change.
+#   * schedule             - a weekly dry-run sanity check.
+#   * workflow_dispatch     - manual run, optionally as a dry run.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Compute the next version but do not modify files
+        type: boolean
+        default: false
+
+# Least privilege: the bumper only reads the repository. Committing the bumped
+# files back would additionally require `contents: write` plus a token.
+permissions:
+  contents: read
+
+# File locations consumed by the bumper. Centralised so all jobs agree.
+env:
+  VERSION_FILE: VERSION
+  COMMITS_FILE: commits.txt
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          # Pester is pre-installed in the CI container; install on demand as a
+          # safety net for other runners.
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge '5.0.0' })) {
+            Write-Host 'Pester 5+ not found; installing from the PowerShell Gallery...'
+            Install-Module Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+          }
+          (Get-Module -ListAvailable Pester | Select-Object -First 1).Version | ForEach-Object { Write-Host "Pester $_" }
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Run.Exit = $true                # non-zero exit if any test fails
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  bump:
+    name: Bump version
+    needs: test                                   # only bump after tests pass
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Compute and apply the version bump
+        id: bump
+        shell: pwsh
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          # Optionally run as a dry run (manual dispatch only).
+          $extra = @{}
+          if ($env:DRY_RUN -eq 'true') { $extra['NoWrite'] = $true }
+
+          ./Invoke-VersionBump.ps1 `
+            -VersionFile   $env:VERSION_FILE `
+            -CommitsFile   $env:COMMITS_FILE `
+            -ChangelogFile $env:CHANGELOG_FILE `
+            @extra
+
+      - name: Show the result
+        shell: pwsh
+        run: |
+          $new  = '${{ steps.bump.outputs.new-version }}'
+          $prev = '${{ steps.bump.outputs.previous-version }}'
+          $type = '${{ steps.bump.outputs.bump-type }}'
+          Write-Host "RESULT new-version=$new (was $prev, bump=$type)"
+          if ([string]::IsNullOrWhiteSpace($new)) {
+            Write-Error 'The bump step did not produce a new-version output.'
+            exit 1
+          }
+
+      - name: Print the generated changelog
+        shell: pwsh
+        run: |
+          if (Test-Path $env:CHANGELOG_FILE) {
+            Write-Host '----- CHANGELOG.md (top) -----'
+            Get-Content $env:CHANGELOG_FILE -TotalCount 30 | ForEach-Object { Write-Host $_ }
+          }

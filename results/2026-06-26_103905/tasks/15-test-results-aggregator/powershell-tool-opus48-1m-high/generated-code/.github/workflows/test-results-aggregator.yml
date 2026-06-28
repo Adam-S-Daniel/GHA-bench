@@ -1,0 +1,67 @@
+name: Test Results Aggregator
+
+# Triggers:
+#  - push / pull_request: validate on every change.
+#  - schedule: a weekly run to catch flakiness drift.
+#  - workflow_dispatch: manual runs, optionally pointing at a different
+#    results directory.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      results-dir:
+        description: Directory containing the test result files to aggregate
+        required: false
+        default: test-results
+
+# Least-privilege: the job only reads the repo contents.
+permissions:
+  contents: read
+
+# Resolve the results directory once. For push/PR/schedule events the
+# workflow_dispatch input is empty, so this falls back to 'test-results'.
+env:
+  RESULTS_DIR: ${{ github.event.inputs.results-dir || 'test-results' }}
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show PowerShell and Pester versions
+        shell: pwsh
+        run: |
+          "PowerShell: $($PSVersionTable.PSVersion)"
+          $pester = (Get-Module -ListAvailable Pester | Sort-Object Version -Descending | Select-Object -First 1)
+          "Pester: $($pester.Version)"
+
+      - name: Run unit tests (Pester)
+        shell: pwsh
+        run: |
+          # Run the full TDD unit suite through CI. Fail the job if any test fails.
+          $result = Invoke-Pester -Path tests/TestResultsAggregator.Tests.ps1 -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            Write-Error "Pester reported $($result.FailedCount) failing test(s)."
+            exit 1
+          }
+
+      - name: Aggregate results and build job summary
+        shell: pwsh
+        env:
+          RESULTS_DIR: ${{ env.RESULTS_DIR }}
+        run: |
+          # Aggregate the result files and write a Markdown summary. The script
+          # appends to $GITHUB_STEP_SUMMARY automatically when it is set.
+          ./Invoke-Aggregator.ps1 -InputPath $env:RESULTS_DIR -OutputPath summary.md
+
+      - name: Print generated summary
+        shell: pwsh
+        run: |
+          # Echo the produced summary so it is visible in the job logs.
+          Get-Content summary.md

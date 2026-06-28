@@ -1,0 +1,282 @@
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null; echo "---ACTRC---"; cat .actrc 2>/dev/null; echo "---LS---"; ls -la
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Assistant] This is a benchmark task to build a semantic version bumper using TDD, with a GitHub Actions workflow tested via `act`. Let me start with the first failing test.
+[Tool: Bash] python3 --version; which pytest pytest-3 2>/dev/null; python3 -c "import pytest; print('pytest', pytest.__version__)" 2>/dev/null; which act actionlint; docker --version 2>/dev/null | head -1
+[Result] Python 3.12.3
+/home/passp/.local/bin/pytest
+pytest 9.0.3
+/home/passp/.local/bin/act
+/home/passp/.local/bin/actionlint
+Docker version 29.4.3, build 055a478
+[Assistant] Tools are available. Let me begin TDD — first a failing test for version parsing.
+[Tool: Bash] mkdir -p tests
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/tests/test_version_bumper.py", "content": "\"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/tests/test_version_bumper.py (file state is current in your context — no need to Read it back)
+[Assistant] Now run the test to confirm it fails (RED):
+[Tool: Bash] cd "$(git rev-parse --show-toplevel 2>/dev/null)/../.." 2>/dev/null; python3 -m pytest tests/ -q 2>&1 | tail -5
+[Result] [31mERROR: file or directory not found: tests/
+[0m
+
+[33m[33mno tests ran[0m[33m in 0.00s[0m[0m
+Shell cwd was reset to /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -8
+[Result]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_version_bumper.py[0m:19: in <module>
+    [0m[94mfrom[39;49;00m [04m[96mversion_bumper[39;49;00m [94mimport[39;49;00m ([90m[39;49;00m
+[1m[31mE   ModuleNotFoundError: No module named 'version_bumper'[0m[0m
+[36m[1m=========================== short test summary info ============================[0m
+[31mERROR[0m tests/test_version_bumper.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+[31m[31m[1m1 error[0m[31m in 0.11s[0m[0m
+[Assistant] RED confirmed. Now write the implementation (GREEN):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/version_bumper.py", "content": "#!/usr/bin/en
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/version_bumper.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -8
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                            [100%][0m
+[32m[32m[1m29 passed[0m[32m in 0.04s[0m[0m
+[Assistant] GREEN — all 29 pass. Now let me create the test fixtures (mock commit logs) and sample version files.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"
+mkdir -p fixtures/feat-minor fixtures/fix-patch fixtures/breaking-major fixtures/no-release fixtures/pkgjson-feat
+echo "done"
+[Result] done
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/fixtures"
+
+# Case 1: feat -> minor (1.1.0 -> 1.2.0)
+printf '1.1.0\n' > feat-minor/VERSION
+printf 'feat: add user profile page\nfix: handle empty input\nchore: update build deps\n' > feat-minor/commits.txt
+
+# Case 2: fix -> patch (2.5.9 -> 2.5.10)
+printf '2.5.9\n' > fix-patch/VERSION
+printf 'fix: prevent crash on null token\ndocs: clarify readme\n' > fix-patch/commits.txt
+
+# Case 3: breaking -> major (0.9.3 -> 1.0.0)
+printf '0.9.3\n' > breaking-major/VERSION
+printf 'feat!: remove deprecated v1 API\nfeat: add pagination\nfix: typo in error message\n' > breaking-major/commits.txt
+
+# Case 4: no release commits (4.2.0 unchanged)
+printf '4.2.0\n' > no-release/VERSION
+printf 'chore: bump ci runner\ndocs: add architecture notes\nstyle: reformat code\n' > no-release/commits.txt
+
+# Case 5: package.json feat -> minor (3.0.0 -> 3.1.0)
+printf '{\n  "name": "demo-app",\n  "version": "3.0.0",\n  "license": "MIT"\n}\n' > pkgjson-feat/package.json
+printf 'feat(api): support bulk export\nfeat: add csv format\n' > pkgjson-feat/commits.txt
+
+echo "fixtures created:"; ls -R .
+[Result] fixtures created:
+.:
+breaking-major
+feat-minor
+fix-patch
+no-release
+pkgjson-feat
+
+./breaking-major:
+VERSION
+commits.txt
+
+./feat-minor:
+VERSION
+commits.txt
+
+./fix-patch:
+VERSION
+commits.txt
+
+./no-release:
+VERSION
+commits.txt
+
+./pkgjson-feat:
+commits.txt
+package.json
+[Assistant] Now the GitHub Actions workflow:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"; mkdir -p .github/workflows
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/.github/workflows/semantic-version-bumper.yml
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/.github/workflows/semantic-version-bumper.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"; actionlint .github/workflows/semantic-version-bumper.yml && echo "ACTIONLINT PASS exit=$?"
+[Result] ACTIONLINT PASS exit=0
+[Assistant] actionlint passes. Let me verify the act image has python before committing to an approach, then do one manual act validation run.
+[Tool: Bash] docker images | grep -E 'act-ubuntu-pwsh|catthehacker' ; echo "---"; docker run --rm act-ubuntu-pwsh:latest bash -c "python3 --version; which python3; cat /etc/os-release | head -1" 2>&1 | tail -5
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+catthehacker/ubuntu:full-latest                 9327301aea27       67.7GB         16.8GB   U    
+ghcr.io/catthehacker/ubuntu:act-latest          eb153df03ca8       2.04GB          297MB        
+ghcr.io/catthehacker/ubuntu:full-latest         9327301aea27       67.7GB         16.8GB   U    
+ghcr.io/catthehacker/ubuntu:pwsh-latest         593e0c99d8f0       2.64GB          397MB        
+---
+Python 3.12.3
+/usr/bin/python3
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+[Assistant] The image already has Python 3.12. Now let me write the act test harness.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/tests/test_act_workflow.py", "content": "\"\"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/tests/test_act_workflow.py (file state is current in your context — no need to Read it back)
+[Assistant] Now the workflow structure tests:
+[Tool: Bash] python3 -c "import yaml; print('pyyaml', yaml.__version__)" 2>&1
+[Result] pyyaml 6.0.1
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/tests/test_workflow_structure.py", "content":
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/tests/test_workflow_structure.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"; python3 -m pytest tests/test_version_bumper.py tests/test_workflow_structure.py -q 2>&1 | tail -8
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                     [100%][0m
+[32m[32m[1m36 passed[0m[32m in 0.18s[0m[0m
+[Assistant] Now validate the workflow in act with a single case first (to catch issues cheaply before the full run):
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"; timeout 590 python3 -m pytest tests/test_act_workflow.py -q -k "feat-minor" -s 2>&1 | tail -30
+[Result]         _setup_repo(work, case[[33m"[39;49;00m[33mname[39;49;00m[33m"[39;49;00m])[90m[39;49;00m
+    [90m[39;49;00m
+        proc = _run_act(work)[90m[39;49;00m
+        _append_result(case[[33m"[39;49;00m[33mname[39;49;00m[33m"[39;49;00m], proc)[90m[39;49;00m
+    [90m[39;49;00m
+        combined = proc.stdout + [33m"[39;49;00m[33m\n[39;49;00m[33m"[39;49;00m + proc.stderr[90m[39;49;00m
+    [90m[39;49;00m
+        [90m# 1. act must exit cleanly.[39;49;00m[90m[39;49;00m
+>       [94massert[39;49;00m proc.returncode == [94m0[39;49;00m, ([90m[39;49;00m
+            [33mf[39;49;00m[33m"[39;49;00m[33mact exited [39;49;00m[33m{[39;49;00mproc.returncode[33m}[39;49;00m[33m for [39;49;00m[33m{[39;49;00mcase[[33m'[39;49;00m[33mname[39;49;00m[33m'[39;49;00m][33m}[39;49;00m[33m:[39;49;00m[33m\n[39;49;00m[33m{[39;49;00mcombined[-[94m3000[39;49;00m:][33m}[39;49;00m[33m"[39;49;00m[90m[39;49;00m
+        )[90m[39;49;00m
+[1m[31mE 
+[Assistant] act tried to force-pull the local image. I'll add `--pull=false`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/tests/test_act_workflow
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/tests/test_act_workflow.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"; timeout 590 python3 -m pytest tests/test_act_workflow.py -q -k "feat-minor" -s 2>&1 | tail -25
+[Result] [32m.[0m
+[32m[32m[1m1 passed[0m, [33m5 deselected[0m[32m in 5.00s[0m[0m
+[Assistant] Single case passes. Now run the full harness across all 5 cases:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"; timeout 600 python3 -m pytest tests/test_act_workflow.py -q 2>&1 | tail -20
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                                   [100%][0m
+[32m[32m[1m6 passed[0m[32m in 26.61s[0m[0m
+[Assistant] All 6 act tests pass (5 cases + artifact check). Let me verify the artifact and run the full suite:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"
+echo "=== act-result.txt exists ==="; ls -la act-result.txt
+echo "=== cases & key lines ==="; grep -E "TEST CASE|NEW_VERSION=|BUMP=|Job succeeded" act-result.txt
+echo "=== full suite ==="; python3 -m pytest tests/ -q 2>&1 | tail -4
+[Result] === act-result.txt exists ===
+-rw-r--r-- 1 passp passp 37407 Jun 26 10:44 act-result.txt
+=== cases & key lines ===
+TEST CASE: feat-minor  (act exit=0)
+[Semantic Version Bumper/Compute next version]   | BUMP=minor
+[Semantic Version Bumper/Compute next version]   | NEW_VERSION=1.2.0
+[Semantic Version Bumper/Compute next version] 🏁  Job succeeded
+TEST CASE: fix-patch  (act exit=0)
+[Semantic Version Bumper/Compute next version]   | BUMP=patch
+[Semantic Version Bumper/Compute next version]   | NEW_VERSION=2.5.10
+[Semantic Version Bumper/Compute next version] 🏁  Job succeeded
+TEST CASE: breaking-major  (act exit=0)
+[Semantic Version Bumper/Compute next version]   | BUMP=major
+[Semantic Version Bumper/Compute next version]   | NEW_VERSION=1.0.0
+[Semantic Version Bumper/Compute next version] 🏁  Job succeeded
+TEST CASE: no-release  (act exit=0)
+[Semantic Version Bumper/Compute next version]   | BUMP=None
+[Semantic Version Bumper/Compute next version]   | NEW_VERSION=4.2.0
+[Semantic Version Bump
+[Assistant] All 42 tests pass. Let me add a README and root-level sample files so the project is runnable standalone.
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"
+printf '1.0.0\n' > VERSION
+printf 'feat: initial public release of the bumper\nfix: tolerate trailing whitespace in VERSION\nchore: scaffolding\n' > commits.txt
+python3 version_bumper.py --version-file VERSION --commits-file commits.txt --date 2026-06-26
+echo "=== VERSION now ==="; cat VERSION; echo "=== CHANGELOG ==="; cat CHANGELOG.md
+# restore VERSION to 1.0.0 as the committed sample baseline, drop generated changelog
+printf '1.0.0\n' > VERSION; rm -f CHANGELOG.md
+[Result] OLD_VERSION=1.0.0
+BUMP=minor
+NEW_VERSION=1.1.0
+Bumped version: 1.0.0 -> 1.1.0
+=== VERSION now ===
+1.1.0
+=== CHANGELOG ===
+# Changelog
+
+## 1.1.0 (2026-06-26)
+
+### Features
+
+- initial public release of the bumper
+
+### Bug Fixes
+
+- tolerate trailing whitespace in VERSION
+[Assistant] The CLI works end-to-end. Let me write the README:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/README.md", "content": "# Semantic Version Bu
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium/README.md (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/default-opus48-1m-medium"
+actionlint .github/workflows/semantic-version-bumper.yml && echo "actionlint: PASS (exit $?)"
+echo "=== files ==="; git status --short --untracked-files=all | grep -vE '^\?\? (benchmark-instructions|\.actrc|\.claude)' 
+[Result] actionlint: PASS (exit 0)
+=== files ===
+?? .github/workflows/semantic-version-bumper.yml
+?? README.md
+?? VERSION
+?? __pycache__/version_bumper.cpython-312.pyc
+?? act-result.txt
+?? commits.txt
+?? fixtures/breaking-major/VERSION
+?? fixtures/breaking-major/commits.txt
+?? fixtures/feat-minor/VERSION
+?? fixtures/feat-minor/commits.txt
+?? fixtures/fix-patch/VERSION
+?? fixtures/fix-patch/commits.txt
+?? fixtures/no-release/VERSION
+?? fixtures/no-release/commits.txt
+?? fixtures/pkgjson-feat/commits.txt
+?? fixtures/pkgjson-feat/package.json
+?? tests/__pycache__/test_act_workflow.cpython-312-pytest-9.0.3.pyc
+?? tests/__pycache__/test_act_workflow.cpython-312.pyc
+?? tests/__pycache__/test_version_bumper.cpython-312-pytest-9.0.3.pyc
+?? tests/__pycache__/test_version_bumper.cpython-312.pyc
+?? tests/__pycache__/test_workflow_structure.cpython-312-pytest-9.0.3.pyc
+?? tests/__pycache__/test_workflow_structure.cpython-312.pyc
+?? tests/test_act_workflow.py
+?? tests/test_version_bumper.py
+?? tests/test_wo
+[Assistant] Done. The solution is complete and fully verified.
+
+## Summary
+
+I built a **semantic version bumper** in Python using red/green TDD, with a GitHub Actions workflow tested end-to-end through `act`.
+
+### What it does
+`version_bumper.py` reads a version from a `VERSION` file or `package.json`, classifies conventional commits (`feat!:`/`BREAKING CHANGE:` → major, `feat:` → minor, `fix:` → patch, else no release — highest precedence wins), bumps the version, writes it back (preserving other JSON keys), prepends a grouped markdown changelog, and prints the new version. Errors raise `SemverError` with meaningful messages and exit non-zero.
+
+### TDD workflow
+- Wrote `tests/test_version_bumper.py` first → ran it (RED: `ModuleNotFoundError`) → implemented the module → GREEN (29 tests). Tests are grouped to mirror the build order (parse → classify → apply → changelog → file I/O → end-to-end).
+
+### Test fixtures (mock commit logs)
+Five `fixtures/<case>/` directories covering minor, patch, major, no-release, and a `package.json` source — each with a hand-computed expected result.
+
+### GitHub Actions + act
+- `.github/workflows/semantic-version-bumper.yml` — triggers on push/pull_request/schedule/workflow_dispatch, `permissions: contents: read`, checkout@v4 + setup-python@v5, detects the version source, runs the bumper. **actionlint passes (exit 0).**
+- `tests/test_workflow_structure.py` — parses the YAML, asserts triggers/job/steps/script references, and asserts actionlint exit 0.
+- `tests/test_act_workflow.py` — for each case spins up an isolated temp git repo, runs `act push --rm`, appends output to **`act-result.txt`**, and asserts exit 0, `Job succeeded`, and **exact** values (e.g. `NEW_VERSION=1.2.0`, the right `BUMP=`, changelog content).
+
+### Final state
+- **42/42 tests pass.** All 5 act cases exit 0 with `🏁 Job succeeded` and exact expected versions (1.2.0, 2.5.10, 1.0.0, 4.2.0 unchanged, 3.1.0).
+- `act-result.txt` exists (37 KB) with every case delimited.
+- Stayed within the act-run budget by fixing the one issue found (`--pull=false` for the local image) from output rather than blind re-runs.

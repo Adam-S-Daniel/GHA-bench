@@ -1,0 +1,85 @@
+---
+name: Semantic Version Bumper
+
+# Run on pushes and PRs (so the next version is previewed in review), on a
+# weekly schedule (a periodic release sweep), and on manual dispatch.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'  # every Monday 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Release date to stamp in the changelog (YYYY-MM-DD)'
+        required: false
+        default: ''
+
+# Least-privilege: the bump itself only needs to read the checked-out tree.
+# (Committing/tagging would require contents: write, intentionally omitted.)
+permissions:
+  contents: read
+
+env:
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  bump:
+    name: Compute next version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Detect version source file
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f package.json ]; then
+            echo "version_file=package.json" >> "$GITHUB_OUTPUT"
+          elif [ -f VERSION ]; then
+            echo "version_file=VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "error: no package.json or VERSION file found" >&2
+            exit 1
+          fi
+          echo "Using version file: $(cat "$GITHUB_OUTPUT")"
+
+      - name: Run semantic version bumper
+        id: bump
+        shell: bash
+        env:
+          VERSION_FILE: ${{ steps.detect.outputs.version_file }}
+          INPUT_DATE: ${{ github.event.inputs.date }}
+        run: |
+          set -euo pipefail
+          DATE_ARG=()
+          if [ -n "${INPUT_DATE:-}" ]; then
+            DATE_ARG=(--date "${INPUT_DATE}")
+          fi
+          python3 version_bumper.py \
+            --version-file "${VERSION_FILE}" \
+            --commits-file commits.txt \
+            --changelog-file "${CHANGELOG_FILE}" \
+            "${DATE_ARG[@]}" | tee bump-output.txt
+
+          # Re-export the machine-readable lines as step outputs.
+          NEW_VERSION=$(grep '^NEW_VERSION=' bump-output.txt | cut -d= -f2)
+          echo "new_version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Show result
+        shell: bash
+        run: |
+          echo "Next version is: ${{ steps.bump.outputs.new_version }}"
+          if [ -f "${CHANGELOG_FILE}" ]; then
+            echo "----- ${CHANGELOG_FILE} -----"
+            cat "${CHANGELOG_FILE}"
+          fi

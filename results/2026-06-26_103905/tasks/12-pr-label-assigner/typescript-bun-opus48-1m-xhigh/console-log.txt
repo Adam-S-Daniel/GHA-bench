@@ -1,0 +1,870 @@
+[Assistant] I'll start by exploring the environment and understanding the project context.
+[Tool: Bash] cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100; echo "---WORKTREE AGENTS---"; cat /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/AGENTS.md 2>/dev/null | head -100
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Tool: Bash] pwd; echo "---LS---"; ls -la; echo "---ACTRC---"; cat .actrc 2>/dev/null; echo "---BENCH INSTRUCTIONS---"; cat benchmark-instructions-v4.md 2>/dev/null | head -80
+[Result] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh
+---LS---
+total 44
+drwxr-xr-x  4 passp passp  4096 Jun 27 18:17 .
+drwxr-xr-x 17 passp passp  4096 Jun 27 18:17 ..
+-rw-r--r--  1 passp passp    40 Jun 27 18:17 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 27 18:17 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 27 18:17 .git
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---BENCH INSTRUCTIONS---
+# Benchmark Instructions v4 — GitHub Actions
+
+**Version**: v4
+**Date**: 2026-04-09
+**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+
+**Changes from v3**:
+- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+- Act container now has pwsh and P
+[Assistant] Let me read the rest of the benchmark instructions, especially the pitfalls section.
+[Tool: Bash] sed -n '80,250p' benchmark-instructions-v4.md
+[Result] ### Pre-installed Tools
+
+The following tools are pre-installed in the benchmark environment:
+- **Python 3** with `pytest`
+- **PowerShell** (`pwsh`) with **Pester** testing framework
+- **Bun** (TypeScript runtime with built-in test runner)
+- **Bash** with **bats-core** testing framework
+- **actionlint** (GitHub Actions workflow linter)
+- **shellcheck** (shell script static analysis)
+- **act** (nektos/act — runs GitHub Actions workflows locally in Docker)
+- **Docker** (container runtime, used by act)
+
+The act Docker container also has `pwsh` and `Pester` pre-installed (matching real GitHub-hosted runners). Your workflow's install-powershell step will be a near-instant no-op. You should still include it for portability, but it won't slow things down.
+
+Agents should NOT attempt to install these tools -- they are already available.
+
+### Syntax/Lint Hooks
+
+All runs have PostToolUse hooks enabled that automatically check files on Write/Edit:
+- `.py` files: `python3 -m py_compile` for syntax e
+[Tool: Bash] echo "--- bun version ---"; bun --version; echo "--- act version ---"; act --version 2>/dev/null; echo "--- actionlint ---"; actionlint --version 2>/dev/null; echo "--- docker ---"; docker --version 2>/dev/null; echo "--- docker images ---"; docker images | grep -i act 2>/dev/null; echo "--- git ---"; git --version
+[Result] --- bun version ---
+1.3.11
+--- act version ---
+act version 0.2.87
+--- actionlint ---
+1.7.12
+installed by downloading from release page
+built with go1.26.1 compiler for linux/amd64
+--- docker ---
+Docker version 29.4.3, build 055a478
+--- docker images ---
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+ghcr.io/catthehacker/ubuntu:act-latest          eb153df03ca8       2.04GB          297MB        
+--- git ---
+git version 2.54.0
+[Assistant] I have a clear picture now. Let me check the act container for pre-installed tools (Bun/Node) and network, then start building.
+[Tool: Bash] echo "=== Check bun/node in custom act image ==="; docker run --rm --entrypoint sh act-ubuntu-pwsh:latest -c 'which bun node npm curl git 2>/dev/null; echo "---versions---"; node --version 2>/dev/null; bun --version 2>/dev/null; curl --version 2>/dev/null | head -1' 2>&1 | head -30
+[Result] === Check bun/node in custom act image ===
+/opt/acttoolcache/node/24.15.0/x64/bin/node
+/opt/acttoolcache/node/24.15.0/x64/bin/npm
+/usr/bin/curl
+/usr/bin/git
+---versions---
+v24.15.0
+curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10
+[Assistant] Node 24 is present but not Bun. Let me verify network access to install Bun inside the container.
+[Tool: Bash] echo "=== Test network + bun install from container ==="; timeout 60 docker run --rm --entrypoint sh act-ubuntu-pwsh:latest -c 'curl -fsSL https://bun.sh/install | bash > /tmp/install.log 2>&1; echo "exit=$?"; ls -la $HOME/.bun/bin 2>/dev/null; $HOME/.bun/bin/bun --version 2>/dev/null' 2>&1 | tail -15
+[Result] === Test network + bun install from container ===
+exit=0
+total 90588
+drwxr-xr-x 2 root root     4096 Jun 27 22:20 .
+drwxr-xr-x 3 root root     4096 Jun 27 22:19 ..
+-rwxr-xr-x 1 root root 92752752 May 12 22:48 bun
+lrwxrwxrwx 1 root root       18 Jun 27 22:20 bunx -> /root/.bun/bin/bun
+1.3.14
+[Assistant] Bun installs cleanly inside the act container (exit 0, network works). I'll use the verified curl-install approach in the workflow. Let me set up the project and track progress with tasks.
+[Tool: ToolSearch] {"query": "select:TaskCreate,TaskUpdate", "max_results": 5}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskCreate'}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskUpdate'}
+[Tool: TaskCreate] {"subject": "Scaffold project (package.json, tsconfig, types)", "description": "Create package.json, tsconfig.json, install @types/bun so the tsc hook passes.", "activeForm": "Scaffolding project"}
+[Result] Task #1 created successfully: Scaffold project (package.json, tsconfig, types)
+[Tool: TaskCreate] {"subject": "TDD core labeler logic", "description": "Red/green TDD: glob matching, rule evaluation, multiple labels, union, priority ordering, config validation/errors. tests/labeler.test.ts + src/la
+[Result] Task #2 created successfully: TDD core labeler logic
+[Tool: TaskCreate] {"subject": "Build CLI entry point", "description": "src/cli.ts: parse args, read config + files, output labels (text/json/csv), GITHUB_OUTPUT/SUMMARY integration, graceful errors. tests/cli.test.ts."
+[Result] Task #3 created successfully: Build CLI entry point
+[Tool: TaskCreate] {"subject": "Write GitHub Actions workflow + pass actionlint", "description": ".github/workflows/pr-label-assigner.yml with push/pull_request/workflow_dispatch, checkout, install bun via curl, run CLI
+[Result] Task #4 created successfully: Write GitHub Actions workflow + pass actionlint
+[Tool: TaskCreate] {"subject": "Workflow structure tests (bun test)", "description": "tests/workflow.test.ts: parse YAML, check triggers/jobs/steps, verify referenced script paths exist, assert actionlint exit 0.", "act
+[Result] Task #5 created successfully: Workflow structure tests (bun test)
+[Tool: TaskCreate] {"subject": "Act integration harness + run once", "description": "tests/act-harness.ts: per-case temp git repo + fixtures, act push --rm, append to act-result.txt, assert exit 0, exact labels, Job suc
+[Result] Task #6 created successfully: Act integration harness + run once
+[Assistant] Let me scaffold the project. I'll create `package.json`, `tsconfig.json`, and install Bun types.
+[Tool: TaskUpdate] {"taskId": "1", "status": "in_progress"}
+[Result] Updated task #1 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/package.json", "content": "{\n  \"name\": \"p
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/package.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tsconfig.json", "content": "{\n  \"compilerOp
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tsconfig.json (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun install 2>&1 | tail -15 && echo "--- tsc available? ---" && bunx tsc --version 2>&1 | tail -2
+[Result] [0m[1mbun install [0m[2mv1.3.11 (af24e281)[0m
+Resolving dependencies
+Resolved, downloaded and extracted [3]
+Saved lockfile
+
+[0m[32m+[0m [1m@types/bun[0m[2m@1.3.14[0m
+
+[32m4[0m packages[0m installed [0m[2m[[1m197.00ms[0m[2m][0m[0m
+--- tsc available? ---
+Saved lockfile
+Version 6.0.3
+[Assistant] Project scaffolded and `@types/bun` installed. Now the TDD cycle. **RED first** — I'll write a failing test for the most fundamental unit (glob matching) before any implementation exists.
+[Tool: TaskUpdate] {"taskId": "1", "status": "completed"}
+[Result] Updated task #1 status
+[Tool: TaskUpdate] {"taskId": "2", "status": "in_progress"}
+[Result] Updated task #2 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/labeler.test.ts", "content": "import { 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/labeler.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/labeler.test.ts 2>&1 | tail -20
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+[0m
+tests/labeler.test.ts:
+[0m
+[1m[2m#[0m [31m[1mUnhandled error[0m[2m between tests[0m
+[2m-------------------------------[0m
+[31merror[0m[2m: [0m[1mCannot find module '../src/labeler.ts' from '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/labeler.test.ts'[0m
+[0m[2m-------------------------------[0m
+
+
+ 0 pass[0m
+[0m[31m 1 fail[0m
+ [0m[31m1 error[0m
+Ran 1 test across 1 file. [0m[2m[[1m113.00ms[0m[2m][0m
+[Assistant] RED confirmed (module not found). **GREEN** — implement the glob matcher.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/labeler.ts", "content": "/**\n * PR Label
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/labeler.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/labeler.test.ts 2>&1 | tail -8
+[Result]     [2mat [0m[36m/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/labeler.ts[0m[2m:[0m[33m37[0m[2m:[0m[33m17[0m
+[0m[2m-------------------------------[0m
+
+
+ 0 pass[0m
+[0m[31m 1 fail[0m
+ [0m[31m1 error[0m
+Ran 1 test across 1 file. [0m[2m[[1m12.00ms[0m[2m][0m
+[Tool: Bash] bun test tests/labeler.test.ts 2>&1 | head -25
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+[0m
+tests/labeler.test.ts:
+[0m
+[1m[2m#[0m [31m[1mUnhandled error[0m[2m between tests[0m
+[2m-------------------------------[0m
+[1m37 | [0m *             [0m[32m`src/**`[0m / [0m[32m`**`[0m behave intuitively.
+                     [1m[31m[1m^[0m
+[31merror[0m[2m: [0m[1mExpected ";" but found "src"[0m
+    [2mat [0m[36m/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/labeler.ts[0m[2m:[0m[33m37[0m[2m:[0m[33m17[0m
+[0m[2m-------------------------------[0m
+
+
+ 0 pass[0m
+[0m[31m 1 fail[0m
+ [0m[31m1 error[0m
+Ran 1 test across 1 file. [0m[2m[[1m12.00ms[0m[2m][0m
+[Assistant] The JSDoc contains a literal `/**/` whose `*/` closes the block comment early. Let me reword those comment lines.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/labeler.ts", "old_s
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/labeler.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/labeler.test.ts 2>&1 | tail -6
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 1 pass[0m
+[0m[2m 0 fail[0m
+ 1 expect() calls
+Ran 1 test across 1 file. [0m[2m[[1m19.00ms[0m[2m][0m
+[Assistant] GREEN. Now expand glob coverage — add the full matrix of glob semantics (these probe edge cases that may reveal bugs).
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/labeler.test.ts",
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/labeler.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/labeler.test.ts 2>&1 | tail -8
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 9 pass[0m
+[0m[2m 0 fail[0m
+ 20 expect() calls
+Ran 9 tests across 1 file. [0m[2m[[1m20.00ms[0m[2m][0m
+[Assistant] All 9 glob tests pass. Next cycle — **RED** for `assignLabels` and `parseConfig` (rule evaluation, multiple labels, union, priority, validation).
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/labeler.test.ts",
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/labeler.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cat >> tests/labeler.test.ts <<'EOF'
+
+// ---------------------------------------------------------------------------
+// RED step 2: rule evaluation. assignLabels() takes a validated config + a
+// list of changed file paths and returns the final label set.
+// ---------------------------------------------------------------------------
+const SAMPLE_CONFIG: LabelerConfig = {
+  rules: [
+    { label: "documentation", patterns: ["docs/**", "*.md"], priority: 1 },
+    { label: "api", patterns: ["src/api/**"], priority: 10 },
+    { label: "tests", patterns: ["*.test.*", "**/*.spec.ts"], priority: 5 },
+    { label: "ci", patterns: [".github/**"], priority: 8 },
+  ],
+};
+
+describe("assignLabels", () => {
+  test("a single matching file produces its rule's label", () => {
+    const result = assignLabels(SAMPLE_CONFIG, ["docs/intro.md"]);
+    expect(result.labels).toEqual(["documentation"]);
+  });
+
+  test("no matching files produces an empty label set", () => {
+    const result = assignLabels(SAMPLE_CONFIG, ["src/web/widget.ts"]);
+    expect(result.labels).toEqual([]);
+  });
+
+  test("a single file can produce MULTIPLE labels", () => {
+    // README.md under docs would be documentation; here a test doc:
+    const result = assignLabels(SAMPLE_CONFIG, ["src/api/client.test.ts"]);
+    // Matches src/api/** (api) and *.test.* (tests).
+    expect(new Set(result.labels)).toEqual(new Set(["api", "tests"]));
+  });
+
+  test("labels are the UNION across all changed files, deduplicated", () => {
+    const result = assignLabels(SAMPLE_CONFIG, [
+      "docs/a.md",
+      "docs/b.md", // duplicate label source — must not duplicate
+      "src/api/users.ts",
+    ]);
+    expect(new Set(result.labels)).toEqual(new Set(["documentation", "api"]));
+    // No label appears twice.
+    expect(result.labels.length).toBe(new Set(result.labels).size);
+  });
+
+  test("PRIORITY controls output ordering (higher priority first)", () => {
+    const result = assignLabels(SAMPLE_CONFIG, [
+      "docs/intro.md", // documentation, priority 1
+      "src/api/users.ts", // api, priority 10
+      "src/util.test.ts", // tests, priority 5
+      ".github/workflows/ci.yml", // ci, priority 8
+    ]);
+    // Expected order by descending priority: api(10), ci(8), tests(5), documentation(1)
+    expect(result.labels).toEqual(["api", "ci", "tests", "documentation"]);
+  });
+
+  test("priority ties fall back to declaration order (stable)", () => {
+    const config: LabelerConfig = {
+      rules: [
+        { label: "first", patterns: ["a/**"] }, // priority defaults to 0
+        { label: "second", patterns: ["b/**"] }, // priority defaults to 0
+      ],
+    };
+    const result = assignLabels(config, ["b/x.ts", "a/y.ts"]);
+    expect(result.labels).toEqual(["first", "second"]);
+  });
+
+  test("the matches map records which files triggered each label", () => {
+    const result = assignLabels(SAMPLE_CONFIG, [
+      "docs/a.md",
+      "src/api/users.ts",
+      "src/api/orders.ts",
+    ]);
+    expect(result.matches.documentation).toEqual(["docs/a.md"]);
+    expect(result.matches.api).toEqual(["src/api/orders.ts", "src/api/users.ts"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// RED step 3: configuration parsing & validation. parseConfig() turns
+// untrusted JSON into a validated LabelerConfig, throwing meaningful errors.
+// ---------------------------------------------------------------------------
+describe("parseConfig", () => {
+  test("accepts a well-formed { rules: [...] } object", () => {
+    const config = parseConfig({
+      rules: [{ label: "docs", patterns: ["docs/**"] }],
+    });
+    expect(config.rules.length).toBe(1);
+    expect(config.rules[0]!.priority).toBe(0); // default applied
+  });
+
+  test("accepts a bare top-level array of rules", () => {
+    const config = parseConfig([{ label: "docs", patterns: ["docs/**"] }]);
+    expect(config.rules.length).toBe(1);
+  });
+
+  test("rejects a non-object / non-array config", () => {
+    expect(() => parseConfig("nope")).toThrow(/config/i);
+  });
+
+  test("rejects a rule missing a label", () => {
+    expect(() => parseConfig({ rules: [{ patterns: ["x"] }] })).toThrow(/label/i);
+  });
+
+  test("rejects a rule whose patterns is not a non-empty string array", () => {
+    expect(() => parseConfig({ rules: [{ label: "x", patterns: [] }] })).toThrow(
+      /pattern/i,
+    );
+    expect(() =>
+      parseConfig({ rules: [{ label: "x", patterns: "docs/**" }] }),
+    ).toThrow(/pattern/i);
+  });
+
+  test("rejects a non-numeric priority", () => {
+    expect(() =>
+      parseConfig({ rules: [{ label: "x", patterns: ["y"], priority: "high" }] }),
+    ).toThrow(/priority/i);
+  });
+});
+EOF
+echo "appended"; bun test tests/labeler.test.ts 2>&1 | tail -12
+[Result] appended
+[0m[1m1 |[0m })
+[0m[1m2 |[0m {
+    [31m[1m^[0m
+[0m[31mSyntaxError[0m[2m:[0m [1mExport named 'parseConfig' not found in module '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/labeler.ts'.[0m
+[0m      [2mat [0m[0m[1m[3mloadAndEvaluateModule[0m[2m ([0m[0m[36m[0m[33m2[0m[2m:[33m1[0m[2m)[0m
+[0m[2m-------------------------------[0m
+
+
+ 0 pass[0m
+[0m[31m 1 fail[0m
+ [0m[31m1 error[0m
+Ran 1 test across 1 file. [0m[2m[[1m13.00ms[0m[2m][0m
+[Assistant] RED confirmed (exports missing). **GREEN** — implement `assignLabels`, `parseConfig`, and the types.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/labeler.ts", "old_s
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/labeler.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cat >> src/labeler.ts <<'EOF'
+
+// ---------------------------------------------------------------------------
+// Rule evaluation
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute the final label set for a list of changed files.
+ *
+ * For every rule we collect the changed files that match any of its patterns.
+ * A rule contributes its label iff at least one file matched. The returned
+ * `labels` array is the deduplicated union of all contributing labels, ordered
+ * by descending priority with ties broken by declaration order (so the output
+ * order is deterministic and stable).
+ */
+export function assignLabels(
+  config: LabelerConfig,
+  files: string[],
+): LabelResult {
+  // Per-label accumulator. `firstIndex` is the declaration index of the first
+  // rule producing this label and is used as a stable tie-breaker. `priority`
+  // is the strongest (max) priority among rules that share the label.
+  interface Acc {
+    priority: number;
+    firstIndex: number;
+    files: Set<string>;
+  }
+  const accByLabel = new Map<string, Acc>();
+
+  config.rules.forEach((rule, index) => {
+    const priority = rule.priority ?? 0;
+    // Files that match at least one of this rule's patterns.
+    const matched = files.filter((file) =>
+      rule.patterns.some((pattern) => matchesGlob(pattern, file)),
+    );
+    if (matched.length === 0) return;
+
+    const existing = accByLabel.get(rule.label);
+    if (existing) {
+      existing.priority = Math.max(existing.priority, priority);
+      existing.firstIndex = Math.min(existing.firstIndex, index);
+      for (const f of matched) existing.files.add(f);
+    } else {
+      accByLabel.set(rule.label, {
+        priority,
+        firstIndex: index,
+        files: new Set(matched),
+      });
+    }
+  });
+
+  // Order labels by descending priority, then ascending declaration order.
+  const ordered = [...accByLabel.entries()].sort((a, b) => {
+    if (b[1].priority !== a[1].priority) return b[1].priority - a[1].priority;
+    return a[1].firstIndex - b[1].firstIndex;
+  });
+
+  const labels = ordered.map(([label]) => label);
+  const matches: Record<string, string[]> = {};
+  for (const [label, acc] of ordered) {
+    // Sort the contributing files for stable, human-friendly output.
+    matches[label] = [...acc.files].sort();
+  }
+
+  return { labels, matches };
+}
+
+// ---------------------------------------------------------------------------
+// Configuration parsing & validation
+// ---------------------------------------------------------------------------
+
+/** Type guard for a plain JSON object. */
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Validate untrusted JSON and turn it into a `LabelerConfig`.
+ *
+ * Accepts either:
+ *   - `{ "rules": [ ... ] }`, or
+ *   - a bare top-level array of rules `[ ... ]`.
+ *
+ * Throws an `Error` with a descriptive message (naming the offending rule and
+ * index) when the structure is invalid, so the CLI can surface a useful
+ * message instead of a cryptic crash.
+ */
+export function parseConfig(raw: unknown): LabelerConfig {
+  // Normalize the two accepted shapes into a rules array.
+  let rawRules: unknown;
+  if (Array.isArray(raw)) {
+    rawRules = raw;
+  } else if (isObject(raw)) {
+    rawRules = raw.rules;
+  } else {
+    throw new Error(
+      'Invalid config: expected an object with a "rules" array, or a ' +
+        "top-level array of rules.",
+    );
+  }
+
+  if (!Array.isArray(rawRules)) {
+    throw new Error(
+      'Invalid config: "rules" must be an array of rule objects.',
+    );
+  }
+
+  const rules: LabelRule[] = rawRules.map((rawRule, index) => {
+    if (!isObject(rawRule)) {
+      throw new Error(`Invalid rule at index ${index}: each rule must be an object.`);
+    }
+
+    const { label, patterns, priority } = rawRule;
+
+    if (typeof label !== "string" || label.trim() === "") {
+      throw new Error(
+        `Invalid rule at index ${index}: "label" must be a non-empty string.`,
+      );
+    }
+
+    if (
+      !Array.isArray(patterns) ||
+      patterns.length === 0 ||
+      !patterns.every((p) => typeof p === "string" && p.length > 0)
+    ) {
+      throw new Error(
+        `Invalid rule "${label}" at index ${index}: "patterns" must be a ` +
+          "non-empty array of non-empty strings.",
+      );
+    }
+
+    if (priority !== undefined && typeof priority !== "number") {
+      throw new Error(
+        `Invalid rule "${label}" at index ${index}: "priority" must be a number.`,
+      );
+    }
+
+    return {
+      label,
+      patterns: patterns as string[],
+      priority: (priority as number | undefined) ?? 0,
+    };
+  });
+
+  return { rules };
+}
+EOF
+echo "appended"; bun test tests/labeler.test.ts 2>&1 | tail -10
+[Result] appended
+[0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 22 pass[0m
+[0m[2m 0 fail[0m
+ 37 expect() calls
+Ran 22 tests across 1 file. [0m[2m[[1m20.00ms[0m[2m][0m
+[Assistant] All 22 tests pass. Let me verify the whole project type-checks cleanly (the tsc hook).
+[Tool: Bash] bunx tsc --noEmit 2>&1 | head -20; echo "tsc exit: ${PIPESTATUS[0]}"
+[Result] Resolving dependencies
+Resolved, downloaded and extracted [2]
+Saved lockfile
+tsc exit: 0
+[Assistant] Core logic complete and type-checks clean. Now the **CLI** (task 3). Starting with a RED test for the file-list parser, then the CLI.
+[Tool: TaskUpdate] {"taskId": "2", "status": "completed"}
+[Result] Updated task #2 status
+[Tool: TaskUpdate] {"taskId": "3", "status": "in_progress"}
+[Result] Updated task #3 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/cli.test.ts", "content": "import { desc
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/cli.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cli.test.ts 2>&1 | tail -8
+[Result] [31merror[0m[2m: [0m[1mCannot find module '../src/cli.ts' from '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/cli.test.ts'[0m
+[0m[2m-------------------------------[0m
+
+
+ 0 pass[0m
+[0m[31m 1 fail[0m
+ [0m[31m1 error[0m
+Ran 1 test across 1 file. [0m[2m[[1m11.00ms[0m[2m][0m
+[Assistant] RED confirmed. **GREEN** — implement the CLI.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/cli.ts", "content": "#!/usr/bin/env bun\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/src/cli.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cli.test.ts 2>&1 | tail -14; echo "=== tsc ==="; bunx tsc --noEmit 2>&1 | tail -5; echo "tsc exit: ${PIPESTATUS[0]}"
+[Result] [0m[1m127 |[0m     expect(stderr)[0m[3m[1m.toMatch[0m(/Error:/)[0m[2m;[0m
+                         [31m[1m^[0m
+[0m[31merror[0m[2m:[0m [1m[2mexpect([0m[31mreceived[0m[2m).[0mtoMatch[2m([0m[32mexpected[0m[2m)[0m
+
+Expected substring or pattern: [32m/Error:/[0m
+Received: [31m""[0m
+[0m
+[0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m[2m/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/[0m[36mtests/cli.test.ts[0m[2m:[0m[33m127[0m[2m:[33m20[0m[2m)[0m
+[0m[31m✗[0m [0mcli end-to-end[2m >[0m[1m exits non-zero with a friendly message on invalid config JSON[0m [0m[2m[[1m46.66ms[0m[2m][0m
+
+[0m[32m 8 pass[0m
+[0m[31m 2 fail[0m
+ 17 expect() calls
+Ran 10 tests across 1 file. [0m[2m[[1m348.00ms[0m[2m][0m
+=== tsc ===
+Resolving dependencies
+Resolved, downloaded and extracted [2]
+Saved lockfile
+tsc exit: 0
+[Assistant] Two stderr-reading tests fail — likely `Bun.spawn` defaults stderr to `inherit`, not `pipe`. Let me confirm and fix the test spawns.
+[Tool: Bash] cd /tmp && cat > _spawntest.ts <<'EOF'
+const p = Bun.spawn(["bash","-c","echo OUT; echo ERR 1>&2; exit 1"]);
+console.log("stdout pipe?", p.stdout !== undefined);
+console.log("stderr pipe?", p.stderr !== undefined);
+EOF
+bun run _spawntest.ts 2>&1; rm -f _spawntest.ts
+[Result] ERR
+stdout pipe? [0m[33mtrue[0m
+stderr pipe? [0m[33mfalse[0m
+Shell cwd was reset to /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh
+[Assistant] Confirmed — stderr defaults to `inherit`. I'll add `stderr: "pipe"` to the two error-path test spawns.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/cli.test.ts", "ol
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/cli.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/cli.test.ts", "ol
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/cli.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -8
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 32 pass[0m
+[0m[2m 0 fail[0m
+ 54 expect() calls
+Ran 32 tests across 2 files. [0m[2m[[1m307.00ms[0m[2m][0m
+[Assistant] All 32 tests pass. Now the example fixtures + the workflow. Let me create them.
+[Tool: TaskUpdate] {"taskId": "3", "status": "completed"}
+[Result] Updated task #3 status
+[Tool: TaskUpdate] {"taskId": "4", "status": "in_progress"}
+[Result] Updated task #4 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/examples/labeler.config.json", "content": "{\
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/examples/labeler.config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/examples/changed-files.json", "content": "[\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/examples/changed-files.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/.github/workflows/pr-label-assigner.yml", "co
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/.github/workflows/pr-label-assigner.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/pr-label-assigner.yml; echo "actionlint exit: $?"
+[Result] actionlint exit: 0
+[Assistant] actionlint passes (exit 0). Now the workflow structure tests. Let me check if Bun has a built-in YAML parser.
+[Tool: Bash] bun -e 'console.log("Bun.YAML:", typeof (Bun as any).YAML); try { console.log(JSON.stringify((Bun as any).YAML?.parse?.("a: 1\nb: [x, y]"))); } catch(e){ console.log("err", e.message)}'
+[Result] Bun.YAML: object
+{"a":1,"b":["x","y"]}
+[Assistant] Bun has built-in `Bun.YAML.parse`. Let me check how it parses the workflow (especially the `on:` key, a classic YAML 1.1 gotcha).
+[Tool: Bash] bun -e '
+const txt = await Bun.file(".github/workflows/pr-label-assigner.yml").text();
+const doc:any = (Bun as any).YAML.parse(txt);
+console.log("top keys:", Object.keys(doc));
+console.log("has on?", "on" in doc, " has true?", true in doc);
+console.log("on value:", JSON.stringify(doc["on"] ?? doc[true as any]));
+console.log("jobs keys:", Object.keys(doc.jobs));
+console.log("assign needs:", JSON.stringify(doc.jobs["assign-labels"].needs));
+'
+[Result] top keys: [ [0m[32m"name"[0m[0m[0m[2m,[0m [0m[32m"on"[0m[0m[0m[2m,[0m [0m[32m"permissions"[0m[0m[0m[2m,[0m [0m[32m"env"[0m[0m[0m[2m,[0m [0m[32m"jobs"[0m[0m ]
+has on? [0m[33mtrue[0m  has true? [0m[33mfalse[0m
+on value: {"push":{"branches":["main","master"]},"pull_request":{"types":["opened","synchronize","reopened"]},"workflow_dispatch":{"inputs":{"config":{"description":"Path to the labeler rules config (JSON)","required":false,"default":"examples/labeler.config.json"},"files":{"description":"Path to the changed-files list (JSON array or newline list)","required":false,"default":"examples/changed-files.json"}}}}
+jobs keys: [ [0m[32m"test"[0m[0m[0m[2m,[0m [0m[32m"assign-labels"[0m[0m ]
+assign needs: "test"
+[Assistant] Bun.YAML keeps `on` as a string key — convenient. Now the workflow structure tests.
+[Tool: TaskUpdate] {"taskId": "4", "status": "completed"}
+[Result] Updated task #4 status
+[Tool: TaskUpdate] {"taskId": "5", "status": "in_progress"}
+[Result] Updated task #5 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/workflow.test.ts", "content": "import {
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/workflow.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -14; echo "=== tsc ==="; bunx tsc --noEmit 2>&1 | tail -3; echo "tsc exit: ${PIPESTATUS[0]}"
+[Result] [0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 47 pass[0m
+[0m[2m 0 fail[0m
+ 80 expect() calls
+Ran 47 tests across 3 files. [0m[2m[[1m332.00ms[0m[2m][0m
+=== tsc ===
+
+Found 2 errors in the same file, starting at: tests/workflow.test.ts[90m:66[0m
+
+tsc exit: 2
+[Assistant] 47 tests pass but tsc flags 2 type errors. Let me see them.
+[Tool: Bash] bunx tsc --noEmit 2>&1 | grep -A3 "workflow.test.ts"
+[Result] [96mtests/workflow.test.ts[0m:[93m66[0m:[93m12[0m - [91merror[0m[90m TS18048: [0m'inputs.config' is possibly 'undefined'.
+
+[7m66[0m     expect(inputs.config.default).toBe("examples/labeler.config.json");
+[7m  [0m [91m           ~~~~~~~~~~~~~[0m
+--
+[96mtests/workflow.test.ts[0m:[93m67[0m:[93m12[0m - [91merror[0m[90m TS18048: [0m'inputs.files' is possibly 'undefined'.
+
+[7m67[0m     expect(inputs.files.default).toBe("examples/changed-files.json");
+[7m  [0m [91m           ~~~~~~~~~~~~[0m
+--
+Found 2 errors in the same file, starting at: tests/workflow.test.ts[90m:66[0m
+[Assistant] `noUncheckedIndexedAccess` flags the Record access. Let me add non-null assertions.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/workflow.test.ts"
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/workflow.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bunx tsc --noEmit 2>&1 | tail -3; echo "tsc exit: ${PIPESTATUS[0]}"; echo "=== tests ==="; bun test 2>&1 | tail -5
+[Result] Resolving dependencies
+Resolved, downloaded and extracted [2]
+Saved lockfile
+tsc exit: 0
+=== tests ===
+
+[0m[32m 47 pass[0m
+[0m[2m 0 fail[0m
+ 80 expect() calls
+Ran 47 tests across 3 files. [0m[2m[[1m507.00ms[0m[2m][0m
+[Assistant] 47 tests pass and tsc is clean. Now the act integration harness (task 6) — the most involved piece. Let me first check the global act config to get the `act push` invocation right (image pull behavior).
+[Tool: Bash] echo "=== ~/.actrc ==="; cat ~/.actrc 2>/dev/null || echo "(none)"; echo "=== local .actrc ==="; cat .actrc; echo "=== act help (pull/artifact flags) ==="; act --help 2>&1 | grep -iE "pull|artifact|rm|^  -W|reuse" | head -20
+[Result] === ~/.actrc ===
+-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:pwsh-latest
+=== local .actrc ===
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+=== act help (pull/artifact flags) ===
+      --action-offline-mode                               If action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull
+      --artifact-server-addr string                       Defines the address to which the artifact server binds. (default "172.27.42.126")
+      --artifact-server-path string                       Defines the path where the artifact server stores uploads and retrieves downloads from. If not specified the artifact server will not start.
+      --artifact-server-port string                       Defines the port where the artifact server listens. (default "34567")
+      --bug-report                                        Display system information for bug report
+      --cache-server-port uint16                          Defines the port where the artifact s
+[Assistant] Key findings: cwd `.actrc` overrides home, mapping to the present `act-ubuntu-pwsh:latest` image. To be fully unambiguous I'll pass `-P` and `--pull=false` explicitly. Now the harness.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/act-harness.ts", "content": "#!/usr/bin
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/tests/act-harness.ts (file state is current in your context — no need to Read it back)
+[Assistant] Let me type-check the harness and locally verify my expected label values are correct (so I don't waste act runs on wrong assertions).
+[Tool: Bash] echo "=== tsc ==="; bunx tsc --noEmit 2>&1 | tail -3; echo "tsc exit: ${PIPESTATUS[0]}"
+echo "=== Local CLI sanity-check of each case's expected labels ==="
+mkdir -p /tmp/case-check
+for c in multi docs empty; do
+  case $c in
+    multi) echo '["docs/getting-started.md","src/api/users.ts","src/api/users.test.ts","src/web/app.tsx"]' > /tmp/case-check/f.json ;;
+    docs)  echo '["docs/intro.md","README.md",".github/workflows/deploy.yml"]' > /tmp/case-check/f.json ;;
+    empty) echo '["LICENSE","Makefile","src/core/engine.ts"]' > /tmp/case-check/f.json ;;
+  esac
+  printf '%-7s -> ' "$c"
+  bun run src/cli.ts --config examples/labeler.config.json --files /tmp/case-check/f.json | grep '__PR_LABELS__='
+done
+[Result] === tsc ===
+Resolving dependencies
+Resolved, downloaded and extracted [2]
+Saved lockfile
+tsc exit: 0
+=== Local CLI sanity-check of each case's expected labels ===
+multi   -> __PR_LABELS__=api,tests,frontend,documentation
+docs    -> __PR_LABELS__=ci,documentation
+empty   -> __PR_LABELS__=
+[Assistant] Expected values confirmed locally (`api,tests,frontend,documentation` / `ci,documentation` / empty) and tsc is clean. Now I'll run the act harness once — 3 act runs total, within budget.
+[Tool: TaskUpdate] {"taskId": "5", "status": "completed"}
+[Result] Updated task #5 status
+[Tool: TaskUpdate] {"taskId": "6", "status": "in_progress"}
+[Result] Updated task #6 status
+[Tool: Bash] bun run tests/act-harness.ts 2>&1 | tail -40
+[Result] >>> Running act for case: multi-label-priority
+    PASS — multi-label-priority
+
+>>> Running act for case: docs-and-ci
+    PASS — docs-and-ci
+
+>>> Running act for case: no-matches
+    PASS — no-matches
+
+##############################################################################
+SUMMARY: 3/3 cases passed
+  PASS  multi-label-priority
+  PASS  docs-and-ci
+  PASS  no-matches
+##############################################################################
+[Assistant] All 3 act cases passed on the first run. Let me verify `act-result.txt` exists and contains the exact expected values and job-success markers.
+[Tool: Bash] echo "=== file exists / size ==="; ls -la act-result.txt
+echo "=== headers / verdicts ==="; grep -nE "TEST CASE:|ACT EXIT CODE:|EXPECTED LABELS:|SUMMARY:" act-result.txt
+echo "=== marker lines captured from act output ==="; grep -nE "__PR_LABELS__=" act-result.txt
+echo "=== Label count lines ==="; grep -nE "Label count:" act-result.txt
+echo "=== Job succeeded count ==="; grep -c "Job succeeded" act-result.txt
+echo "=== Resolved labels lines ==="; grep -nE "Resolved labels:" act-result.txt
+[Result] === file exists / size ===
+-rw-r--r-- 1 passp passp 56309 Jun 27 18:35 act-result.txt
+=== headers / verdicts ===
+7:TEST CASE: multi-label-priority  [PASS]
+10:EXPECTED LABELS: "api,tests,frontend,documentation" (count 4)
+11:ACT EXIT CODE: 0
+192:TEST CASE: docs-and-ci  [PASS]
+195:EXPECTED LABELS: "ci,documentation" (count 2)
+196:ACT EXIT CODE: 0
+369:TEST CASE: no-matches  [PASS]
+372:EXPECTED LABELS: "" (count 0)
+373:ACT EXIT CODE: 0
+535:SUMMARY: 3/3 cases passed
+=== marker lines captured from act output ===
+149:[PR Label Assigner/Assign labels]   | __PR_LABELS__=api,tests,frontend,documentation
+334:[PR Label Assigner/Assign labels]   | __PR_LABELS__=ci,documentation
+511:[PR Label Assigner/Assign labels]   | __PR_LABELS__=
+=== Label count lines ===
+179:[PR Label Assigner/Assign labels]   | Label count:     4
+358:[PR Label Assigner/Assign labels]   | Label count:     2
+524:[PR Label Assigner/Assign labels]   | Label count:     0
+=== Job succeeded count ===
+6
+=== Resolved labels lines ===
+1
+[Assistant] Everything verified: exact label markers, counts (4/2/0) round-tripped via GITHUB_OUTPUT, and 6 "Job succeeded" (2 jobs × 3 cases). Let me confirm both job names succeed and there are zero failures.
+[Tool: Bash] echo "=== Job succeeded lines (job names) ==="; grep -E "Job succeeded" act-result.txt | sed -E 's/\].*Job succeeded/]  Job succeeded/'
+echo "=== Any 'Job failed'? ==="; grep -c "Job failed" act-result.txt || true
+echo "=== Unit-test job ran bun test (sample) ==="; grep -E "Run unit tests|bun test|tests passed|pass" act-result.txt | grep -iE "unit tests|tests across|0 fail" | head -6
+echo "=== final harness exit verification ==="; bun run -e 'import {existsSync} from "node:fs"; console.log("act-result.txt present:", existsSync("act-result.txt"))'
+[Result] === Job succeeded lines (job names) ===
+[PR Label Assigner/Unit tests]  Job succeeded
+[PR Label Assigner/Assign labels]  Job succeeded
+[PR Label Assigner/Unit tests]  Job succeeded
+[PR Label Assigner/Assign labels]  Job succeeded
+[PR Label Assigner/Unit tests]  Job succeeded
+[PR Label Assigner/Assign labels]  Job succeeded
+=== Any 'Job failed'? ===
+0
+=== Unit-test job ran bun test (sample) ===
+[PR Label Assigner/Unit tests] ⭐ Run Main Run unit tests
+[PR Label Assigner/Unit tests]   | bun test v1.3.14 (0d9b296a)
+[PR Label Assigner/Unit tests]   | (pass) parseFileList > parses a JSON array of paths [7.35ms]
+[PR Label Assigner/Unit tests]   | (pass) parseFileList > parses a newline-separated list, ignoring blanks and # comments [1.25ms]
+[PR Label Assigner/Unit tests]   | (pass) parseFileList > returns an empty array for empty content [0.05ms]
+[PR Label Assigner/Unit tests]   | (pass) parseFileList > throws on a JSON value that is not an array of strings [0.16ms]
+=== final harness exit ver
+[Assistant] The `bun run -e` failure was just my malformed verification command (should be `bun -e`); irrelevant. The substantive results are all green: both jobs succeed for all 3 cases, zero failures, and unit tests ran inside the container.
+
+Let me run the final full `bun test` suite and confirm the act harness isn't accidentally picked up by `bun test`.
+[Tool: Bash] echo "=== full bun test ==="; bun test 2>&1 | tail -7
+echo "=== confirm act-harness.ts NOT picked up by bun test discovery ==="; bun test 2>&1 | grep -c "act-harness" || echo "0 (good)"
+echo "=== tsc final ==="; bunx tsc --noEmit 2>&1 | tail -2; echo "tsc exit: ${PIPESTATUS[0]}"
+echo "=== actionlint final ==="; actionlint .github/workflows/pr-label-assigner.yml; echo "actionlint exit: $?"
+[Result] === full bun test ===
+[0m[1mbun test [0m[2mv1.3.11 (af24e281)[0m
+
+[0m[32m 47 pass[0m
+[0m[2m 0 fail[0m
+ 80 expect() calls
+Ran 47 tests across 3 files. [0m[2m[[1m322.00ms[0m[2m][0m
+=== confirm act-harness.ts NOT picked up by bun test discovery ===
+0
+0 (good)
+=== tsc final ===
+Resolved, downloaded and extracted [2]
+Saved lockfile
+tsc exit: 0
+=== actionlint final ===
+actionlint exit: 0
+[Assistant] All green: `bun test` 47/47 pass, act-harness correctly excluded from `bun test` discovery, tsc clean, actionlint clean, and `act-result.txt` shows 3/3 exact-value passes. Let me add a README and `.gitignore` to round out the deliverable.
+[Tool: TaskUpdate] {"taskId": "6", "status": "completed"}
+[Result] Updated task #6 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/.gitignore", "content": "node_modules/\n*.log
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/.gitignore (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/README.md", "content": "# PR Label Assigner\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/typescript-bun-opus48-1m-xhigh/README.md (file state is current in your context — no need to Read it back)
+[Assistant] Let me do a final structure review to confirm all deliverables are in place.
+[Tool: Bash] echo "=== project tree (excluding node_modules/.git) ==="; find . -type f -not -path './node_modules/*' -not -path './.git/*' | sort
+echo; echo "=== final status ==="
+echo "bun test:    $(bun test 2>&1 | grep -E 'pass|fail' | tail -1)"
+echo "act cases:   $(grep 'SUMMARY:' act-result.txt)"
+echo "actionlint:  exit $(actionlint .github/workflows/pr-label-assigner.yml >/dev/null 2>&1; echo $?)"
+echo "tsc:         exit $(bunx tsc --noEmit >/dev/null 2>&1; echo $?)"
+echo "act-result.txt size: $(wc -l < act-result.txt) lines"
+[Result] === project tree (excluding node_modules/.git) ===
+./.actrc
+./.claude/settings.json
+./.github/workflows/pr-label-assigner.yml
+./.gitignore
+./README.md
+./act-result.txt
+./benchmark-instructions-v4.md
+./bun.lock
+./examples/changed-files.json
+./examples/labeler.config.json
+./package.json
+./src/cli.ts
+./src/labeler.ts
+./tests/act-harness.ts
+./tests/cli.test.ts
+./tests/labeler.test.ts
+./tests/workflow.test.ts
+./tsconfig.json
+
+=== final status ===
+bun test:    [0m[2m 0 fail[0m
+act cases:   SUMMARY: 3/3 cases passed
+actionlint:  exit 0
+tsc:         exit 0
+act-result.txt size: 539 lines
+[Assistant] All deliverables are complete and verified. Here's a summary of what was built.
+
+## PR Label Assigner — TypeScript + Bun
+
+Built with genuine red/green TDD (write failing test → minimal code → refactor), demonstrated through each cycle.
+
+### Implementation
+- **`src/labeler.ts`** — core logic, fully commented:
+  - `globToRegExp` / `matchesGlob` — glob matching via glob→regex translation. `**` crosses directories, `*` stays within a segment, `?` matches one char, slash-less patterns (e.g. `*.test.*`) match the basename at any depth, slashed patterns (`docs/**`) match the full path.
+  - `assignLabels` — a file can yield **multiple labels**; the final set is the **deduplicated union** across files, ordered by **priority** (the concrete meaning of "priority ordering when rules conflict"), ties broken by declaration order.
+  - `parseConfig` — validates untrusted JSON with descriptive errors.
+- **`src/cli.ts`** — arg parsing, flexible fixture input (JSON array *or* newline list), `text`/`json`/`csv` output, graceful errors, and GitHub Actions integration (`$GITHUB_OUTPUT` + `$GITHUB_STEP_SUMMARY`). Prints a stable `__PR_LABELS__=` marker line.
+
+### Tests (`bun test` → 47 pass, 0 fail)
+- `tests/labeler.test.ts` — glob + rule-evaluation + validation
+- `tests/cli.test.ts` — end-to-end CLI (spawns the real process)
+- `tests/workflow.test.ts` — parses the YAML, checks triggers/jobs/steps, verifies referenced script paths exist, and asserts `actionlint` exit 0
+
+### Workflow + CI integration
+- **`.github/workflows/pr-label-assigner.yml`** — triggers on `push` / `pull_request` / `workflow_dispatch` (overridable inputs), least-privilege permissions, env vars, and **two jobs with a dependency** (`test` → `assign-labels`). Installs Bun via the verified curl method. **Passes actionlint cleanly.**
+
+### Act integration (the required pipeline test)
+- **`tests/act-harness.ts`** ran **once = 3 `act push` runs** (within budget). Every case executes through the real workflow, output is saved to **`act-result.txt`** (539 lines, clearly delimited), and each case asserts **exact** values:
+
+| Case | Changed files | Expected | act exit | Jobs |
+|------|--------------|----------|----------|------|
+| multi-label-priority | docs+api+test+web | `api,tests,frontend,documentation` (count 4) | 0 | both succeeded |
+| docs-and-ci | docs+README+workflow | `ci,documentation` (count 2) | 0 | both succeeded |
+| no-matches | LICENSE, Makefile, src/core | _(empty)_ (count 0) | 0 | both succeeded |
+
+`Job succeeded` appears 6× (2 jobs × 3 cases), 0 `Job failed`, and the label count is round-tripped through `$GITHUB_OUTPUT`.
+
+**Final status:** `bun test` 0 fail · act 3/3 · actionlint exit 0 · tsc exit 0 · `act-result.txt` present.

@@ -1,0 +1,55 @@
+name: Test Results Aggregator
+
+# Triggers: on every push and PR, on a weekly schedule (catch flakiness drift),
+# and manually with an optional results directory override.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    # Mondays at 06:00 UTC.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      results_dir:
+        description: "Directory of test-result files to aggregate"
+        required: false
+        default: "fixtures/sample"
+
+# Least-privilege: the job only reads the checked-out repository.
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  aggregate:
+    name: Aggregate Test Results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Run unit tests (TDD suite)
+        # Only the dependency-free unit suites run in CI; the workflow-structure
+        # and act-integration suites need tooling that lives outside the container.
+        run: bun test tests/parser.test.ts tests/aggregator.test.ts tests/markdown.test.ts
+
+      - name: Aggregate test results and write job summary
+        env:
+          # workflow_dispatch input (empty on push/PR/schedule). The script
+          # falls back to $RESULTS_DIR (settable via `act --env`) then to the
+          # bundled sample fixtures.
+          DISPATCH_DIR: ${{ inputs.results_dir }}
+        run: |
+          DIR="${DISPATCH_DIR:-${RESULTS_DIR:-fixtures/sample}}"
+          echo "Aggregating test results from: $DIR"
+          bun run src/cli.ts "$DIR"

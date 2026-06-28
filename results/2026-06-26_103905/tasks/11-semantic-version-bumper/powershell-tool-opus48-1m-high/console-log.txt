@@ -1,0 +1,330 @@
+[Assistant] I'll start by exploring the environment and understanding the project context.
+[Tool: Bash] ls -la && echo "---ACTRC---" && cat .actrc 2>/dev/null && echo "---PWSH---" && which pwsh act actionlint docker && pwsh -Version 2>/dev/null
+[Result] total 44
+drwxr-xr-x  4 passp passp  4096 Jun 27 00:57 .
+drwxr-xr-x 11 passp passp  4096 Jun 27 00:57 ..
+-rw-r--r--  1 passp passp    40 Jun 27 00:57 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 27 00:57 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 27 00:57 .git
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---PWSH---
+/snap/bin/pwsh
+/home/passp/.local/bin/act
+/home/passp/.local/bin/actionlint
+/usr/bin/docker
+PowerShell 7.6.3
+[Tool: Bash] pwsh -Command "Get-Module -ListAvailable Pester | Select-Object Name,Version" 2>/dev/null
+[Result] [32;1mName  [0m[32;1m Version[0m
+[32;1m----  [0m [32;1m-------[0m
+Pester 5.7.1
+[Tool: Bash] docker images | grep -i act-ubuntu-pwsh; echo "---"; head -60 /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+---
+# Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchm
+[Assistant] Environment confirmed: PowerShell 7.6.3, Pester 5.7.1, act image `act-ubuntu-pwsh:latest`, actionlint and Docker present. The `.actrc` maps `ubuntu-latest` to the custom pwsh image.
+
+Let me save a key project fact, then begin TDD.
+[Tool: Write] {"file_path": "/home/passp/.claude/projects/-home-passp-repos-GHA-bench--claude-worktrees-opus48-bench-workspaces-2026-06-26-103905-11-semantic-version-bumper-powershell-tool-opus48-1m-high/memory/act
+[Result] File created successfully at: /home/passp/.claude/projects/-home-passp-repos-GHA-bench--claude-worktrees-opus48-bench-workspaces-2026-06-26-103905-11-semantic-version-bumper-powershell-tool-opus48-1m-high/memory/act-pwsh-environment.md (file state is current in your context — no need to Read it back)
+[Tool: Bash] ls .claude/ && cat MEMORY.md 2>/dev/null | head
+[Result] settings.json
+[Tool: Write] {"file_path": "/home/passp/.claude/projects/-home-passp-repos-GHA-bench--claude-worktrees-opus48-bench-workspaces-2026-06-26-103905-11-semantic-version-bumper-powershell-tool-opus48-1m-high/memory/MEM
+[Result] File created successfully at: /home/passp/.claude/projects/-home-passp-repos-GHA-bench--claude-worktrees-opus48-bench-workspaces-2026-06-26-103905-11-semantic-version-bumper-powershell-tool-opus48-1m-high/memory/MEMORY.md (file state is current in your context — no need to Read it back)
+[Assistant] Now let me begin TDD. **Step 1 (RED):** Write the first failing test for version parsing.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.Tests.ps1", "cont
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now let me run the tests to confirm they fail (RED):
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./SemanticVersionBumper.Tests.ps1 -Output Minimal" 2>&1 | tail -20
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 24 tests in 699ms.[0m
+[95mRunning tests.[0m
+[91m[-] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.Tests.ps1 failed with:[0m
+[91mCommandNotFoundException: The term '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.ps1' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91mCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[91mat <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.Tests.ps1:13[0m
+[97mTests completed in 1.48s[0m
+[97mTests Passed: 0, [0m[
+[Assistant] RED confirmed — the implementation doesn't exist yet. **Step 2 (GREEN):** Write the implementation.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.ps1", "content": 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./SemanticVersionBumper.Tests.ps1 -Output Detailed" 2>&1 | tail -45
+[Result] [32m  [+] reads commits from a fixture file via -Path[0m[90m 35ms (32ms|3ms)[0m
+[0m
+[92mDescribing Get-NextVersion[0m
+[32m  [+] bumps the patch component[0m[90m 25ms (19ms|6ms)[0m
+[32m  [+] bumps the minor component and resets patch[0m[90m 9ms (6ms|3ms)[0m
+[32m  [+] bumps the major component and resets minor and patch[0m[90m 7ms (6ms|2ms)[0m
+[32m  [+] leaves the version unchanged for "none"[0m[90m 7ms (6ms|2ms)[0m
+[0m
+[92mDescribing New-ChangelogEntry[0m
+[91m  [-] groups commits into Features / Bug Fixes / Breaking sections[0m[90m 107ms (99ms|9ms)[0m
+[91m   Expected like wildcard '*## [2.0.0] - 2026-06-27*' to match '## [2.0.0] - 2026-06-27
+[91m   ### BREAKING CHANGES
+[91m   - change config format
+[91m   ### Features
+[91m   - add search
+[91m   ### Bug Fixes
+[91m   - handle empty input
+[91m   ', but it did not match.
+[91m   at $entry | Should -BeLike '*## [2.0.0] - 2026-06-27*', /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/
+[Assistant] Three failures are wildcard-matching issues in my **tests**: PowerShell `-BeLike` treats `[2.0.0]` as a character class. And one error-message wording mismatch. Let me fix the test assertions to use regex `-Match`, and tighten the implementation's error message to be meaningful.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBu
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBu
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBu
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./SemanticVersionBumper.Tests.ps1 -Output Minimal" 2>&1 | tail -8
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 24 tests in 344ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.Tests.ps1[0m[90m 1.8s (807ms|701ms)[0m
+[97mTests completed in 1.84s[0m
+[32mTests Passed: 24, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 24 unit tests pass (GREEN). Now let me create the CLI wrapper, test fixtures, and the workflow. First the CLI entry point that the workflow calls:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/Invoke-Bump.ps1", "content": "<#\n.SYNO
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/Invoke-Bump.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now the test fixtures (mock commit logs). Let me create a `fixtures/` directory:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high" && mkdir -p fixtures
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/fixtures/commits-feat.txt", "content": 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/fixtures/commits-feat.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/fixtures/commits-fix.txt", "content": "
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/fixtures/commits-fix.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/fixtures/commits-breaking.txt", "conten
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/fixtures/commits-breaking.txt (file state is current in your context — no need to Read it back)
+[Assistant] Now the GitHub Actions workflow. Let me write it with auto-detection of version file, unit-test execution, the bump step, and a dependent reporting job:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high" && mkdir -p .github/workflows
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/.github/workflows/semantic-version-bump
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/.github/workflows/semantic-version-bumper.yml (file state is current in your context — no need to Read it back)
+[Assistant] Now validate with actionlint (instant) before any act run:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high" && actionlint .github/workflows/semantic-version-bumper.yml && echo "ACTIONLINT_EXIT=$?"
+[Result] ACTIONLINT_EXIT=0
+[Assistant] actionlint passes cleanly. Before spending act runs, let me validate the full bump logic locally for all three scenarios by simulating what the workflow does:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high"
+TMP=$(mktemp -d)
+echo "=== CASE 1: version.txt + feat -> expect 1.2.0 (minor) ==="
+mkdir -p "$TMP/c1" && cp SemanticVersionBumper.ps1 Invoke-Bump.ps1 "$TMP/c1/"
+printf '1.1.0\n' > "$TMP/c1/version.txt"
+cp fixtures/commits-feat.txt "$TMP/c1/commits.txt"
+pwsh -NoProfile -Command "& '$TMP/c1/Invoke-Bump.ps1' -VersionFile '$TMP/c1/version.txt' -CommitLogFile '$TMP/c1/commits.txt' -ChangelogFile '$TMP/c1/CHANGELOG.md' -Date 2026-06-27" 2>&1 | grep -E 'NEW_VERSION|BUMP_TYPE'
+echo "--- changelog ---"; cat "$TMP/c1/CHANGELOG.md"
+echo
+echo "=== CASE 2: version.txt + fix -> expect 1.1.1 (patch) ==="
+mkdir -p "$TMP/c2" && cp SemanticVersionBumper.ps1 Invoke-Bump.ps1 "$TMP/c2/"
+printf '1.1.0\n' > "$TMP/c2/version.txt"
+cp fixtures/commits-fix.txt "$TMP/c2/commits.txt"
+pwsh -NoProfile -Command "& '$TMP/c2/Invoke-Bump.ps1' -VersionFile '$TMP/c2/version.txt' -CommitLogFile '$TMP/c2/commits.txt' -ChangelogFile '$TMP/c2/CHANGELOG.md' -Date 2026-06-27" 2>&1 | grep -E 'NEW_VERSION|BUMP_TYPE'
+echo
+echo "=== CASE 3: package.json + breaking -> expect 3.0.0 (major) ==="
+mkdir -p "$TMP/c3" && cp SemanticVersionBumper.ps1 Invoke-Bump.ps1 "$TMP/c3/"
+printf '{ "name": "demo", "version": "2.3.4" }\n' > "$TMP/c3/package.json"
+cp fixtures/commits-breaking.txt "$TMP/c3/commits.txt"
+pwsh -NoProfile -Command "& '$TMP/c3/Invoke-Bump.ps1' -VersionFile '$TMP/c3/package.json' -CommitLogFile '$TMP/c3/commits.txt' -ChangelogFile '$TMP/c3/CHANGELOG.md' -Date 2026-06-27" 2>&1 | grep -E 'NEW_VERSION|BUMP_TYPE'
+echo "--- package.json after ---"; cat "$TMP/c3/package.json"
+rm -rf "$TMP"
+[Result] === CASE 1: version.txt + feat -> expect 1.2.0 (minor) ===
+NEW_VERSION=1.2.0
+BUMP_TYPE=minor
+--- changelog ---
+# Changelog
+
+## [1.2.0] - 2026-06-27
+
+### Features
+- add fuzzy search to the dashboard
+
+### Bug Fixes
+- correct off-by-one in pagination
+
+### Other Changes
+- chore: bump dev dependencies
+- docs: expand README usage section
+=== CASE 2: version.txt + fix -> expect 1.1.1 (patch) ===
+NEW_VERSION=1.1.1
+BUMP_TYPE=patch
+
+=== CASE 3: package.json + breaking -> expect 3.0.0 (major) ===
+NEW_VERSION=3.0.0
+BUMP_TYPE=major
+--- package.json after ---
+{ "name": "demo", "version": "3.0.0" }
+[Assistant] All three scenarios produce exact correct values locally. Now the workflow structure tests (Pester, fast). Let me check YAML parsing availability:
+[Tool: Bash] pwsh -NoProfile -Command "Get-Module -ListAvailable powershell-yaml,'PSYaml' | Select-Object Name,Version; 'ConvertFrom-Yaml exists: ' + [bool](Get-Command ConvertFrom-Yaml -EA SilentlyContinue)"
+[Result] [32;1mName           [0m[32;1m Version[0m
+[32;1m----           [0m [32;1m-------[0m
+powershell-yaml 0.4.12
+ConvertFrom-Yaml exists: True
+[Assistant] `powershell-yaml` is available. Now the workflow structure tests:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/Workflow.Tests.ps1", "content": "# Work
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/Workflow.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high" && pwsh -NoProfile -Command "Invoke-Pester -Path ./Workflow.Tests.ps1 -Output Detailed" 2>&1 | tail -40
+[Result] [95mPester v5.7.1[0m
+[95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 16 tests in 829ms.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/Workflow.Tests.ps1'[0m
+[92mDescribing Workflow file[0m
+[32m  [+] exists[0m[90m 249ms (140ms|109ms)[0m
+[32m  [+] is valid YAML that parses to a mapping[0m[90m 112ms (108ms|4ms)[0m
+[32m  [+] has a name[0m[90m 74ms (68ms|6ms)[0m
+[0m
+[92mDescribing Triggers[0m
+[32m  [+] declares the expected trigger events[0m[90m 62ms (50ms|12ms)[0m
+[32m  [+] schedules a cron job[0m[90m 37ms (33ms|5ms)[0m
+[0m
+[92mDescribing Permissions[0m
+[32m  [+] declares least-privilege contents permission[0m[90m 25ms (15ms|10ms)[0m
+[0m
+[92mDescribing Jobs[0m
+[32m  [+] defines the bump and report jobs[0m[90m 26ms (19ms|7ms)[0m
+[32m  [+] wires the report job to depend on t
+[Assistant] All structure tests pass. Now the act integration harness. This will use exactly 3 `act push` runs (one per case):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/Invoke-ActTests.ps1", "content": "<#\n.
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/Invoke-ActTests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now run the act harness — this uses exactly 3 `act push` runs. Generous timeout:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high" && pwsh -NoProfile -File ./Invoke-ActTests.ps1 2>&1 | tail -40; echo "HARNESS_EXIT=${PIPESTATUS[0]}"
+[Result] ==> Running act for case 'feat-minor' (expect 1.2.0 / minor)
+    PASS: feat-minor
+==> Running act for case 'fix-patch' (expect 1.1.1 / patch)
+    PASS: fix-patch
+==> Running act for case 'breaking-major' (expect 3.0.0 / major)
+    PASS: breaking-major
+
+All 3 act integration cases passed.
+Results written to: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/act-result.txt
+HARNESS_EXIT=0
+[Assistant] All 3 act cases passed on the first harness run. Let me verify the `act-result.txt` artifact contains the exact expected values and "Job succeeded" markers:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high"
+echo "=== File size ==="; wc -l act-result.txt
+echo "=== Exact value & job markers ==="
+grep -nE 'CASE:|NEW_VERSION=|BUMP_TYPE=|REPORT_VERSION=|Job succeeded|ACT_EXIT_CODE=|ALL ACT' act-result.txt
+[Result] === File size ===
+399 act-result.txt
+=== Exact value & job markers ===
+4:CASE: feat-minor  (expected version=1.2.0, type=minor)
+91:[Semantic Version Bumper/Compute next version]   | NEW_VERSION=1.2.0
+92:[Semantic Version Bumper/Compute next version]   | BUMP_TYPE=minor
+116:[Semantic Version Bumper/Compute next version] 🏁  Job succeeded
+127:[Semantic Version Bumper/Report release      ]   | REPORT_VERSION=1.2.0
+132:[Semantic Version Bumper/Report release      ] 🏁  Job succeeded
+134:ACT_EXIT_CODE=0
+137:CASE: fix-patch  (expected version=1.1.1, type=patch)
+223:[Semantic Version Bumper/Compute next version]   | NEW_VERSION=1.1.1
+224:[Semantic Version Bumper/Compute next version]   | BUMP_TYPE=patch
+245:[Semantic Version Bumper/Compute next version] 🏁  Job succeeded
+256:[Semantic Version Bumper/Report release      ]   | REPORT_VERSION=1.1.1
+261:[Semantic Version Bumper/Report release      ] 🏁  Job succeeded
+263:ACT_EXIT_CODE=0
+266:CASE: breaking-major  (expected version=3.0.0, type=major)
+3
+[Assistant] All three cases verified with exact values, both jobs succeeded, exit 0. Let me confirm the Pester unit tests ran inside the container too, then do a final combined Pester run:
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high"
+grep -nE 'Unit tests passed|Tests Passed|Pester [0-9]' act-result.txt | head
+[Result] 20:[Semantic Version Bumper/Compute next version]   | Pester 5.7.1
+70:[Semantic Version Bumper/Compute next version]   | [32mTests Passed: 24, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+71:[Semantic Version Bumper/Compute next version]   | Unit tests passed: 24
+153:[Semantic Version Bumper/Compute next version]   | Pester 5.7.1
+203:[Semantic Version Bumper/Compute next version]   | [32mTests Passed: 24, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+204:[Semantic Version Bumper/Compute next version]   | Unit tests passed: 24
+282:[Semantic Version Bumper/Compute next version]   | Pester 5.7.1
+332:[Semantic Version Bumper/Compute next version]   | [32mTests Passed: 24, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+333:[Semantic Version Bumper/Compute next version]   | Unit tests passed: 24
+[Assistant] The 24 unit tests ran and passed inside the container for all three cases. Now let me add a repo-root `version.txt` (so the workflow is runnable on real pushes via the git-log fallback) and a README, then do a final combined Pester run:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/version.txt", "content": "0.1.0\n"}
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/version.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/README.md", "content": "# Semantic Vers
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/README.md (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high" && pwsh -NoProfile -Command "Invoke-Pester -Path ./SemanticVersionBumper.Tests.ps1,./Workflow.Tests.ps1 -Output Minimal" 2>&1 | tail -8
+echo "=== Final tree ==="; ls -R --ignore=.git --ignore=.claude .
+[Result] [95m
+[95mStarting discovery in 2 files.[0m
+[95mDiscovery found 40 tests in 6.09s.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/SemanticVersionBumper.Tests.ps1[0m[90m 37.3s (16.44s|15.85s)[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/11-semantic-version-bumper/powershell-tool-opus48-1m-high/Workflow.Tests.ps1[0m[90m 8.75s (6.94s|1.17s)[0m
+[97mTests completed in 46.82s[0m
+[32mTests Passed: 40, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+=== Final tree ===
+.:
+Invoke-ActTests.ps1
+Invoke-Bump.ps1
+README.md
+SemanticVersionBumper.Tests.ps1
+SemanticVersionBumper.ps1
+Workflow.Tests.ps1
+act-result.txt
+benchmark-instructions-v4.md
+fixtures
+version.txt
+
+./fixtures:
+commits-breaking.txt
+commits-feat.txt
+commits-fix.txt
+[Assistant] Everything is complete and verified. Here's the summary.
+
+## What was built (red/green TDD, PowerShell + Pester)
+
+**Core library** — `SemanticVersionBumper.ps1` (side-effect-free, dot-sourceable):
+- `Get-SemanticVersion` — parses a version from `version.txt` or `package.json` (tolerates `v` prefix; meaningful errors on missing file / no version)
+- `Get-CommitBumpType` — classifies Conventional Commits → `major`/`minor`/`patch`/`none` (highest precedence wins; `!` marker and `BREAKING CHANGE` footer both → major)
+- `Get-NextVersion`, `New-ChangelogEntry`, `Set-SemanticVersion` (preserves other JSON fields), `Invoke-VersionBump` (orchestrator)
+
+**CLI** — `Invoke-Bump.ps1` emits `NEW_VERSION=`/`BUMP_TYPE=` and populates `$GITHUB_OUTPUT`.
+
+**TDD flow followed**: wrote `SemanticVersionBumper.Tests.ps1` first → confirmed RED (24 failing) → implemented → GREEN.
+
+## Test results
+| Suite | Result |
+|---|---|
+| `SemanticVersionBumper.Tests.ps1` (unit) | **24 pass** |
+| `Workflow.Tests.ps1` (structure: YAML, triggers, jobs, deps, script refs, actionlint exit 0) | **16 pass** |
+| `actionlint` | **exit 0, clean** |
+| `Invoke-ActTests.ps1` (full pipeline via `act`) | **3/3 pass** |
+
+## Workflow — `.github/workflows/semantic-version-bumper.yml`
+Triggers `push`/`pull_request`/`schedule`/`workflow_dispatch`; least-privilege `permissions: contents: read`; env vars; two jobs with a dependency (`report` `needs: bump`) consuming job **outputs**; uses `actions/checkout@v4` and `shell: pwsh` throughout; gates on the Pester suite, auto-detects the version file, runs the bumper.
+
+## act integration (exactly 3 `act push` runs, the budget)
+`act-result.txt` (399 lines, required artifact present) captures each case's full delimited output. Asserted on **exact** values, not just "a version":
+
+| Case | Input | Asserted output | Both jobs |
+|---|---|---|---|
+| feat → minor | `version.txt` 1.1.0 | `NEW_VERSION=1.2.0`, `BUMP_TYPE=minor`, `REPORT_VERSION=1.2.0` | Job succeeded ×2, exit 0 |
+| fix → patch | `version.txt` 1.1.0 | `NEW_VERSION=1.1.1`, `BUMP_TYPE=patch` | Job succeeded ×2, exit 0 |
+| breaking → major | `package.json` 2.3.4 | `NEW_VERSION=3.0.0`, `BUMP_TYPE=major` | Job succeeded ×2, exit 0 |
+
+The 24 unit tests also executed and passed inside the act container for every case. The three cases cover both file formats and all three bump types within the run budget; `package.json` parsing and edge cases (no-bump, scopes, mixed precedence) are additionally covered by the unit suite.

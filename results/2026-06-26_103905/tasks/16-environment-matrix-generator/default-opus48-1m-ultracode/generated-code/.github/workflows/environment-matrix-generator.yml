@@ -1,0 +1,87 @@
+name: Environment Matrix Generator
+
+# Real CI/CD usage of matrix_generator.py:
+#   1. The `generate-matrix` job runs the script against a JSON config, validates
+#      the resulting matrix size, and exposes the expanded matrix as a job output.
+#   2. The `build` job consumes that output via `fromJSON` to fan out one job per
+#      generated environment combination -- exactly how a dynamic build matrix is
+#      driven on GitHub. It is skipped when the matrix fails validation.
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # Weekly sanity run (Mondays 06:00 UTC) so config drift is caught regularly.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      config_file:
+        description: 'Path to the matrix config JSON'
+        required: false
+        default: 'matrix-config.json'
+
+# Least-privilege: the workflow only needs to read repository contents.
+permissions:
+  contents: read
+
+env:
+  # Default config path; overridable via the workflow_dispatch input above.
+  CONFIG_FILE: matrix-config.json
+
+jobs:
+  generate-matrix:
+    name: Generate and validate matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+      size: ${{ steps.gen.outputs.size }}
+      valid: ${{ steps.gen.outputs.valid }}
+      fail_fast: ${{ steps.gen.outputs.fail_fast }}
+      max_parallel: ${{ steps.gen.outputs.max_parallel }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify Python is available
+        run: python3 --version
+
+      - name: Generate matrix from config
+        id: gen
+        env:
+          # workflow_dispatch input wins when present; otherwise the env default.
+          CFG: ${{ github.event.inputs.config_file || env.CONFIG_FILE }}
+        run: |
+          echo "Generating matrix from config: $CFG"
+          # --github-output writes matrix/size/valid/... to $GITHUB_OUTPUT for
+          # downstream jobs; --compact keeps the JSON on a single line; tee also
+          # records it to result.json for the reporting step below.
+          python3 matrix_generator.py "$CFG" --github-output --compact | tee result.json
+
+      - name: Report matrix details
+        run: |
+          echo "MATRIX_SIZE=$(jq '.size' result.json)"
+          echo "MATRIX_VALID=$(jq -r '.valid' result.json)"
+          echo "FAIL_FAST=$(jq -r '."fail-fast"' result.json)"
+          echo "MAX_PARALLEL=$(jq -r '."max-parallel" // "none"' result.json)"
+          echo "MAX_SIZE=$(jq -r '.max_size // "none"' result.json)"
+          # One COMBO= line per generated combination, as compact JSON.
+          jq -rc '.matrix.include[]' result.json | sed 's/^/COMBO=/'
+          # Surface any validation errors (e.g. matrix too large).
+          jq -r '.errors[]? | "ERROR_MSG=" + .' result.json
+
+  build:
+    name: build ${{ matrix.os }} v${{ matrix.version }}
+    needs: generate-matrix
+    # Only fan out when the generated matrix passed size validation.
+    if: needs.generate-matrix.outputs.valid == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      # These mirror the strategy semantics the generator reports; the
+      # generated values are surfaced by the generate-matrix job's outputs.
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Build for this environment
+        run: |
+          echo "BUILD_OK os=${{ matrix.os }} version=${{ matrix.version }}"

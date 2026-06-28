@@ -1,0 +1,470 @@
+[Assistant] I'll start by exploring the environment and understanding the project context.
+[Tool: Bash] pwd && echo "---" && ls -la && echo "--- AGENTS.md ---" && cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100
+[Result] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh
+---
+total 44
+drwxr-xr-x  4 passp passp  4096 Jun 27 17:07 .
+drwxr-xr-x 14 passp passp  4096 Jun 27 17:07 ..
+-rw-r--r--  1 passp passp    40 Jun 27 17:07 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 27 17:07 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 27 17:07 .git
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+--- AGENTS.md ---
+# Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c 
+[Tool: Bash] echo "--- .actrc ---" && cat .actrc && echo "" && echo "--- .claude dir ---" && ls -la .claude/ && echo "--- git remote ---" && git remote -v && echo "--- act version ---" && act --version 2>/dev/null && echo "--- actionlint ---" && actionlint --version 2>/dev/null && echo "--- pwsh ---" && pwsh --version 2>/dev/null && echo "--- docker ---" && docker --version 2>/dev/null && echo "--- docker images ---" && docker images 2>/dev/null | grep -i act
+[Result] --- .actrc ---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+
+--- .claude dir ---
+total 12
+drwxr-xr-x 2 passp passp 4096 Jun 27 17:07 .
+drwxr-xr-x 4 passp passp 4096 Jun 27 17:07 ..
+-rw-r--r-- 1 passp passp  321 Jun 27 17:07 settings.json
+--- git remote ---
+--- act version ---
+act version 0.2.87
+--- actionlint ---
+1.7.12
+installed by downloading from release page
+built with go1.26.1 compiler for linux/amd64
+--- pwsh ---
+PowerShell 7.6.3
+--- docker ---
+Docker version 29.4.3, build 055a478
+--- docker images ---
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+ghcr.io/catthehacker/ubuntu:act-latest          eb153df03ca8       2.04GB          297MB
+[Tool: Bash] echo "--- settings.json ---" && cat .claude/settings.json && echo "" && echo "--- Pester local ---" && pwsh -NoProfile -Command "Get-Module -ListAvailable Pester | Select-Object Name,Version | Format-Table -AutoSize" 2>/dev/null && echo "--- Pester in container ---" && docker run --rm act-ubuntu-pwsh:latest pwsh -NoProfile -Command "Get-Module -ListAvailable Pester | Select-Object Name,Version; (Get-Command pwsh).Version" 2>/dev/null
+[Result] --- settings.json ---
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/hooks/syntax-check.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
+--- Pester local ---
+
+[32;1mName  [0m[32;1m Version[0m
+[32;1m----  [0m [32;1m-------[0m
+Pester 5.7.1
+
+--- Pester in container ---
+
+[32;1mName  [0m[32;1m Version[0m
+[32;1m----  [0m [32;1m-------[0m
+Pester 5.7.1
+[Assistant] I have a clear picture now. The custom container `act-ubuntu-pwsh:latest` has pwsh 7.6.3 + Pester 5.7.1 pre-installed. Let me check the container's pwsh once more and read the benchmark instructions for any extra constraints.
+[Tool: Bash] echo "--- container pwsh version ---" && docker run --rm act-ubuntu-pwsh:latest pwsh --version 2>/dev/null; echo "--- git/actionlint in container? ---" && docker run --rm act-ubuntu-pwsh:latest bash -c "which git actionlint pwsh 2>/dev/null; git --version" 2>/dev/null
+[Result] --- container pwsh version ---
+PowerShell 7.6.1
+--- git/actionlint in container? ---
+/usr/bin/git
+/usr/bin/pwsh
+git version 2.54.0
+[Assistant] Container has pwsh 7.6.1 + git. Now let me set up the project and begin TDD. First, the directory structure and the **first failing test**.
+[Tool: Bash] mkdir -p src tests fixtures/cases .github/workflows && ls -la
+[Result] total 60
+drwxr-xr-x  8 passp passp  4096 Jun 27 17:11 .
+drwxr-xr-x 14 passp passp  4096 Jun 27 17:07 ..
+-rw-r--r--  1 passp passp    40 Jun 27 17:07 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 27 17:07 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 27 17:07 .git
+drwxr-xr-x  3 passp passp  4096 Jun 27 17:11 .github
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+drwxr-xr-x  3 passp passp  4096 Jun 27 17:11 fixtures
+drwxr-xr-x  2 passp passp  4096 Jun 27 17:11 src
+drwxr-xr-x  2 passp passp  4096 Jun 27 17:11 tests
+[Assistant] Now the **RED** step — write the first failing test before any implementation exists:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1", "content": "#Re
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -20
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 1 tests in 318ms.[0m
+[95mRunning tests.[0m
+[31;1mImport-Module: [0m/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1:12[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  12 | [0m     [36;1mImport-Module $script:ModulePath -Force[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mThe specified module[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m[31;1m[36;1m     | [31;1m'/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1' was not loaded because no valid module file was found in any module directory.[0m
+[91m[
+[Assistant] RED confirmed (module/function missing). Now **GREEN** — minimal module to pass:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1", "content": "function C
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -4
+[Result] [95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1[0m[90m 443ms (72ms|226ms)[0m
+[97mTests completed in 456ms[0m
+[32mTests Passed: 1, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] GREEN. Next TDD cycle — add failing tests for the glob edge cases (basename matching, `**/` prefix, `*` not crossing `/`):
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -8
+[Result] [91m at Test-GlobMatch -Path 'Button.test.tsx' -Pattern '**/*.test.*' | Should -BeTrue, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1:51
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1:51[0m
+[91m[-] Test-GlobMatch.? matches exactly one non-separator character.matches a single character[0m[90m 16ms (13ms|3ms)[0m
+[91m Expected $true, but got $false.
+[91m at Test-GlobMatch -Path 'v1/app.ts' -Pattern 'v?/app.ts' | Should -BeTrue, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1:60
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-a
+[Assistant] 4 RED (basename, `**/` prefix, `?`). Now **GREEN** — refine the glob engine:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1", 
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -4
+[Result] [95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1[0m[90m 1.11s (219ms|620ms)[0m
+[97mTests completed in 1.15s[0m
+[32mTests Passed: 13, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 13 green. Let me track progress with a task list, then continue TDD on the core resolver.
+[Tool: ToolSearch] {"query": "select:TaskCreate,TaskUpdate", "max_results": 5}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskCreate'}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskUpdate'}
+[Tool: TaskCreate] {"subject": "Build glob matching engine (TDD)", "description": "Convert-GlobToRegex + Test-GlobMatch with **, *, ?, basename, leading **/ semantics. Done/green."}
+[Result] Task #1 created successfully: Build glob matching engine (TDD)
+[Tool: TaskCreate] {"subject": "Build core label resolver (TDD)", "description": "Resolve-PrLabels: union of labels, multiple labels per rule/file, priority ordering, stopOnMatch conflict resolution, empty/no-match hand
+[Result] Task #2 created successfully: Build core label resolver (TDD)
+[Tool: TaskCreate] {"subject": "Build config/IO + CLI entry script (TDD)", "description": "Import-LabelRules (JSON), Get-ChangedFile, error handling; Invoke-PrLabelAssigner.ps1 CLI producing PR_LABELS output."}
+[Result] Task #3 created successfully: Build config/IO + CLI entry script (TDD)
+[Tool: TaskCreate] {"subject": "Create fixtures + GitHub Actions workflow", "description": "label-rules.json, per-case changed-file fixtures, .github/workflows/pr-label-assigner.yml running Pester + label assigner via s
+[Result] Task #4 created successfully: Create fixtures + GitHub Actions workflow
+[Tool: TaskCreate] {"subject": "Validate workflow (actionlint) + write act harness", "description": "actionlint clean; Run-ActHarness.ps1 runs act push per case, writes act-result.txt, asserts exit 0, Job succeeded, exa
+[Result] Task #5 created successfully: Validate workflow (actionlint) + write act harness
+[Tool: TaskUpdate] {"taskId": "1", "status": "completed"}
+[Result] Updated task #1 status
+[Tool: TaskUpdate] {"taskId": "2", "status": "in_progress"}
+[Result] Updated task #2 status
+[Assistant] Now the **RED** for the core resolver. Let me add the resolver test block:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -5
+[Result] [91m CommandNotFoundException: The term 'Resolve-PrLabels' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91m Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1:151[0m
+[97mTests completed in 3.88s[0m
+[97mTests Passed: 13, [0m[91mFailed: 10, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] RED confirmed (10 fail). Let me make the array-equality assertions robust (use `-join` for ordered comparison) before implementing:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now **GREEN** — implement the resolver in the module:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1", 
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -6
+[Result] [95mStarting discovery in 1 files.[0m
+[95mDiscovery found 23 tests in 536ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1[0m[90m 1.98s (782ms|748ms)[0m
+[97mTests completed in 2.03s[0m
+[32mTests Passed: 23, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Task 2 done. Now the config/IO layer. **RED** tests for `Import-LabelRules` and `Get-ChangedFile`:
+[Tool: TaskUpdate] {"taskId": "2", "status": "completed"}
+[Result] Updated task #2 status
+[Tool: TaskUpdate] {"taskId": "3", "status": "in_progress"}
+[Result] Updated task #3 status
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -5
+[Result] [91m     +           ~~~~~~~~~~~~~~~
+[91m at Should -Throw -ExpectedMessage '*not found*', /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1:251
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1:250[0m
+[97mTests completed in 2.49s[0m
+[97mTests Passed: 26, [0m[91mFailed: 9, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] 9 RED (the IO functions). Now **GREEN** — implement `Import-LabelRules` and `Get-ChangedFile`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1", 
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -5
+[Result] [95mDiscovery found 35 tests in 224ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1[0m[90m 1.15s (502ms|472ms)[0m
+[97mTests completed in 1.18s[0m
+[32mTests Passed: 35, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 35 green. Now TDD the output formatter (used by the CLI). **RED**:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -4
+[Result] [91m Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1:285[0m
+[97mTests completed in 3.36s[0m
+[97mTests Passed: 35, [0m[91mFailed: 4, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Now **GREEN** — implement `Format-PrLabelOutput`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1", 
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/src/PrLabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/PrLabelAssigner.Tests.ps1 -Output Minimal" 2>&1 | tail -4
+[Result] [95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1[0m[90m 2.08s (1.02s|810ms)[0m
+[97mTests completed in 2.13s[0m
+[32mTests Passed: 39, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] 39 green. Now the CLI entry script that the workflow invokes:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/Invoke-PrLabelAssigner.ps1", "content": "#!/usr/b
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/Invoke-PrLabelAssigner.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now the fixtures. The shared rules config and the per-case changed-file manifests:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/fixtures/label-rules.json", "content": "{\n  \"//
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/fixtures/label-rules.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/fixtures/cases/01-mixed.txt", "content": "# Test 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/fixtures/cases/01-mixed.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/fixtures/cases/02-exclusive.txt", "content": "# T
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/fixtures/cases/02-exclusive.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/fixtures/cases/03-docs-only.txt", "content": "# T
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/fixtures/cases/03-docs-only.txt (file state is current in your context — no need to Read it back)
+[Assistant] Let me create a default manifest and verify the CLI end-to-end locally against each fixture (free, no act):
+[Tool: Bash] cd "$(pwd)" && cp fixtures/cases/01-mixed.txt fixtures/changed-files.txt && echo "=== default ===" && pwsh -NoProfile -File ./Invoke-PrLabelAssigner.ps1; echo "exit=$?"
+echo ""; echo "=== case 01-mixed ==="; pwsh -NoProfile -File ./Invoke-PrLabelAssigner.ps1 -ChangedFilesPath fixtures/cases/01-mixed.txt | grep -E '^PR_LABEL'
+echo "=== case 02-exclusive ==="; pwsh -NoProfile -File ./Invoke-PrLabelAssigner.ps1 -ChangedFilesPath fixtures/cases/02-exclusive.txt | grep -E '^PR_LABEL'
+echo "=== case 03-docs-only ==="; pwsh -NoProfile -File ./Invoke-PrLabelAssigner.ps1 -ChangedFilesPath fixtures/cases/03-docs-only.txt | grep -E '^PR_LABEL'
+[Result] === default ===
+=== PR Label Assigner ===
+Changed files: 6
+--- Per-file labels ---
+docs/guide.md -> documentation
+src/api/users.ts -> api, backend, source
+src/api/users.test.ts -> tests, api, backend, source
+src/utils/helper.ts -> source
+README.md -> documentation
+package.json -> dependencies
+--- Final label set ---
+PR_LABELS=tests,dependencies,api,backend,source,documentation
+PR_LABEL_COUNT=6
+exit=0
+
+=== case 01-mixed ===
+PR_LABELS=tests,dependencies,api,backend,source,documentation
+PR_LABEL_COUNT=6
+=== case 02-exclusive ===
+PR_LABELS=generated,api,backend,source,documentation
+PR_LABEL_COUNT=5
+=== case 03-docs-only ===
+PR_LABELS=documentation
+PR_LABEL_COUNT=1
+[Assistant] All three cases produce exact expected output. Task 3 complete. Now the workflow:
+[Tool: TaskUpdate] {"taskId": "3", "status": "completed"}
+[Result] Updated task #3 status
+[Tool: TaskUpdate] {"taskId": "4", "status": "in_progress"}
+[Result] Updated task #4 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/.github/workflows/pr-label-assigner.yml", "conten
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/.github/workflows/pr-label-assigner.yml (file state is current in your context — no need to Read it back)
+[Assistant] Now validate with actionlint (instant):
+[Tool: Bash] cd "$(pwd)" && actionlint .github/workflows/pr-label-assigner.yml; echo "actionlint exit=$?"
+[Result] actionlint exit=0
+[Assistant] actionlint passes. Let me check for a YAML parser available for the structure tests:
+[Tool: Bash] pwsh -NoProfile -Command "Get-Module -ListAvailable powershell-yaml | Select-Object Name,Version; if (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue) { 'ConvertFrom-Yaml available' } else { 'no ConvertFrom-Yaml' }" 2>&1; echo "--- python yaml? ---"; python3 -c "import yaml; print('python yaml ok')" 2>&1
+[Result] [32;1mName           [0m[32;1m Version[0m
+[32;1m----           [0m [32;1m-------[0m
+powershell-yaml 0.4.12
+ConvertFrom-Yaml available
+
+--- python yaml? ---
+python yaml ok
+[Assistant] `powershell-yaml` is available. Let me check how it parses the workflow (the `on:` key is a known YAML gotcha):
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command '
+$wf = ConvertFrom-Yaml (Get-Content ".github/workflows/pr-label-assigner.yml" -Raw)
+"Type: $($wf.GetType().Name)"
+"Top keys: $($wf.Keys -join ", ")"
+"Has key on? $($wf.ContainsKey("on"))   Has key True? $($wf.ContainsKey($true))"
+$onval = $wf["on"]; if ($null -eq $onval) { $onval = $wf[$true] }
+"on type: $($onval.GetType().Name)"
+"on keys: $($onval.Keys -join ", ")"
+"jobs keys: $($wf["jobs"].Keys -join ", ")"
+"job test steps count: $($wf["jobs"]["test"]["steps"].Count)"
+'
+[Result] Type: Hashtable
+Top keys: env, jobs, on, name, permissions
+Has key on? True   Has key True? False
+on type: Hashtable
+on keys: workflow_dispatch, push, pull_request, schedule
+jobs keys: test, assign-labels
+job test steps count: 2
+[Assistant] `on` parses as the string key (no boolean gotcha), structure is clean. Now the workflow structure tests:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/Workflow.Tests.ps1", "content": "#Requires 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/Workflow.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests/Workflow.Tests.ps1 -Output Detailed" 2>&1 | tail -40
+[Result] [95mPester v5.7.1[0m
+[95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 18 tests in 243ms.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/Workflow.Tests.ps1'[0m
+[92mDescribing Workflow file is present and valid[0m
+[32m  [+] exists on disk[0m[90m 107ms (70ms|37ms)[0m
+[32m  [+] parses as a YAML mapping[0m[90m 39ms (37ms|2ms)[0m
+[32m  [+] passes actionlint with exit code 0[0m[90m 182ms (181ms|2ms)[0m
+[0m
+[92mDescribing Workflow triggers[0m
+[32m  [+] has the expected name[0m[90m 14ms (8ms|6ms)[0m
+[32m  [+] triggers on push[0m[90m 16ms (13ms|4ms)[0m
+[32m  [+] triggers on pull_request[0m[90m 9ms (6ms|4ms)[0m
+[32m  [+] supports manual workflow_dispatch[0m[90m 5ms (3ms|2ms)[0m
+[32m  [+] has a scheduled trigger[0m[90m 4ms (3ms|2ms)[0m
+[0m
+[92mDescribing Workflow permissions and env[0m
+
+[Assistant] All 18 structure tests pass. Task 4 complete. Now the act harness:
+[Tool: TaskUpdate] {"taskId": "4", "status": "completed"}
+[Result] Updated task #4 status
+[Tool: TaskUpdate] {"taskId": "5", "status": "in_progress"}
+[Result] Updated task #5 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/Run-ActHarness.ps1", "content": "#!/usr/bin/env p
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/Run-ActHarness.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now a **smoke run** with one case (act run #1) to validate the full pipeline mechanics and observe the real output format. act needs the Docker daemon, so I disable the sandbox:
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -File ./Run-ActHarness.ps1 -Cases 01-mixed 2>&1 | tail -40; echo "HARNESS_EXIT=$?"
+[Result] === Running case: 01-mixed ===
+  PASSED  labels=tests,dependencies,api,backend,source,documentation
+
+All 1 case(s) passed. Full output -> /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/act-result.txt
+HARNESS_EXIT=0
+[Assistant] Smoke passed first try. Let me inspect the captured act output to confirm the format (job successes, marker lines):
+[Tool: Bash] cd "$(pwd)" && echo "=== file size ===" && wc -l act-result.txt && echo "=== Job succeeded lines ===" && grep -n "Job succeeded" act-result.txt && echo "=== marker lines ===" && grep -nE "PR_LABELS=|PR_LABEL_COUNT=" act-result.txt && echo "=== per-file sample ===" && grep -nE "users.test.ts ->|schema|Assigned [0-9]" act-result.txt | head
+[Result] === file size ===
+135 act-result.txt
+=== Job succeeded lines ===
+90:[PR Label Assigner/Unit tests (Pester)] 🏁  Job succeeded
+128:[PR Label Assigner/Assign labels      ] 🏁  Job succeeded
+=== marker lines ===
+7:EXPECTED: PR_LABELS=tests,dependencies,api,backend,source,documentation   PR_LABEL_COUNT=6
+113:[PR Label Assigner/Assign labels      ]   | PR_LABELS=tests,dependencies,api,backend,source,documentation
+114:[PR Label Assigner/Assign labels      ]   | PR_LABEL_COUNT=6
+=== per-file sample ===
+108:[PR Label Assigner/Assign labels      ]   | src/api/users.test.ts -> tests, api, backend, source
+123:[PR Label Assigner/Assign labels      ]   | Assigned 6 label(s): tests,dependencies,api,backend,source,documentation
+[Assistant] The pipeline works end-to-end: both jobs succeed, exact `PR_LABELS`/`PR_LABEL_COUNT` markers present, per-file breakdown shown, and the step-output propagation (`Assigned 6 label(s)`) works. Mechanics are validated.
+
+Now the definitive full harness run across all 3 cases (this produces the complete `act-result.txt` deliverable):
+[Tool: Bash] cd "$(pwd)" && pwsh -NoProfile -File ./Run-ActHarness.ps1 2>&1 | tail -15; echo "HARNESS_EXIT=$?"
+[Result] === Running case: 01-mixed ===
+  PASSED  labels=tests,dependencies,api,backend,source,documentation
+=== Running case: 02-exclusive ===
+  PASSED  labels=generated,api,backend,source,documentation
+=== Running case: 03-docs-only ===
+  PASSED  labels=documentation
+
+All 3 case(s) passed. Full output -> /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/act-result.txt
+HARNESS_EXIT=0
+[Assistant] All 3 cases passed through act. Let me verify the complete `act-result.txt` deliverable contains all cases with correct markers and job successes:
+[Tool: Bash] cd "$(pwd)" && echo "=== total lines ===" && wc -l act-result.txt && echo "" && echo "=== case delimiters + verdicts ===" && grep -nE "^CASE:|^EXPECTED:|^act exit code:|^VERDICT:|^RESULT:" act-result.txt && echo "" && echo "=== actual PR_LABELS marker lines from act ===" && grep -E "\| PR_LABELS=|\| PR_LABEL_COUNT=" act-result.txt && echo "" && echo "=== Job succeeded count ===" && grep -c "Job succeeded" act-result.txt
+[Result] === total lines ===
+381 act-result.txt
+
+=== case delimiters + verdicts ===
+6:CASE: 01-mixed    fixture=fixtures/cases/01-mixed.txt
+7:EXPECTED: PR_LABELS=tests,dependencies,api,backend,source,documentation   PR_LABEL_COUNT=6
+8:act exit code: 0
+130:VERDICT: PASSED  (jobs succeeded: 2)
+133:CASE: 02-exclusive    fixture=fixtures/cases/02-exclusive.txt
+134:EXPECTED: PR_LABELS=generated,api,backend,source,documentation   PR_LABEL_COUNT=5
+135:act exit code: 0
+254:VERDICT: PASSED  (jobs succeeded: 2)
+257:CASE: 03-docs-only    fixture=fixtures/cases/03-docs-only.txt
+258:EXPECTED: PR_LABELS=documentation   PR_LABEL_COUNT=1
+259:act exit code: 0
+378:VERDICT: PASSED  (jobs succeeded: 2)
+381:RESULT: ALL 3 CASE(S) PASSED
+
+=== actual PR_LABELS marker lines from act ===
+[PR Label Assigner/Assign labels      ]   | PR_LABELS=tests,dependencies,api,backend,source,documentation
+[PR Label Assigner/Assign labels      ]   | PR_LABEL_COUNT=6
+[PR Label Assigner/Assign labels      ]   | PR_LABELS=generated,api,b
+[Assistant] Complete and correct: 3 cases, all exit 0, 6 "Job succeeded" (2 jobs × 3), exact markers. Let me confirm the Pester unit tests actually executed inside act, and run the full local Pester suite as the final check:
+[Tool: Bash] cd "$(pwd)" && echo "=== Pester output inside act (test job) ===" && grep -E "Tests Passed|Running tests|Pester v" act-result.txt | head -6 && echo "" && echo "=== FULL LOCAL Invoke-Pester over tests/ ===" && pwsh -NoProfile -Command "Invoke-Pester -Path ./tests -Output Minimal" 2>&1 | tail -5
+[Result] === Pester output inside act (test job) ===
+[PR Label Assigner/Unit tests (Pester)]   | [95mPester v5.7.1[0m
+[PR Label Assigner/Unit tests (Pester)]   | [95mRunning tests.[0m
+[PR Label Assigner/Unit tests (Pester)]   | [95mRunning tests from '/tmp/pr-label-act-01-mixed-0069b345/tests/PrLabelAssigner.Tests.ps1'[0m
+[PR Label Assigner/Unit tests (Pester)]   | [32mTests Passed: 39, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[PR Label Assigner/Unit tests (Pester)]   | [95mPester v5.7.1[0m
+[PR Label Assigner/Unit tests (Pester)]   | [95mRunning tests.[0m
+
+=== FULL LOCAL Invoke-Pester over tests/ ===
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/tests/PrLabelAssigner.Tests.ps1[0m[90m 1.52s (759ms|553ms)[0m
+[32m[+] /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/1
+[Assistant] Confirmed: the Pester unit tests genuinely run **inside** act (`Tests Passed: 39, Failed: 0` in the test job), and the full local suite is **57 passed, 0 failed** (39 unit + 18 structure). Let me complete the task tracking and add a concise README documenting the design.
+[Tool: TaskUpdate] {"taskId": "5", "status": "completed"}
+[Result] Updated task #5 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/README.md", "content": "# PR Label Assigner (Powe
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/powershell-opus48-1m-xhigh/README.md (file state is current in your context — no need to Read it back)
+[Assistant] Final verification — confirm actionlint is clean and show the complete deliverable structure:
+[Tool: Bash] cd "$(pwd)" && echo "=== actionlint ===" && actionlint .github/workflows/pr-label-assigner.yml && echo "actionlint exit=$? (clean)" && echo "" && echo "=== project tree ===" && find . -type f -not -path './.git/*' -not -name 'benchmark-instructions-v4.md' | sort && echo "" && echo "=== act-result.txt present? ===" && ls -la act-result.txt
+[Result] === actionlint ===
+actionlint exit=0 (clean)
+
+=== project tree ===
+./.actrc
+./.claude/settings.json
+./.github/workflows/pr-label-assigner.yml
+./Invoke-PrLabelAssigner.ps1
+./README.md
+./Run-ActHarness.ps1
+./act-result.txt
+./fixtures/cases/01-mixed.txt
+./fixtures/cases/02-exclusive.txt
+./fixtures/cases/03-docs-only.txt
+./fixtures/changed-files.txt
+./fixtures/label-rules.json
+./src/PrLabelAssigner.psm1
+./tests/PrLabelAssigner.Tests.ps1
+./tests/Workflow.Tests.ps1
+
+=== act-result.txt present? ===
+-rw-r--r-- 1 passp passp 37678 Jun 27 17:25 act-result.txt
+[Assistant] Everything is complete and verified. Here's a summary of what I built.
+
+## Summary
+
+A PowerShell PR label assigner, built test-first (red/green TDD) and exercised end-to-end through a GitHub Actions workflow via `act`.
+
+### Core functionality (`src/PrLabelAssigner.psm1`)
+- **Glob engine** — `Convert-GlobToRegex` / `Test-GlobMatch` with documented, intentional semantics: `**/` (zero+ leading dirs), `**` (crosses `/`), `*` (no `/`), `?` (single non-`/`), basename matching for slash-less patterns (so `*.test.*` matches nested files), case-insensitive.
+- **Resolver** — `Resolve-PrLabels`: unions labels, supports multiple labels per file/rule, dedupes, orders the final set by descending priority (ties alphabetical), and resolves conflicts via `stopOnMatch` exclusive rules (e.g. a `*.generated.*` file gets *only* `generated`).
+- **IO + errors** — `Import-LabelRules` (JSON), `Get-ChangedFile` (manifest), `Format-PrLabelOutput` (machine-parseable `PR_LABELS=` / `PR_LABEL_COUNT=` markers), all with meaningful error messages.
+
+### TDD methodology
+Every unit was driven by a failing test first (you can see the cycles in the transcript: glob match → glob edge cases → resolver → IO → formatter). Each RED was confirmed before the minimal GREEN implementation.
+
+### Testing — all green
+- **Local `Invoke-Pester ./tests`: 57 passed, 0 failed** (39 unit + 18 workflow-structure).
+- The 39 unit tests **also run inside `act`** (the workflow's `test` job runs Pester and reports `Tests Passed: 39`).
+
+### GitHub Actions (`.github/workflows/pr-label-assigner.yml`)
+- Triggers: `push`, `pull_request`, `workflow_dispatch`, `schedule`.
+- Least-privilege `permissions`, workflow-level `env`, two jobs with a `needs:` dependency (`assign-labels` needs `test`), `actions/checkout@v4`, `shell: pwsh` on every run step, step outputs.
+- **`actionlint` exit 0** (clean).
+
+### act harness (`Run-ActHarness.ps1`) — required artifact `act-result.txt` ✅
+For each of 3 test cases it builds an isolated temp git repo (project files + that case's fixture), runs `act push --rm`, appends delimited output to `act-result.txt`, and asserts: **act exit 0**, the **exact** `PR_LABELS`/`PR_LABEL_COUNT` markers, and **every job shows "Job succeeded"** (6 total = 2 jobs × 3 cases). All 3 cases PASSED.
+
+| Case | Expected `PR_LABELS` (verified through act) |
+|------|------|
+| 01-mixed | `tests,dependencies,api,backend,source,documentation` |
+| 02-exclusive | `generated,api,backend,source,documentation` (stopOnMatch suppresses lower rules) |
+| 03-docs-only | `documentation` |
+
+I used the `act` budget deliberately: one single-case smoke run to de-risk the pipeline mechanics and confirm the output format my assertions parse, then one full 3-case run to produce the definitive `act-result.txt` — no blind re-runs.

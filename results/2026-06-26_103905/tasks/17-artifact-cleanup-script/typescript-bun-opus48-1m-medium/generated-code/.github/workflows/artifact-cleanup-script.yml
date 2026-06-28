@@ -1,0 +1,91 @@
+name: Artifact Cleanup
+
+# Triggers:
+# - push / pull_request: validate the cleanup logic on every change.
+# - schedule: run the cleanup nightly so retention policies stay enforced.
+# - workflow_dispatch: allow on-demand runs with custom policy overrides.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC daily
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run in dry-run mode (no deletions reported as executed)"
+        type: boolean
+        default: true
+
+# Least-privilege: this job only reads the repo. Real deletions would need
+# actions:write, but the plan generation is read-only.
+permissions:
+  contents: read
+
+# Default policy values. A per-test-case fixtures/policy.env may override these
+# (it is sourced at run time when present).
+env:
+  DEFAULT_MAX_AGE_DAYS: "90"
+  DEFAULT_KEEP_LATEST_N: "2"
+  DEFAULT_MAX_TOTAL_SIZE_BYTES: "15000000"
+  DEFAULT_NOW: "2026-06-27T00:00:00Z"
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Run unit tests
+        # Only the dependency-free logic/CLI tests run inside the container.
+        # The workflow STRUCTURE tests (which need actionlint + the yaml package)
+        # run on the host via `bun test`, not in CI.
+        run: bun test src/cleanup.test.ts src/cli.test.ts
+
+  cleanup:
+    name: Generate cleanup plan
+    runs-on: ubuntu-latest
+    needs: test # only generate a plan after the logic is verified
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Run artifact cleanup
+        env:
+          DISPATCH_DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          # Per-case overrides (written by the test harness) take precedence
+          # over the workflow defaults declared in env: above.
+          if [ -f fixtures/policy.env ]; then
+            # shellcheck disable=SC1091
+            source fixtures/policy.env
+          fi
+
+          MAX_AGE_DAYS="${MAX_AGE_DAYS:-$DEFAULT_MAX_AGE_DAYS}"
+          KEEP_LATEST_N="${KEEP_LATEST_N:-$DEFAULT_KEEP_LATEST_N}"
+          MAX_TOTAL_SIZE_BYTES="${MAX_TOTAL_SIZE_BYTES:-$DEFAULT_MAX_TOTAL_SIZE_BYTES}"
+          NOW_OVERRIDE="${NOW_OVERRIDE:-$DEFAULT_NOW}"
+          # DRY_RUN: policy.env wins, else the dispatch input, else default true.
+          DRY_RUN="${DRY_RUN:-${DISPATCH_DRY_RUN:-true}}"
+
+          args=(--input fixtures/artifacts.json --now "$NOW_OVERRIDE")
+          [ -n "$MAX_AGE_DAYS" ] && args+=(--max-age-days "$MAX_AGE_DAYS")
+          [ -n "$KEEP_LATEST_N" ] && args+=(--keep-latest-n "$KEEP_LATEST_N")
+          [ -n "$MAX_TOTAL_SIZE_BYTES" ] && args+=(--max-total-size-bytes "$MAX_TOTAL_SIZE_BYTES")
+          [ "$DRY_RUN" = "true" ] && args+=(--dry-run)
+
+          echo "Running: bun run src/cli.ts ${args[*]}"
+          bun run src/cli.ts "${args[@]}"

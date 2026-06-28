@@ -1,0 +1,85 @@
+name: Test Results Aggregator
+
+# Triggers: on every push / PR (report CI test health), on a weekly schedule
+# (flakiness trend), and on-demand with an optional results directory input.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      results_dir:
+        description: Directory containing JUnit XML / JSON test result files
+        required: false
+        default: fixtures
+
+# Least-privilege: the aggregator only reads the checked-out repository.
+permissions:
+  contents: read
+
+env:
+  # Default location of the result files; overridable via workflow_dispatch.
+  RESULTS_DIR: fixtures
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    # Expose the computed totals so dependent jobs can gate / report on them.
+    outputs:
+      passed: ${{ steps.agg.outputs.passed }}
+      failed: ${{ steps.agg.outputs.failed }}
+      skipped: ${{ steps.agg.outputs.skipped }}
+      total: ${{ steps.agg.outputs.total }}
+      flaky: ${{ steps.agg.outputs.flaky }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure PowerShell is available
+        shell: bash
+        run: |
+          # pwsh + Pester are pre-installed on GitHub-hosted ubuntu runners and
+          # in the act container, so this is effectively a no-op. We keep it for
+          # portability and to fail fast with a clear message if pwsh is absent.
+          if ! command -v pwsh >/dev/null 2>&1; then
+            echo "PowerShell (pwsh) is required but was not found on PATH." >&2
+            exit 1
+          fi
+          pwsh --version
+
+      - name: Aggregate results into a job summary
+        id: agg
+        shell: pwsh
+        env:
+          INPUT_RESULTS_DIR: ${{ github.event.inputs.results_dir }}
+        run: |
+          $dir = if ($env:INPUT_RESULTS_DIR) { $env:INPUT_RESULTS_DIR } else { $env:RESULTS_DIR }
+          Write-Output "Aggregating test results from '$dir'"
+          ./Invoke-Aggregator.ps1 -Path $dir -OutFile summary.md
+
+  report:
+    name: Report aggregated status
+    needs: aggregate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Render gate summary
+        shell: pwsh
+        env:
+          PASSED: ${{ needs.aggregate.outputs.passed }}
+          FAILED: ${{ needs.aggregate.outputs.failed }}
+          SKIPPED: ${{ needs.aggregate.outputs.skipped }}
+          TOTAL: ${{ needs.aggregate.outputs.total }}
+          FLAKY: ${{ needs.aggregate.outputs.flaky }}
+        run: |
+          # Consume the upstream job's outputs and emit a single gate line that
+          # the test harness asserts on (proving data flowed across the job edge).
+          Write-Output ('[GATE] passed={0} failed={1} skipped={2} total={3} flaky={4}' -f $env:PASSED, $env:FAILED, $env:SKIPPED, $env:TOTAL, $env:FLAKY)
+          if ([int]$env:FLAKY -gt 0) {
+              Write-Output "::warning::$($env:FLAKY) flaky test(s) detected across the matrix."
+          }
+          "Gate: total=$($env:TOTAL) failed=$($env:FAILED) flaky=$($env:FLAKY)" |
+              Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append

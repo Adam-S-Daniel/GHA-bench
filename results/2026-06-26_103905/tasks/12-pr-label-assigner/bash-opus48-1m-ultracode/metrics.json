@@ -1,0 +1,1001 @@
+{
+  "task_id": "12-pr-label-assigner",
+  "task_name": "PR Label Assigner",
+  "task_category": "GitHub Actions / Triage",
+  "language_mode": "bash",
+  "language_chosen": "bash",
+  "language_breakdown": {
+    "bash": 79.5,
+    "python": 20.5
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-opus-4-8[1m]",
+  "model_short": "opus48-1m",
+  "variant": "opus48-1m-ultracode",
+  "claude_code_version": "2.1.195",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-06-28T10:18:20.922763+00:00",
+  "timestamp_end": "2026-06-28T10:36:56.578540+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use Bash as your implementation language.\n\nTASK: Given a list of changed file paths (simulating a PR's changed files), apply labels based on configurable path-to-label mapping rules (e.g., docs/** -> documentation, src/api/** -> api, *.test.* -> tests). Support glob patterns, multiple labels per file, and priority ordering when rules conflict. Output the final label set. Mock the file list for testing.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use bats-core (bats) as the testing framework.\n3. All tests must be runnable with `bats` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n6. Use `#!/usr/bin/env bash` shebang. Scripts must pass `shellcheck` and `bash -n` syntax validation.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/pr-label-assigner.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/pr-label-assigner.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "8fadde7b-c29f-498f-88d6-af326b058a9d",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 29,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1461,
+      "outputTokens": 16,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.001541,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-opus-4-8[1m]": {
+      "inputTokens": 5484,
+      "outputTokens": 80827,
+      "cacheReadInputTokens": 4310057,
+      "cacheCreationInputTokens": 103538,
+      "webSearchRequests": 0,
+      "costUSD": 5.238503500000002,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "ultracode",
+  "timing": {
+    "grand_total_duration_ms": 1115655,
+    "total_api_duration_ms": 1061535,
+    "total_execution_duration_ms": 53319,
+    "num_turns": 55
+  },
+  "tokens": {
+    "input_tokens": 5484,
+    "output_tokens": 80827,
+    "cache_read_tokens": 4310057,
+    "cache_creation_tokens": 103538,
+    "total_context_consumed": 4419079,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 5.2400445000000015,
+    "assumed_input_cost_per_mtok": 5.0,
+    "assumed_output_cost_per_mtok": 25.0,
+    "assumed_cache_read_cost_per_mtok": 0.5,
+    "assumed_cache_write_cost_per_mtok": 6.25
+  },
+  "code_metrics": {
+    "code_lines": 949,
+    "total_tokens_estimate": 13867,
+    "file_count": 15,
+    "files": [
+      "README.md",
+      "act-result.txt",
+      "pr-label-assigner.sh",
+      ".github/workflows/pr-label-assigner.yml",
+      "config/label-rules.conf",
+      "tests/act-integration.bats",
+      "tests/check-workflow.py",
+      "tests/pr-label-assigner.bats",
+      "tests/run-act.sh",
+      "tests/fixtures/api.files",
+      "tests/fixtures/docs.files",
+      "tests/fixtures/mixed.files",
+      "tests/fixtures/none.files",
+      "tests/fixtures/tests.files",
+      "tests/fixtures/vendor.files"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 2,
+    "error_details": [
+      "Exit code 2\nappended\ntests/pr-label-assigner.bats: line 34: syntax error near unexpected token `}'\ntests/pr-label-assigner.bats: line 34: `}'",
+      "Exit code 1\nsyntax OK\n\nIn tests/run-act.sh line 25:\ncleanup() { rm -rf \"$WORK\"; }\n            ^------------^ SC2317 (info): Command appears to be unreachable. Check usage (or ignore if invoked indirec"
+    ],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/pr-label-assigner.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 18020,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 54,
+    "total_tool_duration_ms": 57338,
+    "bash_tool_uses": 31,
+    "bash_total_ms": 55054,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "FORCE_ACT=1 bats tests/act-integration.bats 2>&1; echo \"exit=${PIPESTATUS[0]}\"",
+        "duration_ms": 19973,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash tests/run-act.sh; echo \"run-act.sh exit=$?\"",
+        "duration_ms": 18852,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash tests/run-act.sh; echo \"run-act.sh exit=$?\"",
+        "duration_ms": 3498,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"===== bash -n (syntax) =====\"; for f in pr-label-assigner.sh tests/run-act.sh; do bash -n \"$f\" && echo \"  OK: $f\"; done\necho \"===== shellcheck =====\"; shellcheck pr-label-assigner.sh tests/run-a",
+        "duration_ms": 2439,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> tests/pr-label-assigner.bats <<'BATS'\n\n# ---------------------------------------------------------------------------\n# Cycle 5: exclusion (negation) rules \u2014 '!pattern' removes labels\n# --------",
+        "duration_ms": 2058,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n pr-label-assigner.sh && echo \"syntax OK\"; shellcheck pr-label-assigner.sh && echo \"shellcheck clean\"; echo \"--- bats ---\"; bats tests/pr-label-assigner.bats 2>&1 | tail -8; echo \"exit=${PIPEST",
+        "duration_ms": 1450,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> tests/pr-label-assigner.bats <<'BATS'\n\n# ---------------------------------------------------------------------------\n# Cycle 4: priority ordering, matchBase, formats, config robustness\n# ------",
+        "duration_ms": 1025,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/act-integration.bats 2>&1; echo \"exit=${PIPESTATUS[0]}\"",
+        "duration_ms": 898,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "shellcheck pr-label-assigner.sh && echo \"shellcheck clean\"; bats tests/pr-label-assigner.bats 2>&1 | tail -3",
+        "duration_ms": 781,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n pr-label-assigner.sh && echo \"syntax OK\"; echo \"--- shellcheck ---\"; shellcheck pr-label-assigner.sh && echo \"shellcheck clean\"; echo \"--- bats ---\"; bats tests/pr-label-assigner.bats 2>&1 | t",
+        "duration_ms": 636,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "cat /home/passp/repos/GHA-bench/AGENTS.md 2>/dev/null | head -100; echo \"---ACTRC---\"; cat /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/12-pr-label-assigner/",
+        "duration_ms": 177,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"=== tool versions ===\"; which bats shellcheck actionlint act docker bash 2>&1; echo \"---\"; bats --version 2>&1; shellcheck --version 2>&1 | head -3; actionlint --version 2>&1 | head -2; act --ve",
+        "duration_ms": 159,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"bash: $(bash --version | head -1)\"; echo \"--- act image present? ---\"; docker images | grep -E 'act-ubuntu-pwsh|catthehacker' || echo \"(custom image not found locally)\"; echo \"--- coreutils in p",
+        "duration_ms": 266,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p tests/fixtures config .github/workflows",
+        "duration_ms": 56,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 50,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/pr-label-assigner.bats; echo \"exit=$?\"",
+        "duration_ms": 186,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 65,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/pr-label-assigner.bats; echo \"exit=$?\"",
+        "duration_ms": 173,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 40,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> tests/pr-label-assigner.bats <<'BATS'\n\n# ---------------------------------------------------------------------------\n# Cycle 2: file-level error handling\n# -------------------------------------",
+        "duration_ms": 59,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/pr-label-assigner.bats 2>&1 | tail -30; echo \"exit=${PIPESTATUS[0]}\"",
+        "duration_ms": 441,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 194,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n pr-label-assigner.sh && echo \"syntax OK\"; echo \"--- shellcheck ---\"; shellcheck pr-label-assigner.sh && echo \"shellcheck clean\"; echo \"--- bats ---\"; bats tests/pr-label-assigner.bats 2>&1 | t",
+        "duration_ms": 636,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 253,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "shellcheck pr-label-assigner.sh && echo \"shellcheck clean\"; bats tests/pr-label-assigner.bats 2>&1 | tail -3",
+        "duration_ms": 781,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> tests/pr-label-assigner.bats <<'BATS'\n\n# ---------------------------------------------------------------------------\n# Cycle 4: priority ordering, matchBase, formats, config robustness\n# ------",
+        "duration_ms": 1025,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> tests/pr-label-assigner.bats <<'BATS'\n\n# ---------------------------------------------------------------------------\n# Cycle 5: exclusion (negation) rules \u2014 '!pattern' removes labels\n# --------",
+        "duration_ms": 2058,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 188,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 231,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 240,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n pr-label-assigner.sh && echo \"syntax OK\"; shellcheck pr-label-assigner.sh && echo \"shellcheck clean\"; echo \"--- bats ---\"; bats tests/pr-label-assigner.bats 2>&1 | tail -8; echo \"exit=${PIPEST",
+        "duration_ms": 1450,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 40,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 37,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 35,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 49,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 38,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 64,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 40,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "for c in docs api tests mixed none vendor; do\n  out=\"$(bash pr-label-assigner.sh --rules config/label-rules.conf --files \"tests/fixtures/${c}.files\" --format csv)\"\n  printf 'case=%-8s rc=%s labels=[%s",
+        "duration_ms": 549,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 136,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/pr-label-assigner.yml; echo \"actionlint exit=$?\"",
+        "duration_ms": 126,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"yq: $(command -v yq || echo no)\"; echo \"python3: $(command -v python3 || echo no)\"; python3 -c 'import yaml; print(\"pyyaml: yes\", yaml.__version__)' 2>&1 | head -1",
+        "duration_ms": 172,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 91,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x pr-label-assigner.sh tests/run-act.sh; bash -n tests/run-act.sh && echo \"syntax OK\"; shellcheck tests/run-act.sh && echo \"shellcheck clean\"",
+        "duration_ms": 95,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 79,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 72,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "shellcheck tests/run-act.sh && echo \"shellcheck clean\"",
+        "duration_ms": 75,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash tests/run-act.sh; echo \"run-act.sh exit=$?\"",
+        "duration_ms": 3498,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"=== tail of parsed section ===\"; sed -n '/PER-CASE PARSED RESULTS/,$p' act-result.txt; echo; echo \"=== Job succeeded/failed counts ===\"; grep -cE 'Job succeeded' act-result.txt; grep -cE 'Job fa",
+        "duration_ms": 83,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"=== act action cache ===\"; ls -la ~/.cache/act 2>/dev/null | head; ls -la ~/.cache/act/actions-checkout@v4 2>/dev/null | head || echo \"(checkout@v4 not pre-cached in ~/.cache/act)\"; echo \"=== do",
+        "duration_ms": 262,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "act --help 2>&1 | grep -iE 'pull|offline|reuse' ",
+        "duration_ms": 127,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 133,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash tests/run-act.sh; echo \"run-act.sh exit=$?\"",
+        "duration_ms": 18852,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"=== PER-CASE PARSED RESULTS ===\"; sed -n '/PER-CASE PARSED RESULTS/,$p' act-result.txt; echo; echo \"=== Job succeeded count ===\"; grep -c 'Job succeeded' act-result.txt; echo \"=== Job failed cou",
+        "duration_ms": 79,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 81,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 tests/check-workflow.py \"$(pwd)\"; echo \"check-workflow exit=$?\"",
+        "duration_ms": 107,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 72,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/act-integration.bats 2>&1; echo \"exit=${PIPESTATUS[0]}\"",
+        "duration_ms": 898,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "FORCE_ACT=1 bats tests/act-integration.bats 2>&1; echo \"exit=${PIPESTATUS[0]}\"",
+        "duration_ms": 19973,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"===== bash -n (syntax) =====\"; for f in pr-label-assigner.sh tests/run-act.sh; do bash -n \"$f\" && echo \"  OK: $f\"; done\necho \"===== shellcheck =====\"; shellcheck pr-label-assigner.sh tests/run-a",
+        "duration_ms": 2439,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"=== act-result.txt head (delimiting) ===\"; sed -E 's/\\x1b\\[[0-9;]*[mGKHF]//g' act-result.txt | head -25; echo \"...\"; echo \"=== project tree ===\"; find . -type f -not -path './.git/*' | sort",
+        "duration_ms": 130,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "rm -rf tests/__pycache__; echo \"cleaned pycache\"",
+        "duration_ms": 65,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 56,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "MEMDIR=\"/home/passp/.claude/projects/-home-passp-repos-GHA-bench--claude-worktrees-opus48-bench-workspaces-2026-06-26-103905-12-pr-label-assigner-bash-opus48-1m-ultracode/memory\"; ls -la \"$MEMDIR\" 2>/",
+        "duration_ms": 57,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 50296,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 25,
+    "hook_errors_caught": 0,
+    "hook_failures": 0,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "b54c589c-bdf9-4c31-a16d-252ecde531c5",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "76272f38-f73e-4687-a3cc-7812328d44cf",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b54c589c-bdf9-4c31-a16d-252ecde531c5",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "76272f38-f73e-4687-a3cc-7812328d44cf",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "47e10e71-cedf-46ba-9b94-b4ba3a91018c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "47e10e71-cedf-46ba-9b94-b4ba3a91018c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6a1ca7cc-759c-44b8-ac21-2a743be14ce4",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6a1ca7cc-759c-44b8-ac21-2a743be14ce4",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "87f00fe8-7767-46c0-826a-c1967e2571da",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "87f00fe8-7767-46c0-826a-c1967e2571da",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "64142819-177e-4f78-b028-88fd94cc4c1e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "64142819-177e-4f78-b028-88fd94cc4c1e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9dbd36e0-d0fd-4955-bea9-01c2e5798419",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9dbd36e0-d0fd-4955-bea9-01c2e5798419",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "e3699e3d-6012-4ddf-8418-c5bb490b356f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "e3699e3d-6012-4ddf-8418-c5bb490b356f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "bb1c3b30-a550-42dd-ab66-cc95b1fe6eda",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "bb1c3b30-a550-42dd-ab66-cc95b1fe6eda",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "76a2b727-db7b-4bc9-aee8-710274b8ea41",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "76a2b727-db7b-4bc9-aee8-710274b8ea41",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "d15e2a0a-cf41-4a27-aaf2-bbfa709d5ffd",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "d15e2a0a-cf41-4a27-aaf2-bbfa709d5ffd",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ef14cb19-8634-4e69-b229-82b6fad999e5",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ef14cb19-8634-4e69-b229-82b6fad999e5",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7306dba7-3fc4-47d1-bbe5-eeaf366be3ce",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7306dba7-3fc4-47d1-bbe5-eeaf366be3ce",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "dbda1425-7df9-4cc1-88c9-915ec0c1363c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "dbda1425-7df9-4cc1-88c9-915ec0c1363c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "11a7981b-350b-42b7-984c-81465a0778bb",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "11a7981b-350b-42b7-984c-81465a0778bb",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a7ca805a-278c-4f5f-a67b-7562daa53a02",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a7ca805a-278c-4f5f-a67b-7562daa53a02",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6b30cc7f-1ca6-420d-b4d5-11857b82b74f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6b30cc7f-1ca6-420d-b4d5-11857b82b74f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "025768a8-91d7-4c9c-a231-830caa8cc1e8",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "025768a8-91d7-4c9c-a231-830caa8cc1e8",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "04050b66-ffaa-43b9-8901-d177277a7f38",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "04050b66-ffaa-43b9-8901-d177277a7f38",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "18b65593-c19d-40ab-9804-2d6d0643b240",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "18b65593-c19d-40ab-9804-2d6d0643b240",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "06f40d9f-47e4-460a-8881-60174c283feb",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "06f40d9f-47e4-460a-8881-60174c283feb",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9856044f-9a02-4ecb-bf4b-c24bb2238bb1",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9856044f-9a02-4ecb-bf4b-c24bb2238bb1",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4bd1da55-45e6-4cc9-a7b5-36437f06f19a",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4bd1da55-45e6-4cc9-a7b5-36437f06f19a",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a1ef8aab-8314-4d42-bd14-02a331021318",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a1ef8aab-8314-4d42-bd14-02a331021318",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b2a1edca-41db-4578-9238-f76786c2a0b1",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b2a1edca-41db-4578-9238-f76786c2a0b1",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}
