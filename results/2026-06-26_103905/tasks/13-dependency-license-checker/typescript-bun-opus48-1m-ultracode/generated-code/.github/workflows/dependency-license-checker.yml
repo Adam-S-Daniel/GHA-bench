@@ -1,0 +1,95 @@
+name: Dependency License Checker
+
+# Triggers:
+#   - push / pull_request: gate dependency changes as they land
+#   - schedule: weekly re-scan catches licenses that became disallowed over time
+#   - workflow_dispatch: on-demand run, optionally against a different manifest
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      manifest:
+        description: "Path to the dependency manifest to scan"
+        required: false
+        default: "fixtures/package.json"
+
+# Least-privilege: the checker only reads the repository contents.
+permissions:
+  contents: read
+
+# Paths to the allow/deny config and the (mock) license database. The license
+# lookup is mocked via a JSON database so the pipeline is deterministic and
+# needs no network or external service.
+env:
+  CONFIG_PATH: fixtures/config.json
+  LICENSES_PATH: fixtures/licenses.json
+
+jobs:
+  # Job 1: run the library's unit test suite.
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+
+      - name: Run unit tests
+        run: bun test license-checker.test.ts
+
+  # Job 2: run the actual compliance check. Depends on the unit tests passing.
+  license-compliance:
+    name: License compliance
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    env:
+      # For workflow_dispatch the operator may override the manifest; every
+      # other trigger falls back to the sample fixture committed to the repo.
+      MANIFEST_PATH: ${{ github.event.inputs.manifest || 'fixtures/package.json' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+
+      - name: Run license compliance check
+        id: check
+        run: |
+          echo "Scanning manifest: ${MANIFEST_PATH}"
+          bun run license-checker.ts \
+            --manifest "${MANIFEST_PATH}" \
+            --config "${CONFIG_PATH}" \
+            --licenses "${LICENSES_PATH}" \
+            --format text | tee report.txt
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Dependency License Compliance"
+            echo ""
+            echo '```'
+            cat report.txt
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Surface compliance result
+        run: |
+          # Report-only gate: annotate (but do not fail) when non-compliant, so
+          # the report is always produced and humans can triage.
+          if grep -q "RESULT NON-COMPLIANT" report.txt; then
+            echo "::warning title=License compliance::Non-compliant dependencies detected"
+            grep -E '^\[(DENIED|UNKNOWN)\]' report.txt || true
+          else
+            echo "All scanned dependencies are license-compliant."
+          fi
