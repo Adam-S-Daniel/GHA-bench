@@ -1,0 +1,67 @@
+name: Artifact Cleanup
+
+# Triggers: validate on every push / PR, run the cleanup plan on a weekly
+# schedule, and allow manual runs (with an optional dry-run toggle).
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 0'   # 03:00 UTC every Sunday
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Plan only; do not delete artifacts'
+        type: boolean
+        default: true
+
+# Least privilege at the top level; the cleanup job widens it to actions:write
+# because a real artifact deletion needs that scope.
+permissions:
+  contents: read
+
+env:
+  FIXTURE_PATH: fixtures/artifacts.json
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          # pwsh + Pester are pre-installed on GitHub runners (and in the act
+          # image); only install if a 5.x is somehow missing. Network-free on
+          # the happy path.
+          $have = Get-Module -ListAvailable Pester |
+            Where-Object { $_.Version -ge [version]'5.0.0' }
+          if (-not $have) {
+            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+            Install-Module Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser
+          }
+          Import-Module Pester -MinimumVersion 5.0.0
+          Write-Host "Using Pester $((Get-Module Pester).Version)"
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: ./tools/Run-UnitTests.ps1
+
+  cleanup:
+    name: Generate cleanup plan
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write   # deleting artifacts via the API requires actions:write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate artifact deletion plan
+        shell: pwsh
+        run: ./Invoke-Cleanup.ps1 -FixturePath $env:FIXTURE_PATH
