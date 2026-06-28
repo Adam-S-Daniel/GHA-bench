@@ -1,0 +1,103 @@
+name: Environment Matrix Generator
+
+# Exercise the matrix generator in a real CI pipeline:
+#  * `generate`        runs the generator against each "good" fixture (one
+#                      matrix leg per fixture) and prints verifiable output.
+#  * `validate-limit`  proves the max-size guard rejects an oversized matrix.
+#  * `summary`         depends on both and reports overall success.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly sanity run (Mondays 06:00 UTC).
+    - cron: '0 6 * * 1'
+
+# Least-privilege: the generator only reads files from the checkout.
+permissions:
+  contents: read
+
+env:
+  GENERATOR: ./generate-matrix.sh
+
+jobs:
+  generate:
+    name: Generate matrix (${{ matrix.fixture }})
+    runs-on: ubuntu-latest
+    strategy:
+      # Keep every leg running so the harness can verify all fixtures at once.
+      fail-fast: false
+      matrix:
+        fixture: [basic, exclude, include, limit, include-only]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure jq is available
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+          jq --version
+
+      - name: Generate matrix for fixture
+        env:
+          FIXTURE: ${{ matrix.fixture }}
+        run: |
+          set -euo pipefail
+          chmod +x "$GENERATOR"
+          out="$("$GENERATOR" "fixtures/${FIXTURE}.json")"
+          echo "$out"
+          # Fail loudly if the generator ever emits invalid JSON.
+          echo "$out" | jq -e . >/dev/null
+          size="$(echo "$out" | jq -r '.size')"
+          ff="$(echo "$out" | jq -r '.["fail-fast"]')"
+          mp="$(echo "$out" | jq -r '.["max-parallel"] // "none"')"
+          # Greppable, single-line summaries the test harness asserts against.
+          echo "MATRIX_RESULT fixture=${FIXTURE} size=${size} fail-fast=${ff} max-parallel=${mp}"
+          echo "MATRIX_JSON fixture=${FIXTURE} $(echo "$out" | jq -c '.matrix.include')"
+
+  validate-limit:
+    name: Validate max-size guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure jq is available
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+          jq --version
+
+      - name: Oversized matrix must be rejected with exit code 2
+        run: |
+          set -uo pipefail
+          chmod +x "$GENERATOR"
+          # The generator is expected to FAIL here; capture without aborting.
+          set +e
+          out="$("$GENERATOR" fixtures/oversize.json 2>&1)"
+          code=$?
+          set -e
+          echo "$out"
+          echo "OVERSIZE_EXIT=${code}"
+          if [ "$code" -ne 2 ]; then
+            echo "FAIL: expected exit code 2 but got ${code}"
+            exit 1
+          fi
+          echo "$out" | grep -q "exceeds maximum" || {
+            echo "FAIL: missing size-limit error message"
+            exit 1
+          }
+          echo "OVERSIZE_OK fixture=oversize size=16 max-size=10"
+
+  summary:
+    name: Summary
+    runs-on: ubuntu-latest
+    needs: [generate, validate-limit]
+    steps:
+      - name: Report overall result
+        run: |
+          echo "ALL_MATRIX_CHECKS_PASSED=true"
+          echo "All environment matrix generation checks passed."
