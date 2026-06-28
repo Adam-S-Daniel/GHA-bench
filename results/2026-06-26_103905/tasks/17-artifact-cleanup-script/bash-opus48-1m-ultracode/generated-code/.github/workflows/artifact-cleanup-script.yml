@@ -1,0 +1,191 @@
+---
+# Artifact Cleanup pipeline.
+#
+# Runs the retention-policy engine (artifact-cleanup.sh) against a set of mock
+# artifact fixtures and produces a deletion plan + summary. In a real repo this
+# is the kind of scheduled maintenance job that prunes old CI artifacts; here it
+# runs entirely on committed mock data so it is hermetic (no external services
+# or secrets).
+#
+# Two jobs with a dependency:
+#   cleanup -> report
+# The `cleanup` job runs every fixture/test case through the script in a single
+# invocation and self-validates each case's exact expected result. The `report`
+# job (needs: cleanup) consumes the aggregate job outputs and prints/validates
+# the final FINAL_REPORT line.
+name: Artifact Cleanup Script
+
+# Appropriate triggers: PR/push validation, a nightly schedule (the realistic
+# trigger for a cleanup job), and manual dispatch.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+# Least-privilege at the top level; the cleanup job widens to actions:write to
+# reflect that a real deletion step would call the GitHub Actions artifacts API.
+permissions:
+  contents: read
+
+# Environment defaults consumed by the steps. REFERENCE_NOW pins "now" so the
+# age-based policy is deterministic in CI. Per-case retention policies live in
+# each fixture's "# policy:" header, so they are NOT overridden here.
+env:
+  REFERENCE_NOW: '2026-06-28T00:00:00Z'
+  CLEANUP_MODE: dry-run
+  FIXTURES_DIR: fixtures
+
+jobs:
+  cleanup:
+    name: Compute deletion plan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    outputs:
+      total_cases: ${{ steps.run.outputs.total_cases }}
+      total_deleted: ${{ steps.run.outputs.total_deleted }}
+      total_reclaimed: ${{ steps.run.outputs.total_reclaimed }}
+      total_retained: ${{ steps.run.outputs.total_retained }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify runtime dependencies
+        # The script depends only on bash + coreutils (date, sort, basename,
+        # awk), which are present on ubuntu-latest. Verify them rather than
+        # installing anything.
+        run: |
+          set -euo pipefail
+          for tool in bash date sort awk basename; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              echo "Required tool not found: $tool" >&2
+              exit 1
+            fi
+          done
+          echo "All required tools present."
+
+      - name: Lint the cleanup script
+        # shellcheck is a real CI quality gate. Skip gracefully if unavailable
+        # so the workflow stays portable.
+        run: |
+          set -euo pipefail
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck artifact-cleanup.sh
+            echo "shellcheck: clean"
+          else
+            echo "shellcheck not installed; skipping lint"
+          fi
+
+      - name: Run cleanup over all fixtures
+        id: run
+        env:
+          REFERENCE_NOW: ${{ env.REFERENCE_NOW }}
+          CLEANUP_MODE: ${{ env.CLEANUP_MODE }}
+          FIXTURES_DIR: ${{ env.FIXTURES_DIR }}
+        run: |
+          set -euo pipefail
+
+          # Expected per-case results (hand-computed; see each fixture header).
+          # The job FAILS if the engine regresses, so "Job succeeded" is a real
+          # signal that every test case produced its known-good output.
+          declare -A exp_del=( ["case1-age"]=2 ["case2-keep-latest"]=2 ["case3-size"]=1 ["case4-combined"]=2 )
+          declare -A exp_rec=( ["case1-age"]=15000000 ["case2-keep-latest"]=2000000 ["case3-size"]=6000000 ["case4-combined"]=7000000 )
+          declare -A exp_ret=( ["case1-age"]=2 ["case2-keep-latest"]=4 ["case3-size"]=2 ["case4-combined"]=3 )
+
+          # Extract a key's value from a "k=v k=v ..." RESULT line.
+          field() {
+            awk -v key="$1" 'BEGIN { FS = "[ =]" }
+              { for (i = 1; i < NF; i++) if ($i == key) { print $(i + 1); exit } }'
+          }
+
+          mode_flag="--dry-run"
+          if [ "$CLEANUP_MODE" = "execute" ]; then
+            mode_flag="--execute"
+          fi
+
+          total_cases=0
+          total_deleted=0
+          total_reclaimed=0
+          total_retained=0
+
+          {
+            echo "## Artifact Cleanup Plan"
+            echo ""
+            echo "| case | deleted | reclaimed_bytes | retained |"
+            echo "| --- | --- | --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for fx in "$FIXTURES_DIR"/case*.txt; do
+            name="$(basename "$fx" .txt)"
+            echo "===== CASE: ${name} ====="
+            out="$(bash ./artifact-cleanup.sh --input "$fx" --now "$REFERENCE_NOW" "$mode_flag")"
+            printf '%s\n' "$out"
+
+            result_line="$(printf '%s\n' "$out" | grep '^RESULT ')"
+            del="$(printf '%s' "$result_line" | field deleted)"
+            rec="$(printf '%s' "$result_line" | field reclaimed_bytes)"
+            ret="$(printf '%s' "$result_line" | field retained)"
+
+            # Per-case exact-value self-check.
+            if [ "$del" != "${exp_del[$name]}" ] || \
+               [ "$rec" != "${exp_rec[$name]}" ] || \
+               [ "$ret" != "${exp_ret[$name]}" ]; then
+              echo "ASSERTION FAILED for ${name}: got deleted=${del} reclaimed=${rec} retained=${ret};" \
+                   "expected deleted=${exp_del[$name]} reclaimed=${exp_rec[$name]} retained=${exp_ret[$name]}" >&2
+              exit 1
+            fi
+            echo "OK: ${name} matches expected (deleted=${del} reclaimed_bytes=${rec} retained=${ret})"
+            echo "| ${name} | ${del} | ${rec} | ${ret} |" >> "$GITHUB_STEP_SUMMARY"
+
+            total_cases=$((total_cases + 1))
+            total_deleted=$((total_deleted + del))
+            total_reclaimed=$((total_reclaimed + rec))
+            total_retained=$((total_retained + ret))
+          done
+
+          echo "AGGREGATE total_cases=${total_cases} total_deleted=${total_deleted} total_reclaimed=${total_reclaimed} total_retained=${total_retained}"
+
+          # Publish aggregates as job outputs for the dependent report job.
+          {
+            echo "total_cases=${total_cases}"
+            echo "total_deleted=${total_deleted}"
+            echo "total_reclaimed=${total_reclaimed}"
+            echo "total_retained=${total_retained}"
+          } >> "$GITHUB_OUTPUT"
+
+  report:
+    name: Publish final report
+    needs: cleanup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      TOTAL_CASES: ${{ needs.cleanup.outputs.total_cases }}
+      TOTAL_DELETED: ${{ needs.cleanup.outputs.total_deleted }}
+      TOTAL_RECLAIMED: ${{ needs.cleanup.outputs.total_reclaimed }}
+      TOTAL_RETAINED: ${{ needs.cleanup.outputs.total_retained }}
+    steps:
+      - name: Emit and validate aggregate report
+        run: |
+          set -euo pipefail
+
+          echo "FINAL_REPORT total_cases=${TOTAL_CASES} total_deleted=${TOTAL_DELETED} total_reclaimed_bytes=${TOTAL_RECLAIMED} total_retained=${TOTAL_RETAINED}"
+
+          # Cross-check the aggregate against the known-good totals.
+          exp_cases=4
+          exp_deleted=7
+          exp_reclaimed=30000000
+          exp_retained=11
+          if [ "$TOTAL_CASES" != "$exp_cases" ] || \
+             [ "$TOTAL_DELETED" != "$exp_deleted" ] || \
+             [ "$TOTAL_RECLAIMED" != "$exp_reclaimed" ] || \
+             [ "$TOTAL_RETAINED" != "$exp_retained" ]; then
+            echo "AGGREGATE ASSERTION FAILED: got cases=${TOTAL_CASES} deleted=${TOTAL_DELETED}" \
+                 "reclaimed=${TOTAL_RECLAIMED} retained=${TOTAL_RETAINED}" >&2
+            exit 1
+          fi
+          echo "Aggregate totals match expected known-good values."
