@@ -4,8 +4,8 @@
 
 ## Notes
 
-- **Generated:** 2026-05-08 01:22:00 PM ET
-- **Source:** `/home/passp/repos/GHA-bench/results/2026-05-06_173435`
+- **Generated:** 2026-06-28 07:46:52 PM ET
+- **Source:** `/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/results/2026-05-06_173435`
 - **Judges present:** haiku45, gemini31pro
 - **Score conventions:** Scores shown are the `overall` dimension from each judge (1-5). Δ column is the second judge minus the first; positive = second judge is more generous.
 
@@ -19,7 +19,7 @@ The opus47-1m configuration at the xhigh effort tier produces the strongest outp
 - **Where rankings diverge**: Agreement weakens at finer language×model granularity (ρ = +0.62 Tests, +0.56 Craft); the model-level reversals all involve opus47-200k, which Gemini ranks above opus47-1m on Workflow Craft and above sonnet on both axes.
 - **Haiku grades harder**: The inter-judge gap is wider on Workflow Craft (+2.23) than Tests Quality (+1.67), a baseline difference in scale rather than ordering disagreement, since both judges still produce the same top-to-bottom model ranking.
 
-*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI; 5 in / 3536 out tokens, $0.3071. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
+*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI (from cache); 5 in / 3536 out tokens, $0.3071. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
 
 ## Campaign summary
 

@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-05-08 01:19:53 PM ET — 64/64 runs completed, 0 remaining; total cost $86.90; total agent time 550.6 min.
+**Last updated:** 2026-06-28 07:44:47 PM ET — 64/64 runs completed, 0 remaining; total cost $86.90; total agent time 550.6 min.
 **Claude Code versions used:** [v2.1.97](claude-code-2.1.97.md) (1 run), [v2.1.98](claude-code-2.1.98.md) (57 runs), [v2.1.100](claude-code-2.1.100.md) (6 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -26,7 +26,7 @@
 
 ## Scoring
 
-Judges: panel of LLM-as-judge models — `haiku-4-5` (via Claude CLI) and `gemini-3.1-pro-preview` (via Gemini CLI). Each run's quality score is the mean of both judges, cached per-run so numbers are deterministic across regenerations. Known bias caveats live in the [Judge Consistency Summary](#judge-consistency-summary).
+Judges: panel of LLM-as-judge models — `haiku-4-5` (via Claude CLI) and `Gemini 3.1 Pro (High)` (via the Antigravity `agy` CLI). Each run's quality score is the mean of both judges, cached per-run so numbers are deterministic across regenerations. Known bias caveats live in the [Judge Consistency Summary](#judge-consistency-summary).
 
 **Tests Quality** = Overall score (1-5) for the generated **test code**.
 
@@ -1357,11 +1357,11 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Judge Consistency Summary
 
-**🟡 The panel agrees on what matters most:** Both judges put Sonnet ahead of Opus on every model comparison (ρ = +1.00) with zero own-model reversals, and no pairwise comparison shows a self-preference signal. The language ranking on Tests Quality is fully reversed though (ρ = -1.00), so language alone is unreliable without conditioning on model.
+**🟡 The panel is doing its job on what matters most:** Both judges rank Sonnet above Opus with perfect agreement and zero reversals on the model axis, and they unanimously place bash + Sonnet first on Workflow Craft. Language-axis ordering on Tests Quality is fully reversed (Spearman −1.00), but no reversal favours either judge's own model family — that reads as calibration drift, not bias.
 
-- 👀 **Where to look closer:** Bash test suites — Haiku ranks them last (mean 2.47) while Gemini ranks them first (4.62, partly compressed against Gemini's 5-ceiling); the widest disagreements (a 3-point gap on a 1–5 scale) include 11-semantic-version-bumper / bash / opus (Haiku 2, Gemini 5) and 18-secret-rotation-validator / bash / sonnet (Haiku 2, Gemini 5), both worth a human spot-check.
-- 🤓 **Surprise finding:** Haiku — the only judge with own-family runs in scope — never elevated its own-model relative rank, even though Haiku scores roughly 1.7 points harsher overall.
-- ℹ️ **Recommended next step:** Hand-grade three or four of those bash test files to settle whether Haiku is over-penalising thin shell harnesses or Gemini is over-rewarding them against its compressed top end.
+- 👀 **Where to look closer:** The widest disagreements (a judge scoring 2 vs 5, a 3-point gap on a 1–5 scale) cluster on bash + opus — 11-semantic-version-bumper / bash / opus and 18-secret-rotation-validator / bash / opus both land at 2 from Haiku and 5 from Gemini. Haiku also ranks bash last on Tests Quality while Gemini ranks it first; spot-check whether Haiku is floor-clipping or genuinely penalising bash.
+- 🤓 **Surprise finding:** Despite Haiku being the only judge that ever sees its own model family's output (the 35 haiku45 runs), none of its reversals favour haiku45 — the own-family column is empty in every pair.
+- ℹ️ **Recommended next step:** Treat model-axis rankings as the headline, condition the language axis on model, and re-grade the two bash/opus 3-point-gap rows with a third independent judge to settle calibration.
 
 #### Provenance
 
@@ -1369,7 +1369,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 - **Inputs:** the [`judge-consistency-data.md`](judge-consistency-data.md) tables plus benchmark context (rubrics, task list, experiment setup).
 - **Script:** [`conclusions_report.py`](../../conclusions_report.py) — regenerate with `python3 generate_results.py <run_dir>`.
 - **Instruction:** [`JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT`](../../judge_consistency_report.py) in that script.
-- **Usage:** 5 input + 2321 output tokens, $0.1667.
+- **Usage:** 5 input + 2313 output tokens, $0.2252.
 
 *Full breakdown with per-model / per-language / per-language×model ranking tables and disagreement hotspots in [judge-consistency-data.md](judge-consistency-data.md).*
 
