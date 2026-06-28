@@ -1,0 +1,477 @@
+[Assistant] I'll start by exploring the environment to understand what's available and how the benchmark is set up.
+[Tool: Bash] ls -la && echo "---ACTRC---" && cat .actrc 2>/dev/null && echo "---PWD---" && pwd
+[Result] total 44
+drwxr-xr-x  4 passp passp  4096 Jun 28 11:49 .
+drwxr-xr-x 18 passp passp  4096 Jun 28 11:49 ..
+-rw-r--r--  1 passp passp    40 Jun 28 11:49 .actrc
+drwxr-xr-x  2 passp passp  4096 Jun 28 11:49 .claude
+drwxr-xr-x  6 passp passp  4096 Jun 28 11:49 .git
+-rw-r--r--  1 passp passp 21843 Jun 26 10:22 benchmark-instructions-v4.md
+---ACTRC---
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+---PWD---
+/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+[Tool: Bash] cd /home/passp/repos/GHA-bench && cat AGENTS.md 2>/dev/null | head -100; echo "---"; ls -la
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Tool: Bash] which act docker actionlint python3 node jq pwsh 2>/dev/null; echo "---versions---"; act --version 2>/dev/null; docker --version 2>/dev/null; actionlint --version 2>/dev/null; python3 --version 2>/dev/null; node --version 2>/dev/null
+[Result] /home/passp/.local/bin/act
+/usr/bin/docker
+/home/passp/.local/bin/actionlint
+/usr/bin/python3
+/usr/bin/node
+/home/passp/.local/bin/jq
+/snap/bin/pwsh
+---versions---
+act version 0.2.87
+Docker version 29.4.3, build 055a478
+1.7.12
+installed by downloading from release page
+built with go1.26.1 compiler for linux/amd64
+Python 3.12.3
+v20.20.2
+[Tool: Bash] cd /home/passp/repos/GHA-bench && cat Dockerfile.act; echo "---IMAGES---"; docker images | grep -i act 2>/dev/null
+[Result] # Custom act container image with PowerShell and Pester pre-installed.
+# Matches what real GitHub-hosted ubuntu-latest runners provide.
+#
+# Build:  docker build -t act-ubuntu-pwsh:latest -f Dockerfile.act .
+# Use:    act push -P ubuntu-latest=act-ubuntu-pwsh:latest
+# Or:     echo '-P ubuntu-latest=act-ubuntu-pwsh:latest' > .actrc
+
+FROM catthehacker/ubuntu:act-latest
+
+# Install PowerShell from Microsoft's APT repo
+RUN apt-get update -qq \
+    && apt-get install -y -qq wget apt-transport-https software-properties-common \
+    && wget -q "https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb" \
+    && dpkg -i packages-microsoft-prod.deb \
+    && apt-get update -qq \
+    && apt-get install -y -qq powershell \
+    && rm -f packages-microsoft-prod.deb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Pester 5 (PowerShell testing framework, pre-installed on GitHub runners)
+RUN pwsh -NoProfile -Command " \
+    Set-PSRepository -Name PSGallery -Inst
+[Tool: Bash] cd /home/passp/repos/GHA-bench && sed -n '100,400p' AGENTS.md
+[Result] a kebab-case name, detection logic over bash_cmds/console/metrics, a time estimate,
+and an entry in `trap_applicable_mode` if mode-specific.
+
+### LLM vs structural discrepancy checks
+
+After every report generation (`python3 generate_results.py --all`), check the
+"LLM vs Structural Discrepancies" section in each `results.md`. Discrepancies
+are auto-classified by `_find_discrepancies()` in `generate_results.py`:
+
+- **counter-gap**: structural metrics are implausibly low (e.g. 0 tests or 0
+  assertions while LLM scores high). This means `test_quality.py` is missing a
+  test pattern. **Fix the counter** — read the generated test files to identify
+  the pattern the counter doesn't recognize, add it to the appropriate
+  `_count_*()` function and the detection/classification patterns, add unit
+  tests, and regenerate. Counter-gap discrepancies should not persist across PRs.
+- **qualitative**: structural metrics look reasonable but the LLM disagrees on
+  quality. The report includes the LLM's 
+[Assistant] Let me check the benchmark instructions for context on the "ultracode" mode and how this task is evaluated.
+[Tool: Bash] cd /home/passp/repos/GHA-bench && grep -niC2 "ultracode\|ultra\|workflow tool\|multi-agent\|orchestrat" benchmark-instructions-v4.md | head -60
+[Result] Shell cwd was reset to /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+[Tool: Bash] cd /home/passp/repos/GHA-bench && grep -niC3 "act-result\|exact\|assert\|test harness\|fixture" benchmark-instructions-v4.md | head -80
+[Result] 41-2. Write the minimum code to make it pass.
+42-3. Refactor.
+43-4. Repeat for each piece of functionality.
+44:5. Create mocks and test fixtures as necessary.
+45-
+46-### GitHub Actions Workflow Requirement
+47-
+--
+62-
+63-Every single test case must execute through the GitHub Actions workflow via `act`. Do NOT test your script directly -- all testing goes through the pipeline.
+64-
+65:Structure your workflow to accept test fixture data and produce verifiable output. Your test harness must:
+66:1. For each test case: set up a temp git repo with your project files + that case's fixture data, run `act push --rm`, capture the output
+67:2. Save all act output to `act-result.txt` in the current working directory (append each test case's output, clearly delimited)
+68:3. Assert that act exited with code 0 for each case
+69:4. Parse the act output and assert on EXACT EXPECTED VALUES -- not just that output appeared, but that it matches the known-good result for that test case's input. For example: i
+[Assistant] The `act-ubuntu-pwsh:latest` image is the base. Let me verify it has the tools my script will need (python3, jq) and check the local test toolchain, before designing around them.
+[Tool: Bash] cd /home/passp/repos/GHA-bench && timeout 60 docker run --rm --entrypoint bash act-ubuntu-pwsh:latest -c 'echo "python3: $(python3 --version 2>&1)"; echo "jq: $(jq --version 2>&1)"; echo "git: $(git --version 2>&1)"; echo "node: $(node --version 2>&1)"' 2>&1 | head -20
+[Tool: Bash] python3 -m pytest --version 2>&1 | head -3; echo "---"; python3 -c "import yaml; print('pyyaml', yaml.__version__)" 2>&1 | head -1
+[Result] python3: Python 3.12.3
+jq: jq-1.6
+git: git version 2.54.0
+node: v24.15.0
+Shell cwd was reset to /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+[Result] pytest 9.0.3
+---
+pyyaml 6.0.1
+[Assistant] All tools are available. Let me set up task tracking and begin TDD. First the project skeleton and the first failing test.
+[Tool: ToolSearch] {"query": "select:TaskCreate", "max_results": 1}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskCreate'}
+[Tool: TaskCreate] {"subject": "TDD: implement matrix_generator.py core logic", "description": "Red/green TDD for cartesian product, exclude, include (GitHub algorithm), size validation, fail-fast/max-parallel passthrou
+[Result] Task #1 created successfully: TDD: implement matrix_generator.py core logic
+[Tool: TaskCreate] {"subject": "Create test fixtures for all scenarios", "description": "Design fixture configs up front: basic cartesian, exclude, include, full kitchen-sink, oversized (over max-size). Compute exact ex
+[Result] Task #2 created successfully: Create test fixtures for all scenarios
+[Tool: TaskCreate] {"subject": "Write GitHub Actions workflow + actionlint clean", "description": "environment-matrix-generator.yml: triggers, permissions, env, generate job (script+jq outputs), build job (dynamic fromJ
+[Result] Task #3 created successfully: Write GitHub Actions workflow + actionlint clean
+[Tool: TaskCreate] {"subject": "Build act integration harness + run, produce act-result.txt", "description": "pytest harness: per fixture set up temp git repo, run act push --rm, append to act-result.txt, assert exit 0,
+[Result] Task #4 created successfully: Build act integration harness + run, produce act-result.txt
+[Assistant] Now let me begin TDD. **Cycle 1 (RED):** write the first failing test for the cartesian product, with a `conftest.py` so tests can import the module.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/conftest.py", "content": "# Ensures t
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/conftest.py (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matrix_generator.py", "con
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matrix_generator.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -15
+[Result] ==================================== ERRORS ====================================
+[31m[1m_ ERROR collecting workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matrix_generator.py _[0m
+[31mImportError while importing test module '/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matrix_generator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+[1m[31m/usr/lib/python3.12/importlib/__init__.py[0m:90: in import_module
+    [0m[94mreturn[39;49;00m _bootstrap._gcd_import(name[level:], package, level)[90m[39;49;00m
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[90m[39;49;00m
+[1m[31mtests/test_matrix_generator.py[0m:17: in <module>
+    [0m[94mimport[39;49;00m [04m[96mmatrix_generator[39;49;00m [94mas[39;49;00m [04m[96mmg[39;49;00m[90m[39;49;00m
+[1m[31mE   Mo
+[Assistant] RED confirmed (module doesn't exist). **Cycle 1 (GREEN):** implement `cartesian_product`.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generator.py", "content": "#!/
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generator.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -6
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m                                                                      [100%][0m
+[32m[32m[1m3 passed[0m[32m in 0.02s[0m[0m
+[Assistant] GREEN. **Cycle 2 (RED):** add exclude tests.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matr
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -6
+[Result] [36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_exclude_removes_partial_match[0m - AttributeError: module 'matrix_generator' has no attribute 'apply_exclude'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_exclude_full_match_removes_single_combo[0m - AttributeError: module 'matrix_generator' has no attribute 'apply_exclude'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_exclude_no_match_is_noop[0m - AttributeError: module 'matrix_generator' has no attribute 'apply_exclude'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_exclude_multiple_rules[0m - AttributeError: module 'matrix_generator' has no attribute 'apply_exclude'
+[31m[31m[1m4 failed[0m, [32m3 passed[0m[31m in 0.07s[0m[0m
+[Assistant] RED confirmed. Let me mark task #1 in progress and implement `apply_exclude` (GREEN).
+[Tool: ToolSearch] {"query": "select:TaskUpdate", "max_results": 1}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskUpdate'}
+[Tool: TaskUpdate] {"taskId": "1", "status": "in_progress"}
+[Result] Updated task #1 status
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generato
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -4
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                                  [100%][0m
+[32m[32m[1m7 passed[0m[32m in 0.02s[0m[0m
+[Assistant] GREEN. **Cycle 3 (RED):** the include algorithm — I'll encode GitHub's official documented example as the spec to guarantee faithful behavior.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matr
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -6
+[Result] [36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_include_matches_github_documented_example[0m - AttributeError: module 'matrix_generator' has no attribute 'apply_include'....
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_include_adds_new_key_to_all_combos[0m - AttributeError: module 'matrix_generator' has no attribute 'apply_include'....
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_include_appends_standalone_when_no_match[0m - AttributeError: module 'matrix_generator' has no attribute 'apply_include'....
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_include_does_not_merge_into_standalone_entries[0m - AttributeError: module 'matrix_generator' has no attribute 'apply_include'....
+[31m[31m[1m4 failed[0m, [32m7 passed[0m[31m in 0.07s[0m[0m
+[Assistant] RED confirmed. **Cycle 3 (GREEN):** implement the include algorithm.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generato
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -4
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                              [100%][0m
+[32m[32m[1m11 passed[0m[32m in 0.02s[0m[0m
+[Assistant] GREEN — including GitHub's documented example, so the include algorithm is faithful. **Cycle 4 (RED):** the full `generate_matrix` pipeline (config → strategy + size validation). I'll mirror a real GHA `strategy:` block: `include`/`exclude` live inside `matrix`, while `max-parallel`/`fail-fast`/`max-size` are siblings.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matr
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -8
+[Result] [31mFAILED[0m tests/test_matrix_generator.py::[1mtest_generate_with_exclude_and_include_inside_matrix[0m - AttributeError: module 'matrix_generator' has no attribute 'generate_matrix'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_generate_flags_oversized_matrix_as_invalid[0m - AttributeError: module 'matrix_generator' has no attribute 'generate_matrix'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_generate_flags_empty_matrix_as_invalid[0m - AttributeError: module 'matrix_generator' has no attribute 'generate_matrix'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_config_must_be_a_mapping[0m - AttributeError: module 'matrix_generator' has no attribute 'ConfigError'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_config_requires_matrix_key[0m - AttributeError: module 'matrix_generator' has no attribute 'ConfigError'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_axis_values_must_be_lists[0m - AttributeError: module 'matrix_genera
+[Assistant] RED confirmed. **Cycle 4 (GREEN):** implement `ConfigError`, validation, and `generate_matrix`.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generato
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generato
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -5
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                     [100%][0m
+[32m[32m[1m20 passed[0m[32m in 0.03s[0m[0m
+[Assistant] All 20 green. **Cycle 5 (RED):** the CLI — file/stdin input, JSON output, `--strict` exit codes, `--max-size` override, `--github-output`, and graceful errors.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matr
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -6
+[Result] [31mFAILED[0m tests/test_matrix_generator.py::[1mtest_cli_strict_exits_2_when_invalid[0m - AttributeError: module 'matrix_generator' has no attribute 'main'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_cli_invalid_json_returns_1[0m - AttributeError: module 'matrix_generator' has no attribute 'main'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_cli_missing_file_returns_1[0m - AttributeError: module 'matrix_generator' has no attribute 'main'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_cli_config_error_returns_1[0m - AttributeError: module 'matrix_generator' has no attribute 'main'
+[31mFAILED[0m tests/test_matrix_generator.py::[1mtest_cli_github_output_written[0m - AttributeError: module 'matrix_generator' has no attribute 'main'
+[31m[31m[1m8 failed[0m, [32m20 passed[0m[31m in 0.14s[0m[0m
+[Assistant] RED confirmed. **Cycle 5 (GREEN):** implement the CLI `main()`.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generato
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generato
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix_generator.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_matrix_generator.py -q 2>&1 | tail -5
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                             [100%][0m
+[32m[32m[1m28 passed[0m[32m in 0.04s[0m[0m
+[Assistant] All 28 unit tests pass — core script complete via TDD. Let me smoke-test the CLI to confirm the exact output shape the workflow/harness will assert against.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+echo '{"matrix":{"os":["ubuntu-latest","windows-latest"],"version":["18","20"],"exclude":[{"os":"windows-latest","version":"18"}],"include":[{"os":"ubuntu-latest","version":"20","coverage":"true"}]},"max-parallel":3,"fail-fast":false,"max-size":20}' | python3 matrix_generator.py --compact
+echo "--- pretty + jq extract ---"
+echo '{"matrix":{"os":["a","b","c","d"],"version":["1","2","3","4"]},"max-size":5}' | python3 matrix_generator.py | jq -c '{size,valid,errors}'
+[Result] {"matrix":{"include":[{"os":"ubuntu-latest","version":"18"},{"os":"ubuntu-latest","version":"20","coverage":"true"},{"os":"windows-latest","version":"20"}]},"fail-fast":false,"max-parallel":3,"size":3,"max_size":20,"valid":true,"errors":[]}
+--- pretty + jq extract ---
+Warning: Matrix size 16 exceeds max-size 5. Reduce axes/values or raise 'max-size'.
+{"size":16,"valid":false,"errors":["Matrix size 16 exceeds max-size 5. Reduce axes/values or raise 'max-size'."]}
+[Assistant] The script is complete with full TDD (28 tests). Let me close task #1, start task #2, and create the fixtures with precisely computed expected outputs.
+[Tool: TaskUpdate] {"taskId": "1", "status": "completed"}
+[Result] Updated task #1 status
+[Tool: TaskUpdate] {"taskId": "2", "status": "in_progress"}
+[Result] Updated task #2 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/basic.json", "content"
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/basic.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/exclude.json", "conten
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/exclude.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/include.json", "conten
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/include.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/full.json", "content":
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/full.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/oversized.json", "cont
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/fixtures/oversized.json (file state is current in your context — no need to Read it back)
+[Assistant] Now let me compute the exact expected output for each fixture by running the script — this locks down the harness assertions.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+for f in basic exclude include full oversized; do
+  echo "===== $f ====="
+  python3 matrix_generator.py "tests/fixtures/$f.json" --compact 2>/dev/null | jq -c '{size,valid,fail_fast:."fail-fast",max_parallel:."max-parallel",combos:[.matrix.include[]]}'
+done
+[Result] ===== basic =====
+{"size":4,"valid":true,"fail_fast":true,"max_parallel":2,"combos":[{"os":"ubuntu-latest","version":"18"},{"os":"ubuntu-latest","version":"20"},{"os":"windows-latest","version":"18"},{"os":"windows-latest","version":"20"}]}
+===== exclude =====
+{"size":4,"valid":true,"fail_fast":false,"max_parallel":4,"combos":[{"os":"ubuntu-latest","version":"18"},{"os":"ubuntu-latest","version":"20"},{"os":"windows-latest","version":"20"},{"os":"macos-latest","version":"20"}]}
+===== include =====
+{"size":5,"valid":true,"fail_fast":false,"max_parallel":3,"combos":[{"os":"ubuntu-latest","version":"18","coverage":"false"},{"os":"ubuntu-latest","version":"20","coverage":"true"},{"os":"windows-latest","version":"18","coverage":"false"},{"os":"windows-latest","version":"20","coverage":"false"},{"os":"macos-latest","version":"22"}]}
+===== full =====
+{"size":3,"valid":true,"fail_fast":true,"max_parallel":5,"combos":[{"os":"ubuntu-latest","version":"20","feature":"stable"},{"os":"ubuntu-latest
+[Assistant] All exact values confirmed and match my hand-computation. Now let me close task #2, start task #3, and write the workflow plus a self-contained default config.
+[Tool: TaskUpdate] {"taskId": "2", "status": "completed"}
+[Result] Updated task #2 status
+[Tool: TaskUpdate] {"taskId": "3", "status": "in_progress"}
+[Result] Updated task #3 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix-config.json", "content": "{\n 
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/matrix-config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/.github/workflows/environment-matrix-
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/.github/workflows/environment-matrix-generator.yml (file state is current in your context — no need to Read it back)
+[Assistant] Now let me run actionlint (instant) and iterate until clean before touching `act`.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+actionlint .github/workflows/environment-matrix-generator.yml; echo "actionlint exit: $?"
+[Result] actionlint exit: 0
+[Assistant] Clean (exit 0). Now let me de-risk the `act` mechanics with **one** manual run on the most complex fixture (`include` — exercises merges, a standalone entry, and the dynamic-matrix fan-out) before writing the full harness.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+SRC=$(pwd)
+TMP=$(mktemp -d /tmp/emg-manual.XXXXXX)
+mkdir -p "$TMP/.github/workflows"
+cp "$SRC/matrix_generator.py" "$TMP/"
+cp "$SRC/.github/workflows/environment-matrix-generator.yml" "$TMP/.github/workflows/"
+cp "$SRC/tests/fixtures/include.json" "$TMP/matrix-config.json"
+cd "$TMP"
+git init -q && git config user.email a@b.c && git config user.name t && git add -A && git commit -qm init
+echo "=== Running act (include fixture) ==="
+timeout 300 act push --rm -P ubuntu-latest=act-ubuntu-pwsh:latest --pull=false > "$SRC/manual-act.log" 2>&1
+echo "act exit: $?"
+echo "=== markers ==="
+grep -aE "MATRIX_SIZE=|MATRIX_VALID=|FAIL_FAST=|MAX_PARALLEL=|COMBO=|BUILD_OK|Job succeeded|Job failed" "$SRC/manual-act.log" | sed 's/\x1b\[[0-9;]*m//g'
+echo "=== counts ==="
+echo "BUILD_OK count: $(grep -ac 'BUILD_OK' "$SRC/manual-act.log")"
+echo "Job succeeded count: $(grep -ac 'Job succeeded' "$SRC/manual-act.log")"
+echo "Job failed count: $(grep -ac 'Job failed' "$SRC/manual-act.log")"
+rm -rf "$TMP"
+[Result ERROR] Exit code 1
+=== Running act (include fixture) ===
+act exit: 0
+=== markers ===
+[Environment Matrix Generator/Generate and validate matrix]   | MATRIX_SIZE=5
+[Environment Matrix Generator/Generate and validate matrix]   | MATRIX_VALID=true
+[Environment Matrix Generator/Generate and validate matrix]   | FAIL_FAST=false
+[Environment Matrix Generator/Generate and validate matrix]   | MAX_PARALLEL=3
+[Environment Matrix Generator/Generate and validate matrix]   | COMBO={"os":"ubuntu-latest","version":"18","coverage":"false"}
+[Environment Matrix Generator/Generate and validate matrix]   | COMBO={"os":"ubuntu-latest","version":"20","coverage":"true"}
+[Environment Matrix Generator/Generate and validate matrix]   | COMBO={"os":"windows-latest","version":"18","coverage":"false"}
+[Environment Matrix Generator/Generate and validate matrix]   | COMBO={"os":"windows-latest","version":"20","coverage":"false"}
+[Environment Matrix Generator/Generate and validate matrix]   | COMBO={"os":"macos-latest","ve
+[Assistant] The full pipeline works in `act` end-to-end: exit 0, exact markers (`MATRIX_SIZE=5`, `MAX_PARALLEL=3`), all 5 COMBO lines correct, dynamic matrix fanned out to **5 BUILD_OK** jobs, 6 "Job succeeded", 0 failed. (The trailing error was just `rm`-ing the cwd — harmless.)
+
+Now let me write the test harness. First the fast structural tests, then the act integration harness.
+[Tool: TaskUpdate] {"taskId": "3", "status": "completed"}
+[Result] Updated task #3 status
+[Tool: TaskUpdate] {"taskId": "4", "status": "in_progress"}
+[Result] Updated task #4 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_workflow_structure.py", "c
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_workflow_structure.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+python3 -m pytest tests/test_workflow_structure.py -q 2>&1 | tail -8
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                                                             [100%][0m
+[32m[32m[1m12 passed[0m[32m in 0.22s[0m[0m
+[Assistant] All 12 structural tests pass. Now the act integration harness — the authoritative end-to-end suite.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_workflow_act.py", "content
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_workflow_act.py (file state is current in your context — no need to Read it back)
+[Assistant] Let me clean up that awkward fail_fast correction in the `basic` expectation.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_work
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_workflow_act.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_work
+[Result] The file /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/tests/test_workflow_act.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now let me run the act integration harness. This executes every test case through the workflow via `act` and produces `act-result.txt`.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+rm -f manual-act.log
+timeout 590 python3 -m pytest tests/test_workflow_act.py -v 2>&1 | tail -30
+echo "PYTEST_EXIT=${PIPESTATUS[0]}"
+[Result] [1m============================= test session starts ==============================[0m
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+[1mcollecting ... [0mcollected 5 items
+
+tests/test_workflow_act.py::test_workflow_through_act[basic] [32mPASSED[0m[32m      [ 20%][0m
+tests/test_workflow_act.py::test_workflow_through_act[exclude] [32mPASSED[0m[32m    [ 40%][0m
+tests/test_workflow_act.py::test_workflow_through_act[include] [32mPASSED[0m[32m    [ 60%][0m
+tests/test_workflow_act.py::test_workflow_through_act[full] [32mPASSED[0m[32m       [ 80%][0m
+tests/test_workflow_act.py::test_workflow_through_act[oversized] [32mPASSED[0m[32m  [100%][0m
+
+[32m============================== [32m[1m5 passed[0m[32m in 41.91s[0m[32m ==============================[0m
+PYTEST_EXIT=0
+[Assistant] All 5 act integration tests **passed in 42s**. Let me verify the `act-result.txt` artifact and then run the complete suite together as the final proof.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+echo "act-result.txt size: $(wc -l < act-result.txt) lines, $(wc -c < act-result.txt) bytes"
+echo "=== test case delimiters ==="
+grep -n "TEST CASE:" act-result.txt
+echo "=== per-case Job succeeded / failed counts ==="
+for c in basic exclude include full oversized; do
+  echo "--- $c ---"
+done
+echo "Total 'Job succeeded': $(grep -c 'Job succeeded' act-result.txt)  | 'Job failed': $(grep -c 'Job failed' act-result.txt)  | BUILD_OK: $(grep -c 'BUILD_OK os=' act-result.txt)"
+[Result] act-result.txt size: 499 lines, 58285 bytes
+=== test case delimiters ===
+5:TEST CASE: basic    (act exit code: 0)
+115:TEST CASE: exclude    (act exit code: 0)
+225:TEST CASE: include    (act exit code: 0)
+352:TEST CASE: full    (act exit code: 0)
+445:TEST CASE: oversized    (act exit code: 0)
+=== per-case Job succeeded / failed counts ===
+--- basic ---
+--- exclude ---
+--- include ---
+--- full ---
+--- oversized ---
+Total 'Job succeeded': 21  | 'Job failed': 0  | BUILD_OK: 16
+[Assistant] `act-result.txt` is complete: 5 cases all exit 0, 21 "Job succeeded", 0 failed, 16 BUILD_OK (4+4+5+3+0). Let me confirm the oversized case correctly skipped the build and reported the size error.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+sed -n '445,499p' act-result.txt | grep -aE "MATRIX_|ERROR_MSG|BUILD_OK|Job succeeded|Job failed|skipped|build" | head -40
+[Result] [Environment Matrix Generator/Generate and validate matrix]   | MATRIX_SIZE=12
+[Environment Matrix Generator/Generate and validate matrix]   | MATRIX_VALID=false
+[Environment Matrix Generator/Generate and validate matrix]   | ERROR_MSG=Matrix size 12 exceeds max-size 6. Reduce axes/values or raise 'max-size'.
+[Environment Matrix Generator/Generate and validate matrix] 🏁  Job succeeded
+[Assistant] Oversized case is perfect: `MATRIX_VALID=false`, exact error, generate job succeeded, build gated off entirely. Now the final all-green proof — the complete suite (unit + structure + act) together.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+timeout 590 python3 -m pytest tests/ -q 2>&1 | tail -15
+echo "PYTEST_EXIT=${PIPESTATUS[0]}"
+echo "act-result.txt exists: $([ -f act-result.txt ] && echo yes) ($(wc -l < act-result.txt) lines)"
+[Result] [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m                            [100%][0m
+[32m[32m[1m45 passed[0m[32m in 36.99s[0m[0m
+PYTEST_EXIT=0
+act-result.txt exists: yes (499 lines)
+[Assistant] All **45 tests pass** (28 unit + 12 structure + 5 act) in 37s, and `act-result.txt` exists. Let me close the task and add project documentation.
+[Tool: TaskUpdate] {"taskId": "4", "status": "completed"}
+[Result] Updated task #4 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/.gitignore", "content": "__pycache__/
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/.gitignore (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/README.md", "content": "# Environment
+[Result] File created successfully at: /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode/README.md (file state is current in your context — no need to Read it back)
+[Assistant] Let me do a final verification of the deliverable layout and a clean import check.
+[Tool: Bash] cd /home/passp/repos/GHA-bench/.claude/worktrees/opus48-bench/workspaces/2026-06-26_103905/16-environment-matrix-generator/default-opus48-1m-ultracode
+echo "=== Deliverable tree ==="
+find . -type f -not -path './.git/*' -not -path '*/__pycache__/*' -not -path '*/.pytest_cache/*' | sort
+echo
+echo "=== import check ==="
+python3 -c "import matrix_generator as m; print('import OK; public api:', [n for n in dir(m) if not n.startswith('_') and n[0].islower()])"
+echo "=== actionlint final ==="
+actionlint .github/workflows/environment-matrix-generator.yml && echo "actionlint: clean (exit 0)"
+[Result] === Deliverable tree ===
+./.actrc
+./.claude/settings.json
+./.github/workflows/environment-matrix-generator.yml
+./.gitignore
+./README.md
+./act-result.txt
+./benchmark-instructions-v4.md
+./conftest.py
+./matrix-config.json
+./matrix_generator.py
+./tests/fixtures/basic.json
+./tests/fixtures/exclude.json
+./tests/fixtures/full.json
+./tests/fixtures/include.json
+./tests/fixtures/oversized.json
+./tests/test_matrix_generator.py
+./tests/test_workflow_act.py
+./tests/test_workflow_structure.py
+
+=== import check ===
+import OK; public api: ['annotations', 'apply_exclude', 'apply_include', 'argparse', 'cartesian_product', 'generate_matrix', 'itertools', 'json', 'main', 'os', 'sys']
+=== actionlint final ===
+actionlint: clean (exit 0)
+[Assistant] Everything is complete and verified. Here's the summary.
+
+## Done — Environment Matrix Generator
+
+Built with red/green TDD in Python (stdlib only — no dependencies to install in the act container). All **45 tests pass** and the required `act-result.txt` artifact is produced.
+
+### What it does
+`matrix_generator.py` takes a JSON config (axes for OS / language versions / feature flags) and produces a GitHub-Actions-ready strategy:
+- **Cartesian product** of the axes → base matrix
+- **`exclude`** — partial-match removal (GitHub semantics)
+- **`include`** — GitHub's exact merge/append algorithm (merge into matching combos, append standalone otherwise). Verified against **GitHub's own documented example** as a test.
+- **`max-parallel` / `fail-fast`** passthrough, and **`max-size` validation** (flags empty or oversized matrices)
+- Output is the fully-expanded matrix in `include` form (directly consumable by `strategy.matrix: ${{ fromJSON(...) }}`) plus validation metadata. Graceful errors with exit codes `0`/`1`/`2`.
+
+### TDD trail
+Five red→green→refactor cycles, each a failing test first: `cartesian_product` → `apply_exclude` → `apply_include` → `generate_matrix`+validation → CLI. (28 unit tests.)
+
+### The workflow (`.github/workflows/environment-matrix-generator.yml`)
+- Triggers: `push`, `pull_request`, `schedule` (weekly cron), `workflow_dispatch` (config-path input)
+- `permissions: contents: read`, an `env.CONFIG_FILE` default
+- **Job dependency + real fan-out**: `generate-matrix` validates and exposes the matrix as a job output; `build` `needs` it, is gated on `valid == 'true'`, and dynamically fans out one job per generated combination via `fromJSON`. **actionlint: clean (exit 0)**.
+
+### act results (`act-result.txt`, 5 cases, all exit 0)
+| case | size | valid | build jobs | check |
+|---|---|---|---|---|
+| basic | 4 | true | 4 | cartesian |
+| exclude | 4 | true | 4 | partial-match removal |
+| include | 5 | true | 5 | merge + standalone |
+| full | 3 | true | 3 | 3-axis + exclude + include-extra-key |
+| oversized | 12 | **false** | 0 (skipped) | size-limit error reported, build gated off |
+
+Totals across all cases: **21 "Job succeeded", 0 "Job failed", 16 BUILD_OK** — each asserted against exact known-good values (sizes, the precise set of combinations, fail-fast/max-parallel, the exact error string).
+
+The harness builds an isolated git repo per fixture, runs `act push --rm`, appends delimited output to `act-result.txt`, and asserts exit 0 + exact values + every job succeeded. I used 3 act iterations total (1 manual debug + 2 harness runs), within budget.
