@@ -1,0 +1,116 @@
+name: Environment Matrix Generator
+
+# Realistic CI usage of the matrix generator:
+#   1. `generate` builds + validates the strategy.matrix JSON from a config file
+#      and publishes it as a job output.
+#   2. `build` consumes that output via fromJSON to actually fan out one job per
+#      generated combination -- proving the matrix is valid and usable downstream.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      max_size:
+        description: Maximum number of jobs the generated matrix may contain.
+        required: false
+        default: "256"
+  schedule:
+    # Weekly sanity run (Mondays 06:00 UTC).
+    - cron: "0 6 * * 1"
+
+# Least privilege: the workflow only reads the repository contents.
+permissions:
+  contents: read
+
+env:
+  PRIMARY_CONFIG: fixtures/a-basic.json
+  FIXTURES_DIR: fixtures
+  MAX_SIZE: ${{ github.event.inputs.max_size || '256' }}
+
+jobs:
+  generate:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+      size: ${{ steps.gen.outputs.size }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure PowerShell is available
+        shell: bash
+        run: |
+          if command -v pwsh >/dev/null 2>&1; then
+            echo "pwsh present: $(pwsh --version)"
+          else
+            echo "Installing PowerShell for portability..."
+            sudo apt-get update
+            sudo apt-get install -y powershell
+          fi
+
+      - name: Generate primary matrix
+        id: gen
+        shell: pwsh
+        run: |
+          # $GITHUB_OUTPUT is provided automatically by the runner / act.
+          ./Invoke-MatrixGenerator.ps1 -ConfigPath $env:PRIMARY_CONFIG -MaxSize ([int]$env:MAX_SIZE) -GitHubOutput
+
+      - name: Run every fixture through the generator
+        shell: pwsh
+        run: |
+          # Exercise each fixture and emit clearly-delimited, machine-checkable
+          # blocks. Validation failures (e.g. an oversize matrix) are reported as
+          # STATUS:ERROR rather than crashing the job, so the whole suite runs in a
+          # single act invocation.
+          Import-Module ./BuildMatrix.psm1 -Force
+          $fixtures = Get-ChildItem -Path $env:FIXTURES_DIR -Filter *.json | Sort-Object Name
+          foreach ($f in $fixtures) {
+              $name = $f.BaseName
+              Write-Output "===FIXTURE-BEGIN:$name==="
+              try {
+                  $res = Get-BuildMatrix -Config (Import-MatrixConfig -Path $f.FullName)
+                  $compact = $res | ConvertTo-Json -Depth 12 -Compress
+                  $mp = 'none'
+                  if ($res.strategy.PSObject.Properties.Name -contains 'max-parallel') {
+                      $mp = $res.strategy.'max-parallel'
+                  }
+                  Write-Output "STATUS:OK"
+                  Write-Output "SIZE:$($res.size)"
+                  Write-Output ("FAILFAST:" + $res.strategy.'fail-fast'.ToString().ToLower())
+                  Write-Output "MAXPARALLEL:$mp"
+                  Write-Output "MATRIX:$compact"
+              }
+              catch {
+                  Write-Output "STATUS:ERROR"
+                  Write-Output ("ERROR:" + ($_.Exception.Message -replace '\r?\n', ' '))
+              }
+              Write-Output "===FIXTURE-END:$name==="
+          }
+
+      - name: Job summary
+        shell: pwsh
+        run: |
+          $size = "${{ steps.gen.outputs.size }}"
+          $line = "Generated $size combination(s) from $env:PRIMARY_CONFIG."
+          Write-Output $line
+          if ($env:GITHUB_STEP_SUMMARY) {
+              "## Environment Matrix Generator" | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+              $line | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+          }
+
+  build:
+    name: Build
+    needs: generate
+    runs-on: ubuntu-latest
+    # Consume the generated matrix exactly as a real pipeline would.
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate.outputs.matrix) }}
+    steps:
+      - name: Show combination
+        shell: pwsh
+        run: |
+          Write-Output "BUILD os=${{ matrix.os }} node=${{ matrix.node }}"
