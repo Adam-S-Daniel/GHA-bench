@@ -1,0 +1,94 @@
+name: Test Results Aggregator
+
+# Triggers: on every push and PR, on a manual dispatch (with an optional
+# fixture directory input), and on a weekly schedule as a nightly-style report.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      fixture_dir:
+        description: "Directory containing JUnit XML / JSON result files to aggregate"
+        required: false
+        default: fixtures/sample
+        type: string
+  schedule:
+    # Mondays at 06:00 UTC.
+    - cron: "0 6 * * 1"
+
+# Least-privilege: the aggregator only reads the checked-out tree and writes to
+# the job summary file; it needs no write access to repository contents.
+permissions:
+  contents: read
+
+# Default fixture directory; the manual-dispatch input overrides it per-run.
+env:
+  FIXTURE_DIR: fixtures/sample
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    # Surface key numbers as job outputs so dependent jobs can gate on them.
+    outputs:
+      status: ${{ steps.aggregate.outputs.status }}
+      failed: ${{ steps.aggregate.outputs.failed }}
+      flaky: ${{ steps.aggregate.outputs.flaky }}
+      total: ${{ steps.aggregate.outputs.total }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        # The official installer is self-contained and only needs bun.sh; this
+        # avoids depending on a third-party action being resolvable in the
+        # sandboxed container. Add Bun to PATH for subsequent steps.
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Bun is available
+        run: bun --version
+
+      - name: Run unit tests for the aggregator
+        # Run only the dependency-free logic + CLI unit tests. The workflow
+        # structure tests (need actionlint) and the act harness (needs act and
+        # would recurse) are intentionally excluded here.
+        run: bun test tests/parsers.test.ts tests/aggregate.test.ts tests/markdown.test.ts tests/cli.test.ts
+
+      - name: Aggregate test results
+        id: aggregate
+        # Route the (potentially untrusted) dispatch input through env rather
+        # than interpolating it directly into the shell — avoids any expression
+        # injection and is the actionlint-recommended pattern.
+        env:
+          FIXTURE_DIR: ${{ github.event.inputs.fixture_dir || 'fixtures/sample' }}
+        run: |
+          echo "Aggregating test results from: ${FIXTURE_DIR}"
+          bun run src/cli.ts "${FIXTURE_DIR}"
+
+      - name: Echo aggregated outputs
+        run: |
+          echo "status: ${{ steps.aggregate.outputs.status }}"
+          echo "passed: ${{ steps.aggregate.outputs.passed }}"
+          echo "failed: ${{ steps.aggregate.outputs.failed }}"
+          echo "skipped: ${{ steps.aggregate.outputs.skipped }}"
+          echo "total: ${{ steps.aggregate.outputs.total }}"
+          echo "flaky: ${{ steps.aggregate.outputs.flaky }}"
+
+  report:
+    name: Report aggregation gate
+    needs: aggregate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summarise the aggregation result
+        # Demonstrates a job dependency consuming the upstream job's outputs.
+        run: |
+          echo "Aggregated status: ${{ needs.aggregate.outputs.status }}"
+          echo "Total tests:       ${{ needs.aggregate.outputs.total }}"
+          echo "Failed tests:      ${{ needs.aggregate.outputs.failed }}"
+          echo "Flaky tests:       ${{ needs.aggregate.outputs.flaky }}"
+          if [ "${{ needs.aggregate.outputs.flaky }}" != "0" ]; then
+            echo "::warning::Flaky tests were detected in this matrix build."
+          fi

@@ -1,7 +1,7 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-06-28 11:18:49 AM ET — 124/140 runs completed, 16 remaining; total cost $474.71; total agent time 1852.1 min.
-**Claude Code versions used:** v2.1.193 (23 runs), v2.1.195 (101 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
+**Last updated:** 2026-06-28 11:50:22 AM ET — 125/140 runs completed, 15 remaining; total cost $485.00; total agent time 1884.4 min.
+**Claude Code versions used:** v2.1.193 (23 runs), v2.1.195 (102 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
 
@@ -75,16 +75,16 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus48-1m-high | B- (12.4min) | B+ ($2.89) | — | — |
 | typescript-bun | opus48-1m-high | B (12.2min) | B- ($3.68) | — | — |
 | powershell | opus48-1m-high | C+ (13.8min) | B ($3.24) | — | — |
-| default | opus48-1m-ultracode | C (15.5min) | C ($4.29) | — | — |
+| default | opus48-1m-ultracode | C (15.5min) | C+ ($4.29) | — | — |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | — | — |
-| bash | opus48-1m-xhigh | D (20.3min) | D+ ($5.74) | — | — |
-| powershell-tool | opus48-1m-ultracode | D (21.8min) | D+ ($5.62) | — | — |
-| typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | — | — |
-| bash | opus48-1m-ultracode | D (20.3min) | D ($5.96) | — | — |
-| powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | — | — |
-| powershell | opus48-1m-ultracode | D (20.5min) | D- ($6.79) | — | — |
+| bash | opus48-1m-ultracode | D+ (20.3min) | D+ ($5.96) | — | — |
+| bash | opus48-1m-xhigh | D+ (20.3min) | D+ ($5.74) | — | — |
+| powershell-tool | opus48-1m-ultracode | D (21.8min) | C- ($5.62) | — | — |
+| typescript-bun | opus48-1m-xhigh | D+ (20.4min) | D+ ($5.76) | — | — |
+| powershell | opus48-1m-ultracode | D+ (20.5min) | D ($6.79) | — | — |
+| powershell | opus48-1m-xhigh* | D (21.9min) | D+ ($6.08) | — | — |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | — | — |
-| typescript-bun | opus48-1m-ultracode | D- (23.3min) | D- ($7.55) | — | — |
+| typescript-bun | opus48-1m-ultracode | D- (25.5min) | D- ($8.24) | — | — |
 
 
 <details>
@@ -102,16 +102,16 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | typescript-bun | opus48-1m-high | B (12.2min) | B- ($3.68) | — | — |
 | powershell-tool | opus48-1m-high | B- (12.4min) | B+ ($2.89) | — | — |
 | powershell | opus48-1m-high | C+ (13.8min) | B ($3.24) | — | — |
-| default | opus48-1m-ultracode | C (15.5min) | C ($4.29) | — | — |
+| default | opus48-1m-ultracode | C (15.5min) | C+ ($4.29) | — | — |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | — | — |
-| bash | opus48-1m-xhigh | D (20.3min) | D+ ($5.74) | — | — |
-| powershell-tool | opus48-1m-ultracode | D (21.8min) | D+ ($5.62) | — | — |
-| typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | — | — |
-| bash | opus48-1m-ultracode | D (20.3min) | D ($5.96) | — | — |
-| powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | — | — |
-| powershell | opus48-1m-ultracode | D (20.5min) | D- ($6.79) | — | — |
+| bash | opus48-1m-ultracode | D+ (20.3min) | D+ ($5.96) | — | — |
+| bash | opus48-1m-xhigh | D+ (20.3min) | D+ ($5.74) | — | — |
+| typescript-bun | opus48-1m-xhigh | D+ (20.4min) | D+ ($5.76) | — | — |
+| powershell | opus48-1m-ultracode | D+ (20.5min) | D ($6.79) | — | — |
+| powershell-tool | opus48-1m-ultracode | D (21.8min) | C- ($5.62) | — | — |
+| powershell | opus48-1m-xhigh* | D (21.9min) | D+ ($6.08) | — | — |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | — | — |
-| typescript-bun | opus48-1m-ultracode | D- (23.3min) | D- ($7.55) | — | — |
+| typescript-bun | opus48-1m-ultracode | D- (25.5min) | D- ($8.24) | — | — |
 
 </details>
 
@@ -130,16 +130,16 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus48-1m-high | B- (12.4min) | B+ ($2.89) | — | — |
 | powershell | opus48-1m-high | C+ (13.8min) | B ($3.24) | — | — |
 | typescript-bun | opus48-1m-high | B (12.2min) | B- ($3.68) | — | — |
-| default | opus48-1m-ultracode | C (15.5min) | C ($4.29) | — | — |
+| default | opus48-1m-ultracode | C (15.5min) | C+ ($4.29) | — | — |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | — | — |
-| bash | opus48-1m-xhigh | D (20.3min) | D+ ($5.74) | — | — |
-| powershell-tool | opus48-1m-ultracode | D (21.8min) | D+ ($5.62) | — | — |
-| typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | — | — |
-| bash | opus48-1m-ultracode | D (20.3min) | D ($5.96) | — | — |
-| powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | — | — |
+| powershell-tool | opus48-1m-ultracode | D (21.8min) | C- ($5.62) | — | — |
+| bash | opus48-1m-ultracode | D+ (20.3min) | D+ ($5.96) | — | — |
+| bash | opus48-1m-xhigh | D+ (20.3min) | D+ ($5.74) | — | — |
+| typescript-bun | opus48-1m-xhigh | D+ (20.4min) | D+ ($5.76) | — | — |
+| powershell | opus48-1m-xhigh* | D (21.9min) | D+ ($6.08) | — | — |
+| powershell | opus48-1m-ultracode | D+ (20.5min) | D ($6.79) | — | — |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | — | — |
-| powershell | opus48-1m-ultracode | D (20.5min) | D- ($6.79) | — | — |
-| typescript-bun | opus48-1m-ultracode | D- (23.3min) | D- ($7.55) | — | — |
+| typescript-bun | opus48-1m-ultracode | D- (25.5min) | D- ($8.24) | — | — |
 
 </details>
 
@@ -158,16 +158,16 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus48-1m-high | B- (12.4min) | B+ ($2.89) | — | — |
 | typescript-bun | opus48-1m-high | B (12.2min) | B- ($3.68) | — | — |
 | powershell | opus48-1m-high | C+ (13.8min) | B ($3.24) | — | — |
-| default | opus48-1m-ultracode | C (15.5min) | C ($4.29) | — | — |
+| default | opus48-1m-ultracode | C (15.5min) | C+ ($4.29) | — | — |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | — | — |
-| bash | opus48-1m-xhigh | D (20.3min) | D+ ($5.74) | — | — |
-| powershell-tool | opus48-1m-ultracode | D (21.8min) | D+ ($5.62) | — | — |
-| typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | — | — |
-| bash | opus48-1m-ultracode | D (20.3min) | D ($5.96) | — | — |
-| powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | — | — |
-| powershell | opus48-1m-ultracode | D (20.5min) | D- ($6.79) | — | — |
+| bash | opus48-1m-ultracode | D+ (20.3min) | D+ ($5.96) | — | — |
+| bash | opus48-1m-xhigh | D+ (20.3min) | D+ ($5.74) | — | — |
+| powershell-tool | opus48-1m-ultracode | D (21.8min) | C- ($5.62) | — | — |
+| typescript-bun | opus48-1m-xhigh | D+ (20.4min) | D+ ($5.76) | — | — |
+| powershell | opus48-1m-ultracode | D+ (20.5min) | D ($6.79) | — | — |
+| powershell | opus48-1m-xhigh* | D (21.9min) | D+ ($6.08) | — | — |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | — | — |
-| typescript-bun | opus48-1m-ultracode | D- (23.3min) | D- ($7.55) | — | — |
+| typescript-bun | opus48-1m-ultracode | D- (25.5min) | D- ($8.24) | — | — |
 
 </details>
 
@@ -186,21 +186,21 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus48-1m-high | B- (12.4min) | B+ ($2.89) | — | — |
 | typescript-bun | opus48-1m-high | B (12.2min) | B- ($3.68) | — | — |
 | powershell | opus48-1m-high | C+ (13.8min) | B ($3.24) | — | — |
-| default | opus48-1m-ultracode | C (15.5min) | C ($4.29) | — | — |
+| default | opus48-1m-ultracode | C (15.5min) | C+ ($4.29) | — | — |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | — | — |
-| bash | opus48-1m-xhigh | D (20.3min) | D+ ($5.74) | — | — |
-| powershell-tool | opus48-1m-ultracode | D (21.8min) | D+ ($5.62) | — | — |
-| typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | — | — |
-| bash | opus48-1m-ultracode | D (20.3min) | D ($5.96) | — | — |
-| powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | — | — |
-| powershell | opus48-1m-ultracode | D (20.5min) | D- ($6.79) | — | — |
+| bash | opus48-1m-ultracode | D+ (20.3min) | D+ ($5.96) | — | — |
+| bash | opus48-1m-xhigh | D+ (20.3min) | D+ ($5.74) | — | — |
+| powershell-tool | opus48-1m-ultracode | D (21.8min) | C- ($5.62) | — | — |
+| typescript-bun | opus48-1m-xhigh | D+ (20.4min) | D+ ($5.76) | — | — |
+| powershell | opus48-1m-ultracode | D+ (20.5min) | D ($6.79) | — | — |
+| powershell | opus48-1m-xhigh* | D (21.9min) | D+ ($6.08) | — | — |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | — | — |
-| typescript-bun | opus48-1m-ultracode | D- (23.3min) | D- ($7.55) | — | — |
+| typescript-bun | opus48-1m-ultracode | D- (25.5min) | D- ($8.24) | — | — |
 
 </details>
 
-- **Estimated time remaining:** 1807.3min
-- **Estimated total cost:** $535.97
+- **Estimated time remaining:** 1809.0min
+- **Estimated total cost:** $543.20
 
 ## Failed / Timed-Out Runs
 
@@ -237,7 +237,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | — | — |
 | typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | — | — |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | — | — |
-| typescript-bun | opus48-1m-ultracode | 3 | 23.3min | 17.0min | 1.7 | 73 | $7.55 | $22.66 | — | — |
+| typescript-bun | opus48-1m-ultracode | 4 | 25.5min | 18.8min | 1.2 | 74 | $8.24 | $32.94 | — | — |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | — | — |
 
 
@@ -265,7 +265,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | — | — |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | — | — |
 | powershell | opus48-1m-ultracode | 4 | 20.5min | 16.9min | 0.5 | 47 | $6.79 | $27.16 | — | — |
-| typescript-bun | opus48-1m-ultracode | 3 | 23.3min | 17.0min | 1.7 | 73 | $7.55 | $22.66 | — | — |
+| typescript-bun | opus48-1m-ultracode | 4 | 25.5min | 18.8min | 1.2 | 74 | $8.24 | $32.94 | — | — |
 
 </details>
 
@@ -292,8 +292,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus48-1m-ultracode | 4 | 20.5min | 16.9min | 0.5 | 47 | $6.79 | $27.16 | — | — |
 | powershell-tool | opus48-1m-ultracode | 4 | 21.8min | 19.5min | 0.2 | 48 | $5.62 | $22.47 | — | — |
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | — | — |
-| typescript-bun | opus48-1m-ultracode | 3 | 23.3min | 17.0min | 1.7 | 73 | $7.55 | $22.66 | — | — |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | — | — |
+| typescript-bun | opus48-1m-ultracode | 4 | 25.5min | 18.8min | 1.2 | 74 | $8.24 | $32.94 | — | — |
 
 </details>
 
@@ -318,8 +318,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | — | — |
 | powershell | opus48-1m-ultracode | 4 | 20.5min | 16.9min | 0.5 | 47 | $6.79 | $27.16 | — | — |
 | bash | opus48-1m-xhigh | 7 | 20.3min | 17.0min | 1.3 | 60 | $5.74 | $40.21 | — | — |
-| typescript-bun | opus48-1m-ultracode | 3 | 23.3min | 17.0min | 1.7 | 73 | $7.55 | $22.66 | — | — |
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | — | — |
+| typescript-bun | opus48-1m-ultracode | 4 | 25.5min | 18.8min | 1.2 | 74 | $8.24 | $32.94 | — | — |
 | bash | opus48-1m-ultracode | 4 | 20.3min | 19.0min | 0.8 | 62 | $5.96 | $23.84 | — | — |
 | powershell-tool | opus48-1m-ultracode | 4 | 21.8min | 19.5min | 0.2 | 48 | $5.62 | $22.47 | — | — |
 
@@ -348,8 +348,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus48-1m-medium | 7 | 10.1min | 10.1min | 0.9 | 40 | $2.57 | $18.00 | — | — |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | — | — |
 | bash | opus48-1m-medium | 7 | 9.2min | 9.2min | 1.1 | 34 | $2.38 | $16.64 | — | — |
+| typescript-bun | opus48-1m-ultracode | 4 | 25.5min | 18.8min | 1.2 | 74 | $8.24 | $32.94 | — | — |
 | bash | opus48-1m-xhigh | 7 | 20.3min | 17.0min | 1.3 | 60 | $5.74 | $40.21 | — | — |
-| typescript-bun | opus48-1m-ultracode | 3 | 23.3min | 17.0min | 1.7 | 73 | $7.55 | $22.66 | — | — |
 
 </details>
 
@@ -377,7 +377,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | opus48-1m-ultracode | 4 | 20.3min | 19.0min | 0.8 | 62 | $5.96 | $23.84 | — | — |
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | — | — |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | — | — |
-| typescript-bun | opus48-1m-ultracode | 3 | 23.3min | 17.0min | 1.7 | 73 | $7.55 | $22.66 | — | — |
+| typescript-bun | opus48-1m-ultracode | 4 | 25.5min | 18.8min | 1.2 | 74 | $8.24 | $32.94 | — | — |
 
 </details>
 
@@ -404,7 +404,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | — | — |
 | typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | — | — |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | — | — |
-| typescript-bun | opus48-1m-ultracode | 3 | 23.3min | 17.0min | 1.7 | 73 | $7.55 | $22.66 | — | — |
+| typescript-bun | opus48-1m-ultracode | 4 | 25.5min | 18.8min | 1.2 | 74 | $8.24 | $32.94 | — | — |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | — | — |
 
 </details>
@@ -432,7 +432,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | — | — |
 | typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | — | — |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | — | — |
-| typescript-bun | opus48-1m-ultracode | 3 | 23.3min | 17.0min | 1.7 | 73 | $7.55 | $22.66 | — | — |
+| typescript-bun | opus48-1m-ultracode | 4 | 25.5min | 18.8min | 1.2 | 74 | $8.24 | $32.94 | — | — |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | — | — |
 
 </details>
@@ -471,7 +471,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | typescript-bun | opus48-1m-high-cli2.1.195 | 189 | 82 | 43.4% | 10.9min | 0.6% | 3.2min | 0.2% | 7.7min | 0.4% | 4.3min | 64.5% |
 | typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 0.3% | 1.4min | 0.1% | 3.9min | 0.2% | 4.0min | 49.5% |
 | typescript-bun | opus48-1m-medium-cli2.1.195 | 79 | 39 | 49.4% | 5.2min | 0.3% | 1.4min | 0.1% | 3.8min | 0.2% | 2.1min | 64.3% |
-| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 99 | 32 | 32.3% | 4.3min | 0.2% | 1.6min | 0.1% | 2.6min | 0.1% | 0.8min | 75.9% |
+| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 134 | 53 | 39.6% | 7.1min | 0.4% | 1.7min | 0.1% | 5.4min | 0.3% | 2.1min | 71.9% |
 | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 190 | 106 | 55.8% | 14.1min | 0.8% | 1.2min | 0.1% | 13.0min | 0.7% | 6.2min | 67.8% |
 
 
@@ -482,9 +482,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
 | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 190 | 106 | 55.8% | 14.1min | 0.8% | 1.2min | 0.1% | 13.0min | 0.7% | 6.2min | 67.8% |
 | typescript-bun | opus48-1m-high-cli2.1.195 | 189 | 82 | 43.4% | 10.9min | 0.6% | 3.2min | 0.2% | 7.7min | 0.4% | 4.3min | 64.5% |
+| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 134 | 53 | 39.6% | 7.1min | 0.4% | 1.7min | 0.1% | 5.4min | 0.3% | 2.1min | 71.9% |
 | typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 0.3% | 1.4min | 0.1% | 3.9min | 0.2% | 4.0min | 49.5% |
 | typescript-bun | opus48-1m-medium-cli2.1.195 | 79 | 39 | 49.4% | 5.2min | 0.3% | 1.4min | 0.1% | 3.8min | 0.2% | 2.1min | 64.3% |
-| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 99 | 32 | 32.3% | 4.3min | 0.2% | 1.6min | 0.1% | 2.6min | 0.1% | 0.8min | 75.9% |
 | bash | opus48-1m-xhigh-cli2.1.195 | 162 | 11 | 6.8% | 2.2min | 0.1% | 0.1min | 0.0% | 2.1min | 0.1% | 7.1min | 22.6% |
 | bash | opus48-1m-high-cli2.1.195 | 102 | 6 | 5.9% | 1.2min | 0.1% | 0.1min | 0.0% | 1.1min | 0.1% | 3.5min | 24.5% |
 | bash | opus48-1m-ultracode-cli2.1.195 | 100 | 4 | 4.0% | 0.8min | 0.0% | 0.1min | 0.0% | 0.7min | 0.0% | 3.0min | 19.9% |
@@ -513,7 +513,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 99 | 32 | 32.3% | 4.3min | 0.2% | 1.6min | 0.1% | 2.6min | 0.1% | 0.8min | 75.9% |
+| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 134 | 53 | 39.6% | 7.1min | 0.4% | 1.7min | 0.1% | 5.4min | 0.3% | 2.1min | 71.9% |
 | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 190 | 106 | 55.8% | 14.1min | 0.8% | 1.2min | 0.1% | 13.0min | 0.7% | 6.2min | 67.8% |
 | typescript-bun | opus48-1m-high-cli2.1.195 | 189 | 82 | 43.4% | 10.9min | 0.6% | 3.2min | 0.2% | 7.7min | 0.4% | 4.3min | 64.5% |
 | typescript-bun | opus48-1m-medium-cli2.1.195 | 79 | 39 | 49.4% | 5.2min | 0.3% | 1.4min | 0.1% | 3.8min | 0.2% | 2.1min | 64.3% |
@@ -550,7 +550,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | typescript-bun | opus48-1m-medium-cli2.1.195 | 79 | 39 | 49.4% | 5.2min | 0.3% | 1.4min | 0.1% | 3.8min | 0.2% | 2.1min | 64.3% |
 | typescript-bun | opus48-1m-high-cli2.1.195 | 189 | 82 | 43.4% | 10.9min | 0.6% | 3.2min | 0.2% | 7.7min | 0.4% | 4.3min | 64.5% |
 | typescript-bun | opus48-1m-medium-cli2.1.193 | 95 | 40 | 42.1% | 5.3min | 0.3% | 1.4min | 0.1% | 3.9min | 0.2% | 4.0min | 49.5% |
-| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 99 | 32 | 32.3% | 4.3min | 0.2% | 1.6min | 0.1% | 2.6min | 0.1% | 0.8min | 75.9% |
+| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 134 | 53 | 39.6% | 7.1min | 0.4% | 1.7min | 0.1% | 5.4min | 0.3% | 2.1min | 71.9% |
 | bash | opus48-1m-xhigh-cli2.1.195 | 162 | 11 | 6.8% | 2.2min | 0.1% | 0.1min | 0.0% | 2.1min | 0.1% | 7.1min | 22.6% |
 | bash | opus48-1m-high-cli2.1.195 | 102 | 6 | 5.9% | 1.2min | 0.1% | 0.1min | 0.0% | 1.1min | 0.1% | 3.5min | 24.5% |
 | bash | opus48-1m-ultracode-cli2.1.195 | 100 | 4 | 4.0% | 0.8min | 0.0% | 0.1min | 0.0% | 0.7min | 0.0% | 3.0min | 19.9% |
@@ -578,59 +578,59 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 5 | 11.7min | 0.6% | $3.16 | 0.67% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.2% | $1.08 | 0.23% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 4.7min | 0.3% | $1.21 | 0.25% |
-| repeated-test-reruns | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 4.3min | 0.2% | $1.26 | 0.27% |
-| repeated-test-reruns | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 13.7min | 0.7% | $4.08 | 0.86% |
-| repeated-test-reruns | default | opus48-1m-high-cli2.1.195 | 5 | 10.0min | 0.5% | $2.94 | 0.62% |
+| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 5 | 11.7min | 0.6% | $3.16 | 0.65% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.2% | $1.08 | 0.22% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 4.7min | 0.2% | $1.21 | 0.25% |
+| repeated-test-reruns | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 4.3min | 0.2% | $1.26 | 0.26% |
+| repeated-test-reruns | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 13.7min | 0.7% | $4.08 | 0.84% |
+| repeated-test-reruns | default | opus48-1m-high-cli2.1.195 | 5 | 10.0min | 0.5% | $2.94 | 0.61% |
 | repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 0.3% | $1.34 | 0.28% |
 | repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.2% | $0.82 | 0.17% |
-| repeated-test-reruns | default | opus48-1m-ultracode-cli2.1.195 | 4 | 8.7min | 0.5% | $2.34 | 0.49% |
-| repeated-test-reruns | default | opus48-1m-xhigh-cli2.1.195 | 8 | 18.3min | 1.0% | $5.59 | 1.18% |
-| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 8 | 22.3min | 1.2% | $5.14 | 1.08% |
+| repeated-test-reruns | default | opus48-1m-ultracode-cli2.1.195 | 4 | 8.7min | 0.5% | $2.34 | 0.48% |
+| repeated-test-reruns | default | opus48-1m-xhigh-cli2.1.195 | 8 | 18.3min | 1.0% | $5.59 | 1.15% |
+| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 8 | 22.3min | 1.2% | $5.14 | 1.06% |
 | repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.1% | $0.66 | 0.14% |
-| repeated-test-reruns | powershell | opus48-1m-ultracode-cli2.1.195 | 3 | 9.3min | 0.5% | $3.19 | 0.67% |
-| repeated-test-reruns | powershell | opus48-1m-xhigh-cli2.1.195 | 6 | 16.7min | 0.9% | $3.23 | 0.68% |
-| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 6 | 9.0min | 0.5% | $2.12 | 0.45% |
+| repeated-test-reruns | powershell | opus48-1m-ultracode-cli2.1.195 | 3 | 9.3min | 0.5% | $3.19 | 0.66% |
+| repeated-test-reruns | powershell | opus48-1m-xhigh-cli2.1.195 | 6 | 16.7min | 0.9% | $3.23 | 0.67% |
+| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 6 | 9.0min | 0.5% | $2.12 | 0.44% |
 | repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.2% | $0.78 | 0.16% |
 | repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 3 | 3.3min | 0.2% | $0.85 | 0.18% |
-| repeated-test-reruns | powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 9.3min | 0.5% | $2.44 | 0.51% |
-| repeated-test-reruns | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 28.0min | 1.5% | $4.15 | 0.87% |
-| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 5 | 10.7min | 0.6% | $3.53 | 0.74% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 0.5% | $2.26 | 0.48% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 4 | 7.3min | 0.4% | $1.71 | 0.36% |
-| repeated-test-reruns | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 12.0min | 0.6% | $3.87 | 0.82% |
-| repeated-test-reruns | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 5 | 10.3min | 0.6% | $2.91 | 0.61% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 6 | 16.4min | 0.9% | $5.11 | 1.08% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 0.4% | $2.17 | 0.46% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 2 | 7.8min | 0.4% | $1.74 | 0.37% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 2 | 6.4min | 0.3% | $1.76 | 0.37% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 21.2min | 1.1% | $6.01 | 1.27% |
+| repeated-test-reruns | powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 9.3min | 0.5% | $2.44 | 0.50% |
+| repeated-test-reruns | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 28.0min | 1.5% | $4.15 | 0.86% |
+| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 5 | 10.7min | 0.6% | $3.53 | 0.73% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 0.5% | $2.26 | 0.47% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 4 | 7.3min | 0.4% | $1.71 | 0.35% |
+| repeated-test-reruns | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 5 | 14.7min | 0.8% | $4.72 | 0.97% |
+| repeated-test-reruns | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 5 | 10.3min | 0.5% | $2.91 | 0.60% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 6 | 16.4min | 0.9% | $5.11 | 1.05% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 0.4% | $2.17 | 0.45% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 2 | 7.8min | 0.4% | $1.74 | 0.36% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 10.6min | 0.6% | $3.09 | 0.64% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 21.2min | 1.1% | $6.01 | 1.24% |
 | fixture-rework | bash | opus48-1m-high-cli2.1.195 | 6 | 5.0min | 0.3% | $1.35 | 0.28% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.1% | $0.41 | 0.09% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.1% | $0.41 | 0.08% |
 | fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 1 | 3.0min | 0.2% | $0.72 | 0.15% |
 | fixture-rework | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 1.0min | 0.1% | $0.30 | 0.06% |
-| fixture-rework | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 6.8min | 0.4% | $1.83 | 0.39% |
+| fixture-rework | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 6.8min | 0.4% | $1.83 | 0.38% |
 | fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.0% | $0.22 | 0.05% |
 | fixture-rework | default | opus48-1m-xhigh-cli2.1.195 | 3 | 1.5min | 0.1% | $0.42 | 0.09% |
 | fixture-rework | powershell | opus48-1m-high-cli2.1.195 | 4 | 2.5min | 0.1% | $0.62 | 0.13% |
 | fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.0% | $0.12 | 0.02% |
 | fixture-rework | powershell | opus48-1m-xhigh-cli2.1.195 | 4 | 3.8min | 0.2% | $0.53 | 0.11% |
 | fixture-rework | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.0% | $0.12 | 0.03% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.06% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.05% |
 | fixture-rework | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 2 | 1.5min | 0.1% | $0.14 | 0.03% |
 | fixture-rework | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 1.2min | 0.1% | $0.37 | 0.08% |
 | fixture-rework | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 0.5min | 0.0% | $0.10 | 0.02% |
-| fixture-rework | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 1 | 0.5min | 0.0% | $0.19 | 0.04% |
-| fixture-rework | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 4 | 2.0min | 0.1% | $0.55 | 0.12% |
+| fixture-rework | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 2 | 1.8min | 0.1% | $0.59 | 0.12% |
+| fixture-rework | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 4 | 2.0min | 0.1% | $0.55 | 0.11% |
 | docker-pwsh-install | powershell | opus48-1m-ultracode-cli2.1.195 | 2 | 3.0min | 0.2% | $0.83 | 0.17% |
 | docker-pwsh-install | powershell | opus48-1m-xhigh-cli2.1.195 | 1 | 1.5min | 0.1% | $0.44 | 0.09% |
 | docker-pwsh-install | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 1 | 1.5min | 0.1% | $0.39 | 0.08% |
 | bats-setup-issues | bash | opus48-1m-high-cli2.1.195 | 1 | 1.2min | 0.1% | $0.33 | 0.07% |
-| bats-setup-issues | bash | opus48-1m-xhigh-cli2.1.195 | 2 | 1.8min | 0.1% | $0.51 | 0.11% |
-| mid-run-module-restructure | powershell | opus48-1m-ultracode-cli2.1.195 | 1 | 2.0min | 0.1% | $0.84 | 0.18% |
-| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.06% |
+| bats-setup-issues | bash | opus48-1m-xhigh-cli2.1.195 | 2 | 1.8min | 0.1% | $0.51 | 0.10% |
+| mid-run-module-restructure | powershell | opus48-1m-ultracode-cli2.1.195 | 1 | 2.0min | 0.1% | $0.84 | 0.17% |
+| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.05% |
 | actionlint-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.0% | $0.13 | 0.03% |
 | act-fixture-paths | bash | opus48-1m-xhigh-cli2.1.195 | 1 | 1.0min | 0.1% | $0.25 | 0.05% |
 
@@ -643,23 +643,23 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.0% | $0.12 | 0.02% |
 | fixture-rework | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.0% | $0.12 | 0.03% |
 | fixture-rework | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 0.5min | 0.0% | $0.10 | 0.02% |
-| fixture-rework | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 1 | 0.5min | 0.0% | $0.19 | 0.04% |
 | actionlint-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.0% | $0.13 | 0.03% |
 | fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.0% | $0.22 | 0.05% |
 | fixture-rework | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 1.0min | 0.1% | $0.30 | 0.06% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.06% |
-| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.06% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.05% |
+| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.05% |
 | act-fixture-paths | bash | opus48-1m-xhigh-cli2.1.195 | 1 | 1.0min | 0.1% | $0.25 | 0.05% |
 | fixture-rework | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 1.2min | 0.1% | $0.37 | 0.08% |
 | bats-setup-issues | bash | opus48-1m-high-cli2.1.195 | 1 | 1.2min | 0.1% | $0.33 | 0.07% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.1% | $0.41 | 0.09% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.1% | $0.41 | 0.08% |
 | fixture-rework | default | opus48-1m-xhigh-cli2.1.195 | 3 | 1.5min | 0.1% | $0.42 | 0.09% |
 | fixture-rework | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 2 | 1.5min | 0.1% | $0.14 | 0.03% |
 | docker-pwsh-install | powershell | opus48-1m-xhigh-cli2.1.195 | 1 | 1.5min | 0.1% | $0.44 | 0.09% |
 | docker-pwsh-install | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 1 | 1.5min | 0.1% | $0.39 | 0.08% |
-| bats-setup-issues | bash | opus48-1m-xhigh-cli2.1.195 | 2 | 1.8min | 0.1% | $0.51 | 0.11% |
-| fixture-rework | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 4 | 2.0min | 0.1% | $0.55 | 0.12% |
-| mid-run-module-restructure | powershell | opus48-1m-ultracode-cli2.1.195 | 1 | 2.0min | 0.1% | $0.84 | 0.18% |
+| fixture-rework | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 2 | 1.8min | 0.1% | $0.59 | 0.12% |
+| bats-setup-issues | bash | opus48-1m-xhigh-cli2.1.195 | 2 | 1.8min | 0.1% | $0.51 | 0.10% |
+| fixture-rework | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 4 | 2.0min | 0.1% | $0.55 | 0.11% |
+| mid-run-module-restructure | powershell | opus48-1m-ultracode-cli2.1.195 | 1 | 2.0min | 0.1% | $0.84 | 0.17% |
 | fixture-rework | powershell | opus48-1m-high-cli2.1.195 | 4 | 2.5min | 0.1% | $0.62 | 0.13% |
 | repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.1% | $0.66 | 0.14% |
 | fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 1 | 3.0min | 0.2% | $0.72 | 0.15% |
@@ -668,33 +668,33 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.2% | $0.78 | 0.16% |
 | repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 3 | 3.3min | 0.2% | $0.85 | 0.18% |
 | fixture-rework | powershell | opus48-1m-xhigh-cli2.1.195 | 4 | 3.8min | 0.2% | $0.53 | 0.11% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.2% | $1.08 | 0.23% |
-| repeated-test-reruns | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 4.3min | 0.2% | $1.26 | 0.27% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 4.7min | 0.3% | $1.21 | 0.25% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.2% | $1.08 | 0.22% |
+| repeated-test-reruns | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 4.3min | 0.2% | $1.26 | 0.26% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 4.7min | 0.2% | $1.21 | 0.25% |
 | fixture-rework | bash | opus48-1m-high-cli2.1.195 | 6 | 5.0min | 0.3% | $1.35 | 0.28% |
 | repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 0.3% | $1.34 | 0.28% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 2 | 6.4min | 0.3% | $1.76 | 0.37% |
-| fixture-rework | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 6.8min | 0.4% | $1.83 | 0.39% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 4 | 7.3min | 0.4% | $1.71 | 0.36% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 2 | 7.8min | 0.4% | $1.74 | 0.37% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 0.4% | $2.17 | 0.46% |
-| repeated-test-reruns | default | opus48-1m-ultracode-cli2.1.195 | 4 | 8.7min | 0.5% | $2.34 | 0.49% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 0.5% | $2.26 | 0.48% |
-| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 6 | 9.0min | 0.5% | $2.12 | 0.45% |
-| repeated-test-reruns | powershell | opus48-1m-ultracode-cli2.1.195 | 3 | 9.3min | 0.5% | $3.19 | 0.67% |
-| repeated-test-reruns | powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 9.3min | 0.5% | $2.44 | 0.51% |
-| repeated-test-reruns | default | opus48-1m-high-cli2.1.195 | 5 | 10.0min | 0.5% | $2.94 | 0.62% |
-| repeated-test-reruns | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 5 | 10.3min | 0.6% | $2.91 | 0.61% |
-| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 5 | 10.7min | 0.6% | $3.53 | 0.74% |
-| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 5 | 11.7min | 0.6% | $3.16 | 0.67% |
-| repeated-test-reruns | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 12.0min | 0.6% | $3.87 | 0.82% |
-| repeated-test-reruns | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 13.7min | 0.7% | $4.08 | 0.86% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 6 | 16.4min | 0.9% | $5.11 | 1.08% |
-| repeated-test-reruns | powershell | opus48-1m-xhigh-cli2.1.195 | 6 | 16.7min | 0.9% | $3.23 | 0.68% |
-| repeated-test-reruns | default | opus48-1m-xhigh-cli2.1.195 | 8 | 18.3min | 1.0% | $5.59 | 1.18% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 21.2min | 1.1% | $6.01 | 1.27% |
-| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 8 | 22.3min | 1.2% | $5.14 | 1.08% |
-| repeated-test-reruns | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 28.0min | 1.5% | $4.15 | 0.87% |
+| fixture-rework | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 6.8min | 0.4% | $1.83 | 0.38% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 4 | 7.3min | 0.4% | $1.71 | 0.35% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 2 | 7.8min | 0.4% | $1.74 | 0.36% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 0.4% | $2.17 | 0.45% |
+| repeated-test-reruns | default | opus48-1m-ultracode-cli2.1.195 | 4 | 8.7min | 0.5% | $2.34 | 0.48% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 0.5% | $2.26 | 0.47% |
+| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 6 | 9.0min | 0.5% | $2.12 | 0.44% |
+| repeated-test-reruns | powershell | opus48-1m-ultracode-cli2.1.195 | 3 | 9.3min | 0.5% | $3.19 | 0.66% |
+| repeated-test-reruns | powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 9.3min | 0.5% | $2.44 | 0.50% |
+| repeated-test-reruns | default | opus48-1m-high-cli2.1.195 | 5 | 10.0min | 0.5% | $2.94 | 0.61% |
+| repeated-test-reruns | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 5 | 10.3min | 0.5% | $2.91 | 0.60% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 10.6min | 0.6% | $3.09 | 0.64% |
+| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 5 | 10.7min | 0.6% | $3.53 | 0.73% |
+| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 5 | 11.7min | 0.6% | $3.16 | 0.65% |
+| repeated-test-reruns | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 13.7min | 0.7% | $4.08 | 0.84% |
+| repeated-test-reruns | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 5 | 14.7min | 0.8% | $4.72 | 0.97% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 6 | 16.4min | 0.9% | $5.11 | 1.05% |
+| repeated-test-reruns | powershell | opus48-1m-xhigh-cli2.1.195 | 6 | 16.7min | 0.9% | $3.23 | 0.67% |
+| repeated-test-reruns | default | opus48-1m-xhigh-cli2.1.195 | 8 | 18.3min | 1.0% | $5.59 | 1.15% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 21.2min | 1.1% | $6.01 | 1.24% |
+| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 8 | 22.3min | 1.2% | $5.14 | 1.06% |
+| repeated-test-reruns | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 28.0min | 1.5% | $4.15 | 0.86% |
 
 </details>
 
@@ -708,56 +708,56 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.0% | $0.12 | 0.03% |
 | actionlint-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.0% | $0.13 | 0.03% |
 | fixture-rework | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 2 | 1.5min | 0.1% | $0.14 | 0.03% |
-| fixture-rework | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 1 | 0.5min | 0.0% | $0.19 | 0.04% |
 | fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.0% | $0.22 | 0.05% |
 | act-fixture-paths | bash | opus48-1m-xhigh-cli2.1.195 | 1 | 1.0min | 0.1% | $0.25 | 0.05% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.06% |
-| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.06% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.05% |
+| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.05% |
 | fixture-rework | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 1.0min | 0.1% | $0.30 | 0.06% |
 | bats-setup-issues | bash | opus48-1m-high-cli2.1.195 | 1 | 1.2min | 0.1% | $0.33 | 0.07% |
 | fixture-rework | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 1.2min | 0.1% | $0.37 | 0.08% |
 | docker-pwsh-install | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 1 | 1.5min | 0.1% | $0.39 | 0.08% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.1% | $0.41 | 0.09% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.1% | $0.41 | 0.08% |
 | fixture-rework | default | opus48-1m-xhigh-cli2.1.195 | 3 | 1.5min | 0.1% | $0.42 | 0.09% |
 | docker-pwsh-install | powershell | opus48-1m-xhigh-cli2.1.195 | 1 | 1.5min | 0.1% | $0.44 | 0.09% |
-| bats-setup-issues | bash | opus48-1m-xhigh-cli2.1.195 | 2 | 1.8min | 0.1% | $0.51 | 0.11% |
+| bats-setup-issues | bash | opus48-1m-xhigh-cli2.1.195 | 2 | 1.8min | 0.1% | $0.51 | 0.10% |
 | fixture-rework | powershell | opus48-1m-xhigh-cli2.1.195 | 4 | 3.8min | 0.2% | $0.53 | 0.11% |
-| fixture-rework | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 4 | 2.0min | 0.1% | $0.55 | 0.12% |
+| fixture-rework | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 4 | 2.0min | 0.1% | $0.55 | 0.11% |
+| fixture-rework | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 2 | 1.8min | 0.1% | $0.59 | 0.12% |
 | fixture-rework | powershell | opus48-1m-high-cli2.1.195 | 4 | 2.5min | 0.1% | $0.62 | 0.13% |
 | repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.1% | $0.66 | 0.14% |
 | fixture-rework | bash | opus48-1m-medium-cli2.1.195 | 1 | 3.0min | 0.2% | $0.72 | 0.15% |
 | repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.2% | $0.78 | 0.16% |
 | repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.2% | $0.82 | 0.17% |
 | docker-pwsh-install | powershell | opus48-1m-ultracode-cli2.1.195 | 2 | 3.0min | 0.2% | $0.83 | 0.17% |
-| mid-run-module-restructure | powershell | opus48-1m-ultracode-cli2.1.195 | 1 | 2.0min | 0.1% | $0.84 | 0.18% |
+| mid-run-module-restructure | powershell | opus48-1m-ultracode-cli2.1.195 | 1 | 2.0min | 0.1% | $0.84 | 0.17% |
 | repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 3 | 3.3min | 0.2% | $0.85 | 0.18% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.2% | $1.08 | 0.23% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 4.7min | 0.3% | $1.21 | 0.25% |
-| repeated-test-reruns | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 4.3min | 0.2% | $1.26 | 0.27% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.2% | $1.08 | 0.22% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 4.7min | 0.2% | $1.21 | 0.25% |
+| repeated-test-reruns | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 4.3min | 0.2% | $1.26 | 0.26% |
 | repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 0.3% | $1.34 | 0.28% |
 | fixture-rework | bash | opus48-1m-high-cli2.1.195 | 6 | 5.0min | 0.3% | $1.35 | 0.28% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 4 | 7.3min | 0.4% | $1.71 | 0.36% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 2 | 7.8min | 0.4% | $1.74 | 0.37% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 2 | 6.4min | 0.3% | $1.76 | 0.37% |
-| fixture-rework | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 6.8min | 0.4% | $1.83 | 0.39% |
-| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 6 | 9.0min | 0.5% | $2.12 | 0.45% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 0.4% | $2.17 | 0.46% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 0.5% | $2.26 | 0.48% |
-| repeated-test-reruns | default | opus48-1m-ultracode-cli2.1.195 | 4 | 8.7min | 0.5% | $2.34 | 0.49% |
-| repeated-test-reruns | powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 9.3min | 0.5% | $2.44 | 0.51% |
-| repeated-test-reruns | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 5 | 10.3min | 0.6% | $2.91 | 0.61% |
-| repeated-test-reruns | default | opus48-1m-high-cli2.1.195 | 5 | 10.0min | 0.5% | $2.94 | 0.62% |
-| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 5 | 11.7min | 0.6% | $3.16 | 0.67% |
-| repeated-test-reruns | powershell | opus48-1m-ultracode-cli2.1.195 | 3 | 9.3min | 0.5% | $3.19 | 0.67% |
-| repeated-test-reruns | powershell | opus48-1m-xhigh-cli2.1.195 | 6 | 16.7min | 0.9% | $3.23 | 0.68% |
-| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 5 | 10.7min | 0.6% | $3.53 | 0.74% |
-| repeated-test-reruns | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 12.0min | 0.6% | $3.87 | 0.82% |
-| repeated-test-reruns | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 13.7min | 0.7% | $4.08 | 0.86% |
-| repeated-test-reruns | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 28.0min | 1.5% | $4.15 | 0.87% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 6 | 16.4min | 0.9% | $5.11 | 1.08% |
-| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 8 | 22.3min | 1.2% | $5.14 | 1.08% |
-| repeated-test-reruns | default | opus48-1m-xhigh-cli2.1.195 | 8 | 18.3min | 1.0% | $5.59 | 1.18% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 21.2min | 1.1% | $6.01 | 1.27% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 4 | 7.3min | 0.4% | $1.71 | 0.35% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 2 | 7.8min | 0.4% | $1.74 | 0.36% |
+| fixture-rework | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 6.8min | 0.4% | $1.83 | 0.38% |
+| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 6 | 9.0min | 0.5% | $2.12 | 0.44% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 0.4% | $2.17 | 0.45% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 0.5% | $2.26 | 0.47% |
+| repeated-test-reruns | default | opus48-1m-ultracode-cli2.1.195 | 4 | 8.7min | 0.5% | $2.34 | 0.48% |
+| repeated-test-reruns | powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 9.3min | 0.5% | $2.44 | 0.50% |
+| repeated-test-reruns | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 5 | 10.3min | 0.5% | $2.91 | 0.60% |
+| repeated-test-reruns | default | opus48-1m-high-cli2.1.195 | 5 | 10.0min | 0.5% | $2.94 | 0.61% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 10.6min | 0.6% | $3.09 | 0.64% |
+| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 5 | 11.7min | 0.6% | $3.16 | 0.65% |
+| repeated-test-reruns | powershell | opus48-1m-ultracode-cli2.1.195 | 3 | 9.3min | 0.5% | $3.19 | 0.66% |
+| repeated-test-reruns | powershell | opus48-1m-xhigh-cli2.1.195 | 6 | 16.7min | 0.9% | $3.23 | 0.67% |
+| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 5 | 10.7min | 0.6% | $3.53 | 0.73% |
+| repeated-test-reruns | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 13.7min | 0.7% | $4.08 | 0.84% |
+| repeated-test-reruns | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 28.0min | 1.5% | $4.15 | 0.86% |
+| repeated-test-reruns | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 5 | 14.7min | 0.8% | $4.72 | 0.97% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 6 | 16.4min | 0.9% | $5.11 | 1.05% |
+| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 8 | 22.3min | 1.2% | $5.14 | 1.06% |
+| repeated-test-reruns | default | opus48-1m-xhigh-cli2.1.195 | 8 | 18.3min | 1.0% | $5.59 | 1.15% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 21.2min | 1.1% | $6.01 | 1.24% |
 
 </details>
 
@@ -770,57 +770,57 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | default | opus48-1m-medium-cli2.1.193 | 1 | 0.8min | 0.0% | $0.22 | 0.05% |
 | fixture-rework | powershell | opus48-1m-medium-cli2.1.193 | 1 | 0.5min | 0.0% | $0.12 | 0.02% |
 | fixture-rework | powershell-tool | opus48-1m-high-cli2.1.195 | 1 | 0.5min | 0.0% | $0.12 | 0.03% |
-| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.06% |
+| fixture-rework | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.05% |
 | fixture-rework | typescript-bun | opus48-1m-high-cli2.1.195 | 1 | 1.2min | 0.1% | $0.37 | 0.08% |
 | fixture-rework | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 0.5min | 0.0% | $0.10 | 0.02% |
-| fixture-rework | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 1 | 0.5min | 0.0% | $0.19 | 0.04% |
 | docker-pwsh-install | powershell | opus48-1m-xhigh-cli2.1.195 | 1 | 1.5min | 0.1% | $0.44 | 0.09% |
 | docker-pwsh-install | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 1 | 1.5min | 0.1% | $0.39 | 0.08% |
 | bats-setup-issues | bash | opus48-1m-high-cli2.1.195 | 1 | 1.2min | 0.1% | $0.33 | 0.07% |
-| mid-run-module-restructure | powershell | opus48-1m-ultracode-cli2.1.195 | 1 | 2.0min | 0.1% | $0.84 | 0.18% |
-| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.06% |
+| mid-run-module-restructure | powershell | opus48-1m-ultracode-cli2.1.195 | 1 | 2.0min | 0.1% | $0.84 | 0.17% |
+| actionlint-fix-cycles | powershell-tool | opus48-1m-medium-cli2.1.193 | 1 | 1.0min | 0.1% | $0.27 | 0.05% |
 | actionlint-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 1 | 0.7min | 0.0% | $0.13 | 0.03% |
 | act-fixture-paths | bash | opus48-1m-xhigh-cli2.1.195 | 1 | 1.0min | 0.1% | $0.25 | 0.05% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 4.7min | 0.3% | $1.21 | 0.25% |
-| repeated-test-reruns | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 4.3min | 0.2% | $1.26 | 0.27% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.195 | 2 | 4.7min | 0.2% | $1.21 | 0.25% |
+| repeated-test-reruns | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 4.3min | 0.2% | $1.26 | 0.26% |
 | repeated-test-reruns | default | opus48-1m-medium-cli2.1.195 | 2 | 3.3min | 0.2% | $0.82 | 0.17% |
 | repeated-test-reruns | powershell | opus48-1m-medium-cli2.1.193 | 2 | 2.7min | 0.1% | $0.66 | 0.14% |
 | repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.193 | 2 | 3.3min | 0.2% | $0.78 | 0.16% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 2 | 7.8min | 0.4% | $1.74 | 0.37% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 2 | 6.4min | 0.3% | $1.76 | 0.37% |
-| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.1% | $0.41 | 0.09% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.195 | 2 | 7.8min | 0.4% | $1.74 | 0.36% |
+| fixture-rework | bash | opus48-1m-medium-cli2.1.193 | 2 | 1.5min | 0.1% | $0.41 | 0.08% |
 | fixture-rework | bash | opus48-1m-ultracode-cli2.1.195 | 2 | 1.0min | 0.1% | $0.30 | 0.06% |
 | fixture-rework | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 2 | 1.5min | 0.1% | $0.14 | 0.03% |
+| fixture-rework | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 2 | 1.8min | 0.1% | $0.59 | 0.12% |
 | docker-pwsh-install | powershell | opus48-1m-ultracode-cli2.1.195 | 2 | 3.0min | 0.2% | $0.83 | 0.17% |
-| bats-setup-issues | bash | opus48-1m-xhigh-cli2.1.195 | 2 | 1.8min | 0.1% | $0.51 | 0.11% |
-| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.2% | $1.08 | 0.23% |
-| repeated-test-reruns | powershell | opus48-1m-ultracode-cli2.1.195 | 3 | 9.3min | 0.5% | $3.19 | 0.67% |
+| bats-setup-issues | bash | opus48-1m-xhigh-cli2.1.195 | 2 | 1.8min | 0.1% | $0.51 | 0.10% |
+| repeated-test-reruns | bash | opus48-1m-medium-cli2.1.193 | 3 | 4.0min | 0.2% | $1.08 | 0.22% |
+| repeated-test-reruns | powershell | opus48-1m-ultracode-cli2.1.195 | 3 | 9.3min | 0.5% | $3.19 | 0.66% |
 | repeated-test-reruns | powershell-tool | opus48-1m-medium-cli2.1.195 | 3 | 3.3min | 0.2% | $0.85 | 0.18% |
-| repeated-test-reruns | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 12.0min | 0.6% | $3.87 | 0.82% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 0.4% | $2.17 | 0.46% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-medium-cli2.1.193 | 3 | 8.0min | 0.4% | $2.17 | 0.45% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 10.6min | 0.6% | $3.09 | 0.64% |
 | fixture-rework | default | opus48-1m-xhigh-cli2.1.195 | 3 | 1.5min | 0.1% | $0.42 | 0.09% |
 | repeated-test-reruns | default | opus48-1m-medium-cli2.1.193 | 4 | 5.7min | 0.3% | $1.34 | 0.28% |
-| repeated-test-reruns | default | opus48-1m-ultracode-cli2.1.195 | 4 | 8.7min | 0.5% | $2.34 | 0.49% |
-| repeated-test-reruns | powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 9.3min | 0.5% | $2.44 | 0.51% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 0.5% | $2.26 | 0.48% |
-| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 4 | 7.3min | 0.4% | $1.71 | 0.36% |
+| repeated-test-reruns | default | opus48-1m-ultracode-cli2.1.195 | 4 | 8.7min | 0.5% | $2.34 | 0.48% |
+| repeated-test-reruns | powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 9.3min | 0.5% | $2.44 | 0.50% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 8.7min | 0.5% | $2.26 | 0.47% |
+| repeated-test-reruns | typescript-bun | opus48-1m-medium-cli2.1.195 | 4 | 7.3min | 0.4% | $1.71 | 0.35% |
 | fixture-rework | powershell | opus48-1m-high-cli2.1.195 | 4 | 2.5min | 0.1% | $0.62 | 0.13% |
 | fixture-rework | powershell | opus48-1m-xhigh-cli2.1.195 | 4 | 3.8min | 0.2% | $0.53 | 0.11% |
-| fixture-rework | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 4 | 2.0min | 0.1% | $0.55 | 0.12% |
-| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 5 | 11.7min | 0.6% | $3.16 | 0.67% |
-| repeated-test-reruns | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 13.7min | 0.7% | $4.08 | 0.86% |
-| repeated-test-reruns | default | opus48-1m-high-cli2.1.195 | 5 | 10.0min | 0.5% | $2.94 | 0.62% |
-| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 5 | 10.7min | 0.6% | $3.53 | 0.74% |
-| repeated-test-reruns | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 5 | 10.3min | 0.6% | $2.91 | 0.61% |
-| fixture-rework | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 6.8min | 0.4% | $1.83 | 0.39% |
-| repeated-test-reruns | powershell | opus48-1m-xhigh-cli2.1.195 | 6 | 16.7min | 0.9% | $3.23 | 0.68% |
-| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 6 | 9.0min | 0.5% | $2.12 | 0.45% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 6 | 16.4min | 0.9% | $5.11 | 1.08% |
+| fixture-rework | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 4 | 2.0min | 0.1% | $0.55 | 0.11% |
+| repeated-test-reruns | bash | opus48-1m-high-cli2.1.195 | 5 | 11.7min | 0.6% | $3.16 | 0.65% |
+| repeated-test-reruns | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 13.7min | 0.7% | $4.08 | 0.84% |
+| repeated-test-reruns | default | opus48-1m-high-cli2.1.195 | 5 | 10.0min | 0.5% | $2.94 | 0.61% |
+| repeated-test-reruns | typescript-bun | opus48-1m-high-cli2.1.195 | 5 | 10.7min | 0.6% | $3.53 | 0.73% |
+| repeated-test-reruns | typescript-bun | opus48-1m-ultracode-cli2.1.195 | 5 | 14.7min | 0.8% | $4.72 | 0.97% |
+| repeated-test-reruns | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 5 | 10.3min | 0.5% | $2.91 | 0.60% |
+| fixture-rework | bash | opus48-1m-xhigh-cli2.1.195 | 5 | 6.8min | 0.4% | $1.83 | 0.38% |
+| repeated-test-reruns | powershell | opus48-1m-xhigh-cli2.1.195 | 6 | 16.7min | 0.9% | $3.23 | 0.67% |
+| repeated-test-reruns | powershell-tool | opus48-1m-high-cli2.1.195 | 6 | 9.0min | 0.5% | $2.12 | 0.44% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-high-cli2.1.195 | 6 | 16.4min | 0.9% | $5.11 | 1.05% |
 | fixture-rework | bash | opus48-1m-high-cli2.1.195 | 6 | 5.0min | 0.3% | $1.35 | 0.28% |
-| repeated-test-reruns | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 28.0min | 1.5% | $4.15 | 0.87% |
-| ts-type-error-fix-cycles | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 21.2min | 1.1% | $6.01 | 1.27% |
-| repeated-test-reruns | default | opus48-1m-xhigh-cli2.1.195 | 8 | 18.3min | 1.0% | $5.59 | 1.18% |
-| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 8 | 22.3min | 1.2% | $5.14 | 1.08% |
+| repeated-test-reruns | powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 28.0min | 1.5% | $4.15 | 0.86% |
+| ts-type-error-fix-cycles | typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 21.2min | 1.1% | $6.01 | 1.24% |
+| repeated-test-reruns | default | opus48-1m-xhigh-cli2.1.195 | 8 | 18.3min | 1.0% | $5.59 | 1.15% |
+| repeated-test-reruns | powershell | opus48-1m-high-cli2.1.195 | 8 | 22.3min | 1.2% | $5.14 | 1.06% |
 
 </details>
 
@@ -848,31 +848,31 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| bash | opus48-1m-high-cli2.1.195 | 7 | 12 | 17.9min | 1.0% | $4.84 | 1.02% |
+| bash | opus48-1m-high-cli2.1.195 | 7 | 12 | 17.9min | 1.0% | $4.84 | 1.00% |
 | bash | opus48-1m-medium-cli2.1.193 | 5 | 5 | 5.5min | 0.3% | $1.49 | 0.31% |
 | bash | opus48-1m-medium-cli2.1.195 | 2 | 3 | 7.7min | 0.4% | $1.92 | 0.40% |
-| bash | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 5.3min | 0.3% | $1.56 | 0.33% |
-| bash | opus48-1m-xhigh-cli2.1.195 | 7 | 13 | 23.2min | 1.3% | $6.67 | 1.41% |
-| default | opus48-1m-high-cli2.1.195 | 7 | 5 | 10.0min | 0.5% | $2.94 | 0.62% |
-| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 0.3% | $1.57 | 0.33% |
+| bash | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 5.3min | 0.3% | $1.56 | 0.32% |
+| bash | opus48-1m-xhigh-cli2.1.195 | 7 | 13 | 23.2min | 1.2% | $6.67 | 1.38% |
+| default | opus48-1m-high-cli2.1.195 | 7 | 5 | 10.0min | 0.5% | $2.94 | 0.61% |
+| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 0.3% | $1.57 | 0.32% |
 | default | opus48-1m-medium-cli2.1.195 | 2 | 2 | 3.3min | 0.2% | $0.82 | 0.17% |
-| default | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 8.7min | 0.5% | $2.34 | 0.49% |
-| default | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 19.8min | 1.1% | $6.01 | 1.27% |
-| powershell | opus48-1m-high-cli2.1.195 | 7 | 12 | 24.8min | 1.3% | $5.75 | 1.21% |
+| default | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 8.7min | 0.5% | $2.34 | 0.48% |
+| default | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 19.8min | 1.1% | $6.01 | 1.24% |
+| powershell | opus48-1m-high-cli2.1.195 | 7 | 12 | 24.8min | 1.3% | $5.75 | 1.19% |
 | powershell | opus48-1m-medium-cli2.1.193 | 5 | 3 | 3.2min | 0.2% | $0.78 | 0.16% |
 | powershell | opus48-1m-medium-cli2.1.195 | 2 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
-| powershell | opus48-1m-ultracode-cli2.1.195 | 4 | 6 | 14.3min | 0.8% | $4.85 | 1.02% |
-| powershell | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 21.9min | 1.2% | $4.20 | 0.89% |
-| powershell-tool | opus48-1m-high-cli2.1.195 | 7 | 7 | 9.5min | 0.5% | $2.24 | 0.47% |
-| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 0.3% | $1.31 | 0.28% |
+| powershell | opus48-1m-ultracode-cli2.1.195 | 4 | 6 | 14.3min | 0.8% | $4.85 | 1.00% |
+| powershell | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 21.9min | 1.2% | $4.20 | 0.87% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 7 | 7 | 9.5min | 0.5% | $2.24 | 0.46% |
+| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 0.3% | $1.31 | 0.27% |
 | powershell-tool | opus48-1m-medium-cli2.1.195 | 3 | 3 | 3.3min | 0.2% | $0.85 | 0.18% |
-| powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 9.3min | 0.5% | $2.44 | 0.51% |
-| powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 10 | 31.0min | 1.7% | $4.68 | 0.99% |
-| typescript-bun | opus48-1m-high-cli2.1.195 | 7 | 12 | 28.3min | 1.5% | $9.01 | 1.90% |
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 0.9% | $4.43 | 0.93% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 8 | 16.3min | 0.9% | $3.68 | 0.77% |
-| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 6 | 18.9min | 1.0% | $5.83 | 1.23% |
-| typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 16 | 33.5min | 1.8% | $9.48 | 2.00% |
+| powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 9.3min | 0.5% | $2.44 | 0.50% |
+| powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 10 | 31.0min | 1.6% | $4.68 | 0.97% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 7 | 12 | 28.3min | 1.5% | $9.01 | 1.86% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 0.9% | $4.43 | 0.91% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 8 | 16.3min | 0.9% | $3.68 | 0.76% |
+| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 4 | 10 | 27.0min | 1.4% | $8.41 | 1.73% |
+| typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 16 | 33.5min | 1.8% | $9.48 | 1.95% |
 
 
 <details>
@@ -884,27 +884,27 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | powershell | opus48-1m-medium-cli2.1.193 | 5 | 3 | 3.2min | 0.2% | $0.78 | 0.16% |
 | default | opus48-1m-medium-cli2.1.195 | 2 | 2 | 3.3min | 0.2% | $0.82 | 0.17% |
 | powershell-tool | opus48-1m-medium-cli2.1.195 | 3 | 3 | 3.3min | 0.2% | $0.85 | 0.18% |
-| bash | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 5.3min | 0.3% | $1.56 | 0.33% |
-| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 0.3% | $1.31 | 0.28% |
+| bash | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 5.3min | 0.3% | $1.56 | 0.32% |
+| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 0.3% | $1.31 | 0.27% |
 | bash | opus48-1m-medium-cli2.1.193 | 5 | 5 | 5.5min | 0.3% | $1.49 | 0.31% |
-| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 0.3% | $1.57 | 0.33% |
+| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 0.3% | $1.57 | 0.32% |
 | bash | opus48-1m-medium-cli2.1.195 | 2 | 3 | 7.7min | 0.4% | $1.92 | 0.40% |
-| default | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 8.7min | 0.5% | $2.34 | 0.49% |
-| powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 9.3min | 0.5% | $2.44 | 0.51% |
-| powershell-tool | opus48-1m-high-cli2.1.195 | 7 | 7 | 9.5min | 0.5% | $2.24 | 0.47% |
-| default | opus48-1m-high-cli2.1.195 | 7 | 5 | 10.0min | 0.5% | $2.94 | 0.62% |
-| powershell | opus48-1m-ultracode-cli2.1.195 | 4 | 6 | 14.3min | 0.8% | $4.85 | 1.02% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 8 | 16.3min | 0.9% | $3.68 | 0.77% |
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 0.9% | $4.43 | 0.93% |
-| bash | opus48-1m-high-cli2.1.195 | 7 | 12 | 17.9min | 1.0% | $4.84 | 1.02% |
-| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 6 | 18.9min | 1.0% | $5.83 | 1.23% |
-| default | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 19.8min | 1.1% | $6.01 | 1.27% |
-| powershell | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 21.9min | 1.2% | $4.20 | 0.89% |
-| bash | opus48-1m-xhigh-cli2.1.195 | 7 | 13 | 23.2min | 1.3% | $6.67 | 1.41% |
-| powershell | opus48-1m-high-cli2.1.195 | 7 | 12 | 24.8min | 1.3% | $5.75 | 1.21% |
-| typescript-bun | opus48-1m-high-cli2.1.195 | 7 | 12 | 28.3min | 1.5% | $9.01 | 1.90% |
-| powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 10 | 31.0min | 1.7% | $4.68 | 0.99% |
-| typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 16 | 33.5min | 1.8% | $9.48 | 2.00% |
+| default | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 8.7min | 0.5% | $2.34 | 0.48% |
+| powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 9.3min | 0.5% | $2.44 | 0.50% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 7 | 7 | 9.5min | 0.5% | $2.24 | 0.46% |
+| default | opus48-1m-high-cli2.1.195 | 7 | 5 | 10.0min | 0.5% | $2.94 | 0.61% |
+| powershell | opus48-1m-ultracode-cli2.1.195 | 4 | 6 | 14.3min | 0.8% | $4.85 | 1.00% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 8 | 16.3min | 0.9% | $3.68 | 0.76% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 0.9% | $4.43 | 0.91% |
+| bash | opus48-1m-high-cli2.1.195 | 7 | 12 | 17.9min | 1.0% | $4.84 | 1.00% |
+| default | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 19.8min | 1.1% | $6.01 | 1.24% |
+| powershell | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 21.9min | 1.2% | $4.20 | 0.87% |
+| bash | opus48-1m-xhigh-cli2.1.195 | 7 | 13 | 23.2min | 1.2% | $6.67 | 1.38% |
+| powershell | opus48-1m-high-cli2.1.195 | 7 | 12 | 24.8min | 1.3% | $5.75 | 1.19% |
+| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 4 | 10 | 27.0min | 1.4% | $8.41 | 1.73% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 7 | 12 | 28.3min | 1.5% | $9.01 | 1.86% |
+| powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 10 | 31.0min | 1.6% | $4.68 | 0.97% |
+| typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 16 | 33.5min | 1.8% | $9.48 | 1.95% |
 
 </details>
 
@@ -917,27 +917,27 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | powershell | opus48-1m-medium-cli2.1.193 | 5 | 3 | 3.2min | 0.2% | $0.78 | 0.16% |
 | default | opus48-1m-medium-cli2.1.195 | 2 | 2 | 3.3min | 0.2% | $0.82 | 0.17% |
 | powershell-tool | opus48-1m-medium-cli2.1.195 | 3 | 3 | 3.3min | 0.2% | $0.85 | 0.18% |
-| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 0.3% | $1.31 | 0.28% |
+| powershell-tool | opus48-1m-medium-cli2.1.193 | 4 | 4 | 5.3min | 0.3% | $1.31 | 0.27% |
 | bash | opus48-1m-medium-cli2.1.193 | 5 | 5 | 5.5min | 0.3% | $1.49 | 0.31% |
-| bash | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 5.3min | 0.3% | $1.56 | 0.33% |
-| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 0.3% | $1.57 | 0.33% |
+| bash | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 5.3min | 0.3% | $1.56 | 0.32% |
+| default | opus48-1m-medium-cli2.1.193 | 5 | 5 | 6.4min | 0.3% | $1.57 | 0.32% |
 | bash | opus48-1m-medium-cli2.1.195 | 2 | 3 | 7.7min | 0.4% | $1.92 | 0.40% |
-| powershell-tool | opus48-1m-high-cli2.1.195 | 7 | 7 | 9.5min | 0.5% | $2.24 | 0.47% |
-| default | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 8.7min | 0.5% | $2.34 | 0.49% |
-| powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 9.3min | 0.5% | $2.44 | 0.51% |
-| default | opus48-1m-high-cli2.1.195 | 7 | 5 | 10.0min | 0.5% | $2.94 | 0.62% |
-| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 8 | 16.3min | 0.9% | $3.68 | 0.77% |
-| powershell | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 21.9min | 1.2% | $4.20 | 0.89% |
-| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 0.9% | $4.43 | 0.93% |
-| powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 10 | 31.0min | 1.7% | $4.68 | 0.99% |
-| bash | opus48-1m-high-cli2.1.195 | 7 | 12 | 17.9min | 1.0% | $4.84 | 1.02% |
-| powershell | opus48-1m-ultracode-cli2.1.195 | 4 | 6 | 14.3min | 0.8% | $4.85 | 1.02% |
-| powershell | opus48-1m-high-cli2.1.195 | 7 | 12 | 24.8min | 1.3% | $5.75 | 1.21% |
-| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 3 | 6 | 18.9min | 1.0% | $5.83 | 1.23% |
-| default | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 19.8min | 1.1% | $6.01 | 1.27% |
-| bash | opus48-1m-xhigh-cli2.1.195 | 7 | 13 | 23.2min | 1.3% | $6.67 | 1.41% |
-| typescript-bun | opus48-1m-high-cli2.1.195 | 7 | 12 | 28.3min | 1.5% | $9.01 | 1.90% |
-| typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 16 | 33.5min | 1.8% | $9.48 | 2.00% |
+| powershell-tool | opus48-1m-high-cli2.1.195 | 7 | 7 | 9.5min | 0.5% | $2.24 | 0.46% |
+| default | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 8.7min | 0.5% | $2.34 | 0.48% |
+| powershell-tool | opus48-1m-ultracode-cli2.1.195 | 4 | 4 | 9.3min | 0.5% | $2.44 | 0.50% |
+| default | opus48-1m-high-cli2.1.195 | 7 | 5 | 10.0min | 0.5% | $2.94 | 0.61% |
+| typescript-bun | opus48-1m-medium-cli2.1.195 | 3 | 8 | 16.3min | 0.9% | $3.68 | 0.76% |
+| powershell | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 21.9min | 1.2% | $4.20 | 0.87% |
+| typescript-bun | opus48-1m-medium-cli2.1.193 | 4 | 7 | 16.7min | 0.9% | $4.43 | 0.91% |
+| powershell-tool | opus48-1m-xhigh-cli2.1.195 | 7 | 10 | 31.0min | 1.6% | $4.68 | 0.97% |
+| bash | opus48-1m-high-cli2.1.195 | 7 | 12 | 17.9min | 1.0% | $4.84 | 1.00% |
+| powershell | opus48-1m-ultracode-cli2.1.195 | 4 | 6 | 14.3min | 0.8% | $4.85 | 1.00% |
+| powershell | opus48-1m-high-cli2.1.195 | 7 | 12 | 24.8min | 1.3% | $5.75 | 1.19% |
+| default | opus48-1m-xhigh-cli2.1.195 | 7 | 11 | 19.8min | 1.1% | $6.01 | 1.24% |
+| bash | opus48-1m-xhigh-cli2.1.195 | 7 | 13 | 23.2min | 1.2% | $6.67 | 1.38% |
+| typescript-bun | opus48-1m-ultracode-cli2.1.195 | 4 | 10 | 27.0min | 1.4% | $8.41 | 1.73% |
+| typescript-bun | opus48-1m-high-cli2.1.195 | 7 | 12 | 28.3min | 1.5% | $9.01 | 1.86% |
+| typescript-bun | opus48-1m-xhigh-cli2.1.195 | 7 | 16 | 33.5min | 1.8% | $9.48 | 1.95% |
 
 </details>
 
@@ -946,7 +946,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | Status | Runs | $ Saved | % of $ |
 |--------|------|---------|--------|
 | Full hit (100%) | 1 | $0.12 | 0.03% |
-| Partial | 116 | $11.66 | 2.46% |
+| Partial | 117 | $11.76 | 2.43% |
 | Miss | 7 | $0.00 | 0.00% |
 
 ## Test Quality Evaluation
@@ -975,7 +975,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | powershell-tool | opus48-1m-xhigh | 50.4 | 103.9 | 2.1 | 3.07 |
 | typescript-bun | opus48-1m-high | 40.3 | 87.3 | 2.2 | 1.02 |
 | typescript-bun | opus48-1m-medium | 30.9 | 65.1 | 2.1 | 1.02 |
-| typescript-bun | opus48-1m-ultracode | 51.3 | 94.3 | 1.8 | 1.23 |
+| typescript-bun | opus48-1m-ultracode | 50.8 | 99.8 | 2.0 | 1.18 |
 | typescript-bun | opus48-1m-xhigh | 51.4 | 104.0 | 2.0 | 1.19 |
 
 
@@ -986,7 +986,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|-------|-----------|----------------|-----------------|---------------------|
 | powershell | opus48-1m-ultracode | 60.8 | 91.5 | 1.5 | 3.43 |
 | typescript-bun | opus48-1m-xhigh | 51.4 | 104.0 | 2.0 | 1.19 |
-| typescript-bun | opus48-1m-ultracode | 51.3 | 94.3 | 1.8 | 1.23 |
+| typescript-bun | opus48-1m-ultracode | 50.8 | 99.8 | 2.0 | 1.18 |
 | powershell-tool | opus48-1m-xhigh | 50.4 | 103.9 | 2.1 | 3.07 |
 | powershell | opus48-1m-xhigh | 47.4 | 82.0 | 1.7 | 3.83 |
 | powershell-tool | opus48-1m-ultracode | 45.8 | 82.2 | 1.8 | 4.66 |
@@ -1014,7 +1014,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|-------|-----------|----------------|-----------------|---------------------|
 | typescript-bun | opus48-1m-xhigh | 51.4 | 104.0 | 2.0 | 1.19 |
 | powershell-tool | opus48-1m-xhigh | 50.4 | 103.9 | 2.1 | 3.07 |
-| typescript-bun | opus48-1m-ultracode | 51.3 | 94.3 | 1.8 | 1.23 |
+| typescript-bun | opus48-1m-ultracode | 50.8 | 99.8 | 2.0 | 1.18 |
 | powershell | opus48-1m-ultracode | 60.8 | 91.5 | 1.5 | 3.43 |
 | typescript-bun | opus48-1m-high | 40.3 | 87.3 | 2.2 | 1.02 |
 | powershell | opus48-1m-high | 44.7 | 82.4 | 1.8 | 5.25 |
@@ -1050,10 +1050,10 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | powershell | opus48-1m-medium | 33.7 | 63.0 | 1.9 | 2.54 |
 | default | opus48-1m-high | 28.3 | 55.9 | 2.0 | 1.45 |
 | bash | opus48-1m-high | 32.1 | 67.3 | 2.1 | 1.32 |
-| typescript-bun | opus48-1m-ultracode | 51.3 | 94.3 | 1.8 | 1.23 |
 | default | opus48-1m-ultracode | 38.5 | 78.2 | 2.0 | 1.21 |
 | typescript-bun | opus48-1m-xhigh | 51.4 | 104.0 | 2.0 | 1.19 |
 | bash | opus48-1m-medium | 22.4 | 39.0 | 1.7 | 1.19 |
+| typescript-bun | opus48-1m-ultracode | 50.8 | 99.8 | 2.0 | 1.18 |
 | typescript-bun | opus48-1m-high | 40.3 | 87.3 | 2.2 | 1.02 |
 | typescript-bun | opus48-1m-medium | 30.9 | 65.1 | 2.1 | 1.02 |
 | default | opus48-1m-medium | 27.0 | 49.1 | 1.8 | 1.01 |
@@ -1193,6 +1193,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Test Results Aggregator | powershell | opus48-1m-ultracode | 62 | 82 | 1.3 | 411 | 588 | 0.70 |
 | Test Results Aggregator | bash | opus48-1m-ultracode | 12 | 44 | 3.7 | 182 | 395 | 0.46 |
 | Test Results Aggregator | powershell-tool | opus48-1m-ultracode | 43 | 86 | 2.0 | 526 | 82 | 6.41 |
+| Test Results Aggregator | typescript-bun | opus48-1m-ultracode | 49 | 116 | 2.4 | 967 | 934 | 1.04 |
 
 </details>
 
@@ -1325,6 +1326,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Test Results Aggregator | powershell-tool | opus48-1m-xhigh | 25.9min | 67 | 2 | $6.67 | — | powershell | ok |
 | Test Results Aggregator | typescript-bun | opus48-1m-high | 19.2min | 69 | 0 | $5.19 | — | typescript | ok |
 | Test Results Aggregator | typescript-bun | opus48-1m-medium | 9.2min | 45 | 0 | $2.57 | — | typescript | ok |
+| Test Results Aggregator | typescript-bun | opus48-1m-ultracode | 32.3min | 79 | 0 | $10.28 | — | typescript | ok |
 | Test Results Aggregator | typescript-bun | opus48-1m-xhigh | 16.4min | 46 | 0 | $4.37 | — | typescript | ok |
 
 
@@ -1455,6 +1457,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Artifact Cleanup Script | powershell | opus48-1m-xhigh | 25.0min | 92 | 1 | $7.41 | — | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus48-1m-xhigh | 26.1min | 78 | 0 | $7.45 | — | powershell | ok |
 | Dependency License Checker | bash | opus48-1m-xhigh | 23.9min | 96 | 2 | $8.01 | — | bash | ok |
+| Test Results Aggregator | typescript-bun | opus48-1m-ultracode | 32.3min | 79 | 0 | $10.28 | — | typescript | ok |
 | Semantic Version Bumper | typescript-bun | opus48-1m-ultracode | 30.6min | 104 | 0 | $11.91 | — | typescript | ok |
 | Semantic Version Bumper | powershell | opus48-1m-ultracode | 31.9min | 65 | 2 | $13.39 | — | powershell | ok |
 
@@ -1589,6 +1592,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Environment Matrix Generator | powershell-tool | opus48-1m-xhigh | 30.0min | 0 | 0 | $0.00 | — | powershell | timeout |
 | Semantic Version Bumper | typescript-bun | opus48-1m-ultracode | 30.6min | 104 | 0 | $11.91 | — | typescript | ok |
 | Semantic Version Bumper | powershell | opus48-1m-ultracode | 31.9min | 65 | 2 | $13.39 | — | powershell | ok |
+| Test Results Aggregator | typescript-bun | opus48-1m-ultracode | 32.3min | 79 | 0 | $10.28 | — | typescript | ok |
 
 </details>
 
@@ -1678,6 +1682,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Test Results Aggregator | powershell | opus48-1m-ultracode | 24.6min | 48 | 0 | $6.88 | — | powershell | ok |
 | Test Results Aggregator | bash | opus48-1m-ultracode | 17.5min | 46 | 0 | $5.53 | — | bash | ok |
 | Test Results Aggregator | powershell-tool | opus48-1m-ultracode | 20.5min | 47 | 0 | $5.53 | — | powershell | ok |
+| Test Results Aggregator | typescript-bun | opus48-1m-ultracode | 32.3min | 79 | 0 | $10.28 | — | typescript | ok |
 | Semantic Version Bumper | bash | opus48-1m-high | 9.5min | 41 | 1 | $2.70 | — | bash | ok |
 | Semantic Version Bumper | default | opus48-1m-xhigh | 15.3min | 50 | 1 | $4.59 | — | python | ok |
 | Semantic Version Bumper | powershell | opus48-1m-xhigh | 21.0min | 69 | 1 | $6.19 | — | powershell | ok |
@@ -1849,6 +1854,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Artifact Cleanup Script | default | opus48-1m-xhigh | 19.1min | 77 | 0 | $6.84 | — | python | ok |
 | Secret Rotation Validator | powershell-tool | opus48-1m-xhigh | 26.1min | 78 | 0 | $7.45 | — | powershell | ok |
 | Secret Rotation Validator | typescript-bun | opus48-1m-medium | 23.0min | 78 | 2 | $4.51 | — | typescript | ok |
+| Test Results Aggregator | typescript-bun | opus48-1m-ultracode | 32.3min | 79 | 0 | $10.28 | — | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | opus48-1m-high | 14.8min | 82 | 1 | $6.00 | — | typescript | ok |
 | Artifact Cleanup Script | powershell | opus48-1m-xhigh | 25.0min | 92 | 1 | $7.41 | — | powershell | ok |
 | Dependency License Checker | bash | opus48-1m-xhigh | 23.9min | 96 | 2 | $8.01 | — | bash | ok |
@@ -1985,6 +1991,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Test Results Aggregator | powershell | opus48-1m-ultracode | 24.6min | 48 | 0 | $6.88 | — | powershell | ok |
 | Test Results Aggregator | bash | opus48-1m-ultracode | 17.5min | 46 | 0 | $5.53 | — | bash | ok |
 | Test Results Aggregator | powershell-tool | opus48-1m-ultracode | 20.5min | 47 | 0 | $5.53 | — | powershell | ok |
+| Test Results Aggregator | typescript-bun | opus48-1m-ultracode | 32.3min | 79 | 0 | $10.28 | — | typescript | ok |
 
 </details>
 
@@ -1992,8 +1999,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 ### Tiers
 
-- **Duration bands:** **A+** ≤1.11×, **A** ≤1.22×, **A-** ≤1.35×, **B+** ≤1.49×, **B** ≤1.65×, **B-** ≤1.82×, **C+** ≤2.01×, **C** ≤2.23×, **C-** ≤2.46×, **D+** ≤2.72×, **D** ≤3.01×, **D-** ≤3.32×, **F** >3.32×
-- **Cost bands:** **A+** ≤1.13×, **A** ≤1.27×, **A-** ≤1.43×, **B+** ≤1.61×, **B** ≤1.82×, **B-** ≤2.05×, **C+** ≤2.30×, **C** ≤2.60×, **C-** ≤2.92×, **D+** ≤3.30×, **D** ≤3.71×, **D-** ≤4.18×, **F** >4.18×
+- **Duration bands:** **A+** ≤1.11×, **A** ≤1.23×, **A-** ≤1.36×, **B+** ≤1.51×, **B** ≤1.68×, **B-** ≤1.86×, **C+** ≤2.06×, **C** ≤2.29×, **C-** ≤2.53×, **D+** ≤2.81×, **D** ≤3.12×, **D-** ≤3.46×, **F** >3.46×
+- **Cost bands:** **A+** ≤1.13×, **A** ≤1.29×, **A-** ≤1.46×, **B+** ≤1.66×, **B** ≤1.88×, **B-** ≤2.14×, **C+** ≤2.42×, **C** ≤2.75×, **C-** ≤3.12×, **D+** ≤3.54×, **D** ≤4.02×, **D-** ≤4.56×, **F** >4.56×
 
 *Tests/Workflow Craft bands are absolute Overall score bands:* **A+** ≥4.7, **A** ≥4.4, **A-** ≥4.1, **B+** ≥3.8, **B** ≥3.5, **B-** ≥3.2, **C+** ≥2.9, **C** ≥2.6, **C-** ≥2.3, **D+** ≥2.0, **D** ≥1.7, **D-** ≥1.4, **F** <1.4, `—` = no data.*
 
