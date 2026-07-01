@@ -1,0 +1,629 @@
+[Tool: Bash] pwd && ls -la && git status
+[Result] /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5
+total 44
+drwxr-xr-x 4 passp passp  4096 Jul  1 03:19 .
+drwxr-xr-x 6 passp passp  4096 Jul  1 03:19 ..
+-rw-r--r-- 1 passp passp    40 Jul  1 03:19 .actrc
+drwxr-xr-x 2 passp passp  4096 Jul  1 03:19 .claude
+drwxr-xr-x 6 passp passp  4096 Jul  1 03:19 .git
+-rw-r--r-- 1 passp passp 21843 Jun 30 19:11 benchmark-instructions-v4.md
+On branch master
+
+No commits yet
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.actrc
+	.claude/
+	benchmark-instructions-v4.md
+
+nothing added to commit but untracked files present (use "git add" to track)
+[Tool: Bash] cat .actrc; echo "---"; which pwsh; pwsh -Version; echo "---"; which act; act --version; echo "---"; which actionlint; actionlint --version; echo "---"; docker ps 2>&1 | head -5
+[Result] -P ubuntu-latest=act-ubuntu-pwsh:latest
+---
+/snap/bin/pwsh
+PowerShell 7.6.3
+---
+/home/passp/.local/bin/act
+act version 0.2.87
+---
+/home/passp/.local/bin/actionlint
+1.7.12
+installed by downloading from release page
+built with go1.26.1 compiler for linux/amd64
+---
+CONTAINER ID   IMAGE                                  COMMAND                  CREATED      STATUS      PORTS     NAMES
+4dd47777aa43   hashicorp/terraform-mcp-server:0.4.0   "/bin/terraform-mcp-…"   2 days ago   Up 2 days             flamboyant_keldysh
+[Tool: Bash] docker images | grep -i act-ubuntu-pwsh; docker images | grep -i pwsh
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+ghcr.io/catthehacker/ubuntu:pwsh-latest         6841ce5337da       2.87GB          670MB
+[Assistant] Let me check the benchmark instructions file for any additional project-specific context.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/benchmark-instructions-v4.md"}
+[Result] 1	# Benchmark Instructions v4 — GitHub Actions
+2	
+3	**Version**: v4
+4	**Date**: 2026-04-09
+5	**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+6	
+7	**Changes from v3**:
+8	- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+9	- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+10	- GHA workflow addendum expanded with `shell: pwsh` guidance for PowerShell mode
+11	- All other methodology, tasks, modes, and models are unchanged from v3
+12	
+13	## Methodology
+14	
+15	### Overview
+16	
+17	Each task is executed by a Claude Code agent under 4 different language constraints ("modes") and with 2 different models, yielding **8 runs per task**. A
+[Tool: Bash] pwsh -NoProfile -Command "Get-Module -ListAvailable -Name Pester,powershell-yaml | Select-Object Name,Version" 2>&1
+[Result] [32;1mName           [0m[32;1m Version[0m
+[32;1m----           [0m [32;1m-------[0m
+Pester          5.7.1
+powershell-yaml 0.4.12
+[Assistant] Good — `powershell-yaml` and Pester are available locally, which I'll use for workflow-structure tests (not for testing the generator script itself, per the "all logic testing goes through act" requirement). Let me set up the project structure.
+[Tool: Bash] mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/.github/workflows
+ls -la /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5
+[Result] total 52
+drwxr-xr-x 6 passp passp  4096 Jul  1 03:27 .
+drwxr-xr-x 6 passp passp  4096 Jul  1 03:19 ..
+-rw-r--r-- 1 passp passp    40 Jul  1 03:19 .actrc
+drwxr-xr-x 2 passp passp  4096 Jul  1 03:19 .claude
+drwxr-xr-x 6 passp passp  4096 Jul  1 03:19 .git
+drwxr-xr-x 3 passp passp  4096 Jul  1 03:27 .github
+-rw-r--r-- 1 passp passp 21843 Jun 30 19:11 benchmark-instructions-v4.md
+drwxr-xr-x 2 passp passp  4096 Jul  1 03:27 fixtures
+[Assistant] Now let me create the test fixtures first — designing the exact test data before writing any code.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/basic-config.json", "content": "{\n  \"matrix\": {\n   
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/basic-config.json (file state is current in your context — no need to Read it back)
+[Tool: ToolSearch] {"query": "select:TaskCreate,TaskUpdate", "max_results": 5}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskCreate'}
+[Result] {'type': 'tool_reference', 'tool_name': 'TaskUpdate'}
+[Tool: TaskCreate] {"subject": "Create remaining fixtures", "description": "Create fixtures/excludes-config.json, includes-config.json, exceeds-max-config.json, invalid-config.json, defaults-config.json"}
+[Result] Task #1 created successfully: Create remaining fixtures
+[Tool: TaskCreate] {"subject": "Write MatrixFunctions.ps1", "description": "Core cartesian/exclude/include/validate functions, no side effects on dot-source"}
+[Result] Task #2 created successfully: Write MatrixFunctions.ps1
+[Tool: TaskCreate] {"subject": "Write EnvironmentMatrixGenerator.ps1 CLI", "description": "CLI wrapper: reads config JSON, calls New-BuildMatrix, outputs JSON, writes GITHUB_OUTPUT"}
+[Result] Task #3 created successfully: Write EnvironmentMatrixGenerator.ps1 CLI
+[Tool: TaskCreate] {"subject": "Write EnvironmentMatrixGenerator.Tests.ps1", "description": "Pester unit tests covering cartesian, exclude, include, validation, CLI end-to-end; runs only inside act container"}
+[Result] Task #4 created successfully: Write EnvironmentMatrixGenerator.Tests.ps1
+[Tool: TaskCreate] {"subject": "Write GitHub Actions workflow", "description": ".github/workflows/environment-matrix-generator.yml with test/generate/use-matrix jobs"}
+[Result] Task #5 created successfully: Write GitHub Actions workflow
+[Tool: TaskCreate] {"subject": "Validate workflow with actionlint", "description": "Run actionlint and fix errors until clean"}
+[Result] Task #6 created successfully: Validate workflow with actionlint
+[Tool: TaskCreate] {"subject": "Write WorkflowStructure.Tests.ps1", "description": "Parse YAML via powershell-yaml, verify triggers/jobs/steps, verify referenced script paths exist, verify actionlint passes"}
+[Result] Task #7 created successfully: Write WorkflowStructure.Tests.ps1
+[Tool: TaskCreate] {"subject": "Write ActPipeline.Tests.ps1 harness", "description": "Set up temp git repo, run act push --rm (max 3 times total), save output to act-result.txt, parse output and assert exact values + Jo
+[Result] Task #8 created successfully: Write ActPipeline.Tests.ps1 harness
+[Tool: TaskCreate] {"subject": "Run act and verify act-result.txt", "description": "Execute the harness, confirm exit 0, confirm act-result.txt exists with expected content"}
+[Result] Task #9 created successfully: Run act and verify act-result.txt
+[Tool: TaskUpdate] {"taskId": "1", "status": "in_progress"}
+[Result] Updated task #1 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/excludes-config.json", "content": "{\n  \"matrix\": {\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/excludes-config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/includes-config.json", "content": "{\n  \"matrix\": {\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/includes-config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/exceeds-max-config.json", "content": "{\n  \"matrix\": 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/exceeds-max-config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/invalid-config.json", "content": "{\n  \"matrix\": {}\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/invalid-config.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/defaults-config.json", "content": "{\n  \"matrix\": {\n
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/fixtures/defaults-config.json (file state is current in your context — no need to Read it back)
+[Tool: TaskUpdate] {"taskId": "1", "status": "completed"}
+[Result] Updated task #1 status
+[Tool: TaskUpdate] {"taskId": "4", "status": "in_progress"}
+[Result] Updated task #4 status
+[Assistant] Now, following TDD, I'll write the test file first — before any implementation exists (the red step).
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/EnvironmentMatrixGenerator.Tests.ps1", "content": "<#\n    Unit 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/EnvironmentMatrixGenerator.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Let me verify this parses correctly (syntax-only check, not execution) before moving on.
+[Tool: Bash] pwsh -NoProfile -Command '
+$errors = $null
+$tokens = $null
+$null = [System.Management.Automation.Language.Parser]::ParseFile("EnvironmentMatrixGenerator.Tests.ps1", [ref]$tokens, [ref]$errors)
+if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Host $_.Message } ; exit 1 } else { Write-Host "No syntax errors" }
+'
+[Result] No syntax errors
+[Assistant] Now let me write the core functions module — this is the "green" step making the tests pass.
+[Tool: TaskUpdate] {"taskId": "2", "status": "in_progress"}
+[Result] Updated task #2 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1", "content": "<#\n    Core logic for the Git
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command '
+$errors = $null
+$tokens = $null
+$null = [System.Management.Automation.Language.Parser]::ParseFile("MatrixFunctions.ps1", [ref]$tokens, [ref]$errors)
+if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Host $_.Message } ; exit 1 } else { Write-Host "No syntax errors" }
+'
+[Result] No syntax errors
+[Tool: Bash] pwsh -NoProfile -Command '
+if (Get-Module -ListAvailable -Name PSScriptAnalyzer) {
+  Invoke-ScriptAnalyzer -Path MatrixFunctions.ps1 -Severity Warning,Error
+} else {
+  Write-Host "PSScriptAnalyzer not installed"
+}
+'
+[Result] [32;1mRuleName                           [0m[32;1m Severity    [0m[32;1m ScriptName[0m[32;1m Line [0m[32;1m Message[0m
+[32;1m--------                           [0m [32;1m--------    [0m [32;1m----------[0m [32;1m---- [0m [32;1m-------[0m
+PSUseShouldProcessForStateChangingF Warning      MatrixFunc 79    Function 'Rem
+unctions                                         tions.ps1        ove-ExcludedC
+                                                                  ombinations'
+                                                                  has verb that
+                                                                   could change
+                                                                   system state
+                                                                  . Therefore,
+                                                                  the function
+                                                                  has to suppor
+                         
+[Assistant] Minor style warnings only (naming conventions), no correctness issues. Moving to the CLI script.
+[Tool: TaskUpdate] {"taskId": "2", "status": "completed"}
+[Tool: TaskUpdate] {"taskId": "3", "status": "in_progress"}
+[Result] Updated task #2 status
+[Result] Updated task #3 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/EnvironmentMatrixGenerator.ps1", "content": "#Requires -Version 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/EnvironmentMatrixGenerator.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command '
+$errors = $null
+$tokens = $null
+$null = [System.Management.Automation.Language.Parser]::ParseFile("EnvironmentMatrixGenerator.ps1", [ref]$tokens, [ref]$errors)
+if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Host $_.Message } ; exit 1 } else { Write-Host "No syntax errors" }
+'
+[Result] No syntax errors
+[Tool: TaskUpdate] {"taskId": "3", "status": "completed"}
+[Result] Updated task #3 status
+[Tool: TaskUpdate] {"taskId": "4", "status": "completed"}
+[Result] Updated task #4 status
+[Tool: TaskUpdate] {"taskId": "5", "status": "in_progress"}
+[Result] Updated task #5 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/.github/workflows/environment-matrix-generator.yml", "content": 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/.github/workflows/environment-matrix-generator.yml (file state is current in your context — no need to Read it back)
+[Assistant] Now let's validate with actionlint.
+[Tool: Bash] actionlint .github/workflows/environment-matrix-generator.yml; echo "EXIT: $?"
+[Result] EXIT: 0
+[Assistant] actionlint passes cleanly on the first try.
+[Tool: TaskUpdate] {"taskId": "5", "status": "completed"}
+[Result] Updated task #5 status
+[Tool: TaskUpdate] {"taskId": "6", "status": "completed"}
+[Result] Updated task #6 status
+[Tool: TaskUpdate] {"taskId": "7", "status": "in_progress"}
+[Result] Updated task #7 status
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/WorkflowStructure.Tests.ps1", "content": "<#\n    Structural tes
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/WorkflowStructure.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] This file doesn't test the generator's logic — only the workflow YAML structure — so running it directly on the host is within policy. Let's verify.
+[Tool: Bash] pwsh -NoProfile -Command "
+Import-Module Pester -MinimumVersion 5.0.0
+\$config = New-PesterConfiguration
+\$config.Run.Path = './WorkflowStructure.Tests.ps1'
+\$config.Output.Verbosity = 'Detailed'
+Invoke-Pester -Configuration \$config
+"
+
+[Result] [95mPester v5.7.1[0m
+[95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 18 tests in 586ms.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/WorkflowStructure.Tests.ps1'[0m
+[92mDescribing Workflow file existence and syntax[0m
+[32m  [+] exists at .github/workflows/environment-matrix-generator.yml[0m[90m 504ms (366ms|138ms)[0m
+[32m  [+] parses as valid YAML[0m[90m 71ms (64ms|6ms)[0m
+[0m
+[92mDescribing Workflow triggers[0m
+[32m  [+] defines an "on" section[0m[90m 190ms (111ms|79ms)[0m
+[32m  [+] triggers on push[0m[90m 45ms (33ms|12ms)[0m
+[32m  [+] triggers on pull_request[0m[90m 40ms (24ms|16ms)[0m
+[32m  [+] triggers on workflow_dispatch[0m[90m 28ms (17ms|10ms)[0m
+[32m  [+] triggers on a schedule[0m[90m 77ms (67ms|10ms)[0m
+[0m
+[92mDescribing Workflow permissions and environment[0m
+[32m  [+] declares read-o
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/WorkflowStructure.Tests.ps1", "old_string"
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/WorkflowStructure.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "
+Import-Module Pester -MinimumVersion 5.0.0
+\$config = New-PesterConfiguration
+\$config.Run.Path = './WorkflowStructure.Tests.ps1'
+\$config.Output.Verbosity = 'Detailed'
+Invoke-Pester -Configuration \$config
+"
+
+[Result] [95mPester v5.7.1[0m
+[95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 18 tests in 400ms.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/WorkflowStructure.Tests.ps1'[0m
+[92mDescribing Workflow file existence and syntax[0m
+[32m  [+] exists at .github/workflows/environment-matrix-generator.yml[0m[90m 329ms (231ms|97ms)[0m
+[32m  [+] parses as valid YAML[0m[90m 44ms (39ms|5ms)[0m
+[0m
+[92mDescribing Workflow triggers[0m
+[32m  [+] defines an "on" section[0m[90m 32ms (25ms|7ms)[0m
+[32m  [+] triggers on push[0m[90m 20ms (13ms|6ms)[0m
+[32m  [+] triggers on pull_request[0m[90m 21ms (13ms|7ms)[0m
+[32m  [+] triggers on workflow_dispatch[0m[90m 20ms (14ms|7ms)[0m
+[32m  [+] triggers on a schedule[0m[90m 40ms (36ms|5ms)[0m
+[0m
+[92mDescribing Workflow permissions and environment[0m
+[32m  [+] declares read-only cont
+[Assistant] All 18 workflow structure tests pass, and actionlint confirms clean. Now let's build the act test harness.
+[Tool: TaskUpdate] {"taskId": "7", "status": "completed"}
+[Result] Updated task #7 status
+[Tool: TaskUpdate] {"taskId": "8", "status": "in_progress"}
+[Result] Updated task #8 status
+[Tool: Bash] act --help 2>&1 | head -60
+[Result] Run GitHub actions locally by specifying the event name (e.g. `push`) or an action name directly.
+
+Usage:
+  act [event name to run] [flags]
+
+If no event name passed, will default to "on: push"
+If actions handles only one event it will be used as default instead of "on: push"
+
+Flags:
+      --action-cache-path string                          Defines the path where the actions get cached and host workspaces created. (default "/home/passp/.cache/act")
+      --action-offline-mode                               If action contents exists, it will not be fetch and pull again. If turn on this, will turn off force pull
+  -a, --actor string                                      user that triggered the event (default "nektos/act")
+      --artifact-server-addr string                       Defines the address to which the artifact server binds. (default "172.27.42.126")
+      --artifact-server-path string                       Defines the path where the artifact server stores uploads and retrieves dow
+[Tool: Bash] cat ~/.actrc 2>/dev/null; echo "---"; env | grep -i act; echo "---"; docker image inspect act-ubuntu-pwsh:latest --format '{{.RepoTags}} {{.Id}}' 2>&1
+[Result] -P ubuntu-latest=ghcr.io/catthehacker/ubuntu:pwsh-latest
+---
+---
+[act-ubuntu-pwsh:latest] sha256:b299e185b1bb9604800f03e55c272fe74ebc57661fbd0ff09f3e27fe6f317887
+[Tool: Bash] act --help 2>&1 | grep -i -A1 "color\|verbose\|log-prefix"
+[Result]       --log-prefix-job-id                                 Output the job id within non-json logs instead of the entire name
+      --man-page                                          Print a generated manual page to stdout
+--
+  -v, --verbose                                           verbose output
+      --version                                           version for act
+[Assistant] Let me review the workflow once more for a subtlety before spending an act run — the CLI script already writes to `$GITHUB_OUTPUT` itself, so the workflow step doing it again is redundant.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/.github/workflows/environment-matrix-generator.yml"}
+[Result] 1	name: Environment Matrix Generator
+2	
+3	on:
+4	  push:
+5	  pull_request:
+6	  workflow_dispatch:
+7	    inputs:
+8	      config_path:
+9	        description: 'Path to the matrix configuration JSON used by the manual "generate" step'
+10	        required: false
+11	        default: 'fixtures/basic-config.json'
+12	  schedule:
+13	    - cron: '0 6 * * 1'
+14	
+15	permissions:
+16	  contents: read
+17	
+18	env:
+19	  CONFIG_DIR: fixtures
+20	  MATRIX_MAX_SIZE: '256'
+21	
+22	jobs:
+23	  test:
+24	    name: Run Pester Tests
+25	    runs-on: ubuntu-latest
+26	    steps:
+27	      - name: Checkout
+28	        uses: actions/checkout@v4
+29	
+30	      - name: Ensure Pester 5 is available
+31	        shell: pwsh
+32	        run: |
+33	          $pester = Get-Module -ListAvailable -Name Pester | Sort-Object Version -Descending | Select-Object -First 1
+34	          if (-not $pester -or $pester.Version -lt [version]'5.0.0') {
+35	            Install-Module -Name Pester -Force -SkipPublisherCheck -MinimumVersion 5.0.0 -Scope 
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/.github/workflows/environment-matrix-gener
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/.github/workflows/environment-matrix-generator.yml has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/environment-matrix-generator.yml; echo "EXIT: $?"
+[Result] EXIT: 0
+[Tool: Bash] pwsh -NoProfile -Command "
+Import-Module Pester -MinimumVersion 5.0.0
+\$config = New-PesterConfiguration
+\$config.Run.Path = './WorkflowStructure.Tests.ps1'
+\$config.Output.Verbosity = 'Normal'
+Invoke-Pester -Configuration \$config
+" 2>&1 | tail -20
+
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 18 tests in 496ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/WorkflowStructure.Tests.ps1[0m[90m 2.33s (1.17s|753ms)[0m
+[97mTests completed in 2.37s[0m
+[32mTests Passed: 18, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Now let's write the act pipeline harness.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/ActPipeline.Tests.ps1", "content": "<#\n    Act-driven pipeline 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/ActPipeline.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command '
+$errors = $null
+$tokens = $null
+$null = [System.Management.Automation.Language.Parser]::ParseFile("ActPipeline.Tests.ps1", [ref]$tokens, [ref]$errors)
+if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Host $_.Message } ; exit 1 } else { Write-Host "No syntax errors" }
+'
+[Result] No syntax errors
+[Tool: Bash] git --version; docker --version
+[Result] git version 2.54.0
+Docker version 29.4.3, build 055a478
+[Tool: Bash] ls -la ~/.cache/act 2>&1 | head -30; echo "---"; find ~/.cache/act -maxdepth 3 -iname "*checkout*" 2>&1
+[Result] total 56
+drwxr-xr-x 13 passp passp 4096 May  6 21:13 .
+drwx------ 25 passp passp 4096 Jun 26 12:46 ..
+-rw-------  1 passp passp   36 Jul  1 03:16 .notices.etag
+drwxr-xr-x 10 passp passp 4096 Apr  9 01:13 actions-checkout@v4
+drwxr-xr-x 10 passp passp 4096 May  6 20:02 actions-download-artifact@v4
+drwxr-xr-x 11 passp passp 4096 Apr 19 00:11 actions-setup-node@v4
+drwxr-xr-x  9 passp passp 4096 May  6 21:13 actions-setup-python@61a6322f88396a6271a6ee3cb4d175c0dc4ef479
+drwxr-xr-x  9 passp passp 4096 Apr 19 02:00 actions-setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+drwxr-xr-x  9 passp passp 4096 May  6 20:47 actions-setup-python@f677139bbe7f9c59b41e7462f120eb1989c08947
+drwxr-xr-x  9 passp passp 4096 Apr 10 01:58 actions-setup-python@v5
+drwxr-xr-x  9 passp passp 4096 May  6 19:17 actions-setup-python@v5.0.0
+drwxr-xr-x 12 passp passp 4096 Apr 24 18:54 actions-upload-artifact@v4
+drwxr-xr-x  6 passp passp 4096 Apr 20 01:56 oven-sh-setup-bun@v1
+drwxr-xr-x  9 passp passp 4096 Apr 25 01:57
+[Assistant] actions/checkout@v4 is already cached locally, so no network dependency there. Everything looks solid — let's run the act pipeline now.
+[Tool: TaskUpdate] {"taskId": "8", "status": "completed"}
+[Result] Updated task #8 status
+[Tool: TaskUpdate] {"taskId": "9", "status": "in_progress"}
+[Result] Updated task #9 status
+[Tool: Bash] pwsh -NoProfile -Command "
+Import-Module Pester -MinimumVersion 5.0.0
+\$config = New-PesterConfiguration
+\$config.Run.Path = './ActPipeline.Tests.ps1'
+\$config.Output.Verbosity = 'Detailed'
+Invoke-Pester -Configuration \$config
+"
+
+[Result] [95mPester v5.7.1[0m
+[95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 11 tests in 511ms.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/ActPipeline.Tests.ps1'[0m
+[92mDescribing act pipeline execution[0m
+[32m  [+] produces the act-result.txt artifact[0m[90m 1.06s (721ms|339ms)[0m
+[91m  [-] exits with code 0[0m[90m 169ms (160ms|9ms)[0m
+[91m   Expected 0, because time="2026-07-01T03:36:46-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[91m   [Environment Matrix Generator/Run Pester Tests] ⭐ Run Set up job
+[91m   [Environment Matrix Generator/Run Pester Tests] 🚀  Start image=act-ubuntu-pwsh:latest
+[91m   [Environment Matrix Generator/Run Pester Tests]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=false
+[91m   [Environment
+[Assistant] Found the root cause — a real PowerShell gotcha: `.PSObject.Properties.Name` on an object with zero properties returns `$null` (not an empty array), and wrapping that in `@()` produces a one-element array `[$null]`, which defeats the `Count -eq 0` check. This surfaced exactly because the pipeline ran the Pester suite for real. Let me fix it.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1"}
+[Result] 1	<#
+2	    Core logic for the GitHub Actions environment matrix generator.
+3	
+4	    This file only defines functions -- dot-sourcing it has no side effects,
+5	    which keeps it safe to load from both the CLI script and the Pester
+6	    test suite. All GitHub Actions -related semantics implemented here
+7	    (cartesian expansion, include/exclude merging, fail-fast/max-parallel
+8	    passthrough) intentionally mirror the real strategy.matrix behavior
+9	    documented for GitHub Actions.
+10	#>
+11	
+12	# Normalizes a value (string, number, boolean, $null) to a string so that
+13	# exclude/include rule matching works the same regardless of whether a JSON
+14	# author wrote a bare number or a quoted string for something like a version.
+15	function ConvertTo-ComparableString {
+16	    param(
+17	        [Parameter()]
+18	        $Value
+19	    )
+20	    if ($null -eq $Value) { return '' }
+21	    return [string]$Value
+22	}
+23	
+24	# Builds the cartesian product of a set of named matrix dimensions.
+25	
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1", "old_string": "funct
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1", "old_string": "    f
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1", "old_string": "    $
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1", "old_string": "     
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now the critical fix in `New-BuildMatrix`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1", "old_string": "    $
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/MatrixFunctions.ps1"}
+[Result] 1	<#
+2	    Core logic for the GitHub Actions environment matrix generator.
+3	
+4	    This file only defines functions -- dot-sourcing it has no side effects,
+5	    which keeps it safe to load from both the CLI script and the Pester
+6	    test suite. All GitHub Actions -related semantics implemented here
+7	    (cartesian expansion, include/exclude merging, fail-fast/max-parallel
+8	    passthrough) intentionally mirror the real strategy.matrix behavior
+9	    documented for GitHub Actions.
+10	#>
+11	
+12	# Normalizes a value (string, number, boolean, $null) to a string so that
+13	# exclude/include rule matching works the same regardless of whether a JSON
+14	# author wrote a bare number or a quoted string for something like a version.
+15	function ConvertTo-ComparableString {
+16	    param(
+17	        [Parameter()]
+18	        $Value
+19	    )
+20	    if ($null -eq $Value) { return '' }
+21	    return [string]$Value
+22	}
+23	
+24	# Returns the property names of a PSCustomObject as a real (possibly em
+[Tool: Bash] pwsh -NoProfile -Command '
+$errors = $null
+$tokens = $null
+$null = [System.Management.Automation.Language.Parser]::ParseFile("MatrixFunctions.ps1", [ref]$tokens, [ref]$errors)
+if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Host $_.Message } ; exit 1 } else { Write-Host "No syntax errors" }
+'
+actionlint .github/workflows/environment-matrix-generator.yml; echo "actionlint exit: $?"
+[Result] No syntax errors
+actionlint exit: 0
+[Assistant] Fix looks solid and consistent throughout. Let's re-run the act pipeline (attempt 2 of 3).
+[Tool: Bash] pwsh -NoProfile -Command "
+Import-Module Pester -MinimumVersion 5.0.0
+\$config = New-PesterConfiguration
+\$config.Run.Path = './ActPipeline.Tests.ps1'
+\$config.Output.Verbosity = 'Detailed'
+Invoke-Pester -Configuration \$config
+" 2>&1 | tail -150
+
+[Result] [91m   [Environment Matrix Generator/Run Pester Tests]   | [0m
+[91m   [Environment Matrix Generator/Run Pester Tests]   | [92mDescribing Remove-ExcludedCombinations[0m
+[91m   [Environment Matrix Generator/Run Pester Tests]   | [32m  [+] removes combinations that match every key in an exclude rule[0m[90m 45ms (39ms|6ms)[0m
+[91m   [Environment Matrix Generator/Run Pester Tests]   | [32m  [+] treats an exclude rule as a wildcard on keys it does not mention[0m[90m 13ms (11ms|2ms)[0m
+[91m   [Environment Matrix Generator/Run Pester Tests]   | [32m  [+] returns all combinations unchanged when no exclude rules are given[0m[90m 45ms (43ms|2ms)[0m
+[91m   [Environment Matrix Generator/Run Pester Tests]   | [0m
+[91m   [Environment Matrix Generator/Run Pester Tests]   | [92mDescribing Merge-IncludeRules[0m
+[91m   [Environment Matrix Generator/Run Pester Tests]   | [32m  [+] adds extra keys to every existing combination that matches the include rule[0m[90m 38ms (28ms|10m
+[Assistant] All fixture-driven assertions passed exactly — only my harness's own assumption was wrong: `use-matrix` is a matrix job that fans out to 4 instances (one per combination in basic-config.json), so "Job succeeded" appears 6 times (1 test + 1 generate + 4 use-matrix), not 3. Let me fix that assertion.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/ActPipeline.Tests.ps1", "offset": 96, "limit": 10}
+[Result] 96	    }
+97	
+98	    It 'exits with code 0' {
+99	        $ActExitCode | Should -Be 0 -Because ($ActOutputLines -join "`n")
+100	    }
+101	
+102	    It 'reports "Job succeeded" for all three jobs (test, generate, use-matrix)' {
+103	        $successCount = ($ActOutputLines | Select-String -SimpleMatch 'Job succeeded').Count
+104	        $successCount | Should -Be 3 -Because ($ActOutputLines -join "`n")
+105	    }
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/ActPipeline.Tests.ps1", "old_string": "   
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/ActPipeline.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] wc -l act-result.txt; grep -n "=====" act-result.txt | head -10
+[Result] 235 act-result.txt
+1:===== act push --rm  (run at 2026-07-01T03:37:27-04:00, exit code 1) =====
+72:===== end act push =====
+74:===== act push --rm  (run at 2026-07-01T03:42:23-04:00, exit code 0) =====
+234:===== end act push =====
+[Assistant] This is my last permitted `act push` run — let me review the harness file once more before using it.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/ActPipeline.Tests.ps1"}
+[Result] 1	<#
+2	    Act-driven pipeline test harness.
+3	
+4	    This is the ONLY place the environment matrix generator's actual logic
+5	    is verified end-to-end: it copies the project into an isolated temp git
+6	    repository, runs the real GitHub Actions workflow with `act push --rm`
+7	    in Docker, and asserts on the captured output. The generator script is
+8	    never invoked directly from this file -- every assertion is against what
+9	    the containerized pipeline itself printed or returned.
+10	
+11	    A single "===TESTCASE_<NAME>_START===" / "===TESTCASE_<NAME>_END==="
+12	    pair per fixture lets one `act push` run exercise every fixture-driven
+13	    test case as a distinct, independently-assertable section of one
+14	    workflow run, instead of needing one `act push` invocation per case.
+15	#>
+16	
+17	BeforeDiscovery {
+18	    $script:RepoRoot = $PSScriptRoot
+19	    $script:ActResultPath = Join-Path $RepoRoot 'act-result.txt'
+20	}
+21	
+22	BeforeAll {
+23	    function Get-DelimitedJson 
+[Assistant] This looks correct given the confirmed output structure from run 2. Let's run it one final time to confirm a fully clean pass.
+[Tool: Bash] pwsh -NoProfile -Command "
+Import-Module Pester -MinimumVersion 5.0.0
+\$config = New-PesterConfiguration
+\$config.Run.Path = './ActPipeline.Tests.ps1'
+\$config.Output.Verbosity = 'Normal'
+Invoke-Pester -Configuration \$config
+" 2>&1 | tail -40
+
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 11 tests in 2.56s.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/ActPipeline.Tests.ps1[0m[90m 50.16s (46.49s|1.51s)[0m
+[97mTests completed in 50.19s[0m
+[32mTests Passed: 11, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] All 11 tests pass cleanly on the third and final act run.
+[Tool: Bash] ls -la act-result.txt && echo "---" && tail -5 act-result.txt && echo "---" && grep -c "=====" act-result.txt
+[Result] -rw-r--r-- 1 passp passp 47881 Jul  1 03:44 act-result.txt
+---
+[Environment Matrix Generator/Use Generated Matrix-2] 🏁  Job succeeded
+[Environment Matrix Generator/Use Generated Matrix-4]   ✅  Success - Complete job
+[Environment Matrix Generator/Use Generated Matrix-4] 🏁  Job succeeded
+===== end act push =====
+
+---
+6
+[Tool: Bash] git status && echo "---FILES---" && find . -path ./.git -prune -o -type f -print | sort
+[Result] On branch master
+
+No commits yet
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.actrc
+	.claude/
+	.github/
+	ActPipeline.Tests.ps1
+	EnvironmentMatrixGenerator.Tests.ps1
+	EnvironmentMatrixGenerator.ps1
+	MatrixFunctions.ps1
+	WorkflowStructure.Tests.ps1
+	act-result.txt
+	benchmark-instructions-v4.md
+	fixtures/
+
+nothing added to commit but untracked files present (use "git add" to track)
+---FILES---
+./.actrc
+./.claude/settings.json
+./.github/workflows/environment-matrix-generator.yml
+./ActPipeline.Tests.ps1
+./EnvironmentMatrixGenerator.Tests.ps1
+./EnvironmentMatrixGenerator.ps1
+./MatrixFunctions.ps1
+./WorkflowStructure.Tests.ps1
+./act-result.txt
+./benchmark-instructions-v4.md
+./fixtures/basic-config.json
+./fixtures/defaults-config.json
+./fixtures/exceeds-max-config.json
+./fixtures/excludes-config.json
+./fixtures/includes-config.json
+./fixtures/invalid-config.json
+[Assistant] Good — the main repo is untouched (no commits made), and all files are in place. Let's do a final quick re-run of the workflow structure tests to confirm everything is still green after the harness fix.
+[Tool: Bash] pwsh -NoProfile -Command "
+Import-Module Pester -MinimumVersion 5.0.0
+\$config = New-PesterConfiguration
+\$config.Run.Path = @('./WorkflowStructure.Tests.ps1')
+\$config.Output.Verbosity = 'Normal'
+Invoke-Pester -Configuration \$config
+"
+actionlint .github/workflows/environment-matrix-generator.yml && echo "actionlint: OK"
+[Result] [95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 18 tests in 417ms.[0m
+[95mRunning tests.[0m
+[32m[+] /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/16-environment-matrix-generator/powershell-tool-sonnet5/WorkflowStructure.Tests.ps1[0m[90m 2.06s (1.06s|655ms)[0m
+[97mTests completed in 2.09s[0m
+[32mTests Passed: 18, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+actionlint: OK
+[Tool: TaskUpdate] {"taskId": "9", "status": "completed"}
+[Result] Updated task #9 status
+[Assistant] Everything is complete and verified. Summary:
+
+**Files created:**
+- `MatrixFunctions.ps1` — core logic (cartesian product, exclude/include rule matching mirroring GitHub Actions semantics, size validation)
+- `EnvironmentMatrixGenerator.ps1` — CLI wrapper that reads a JSON config and prints/writes the `strategy.matrix` JSON, wiring into `$GITHUB_OUTPUT`
+- `EnvironmentMatrixGenerator.Tests.ps1` — 20 Pester unit tests (written test-first, before the implementation existed), run only inside the act container
+- `fixtures/*.json` — basic, excludes, includes, exceeds-max, invalid, defaults configs
+- `.github/workflows/environment-matrix-generator.yml` — 3-job workflow (`test` → `generate` → `use-matrix`, the last a real dynamic fan-out matrix)
+- `WorkflowStructure.Tests.ps1` — 18 tests parsing the YAML (via `powershell-yaml`) and validating actionlint passes
+- `ActPipeline.Tests.ps1` — the act-driven harness; 11 tests
+- `act-result.txt` — required artifact with full delimited act output
+
+**Bug the pipeline caught:** a real PowerShell gotcha — `.PSObject.Properties.Name` on a zero-property object returns `$null`, and `@($null)` wraps it into a one-element array, silently defeating `Count -eq 0` emptiness checks. This broke the "empty matrix" validation test. Fixed with a `Get-PropertyNames` helper that iterates the `.Properties` collection directly instead of the collapsing shorthand.
+
+**Verification:** actionlint passes cleanly; used exactly 3 `act push` runs as budgeted (1 red — caught the bug, 1 green but wrong test-assumption about matrix fan-out, 1 fully green with all 11 harness assertions passing exact expected values for all three fixture cases). All logic testing went through the containerized pipeline, never invoked directly on the host.

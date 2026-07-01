@@ -1,0 +1,91 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      config_path:
+        description: 'Path to the matrix configuration JSON used by the manual "generate" step'
+        required: false
+        default: 'fixtures/basic-config.json'
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  CONFIG_DIR: fixtures
+  MATRIX_MAX_SIZE: '256'
+
+jobs:
+  test:
+    name: Run Pester Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester 5 is available
+        shell: pwsh
+        run: |
+          $pester = Get-Module -ListAvailable -Name Pester | Sort-Object Version -Descending | Select-Object -First 1
+          if (-not $pester -or $pester.Version -lt [version]'5.0.0') {
+            Install-Module -Name Pester -Force -SkipPublisherCheck -MinimumVersion 5.0.0 -Scope CurrentUser
+          }
+
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          Import-Module Pester -MinimumVersion 5.0.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = './EnvironmentMatrixGenerator.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  generate:
+    name: Generate Build Matrix
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      basic-matrix: ${{ steps.basic.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate matrix - basic
+        id: basic
+        shell: pwsh
+        run: |
+          Write-Output "===TESTCASE_BASIC_START==="
+          & ./EnvironmentMatrixGenerator.ps1 -ConfigPath "$env:CONFIG_DIR/basic-config.json"
+          Write-Output "===TESTCASE_BASIC_END==="
+
+      - name: Generate matrix - excludes
+        shell: pwsh
+        run: |
+          Write-Output "===TESTCASE_EXCLUDES_START==="
+          & ./EnvironmentMatrixGenerator.ps1 -ConfigPath "$env:CONFIG_DIR/excludes-config.json"
+          Write-Output "===TESTCASE_EXCLUDES_END==="
+
+      - name: Generate matrix - includes
+        shell: pwsh
+        run: |
+          Write-Output "===TESTCASE_INCLUDES_START==="
+          & ./EnvironmentMatrixGenerator.ps1 -ConfigPath "$env:CONFIG_DIR/includes-config.json"
+          Write-Output "===TESTCASE_INCLUDES_END==="
+
+  use-matrix:
+    name: Use Generated Matrix
+    needs: generate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.generate.outputs.basic-matrix).strategy.matrix }}
+    steps:
+      - name: Show matrix entry
+        shell: pwsh
+        run: |
+          Write-Output "Running matrix entry: os=${{ matrix.os }} version=${{ matrix.version }}"
