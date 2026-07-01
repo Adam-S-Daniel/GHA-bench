@@ -1,0 +1,84 @@
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  FIXTURES_DIR: fixtures
+
+jobs:
+  aggregate:
+    name: Aggregate Test Results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          command -v jq >/dev/null || { sudo apt-get update -y && sudo apt-get install -y jq; }
+          command -v shellcheck >/dev/null || { sudo apt-get update -y && sudo apt-get install -y shellcheck; }
+
+      - name: Shellcheck the aggregator scripts
+        run: shellcheck aggregate-results.sh lib/*.sh
+
+      - name: Syntax-check the aggregator scripts
+        run: |
+          set -euo pipefail
+          bash -n aggregate-results.sh
+          for f in lib/*.sh; do
+            bash -n "$f"
+          done
+
+      - name: "Scenario: aggregate a full matrix build (2 XML + 2 JSON runs)"
+        run: |
+          echo "=== SCENARIO: basic-matrix-aggregation ==="
+          ./aggregate-results.sh \
+            "${FIXTURES_DIR}/run1-ubuntu-py39.xml" \
+            "${FIXTURES_DIR}/run2-ubuntu-py310.xml" \
+            "${FIXTURES_DIR}/run3-macos-py39.json" \
+            "${FIXTURES_DIR}/run4-windows-py310.json" \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: "Scenario: zero-test JSON file is handled gracefully"
+        run: |
+          echo "=== SCENARIO: empty-results ==="
+          ./aggregate-results.sh "${FIXTURES_DIR}/empty-results.json"
+
+      - name: "Scenario: malformed JUnit XML is rejected with a clear error"
+        run: |
+          echo "=== SCENARIO: malformed-xml-rejected ==="
+          if ./aggregate-results.sh "${FIXTURES_DIR}/malformed.xml" 2>err.log; then
+            echo "ERROR: expected aggregate-results.sh to fail on malformed.xml" >&2
+            cat err.log
+            exit 1
+          fi
+          echo "MALFORMED_XML_HANDLED_OK: $(cat err.log)"
+
+      - name: "Scenario: invalid JSON is rejected with a clear error"
+        run: |
+          echo "=== SCENARIO: invalid-json-rejected ==="
+          if ./aggregate-results.sh "${FIXTURES_DIR}/invalid.json" 2>err.log; then
+            echo "ERROR: expected aggregate-results.sh to fail on invalid.json" >&2
+            cat err.log
+            exit 1
+          fi
+          echo "INVALID_JSON_HANDLED_OK: $(cat err.log)"
+
+      - name: "Scenario: unsupported file extension is rejected"
+        run: |
+          echo "=== SCENARIO: unsupported-extension-rejected ==="
+          if ./aggregate-results.sh "${FIXTURES_DIR}/unsupported.txt" 2>err.log; then
+            echo "ERROR: expected aggregate-results.sh to fail on unsupported.txt" >&2
+            cat err.log
+            exit 1
+          fi
+          echo "UNSUPPORTED_EXTENSION_HANDLED_OK: $(cat err.log)"
