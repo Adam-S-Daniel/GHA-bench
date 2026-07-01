@@ -1,0 +1,45 @@
+# PR Label Assigner pipeline.
+#
+# Runs the bats unit-test suite, then feeds the (mocked) changed-file list in
+# ci/changed-files.txt through label-assigner.sh with the rules in
+# ci/labels.rules, and prints the resulting label set between
+# LABELS_BEGIN/LABELS_END markers so external harnesses (act) can assert on
+# exact values.
+name: pr-label-assigner
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write # would be needed to actually apply labels on a real PR
+
+env:
+  RULES_FILE: ci/labels.rules
+  CHANGED_FILES: ci/changed-files.txt
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: npm install -g bats
+
+      - name: Validate script syntax
+        run: bash -n label-assigner.sh
+
+      - name: Run unit tests
+        run: bats test/
+
+      - name: Assign labels from changed files
+        run: |
+          bash label-assigner.sh --rules "$RULES_FILE" --files "$CHANGED_FILES" > labels.txt
+          echo "LABELS_BEGIN"
+          cat labels.txt
+          echo "LABELS_END"
+          echo "LABEL_COUNT=$(grep -c . labels.txt || true)"
