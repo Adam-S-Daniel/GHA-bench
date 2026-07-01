@@ -1,0 +1,51 @@
+# PR Label Assigner pipeline.
+#
+# Runs the full unit-test suite, then executes the labeler against the
+# repo's rules.json and changed_files.txt (the mocked "PR changed files"
+# list) and prints the final label set as a `FINAL_LABELS: ...` line that
+# the act-based test harness asserts on exactly.
+name: PR Label Assigner
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Read-only: this pipeline only computes labels; it never writes to the repo.
+permissions:
+  contents: read
+
+env:
+  RULES_FILE: rules.json
+  CHANGED_FILES: changed_files.txt
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show tool versions
+        run: python3 --version
+
+      - name: Run unit tests (red/green TDD suite)
+        run: python3 -m unittest test_labeler -v
+
+      - name: Assign labels from changed files
+        run: |
+          echo "Rules file: $RULES_FILE"
+          echo "Changed files:"
+          cat "$CHANGED_FILES"
+          python3 labeler.py --rules "$RULES_FILE" --files "$CHANGED_FILES"
+
+      - name: Reject invalid rules gracefully (error-path check)
+        run: |
+          # The labeler must fail with exit 2 and a clear message on bad JSON.
+          echo '{broken' > /tmp/bad-rules.json
+          if python3 labeler.py --rules /tmp/bad-rules.json --files "$CHANGED_FILES" 2>/tmp/err.txt; then
+            echo "expected failure but labeler succeeded" >&2
+            exit 1
+          fi
+          grep -q "Invalid JSON" /tmp/err.txt
+          echo "ERROR_PATH_OK"
