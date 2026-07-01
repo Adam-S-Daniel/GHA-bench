@@ -1,0 +1,64 @@
+name: Artifact Cleanup Script
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Nightly cleanup run at 03:00 UTC
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pytest
+
+      - name: Run tests
+        run: python3 -m pytest test_artifact_cleanup.py -v
+
+  cleanup:
+    name: Apply artifact retention policy (${{ matrix.case.name }})
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        case:
+          - name: age-and-count-policy
+            data: fixtures/sample_artifacts.json
+            args: --max-age-days 90 --keep-latest-n 2
+          - name: size-budget-policy
+            data: fixtures/size_budget_artifacts.json
+            args: --max-total-size-bytes 100
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Run artifact cleanup (dry run)
+        run: |
+          python3 artifact_cleanup.py \
+            --data ${{ matrix.case.data }} \
+            ${{ matrix.case.args }} \
+            --dry-run
