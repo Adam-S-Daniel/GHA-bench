@@ -1,0 +1,134 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  VERSION_MODULE_PATH: scripts/VersionBumper.psm1
+  BUMP_SCRIPT_PATH: scripts/Invoke-Bump.ps1
+
+jobs:
+  unit-tests:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./tests -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) Pester test(s) failed."
+          }
+
+  integration-tests:
+    name: Run integration test cases
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test case - feat commit bumps minor version
+        shell: pwsh
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP 'case-feat'
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          Set-Content -Path (Join-Path $work 'VERSION') -Value '1.1.0' -NoNewline
+          Copy-Item ./tests/fixtures/commits-feat.log (Join-Path $work 'commits.log')
+
+          & pwsh -NoProfile -File $env:BUMP_SCRIPT_PATH `
+            -VersionFilePath (Join-Path $work 'VERSION') `
+            -CommitLogPath (Join-Path $work 'commits.log') `
+            -ChangelogPath (Join-Path $work 'CHANGELOG.md')
+
+          $newVersion = (Get-Content (Join-Path $work 'VERSION') -Raw).Trim()
+          Write-Host "Resulting version: $newVersion"
+          if ($newVersion -ne '1.2.0') {
+            throw "Expected version 1.2.0 but got $newVersion"
+          }
+
+      - name: Test case - fix commit bumps patch version
+        shell: pwsh
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP 'case-fix'
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          Set-Content -Path (Join-Path $work 'VERSION') -Value '1.1.0' -NoNewline
+          Copy-Item ./tests/fixtures/commits-fix.log (Join-Path $work 'commits.log')
+
+          & pwsh -NoProfile -File $env:BUMP_SCRIPT_PATH `
+            -VersionFilePath (Join-Path $work 'VERSION') `
+            -CommitLogPath (Join-Path $work 'commits.log') `
+            -ChangelogPath (Join-Path $work 'CHANGELOG.md')
+
+          $newVersion = (Get-Content (Join-Path $work 'VERSION') -Raw).Trim()
+          Write-Host "Resulting version: $newVersion"
+          if ($newVersion -ne '1.1.1') {
+            throw "Expected version 1.1.1 but got $newVersion"
+          }
+
+      - name: Test case - breaking change bumps major version
+        shell: pwsh
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP 'case-breaking'
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          Set-Content -Path (Join-Path $work 'VERSION') -Value '1.1.0' -NoNewline
+          Copy-Item ./tests/fixtures/commits-breaking.log (Join-Path $work 'commits.log')
+
+          & pwsh -NoProfile -File $env:BUMP_SCRIPT_PATH `
+            -VersionFilePath (Join-Path $work 'VERSION') `
+            -CommitLogPath (Join-Path $work 'commits.log') `
+            -ChangelogPath (Join-Path $work 'CHANGELOG.md')
+
+          $newVersion = (Get-Content (Join-Path $work 'VERSION') -Raw).Trim()
+          Write-Host "Resulting version: $newVersion"
+          if ($newVersion -ne '2.0.0') {
+            throw "Expected version 2.0.0 but got $newVersion"
+          }
+
+      - name: Test case - package.json version is bumped
+        shell: pwsh
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP 'case-package-json'
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          Copy-Item ./tests/fixtures/package-simple.json (Join-Path $work 'package.json')
+          Copy-Item ./tests/fixtures/commits-feat.log (Join-Path $work 'commits.log')
+
+          & pwsh -NoProfile -File $env:BUMP_SCRIPT_PATH `
+            -VersionFilePath (Join-Path $work 'package.json') `
+            -CommitLogPath (Join-Path $work 'commits.log') `
+            -ChangelogPath (Join-Path $work 'CHANGELOG.md')
+
+          $updated = Get-Content (Join-Path $work 'package.json') -Raw | ConvertFrom-Json
+          Write-Host "Resulting version: $($updated.version)"
+          if ($updated.version -ne '2.1.0') {
+            throw "Expected version 2.1.0 but got $($updated.version)"
+          }
+
+      - name: Test case - no conventional commits leaves version unchanged
+        shell: pwsh
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP 'case-none'
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          Set-Content -Path (Join-Path $work 'VERSION') -Value '1.1.0' -NoNewline
+          Copy-Item ./tests/fixtures/commits-none.log (Join-Path $work 'commits.log')
+
+          & pwsh -NoProfile -File $env:BUMP_SCRIPT_PATH `
+            -VersionFilePath (Join-Path $work 'VERSION') `
+            -CommitLogPath (Join-Path $work 'commits.log') `
+            -ChangelogPath (Join-Path $work 'CHANGELOG.md')
+
+          $newVersion = (Get-Content (Join-Path $work 'VERSION') -Raw).Trim()
+          Write-Host "Resulting version: $newVersion"
+          if ($newVersion -ne '1.1.0') {
+            throw "Expected version 1.1.0 but got $newVersion"
+          }

@@ -1,0 +1,62 @@
+name: PR Label Assigner
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RULES_FILE: fixtures/rules.json
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: pip install --quiet pytest
+
+      - name: Run unit tests
+        run: python3 -m pytest -v test_label_assigner.py
+
+  assign-labels:
+    name: Assign labels from fixtures
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Case 1 - docs only
+        run: |
+          python3 label_assigner.py \
+            --files "$(cat fixtures/case1_files.json)" \
+            --rules "$(cat "$RULES_FILE")"
+
+      - name: Case 2 - multiple independent labels
+        run: |
+          python3 label_assigner.py \
+            --files "$(cat fixtures/case2_files.json)" \
+            --rules "$(cat "$RULES_FILE")"
+
+      - name: Case 3 - priority conflict resolution
+        run: |
+          python3 label_assigner.py \
+            --files "$(cat fixtures/case3_files.json)" \
+            --rules "$(cat "$RULES_FILE")"

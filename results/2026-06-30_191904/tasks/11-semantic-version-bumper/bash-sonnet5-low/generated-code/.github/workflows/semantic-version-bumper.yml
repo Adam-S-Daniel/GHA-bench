@@ -1,0 +1,68 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      commits_file:
+        description: 'Path to the commits fixture file to use'
+        required: false
+        default: 'tests/fixtures/commits_mixed.txt'
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  VERSION_FILE: VERSION
+  COMMITS_FILE: tests/fixtures/ci_commits.txt
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  test:
+    name: Run bats unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install bats and shellcheck
+        run: |
+          if ! command -v bats >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y bats shellcheck
+          fi
+
+      - name: Shellcheck the script
+        run: shellcheck scripts/bump-version.sh
+
+      - name: Run bats test suite
+        run: bats tests/bump_version.bats
+
+  bump:
+    name: Bump version and generate changelog
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare fixture version file
+        run: cp tests/fixtures/VERSION_1.2.3 "${VERSION_FILE}"
+
+      - name: Run semantic version bumper
+        id: bump
+        run: |
+          new_version="$(./scripts/bump-version.sh --version-file "${VERSION_FILE}" --commits-file "${COMMITS_FILE}" --changelog-file "${CHANGELOG_FILE}")"
+          echo "new_version=${new_version}" >> "$GITHUB_OUTPUT"
+          echo "Bumped to ${new_version}"
+
+      - name: Show resulting changelog
+        run: cat "${CHANGELOG_FILE}"
+
+      - name: Report new version
+        run: echo "New version is ${{ steps.bump.outputs.new_version }}"
