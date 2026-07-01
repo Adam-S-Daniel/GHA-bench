@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-01 07:33:45 AM ET — 35/35 runs completed, 0 remaining; total cost $138.34; total agent time 734.0 min.
+**Last updated:** 2026-07-01 07:35:34 AM ET — 35/70 runs completed, 35 remaining; total cost $138.34; total agent time 734.0 min.
 **Claude Code versions used:** v2.1.197 (35 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -124,13 +124,16 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 </details>
 
+- **Estimated time remaining:** 734.0min
+- **Estimated total cost:** $276.68
+
 ## Failed / Timed-Out Runs
 
 | Task | Language | Model | Duration | Reason | Lines | actionlint | act-result.txt |
 |------|------|-------|----------|--------|-------|------------|----------------|
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | timeout | 667 | pass | yes |
-| PR Label Assigner | powershell | sonnet5 | 30.0min | timeout | 806 | pass | yes |
 | PR Label Assigner | bash | sonnet5 | 30.0min | timeout | 1034 | pass | yes |
+| PR Label Assigner | powershell | sonnet5 | 30.0min | timeout | 806 | pass | yes |
 | PR Label Assigner | powershell-tool | sonnet5 | 30.0min | timeout | 621 | pass | no |
 | Test Results Aggregator | powershell | sonnet5 | 30.0min | timeout | 824 | pass | yes |
 | Secret Rotation Validator | powershell | sonnet5 | 30.0min | timeout | 723 | pass | yes |
@@ -528,39 +531,39 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Tests | Assertions | Assert/Test | Test Lines | Impl Lines | Test:Code |
 |------|------|-------|-------|------------|-------------|------------|------------|-----------|
+| Semantic Version Bumper | bash | sonnet5 | 7 | 20 | 2.9 | 77 | 238 | 0.32 |
 | Semantic Version Bumper | default | sonnet5 | 38 | 60 | 1.6 | 438 | 336 | 1.30 |
 | Semantic Version Bumper | powershell | sonnet5 | 43 | 87 | 2.0 | 514 | 89 | 5.78 |
-| Semantic Version Bumper | bash | sonnet5 | 7 | 20 | 2.9 | 77 | 238 | 0.32 |
 | Semantic Version Bumper | powershell-tool | sonnet5 | 51 | 88 | 1.7 | 649 | 72 | 9.01 |
 | Semantic Version Bumper | typescript-bun | sonnet5 | 51 | 88 | 1.7 | 869 | 470 | 1.85 |
+| PR Label Assigner | bash | sonnet5 | 52 | 100 | 1.9 | 517 | 447 | 1.16 |
 | PR Label Assigner | default | sonnet5 | 30 | 57 | 1.9 | 323 | 319 | 1.01 |
 | PR Label Assigner | powershell | sonnet5 | 58 | 77 | 1.3 | 504 | 215 | 2.34 |
-| PR Label Assigner | bash | sonnet5 | 52 | 100 | 1.9 | 517 | 447 | 1.16 |
 | PR Label Assigner | powershell-tool | sonnet5 | 59 | 92 | 1.6 | 472 | 71 | 6.65 |
 | PR Label Assigner | typescript-bun | sonnet5 | 35 | 40 | 1.1 | 317 | 404 | 0.78 |
+| Dependency License Checker | bash | sonnet5 | 39 | 95 | 2.4 | 521 | 395 | 1.32 |
 | Dependency License Checker | default | sonnet5 | 8 | 30 | 3.8 | 218 | 274 | 0.80 |
 | Dependency License Checker | powershell | sonnet5 | 37 | 52 | 1.4 | 384 | 181 | 2.12 |
-| Dependency License Checker | bash | sonnet5 | 39 | 95 | 2.4 | 521 | 395 | 1.32 |
 | Dependency License Checker | powershell-tool | sonnet5 | 31 | 58 | 1.9 | 340 | 87 | 3.91 |
 | Dependency License Checker | typescript-bun | sonnet5 | 40 | 65 | 1.6 | 579 | 385 | 1.50 |
+| Test Results Aggregator | bash | sonnet5 | 24 | 30 | 1.2 | 221 | 578 | 0.38 |
 | Test Results Aggregator | default | sonnet5 | 12 | 28 | 2.3 | 317 | 430 | 0.74 |
 | Test Results Aggregator | powershell | sonnet5 | 72 | 128 | 1.8 | 597 | 173 | 3.45 |
-| Test Results Aggregator | bash | sonnet5 | 24 | 30 | 1.2 | 221 | 578 | 0.38 |
 | Test Results Aggregator | powershell-tool | sonnet5 | 23 | 30 | 1.3 | 292 | 51 | 5.73 |
 | Test Results Aggregator | typescript-bun | sonnet5 | 34 | 96 | 2.8 | 661 | 456 | 1.45 |
+| Environment Matrix Generator | bash | sonnet5 | 27 | 73 | 2.7 | 263 | 327 | 0.80 |
 | Environment Matrix Generator | default | sonnet5 | 43 | 43 | 1.0 | 433 | 422 | 1.03 |
 | Environment Matrix Generator | powershell | sonnet5 | 47 | 110 | 2.3 | 467 | 41 | 11.39 |
-| Environment Matrix Generator | bash | sonnet5 | 27 | 73 | 2.7 | 263 | 327 | 0.80 |
 | Environment Matrix Generator | powershell-tool | sonnet5 | 49 | 103 | 2.1 | 531 | 332 | 1.60 |
 | Environment Matrix Generator | typescript-bun | sonnet5 | 40 | 76 | 1.9 | 630 | 287 | 2.20 |
+| Artifact Cleanup Script | bash | sonnet5 | 22 | 13 | 0.6 | 209 | 293 | 0.71 |
 | Artifact Cleanup Script | default | sonnet5 | 10 | 22 | 2.2 | 103 | 0 | 0.00 |
 | Artifact Cleanup Script | powershell | sonnet5 | 57 | 117 | 2.1 | 570 | 122 | 4.67 |
-| Artifact Cleanup Script | bash | sonnet5 | 22 | 13 | 0.6 | 209 | 293 | 0.71 |
 | Artifact Cleanup Script | powershell-tool | sonnet5 | 41 | 109 | 2.7 | 495 | 128 | 3.87 |
 | Artifact Cleanup Script | typescript-bun | sonnet5 | 53 | 107 | 2.0 | 700 | 578 | 1.21 |
+| Secret Rotation Validator | bash | sonnet5 | 70 | 182 | 2.6 | 631 | 416 | 1.52 |
 | Secret Rotation Validator | default | sonnet5 | 13 | 48 | 3.7 | 326 | 280 | 1.16 |
 | Secret Rotation Validator | powershell | sonnet5 | 32 | 80 | 2.5 | 582 | 46 | 12.65 |
-| Secret Rotation Validator | bash | sonnet5 | 70 | 182 | 2.6 | 631 | 416 | 1.52 |
 | Secret Rotation Validator | powershell-tool | sonnet5 | 66 | 102 | 1.5 | 564 | 96 | 5.88 |
 | Secret Rotation Validator | typescript-bun | sonnet5 | 63 | 115 | 1.8 | 927 | 461 | 2.01 |
 
@@ -615,8 +618,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
-| PR Label Assigner | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
 | PR Label Assigner | bash | sonnet5 | 30.0min | 0 | 2 | $0.00 | — | bash | timeout |
+| PR Label Assigner | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
 | PR Label Assigner | powershell-tool | sonnet5 | 30.0min | 0 | 4 | $0.00 | — | powershell | timeout |
 | Test Results Aggregator | powershell | sonnet5 | 30.0min | 0 | 0 | $0.00 | — | powershell | timeout |
 | Secret Rotation Validator | powershell | sonnet5 | 30.0min | 0 | 0 | $0.00 | — | powershell | timeout |
@@ -744,8 +747,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
-| PR Label Assigner | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
 | PR Label Assigner | bash | sonnet5 | 30.0min | 0 | 2 | $0.00 | — | bash | timeout |
+| PR Label Assigner | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
 | PR Label Assigner | powershell-tool | sonnet5 | 30.0min | 0 | 4 | $0.00 | — | powershell | timeout |
 | Test Results Aggregator | powershell | sonnet5 | 30.0min | 0 | 0 | $0.00 | — | powershell | timeout |
 | Secret Rotation Validator | powershell | sonnet5 | 30.0min | 0 | 0 | $0.00 | — | powershell | timeout |
@@ -786,39 +789,39 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
+| Semantic Version Bumper | bash | sonnet5 | 11.8min | 57 | 3 | $2.84 | — | bash | ok |
 | Semantic Version Bumper | default | sonnet5 | 12.5min | 80 | 2 | $3.54 | — | python | ok |
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
-| Semantic Version Bumper | bash | sonnet5 | 11.8min | 57 | 3 | $2.84 | — | bash | ok |
 | Semantic Version Bumper | powershell-tool | sonnet5 | 26.7min | 111 | 0 | $5.41 | — | powershell | ok |
 | Semantic Version Bumper | typescript-bun | sonnet5 | 18.6min | 127 | 8 | $6.16 | — | typescript | ok |
+| PR Label Assigner | bash | sonnet5 | 30.0min | 0 | 2 | $0.00 | — | bash | timeout |
 | PR Label Assigner | default | sonnet5 | 11.6min | 80 | 0 | $3.61 | — | python | ok |
 | PR Label Assigner | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
-| PR Label Assigner | bash | sonnet5 | 30.0min | 0 | 2 | $0.00 | — | bash | timeout |
 | PR Label Assigner | powershell-tool | sonnet5 | 30.0min | 0 | 4 | $0.00 | — | powershell | timeout |
 | PR Label Assigner | typescript-bun | sonnet5 | 18.3min | 106 | 0 | $4.13 | — | typescript | ok |
+| Dependency License Checker | bash | sonnet5 | 17.4min | 105 | 3 | $5.57 | — | bash | ok |
 | Dependency License Checker | default | sonnet5 | 9.9min | 39 | 1 | $1.99 | — | python | ok |
 | Dependency License Checker | powershell | sonnet5 | 16.8min | 80 | 0 | $3.03 | — | powershell | ok |
-| Dependency License Checker | bash | sonnet5 | 17.4min | 105 | 3 | $5.57 | — | bash | ok |
 | Dependency License Checker | powershell-tool | sonnet5 | 14.6min | 58 | 1 | $2.80 | — | powershell | ok |
 | Dependency License Checker | typescript-bun | sonnet5 | 18.4min | 137 | 11 | $5.28 | — | typescript | ok |
+| Test Results Aggregator | bash | sonnet5 | 17.1min | 108 | 6 | $5.57 | — | bash | ok |
 | Test Results Aggregator | default | sonnet5 | 12.7min | 59 | 0 | $3.47 | — | python | ok |
 | Test Results Aggregator | powershell | sonnet5 | 30.0min | 0 | 0 | $0.00 | — | powershell | timeout |
-| Test Results Aggregator | bash | sonnet5 | 17.1min | 108 | 6 | $5.57 | — | bash | ok |
 | Test Results Aggregator | powershell-tool | sonnet5 | 26.0min | 87 | 4 | $4.82 | — | powershell | ok |
 | Test Results Aggregator | typescript-bun | sonnet5 | 25.3min | 143 | 2 | $7.29 | — | typescript | ok |
+| Environment Matrix Generator | bash | sonnet5 | 26.2min | 150 | 9 | $8.03 | — | bash | ok |
 | Environment Matrix Generator | default | sonnet5 | 16.4min | 94 | 2 | $5.01 | — | python | ok |
 | Environment Matrix Generator | powershell | sonnet5 | 29.5min | 103 | 0 | $6.22 | — | powershell | ok |
-| Environment Matrix Generator | bash | sonnet5 | 26.2min | 150 | 9 | $8.03 | — | bash | ok |
 | Environment Matrix Generator | powershell-tool | sonnet5 | 25.4min | 82 | 0 | $5.48 | — | powershell | ok |
 | Environment Matrix Generator | typescript-bun | sonnet5 | 19.7min | 75 | 1 | $4.76 | — | typescript | ok |
+| Artifact Cleanup Script | bash | sonnet5 | 11.8min | 59 | 4 | $3.37 | — | bash | ok |
 | Artifact Cleanup Script | default | sonnet5 | 18.0min | 76 | 1 | $3.61 | — | powershell | ok |
 | Artifact Cleanup Script | powershell | sonnet5 | 23.4min | 98 | 3 | $5.42 | — | powershell | ok |
-| Artifact Cleanup Script | bash | sonnet5 | 11.8min | 59 | 4 | $3.37 | — | bash | ok |
 | Artifact Cleanup Script | powershell-tool | sonnet5 | 21.2min | 79 | 0 | $4.33 | — | powershell | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet5 | 23.5min | 150 | 2 | $6.00 | — | typescript | ok |
+| Secret Rotation Validator | bash | sonnet5 | 20.7min | 119 | 1 | $6.24 | — | bash | ok |
 | Secret Rotation Validator | default | sonnet5 | 12.7min | 69 | 0 | $3.58 | — | python | ok |
 | Secret Rotation Validator | powershell | sonnet5 | 30.0min | 0 | 0 | $0.00 | — | powershell | timeout |
-| Secret Rotation Validator | bash | sonnet5 | 20.7min | 119 | 1 | $6.24 | — | bash | ok |
 | Secret Rotation Validator | powershell-tool | sonnet5 | 22.6min | 102 | 2 | $4.46 | — | powershell | ok |
 | Secret Rotation Validator | typescript-bun | sonnet5 | 25.3min | 136 | 1 | $6.32 | — | typescript | ok |
 
