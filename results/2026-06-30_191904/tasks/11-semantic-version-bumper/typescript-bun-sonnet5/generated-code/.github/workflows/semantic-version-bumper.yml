@@ -1,0 +1,79 @@
+name: Semantic Version Bumper
+
+# Computes the next semantic version from Conventional Commits, updates the
+# version file, and prepends a changelog entry. Runs on every push/PR so
+# maintainers can see the resulting version bump before merging, and can be
+# triggered manually via workflow_dispatch.
+#
+# The commit log this workflow reads (commits.log) is a checked-in mock
+# fixture for deterministic CI testing; in a non-mocked deployment it would
+# instead be produced by a preceding `git log <last-tag>..HEAD` step.
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  # Pin a deterministic timezone so the CLI's default changelog date is
+  # reproducible regardless of the runner's local time.
+  TZ: UTC
+
+jobs:
+  bump-version:
+    name: Compute version bump
+    runs-on: ubuntu-latest
+    outputs:
+      previous_version: ${{ steps.bump.outputs.previous_version }}
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_type: ${{ steps.bump.outputs.bump_type }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Run unit test suite
+        # Scoped to the pure-logic unit tests: the workflow-structure/act
+        # meta-tests under tests/meta/ shell out to actionlint/act, which
+        # this container intentionally does not have installed (they
+        # validate this very workflow file from the host instead).
+        run: bun test tests/unit
+
+      - name: Determine and apply version bump
+        id: bump
+        run: bun run bump-version.ts
+
+      - name: Show updated version file
+        run: cat package.json
+
+      - name: Show changelog
+        run: cat CHANGELOG.md
+
+  report:
+    name: Report version bump result
+    needs: bump-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PREVIOUS_VERSION: ${{ needs.bump-version.outputs.previous_version }}
+      NEW_VERSION: ${{ needs.bump-version.outputs.new_version }}
+      BUMP_TYPE: ${{ needs.bump-version.outputs.bump_type }}
+    steps:
+      - name: Print version bump summary
+        run: |
+          echo "Previous version: ${PREVIOUS_VERSION}"
+          echo "Bump type: ${BUMP_TYPE}"
+          echo "Resolved new version: ${NEW_VERSION}"
