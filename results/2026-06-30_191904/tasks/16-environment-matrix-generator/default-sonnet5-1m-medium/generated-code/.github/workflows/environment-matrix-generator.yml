@@ -1,0 +1,72 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_MIN_VERSION: "3.10"
+
+jobs:
+  unit-tests:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        run: pip3 install --quiet --break-system-packages pytest
+
+      - name: Run pytest suite
+        run: python3 -m pytest test_matrix_generator.py -v
+
+  generate-matrix:
+    name: Generate environment matrix
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+      fail_fast: ${{ steps.generate.outputs.fail_fast }}
+      max_parallel: ${{ steps.generate.outputs.max_parallel }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate matrix JSON from fixture config
+        id: generate
+        run: |
+          set -euo pipefail
+          python3 matrix_generator.py fixtures/ci_matrix.json > strategy.json
+          cat strategy.json
+          python3 -c "
+          import json
+          strategy = json.load(open('strategy.json'))
+          print('matrix=' + json.dumps(strategy['matrix']))
+          print('fail_fast=' + json.dumps(strategy['fail-fast']))
+          print('max_parallel=' + json.dumps(strategy['max-parallel']))
+          " >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.python-version }})
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: ${{ fromJson(needs.generate-matrix.outputs.fail_fast) }}
+      max-parallel: ${{ fromJson(needs.generate-matrix.outputs.max_parallel) }}
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show matrix entry
+        run: |
+          echo "os=${{ matrix.os }}"
+          echo "python-version=${{ matrix.python-version }}"
+          echo "experimental=${{ matrix.experimental || false }}"

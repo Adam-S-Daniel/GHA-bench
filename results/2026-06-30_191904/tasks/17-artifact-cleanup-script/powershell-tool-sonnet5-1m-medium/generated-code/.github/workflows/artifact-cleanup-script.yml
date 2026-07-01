@@ -1,0 +1,93 @@
+name: Artifact Cleanup Script
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Weekly artifact retention sweep.
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no deletions performed)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  contents: read
+
+env:
+  FIXTURE_PATH: './fixtures/artifacts-sample.json'
+  MAX_AGE_DAYS: '45'
+  MAX_TOTAL_SIZE_BYTES: '999999999999'
+  KEEP_LATEST_N: '2'
+  FIXED_NOW: '2026-07-01T00:00:00Z'
+
+jobs:
+  test:
+    name: Run Pester test suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object Version -ge '5.0.0')) {
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./tests -Output Detailed -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) Pester test(s) failed."
+          }
+          Write-Host "PESTER_TESTS_PASSED=$($result.PassedCount)"
+          Write-Host "PESTER_TESTS_FAILED=$($result.FailedCount)"
+
+  dry-run-plan:
+    name: Generate dry-run cleanup plan
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run artifact cleanup (dry run)
+        shell: pwsh
+        run: |
+          ./Invoke-ArtifactCleanup.ps1 `
+            -FixturePath ${{ env.FIXTURE_PATH }} `
+            -MaxAgeDays ${{ env.MAX_AGE_DAYS }} `
+            -MaxTotalSizeBytes ${{ env.MAX_TOTAL_SIZE_BYTES }} `
+            -KeepLatestN ${{ env.KEEP_LATEST_N }} `
+            -Now '${{ env.FIXED_NOW }}' `
+            -DryRun
+
+  apply-cleanup:
+    name: Apply cleanup plan
+    runs-on: ubuntu-latest
+    needs: dry-run-plan
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run artifact cleanup (apply)
+        shell: pwsh
+        run: |
+          ./Invoke-ArtifactCleanup.ps1 `
+            -FixturePath ${{ env.FIXTURE_PATH }} `
+            -MaxAgeDays ${{ env.MAX_AGE_DAYS }} `
+            -MaxTotalSizeBytes ${{ env.MAX_TOTAL_SIZE_BYTES }} `
+            -KeepLatestN ${{ env.KEEP_LATEST_N }} `
+            -Now '${{ env.FIXED_NOW }}'

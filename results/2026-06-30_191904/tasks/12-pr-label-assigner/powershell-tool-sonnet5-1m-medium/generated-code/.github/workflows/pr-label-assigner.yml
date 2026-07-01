@@ -1,0 +1,75 @@
+name: PR Label Assigner
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      changed-files-fixture:
+        description: "Path (relative to repo root) to the changed-files JSON fixture to use"
+        required: false
+        default: fixtures/changed-files.json
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  RULES_PATH: fixtures/label-rules.json
+  DEFAULT_CHANGED_FILES_PATH: fixtures/changed-files.json
+
+jobs:
+  test:
+    name: Run Pester tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Pester test suite
+        shell: pwsh
+        run: |
+          Import-Module Pester -MinimumVersion 5.0
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  assign-labels:
+    name: Compute PR labels
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute label set from changed-file fixture
+        id: labels
+        shell: pwsh
+        env:
+          CHANGED_FILES_FIXTURE: ${{ github.event.inputs.changed-files-fixture }}
+        run: |
+          $fixture = if ([string]::IsNullOrEmpty($env:CHANGED_FILES_FIXTURE)) {
+            $env:DEFAULT_CHANGED_FILES_PATH
+          } else {
+            $env:CHANGED_FILES_FIXTURE
+          }
+          ./Assign-PRLabels.ps1 -ChangedFilesPath $fixture -RulesPath $env:RULES_PATH
+
+      - name: Apply labels to the pull request
+        if: github.event_name == 'pull_request'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LABELS: ${{ steps.labels.outputs.labels }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:LABELS)) {
+            Write-Output "No labels to apply."
+            exit 0
+          }
+          $labelArgs = ($env:LABELS -split ',\s*') | ForEach-Object { '--add-label', $_ }
+          gh pr edit $env:PR_NUMBER @labelArgs

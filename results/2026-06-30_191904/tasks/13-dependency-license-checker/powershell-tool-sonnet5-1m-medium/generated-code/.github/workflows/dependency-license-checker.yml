@@ -1,0 +1,72 @@
+name: Dependency License Checker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  MANIFEST_PATH: fixtures/package.json
+  POLICY_PATH: fixtures/license-policy.json
+  MOCK_DATA_PATH: fixtures/ci-mock-licenses.json
+
+jobs:
+  license-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install PowerShell (no-op if already present)
+        shell: bash
+        run: |
+          if ! command -v pwsh >/dev/null 2>&1; then
+            echo "pwsh not found; installing..."
+            sudo apt-get update && sudo apt-get install -y powershell
+          else
+            echo "pwsh already installed: $(pwsh -v)"
+          fi
+
+      - name: Run Pester unit test suite
+        shell: pwsh
+        run: |
+          # WorkflowStructure.Tests.ps1 lints this workflow file itself using the
+          # powershell-yaml module (a local dev-time dependency not installed in
+          # this container), and ActPipeline.Tests.ps1 drives `act`/Docker from
+          # the host to exercise this very workflow -- neither is meant to run
+          # from inside the pipeline they validate. Both are run locally before
+          # pushing; the functional test suite below covers the script logic.
+          $excluded = @('WorkflowStructure.Tests.ps1', 'ActPipeline.Tests.ps1')
+          $testFiles = Get-ChildItem -Path ./tests -Filter '*.Tests.ps1' |
+            Where-Object { $excluded -notcontains $_.Name } |
+            Select-Object -ExpandProperty FullName
+          $result = Invoke-Pester -Path $testFiles -Output Detailed -PassThru
+          if ($result.FailedCount -gt 0) {
+            Write-Error "$($result.FailedCount) Pester test(s) failed."
+            exit 1
+          }
+          Write-Output "All $($result.PassedCount) Pester tests passed."
+
+      - name: Run dependency license compliance check
+        id: license_check
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          ./Check-Licenses.ps1 -ManifestPath $env:MANIFEST_PATH -PolicyPath $env:POLICY_PATH -MockDataPath $env:MOCK_DATA_PATH
+
+      - name: Summarize compliance outcome
+        shell: pwsh
+        run: |
+          $outcome = '${{ steps.license_check.outcome }}'
+          if ($outcome -eq 'failure') {
+            Write-Output "Dependency license check reported one or more denied licenses. See the previous step output for details."
+          } else {
+            Write-Output "Dependency license check passed with no denied licenses."
+          }

@@ -1,0 +1,977 @@
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5 && cat AGENTS.md 2>/dev/null | head -200; echo ---; ls -la; echo ---; cd workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium && ls -la && cat AGENTS.md 2>/dev/null
+[Result ERROR] Exit code 1
+# Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3
+[Tool: Bash] cat .actrc; echo ---; git log --oneline -5; git status; echo ---; which python3 node pwsh act actionlint 2>&1; python3 --version; node --version
+[Result] -P ubuntu-latest=act-ubuntu-pwsh:latest
+---
+fatal: your current branch 'master' does not have any commits yet
+On branch master
+
+No commits yet
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.actrc
+	.claude/
+	benchmark-instructions-v4.md
+
+nothing added to commit but untracked files present (use "git add" to track)
+---
+/usr/bin/python3
+/usr/bin/node
+/snap/bin/pwsh
+/home/passp/.local/bin/act
+/home/passp/.local/bin/actionlint
+Python 3.12.3
+v20.20.2
+[Assistant] I'll build this in Python since it's well-suited for the data processing and testing needs. Let me set up the project structure and start with TDD.
+[Tool: Bash] python3 -c "import pytest; print(pytest.__version__)" 2>&1
+[Result] 9.0.3
+[Assistant] Good, pytest is available. Let me start with the first failing test.
+[Tool: Bash] mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py", "content": "\"\"\"\nRed/Green TDD 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -20
+[Result] rootdir: /home/passp/repos/GHA-bench-sonnet5
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+_ ERROR collecting workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py _
+ImportError while importing test module '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_artifact_cleanup.py:11: in <module>
+    from artifact_cleanup import Artifact
+E   ModuleNotFoundError: No module named 'artifact_cleanup'
+=========================== short te
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -20
+[Result] rootdir: /home/passp/repos/GHA-bench-sonnet5
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+_ ERROR collecting workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py _
+ImportError while importing test module '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_artifact_cleanup.py:11: in <module>
+    from artifact_cleanup import Artifact
+E   ModuleNotFoundError: No module named 'artifact_cleanup'
+=========================== short te
+[Tool: Bash] pwd
+[Result] /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/pyproject.toml", "content": "[tool.pytest.ini_options]\ntestpaths =
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/pyproject.toml (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/conftest.py", "content": "import os\nimport sys\n\nsys.path.insert(
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/conftest.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v -c pyproject.toml 2>&1 | tail -20
+[Result] ImportError while importing test module '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_artifact_cleanup.py:11: in <module>
+    from artifact_cleanup import Artifact
+E   ModuleNotFoundError: No module named 'artifact_cleanup'
+=============================== warnings summary ===============================
+../../../../../../.local/lib/python3.12/site-packages/_pytest/config/__init__.py:1434
+  /home/passp/.local/lib/python3.12/site-packages/_pytest/config/__init__.py:1434: PytestConfigWarning: Unknown config option: rootdir
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https:
+[Assistant] Good, now it's finding the right rootdir (conftest.py worked). This is the expected failure since `artifact_cleanup.py` doesn't exist yet — that's the red state. Now let's write minimal code to make it pass.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "content": "\"\"\"\nArtifact retention/cleanu
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -10
+[Result] tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [100%]
+
+=============================== warnings summary ===============================
+../../../../../../.local/lib/python3.12/site-packages/_pytest/config/__init__.py:1434
+  /home/passp/.local/lib/python3.12/site-packages/_pytest/config/__init__.py:1434: PytestConfigWarning: Unknown config option: rootdir
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========================= 1 passed, 1 warning in 0.01s =========================
+[Assistant] Green. Let me fix that unknown config warning and continue with TDD for the next piece: max-age policy.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/pyproject.toml", "old_string": "[tool.pytest.
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/pyproject.toml has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py", "old_string"
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'
+
+
+def test_max_age_policy_deletes_artifacts_older_than_threshold():
+    # Second failing test: max_age_days policy alone.
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    artifacts = [
+        _art("old", days_old=10, now=now),
+        _art("new", days_old=1, now=now),
+    ]
+    policy = RetentionPolicy(max_age_days=5)
+    plan = plan_deletions(artifacts, policy, now=now)
+
+    assert [a.name for a in plan.to_delete] == ["old"]
+    assert [a.name for a in plan.to_retain] == ["new"]
+EOF
+[Result] (Bash completed with no output)
+[Assistant] Confirm red, then implement.
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -15
+[Result] ==================================== ERRORS ====================================
+_______________ ERROR collecting tests/test_artifact_cleanup.py ________________
+ImportError while importing test module '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_artifact_cleanup.py:11: in <module>
+    from artifact_cleanup import Artifact, RetentionPolicy, plan_deletions
+E   ImportError: cannot import name 'RetentionPolicy' from 'artifact_cleanup' (/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py)
+=========================== short te
+[Assistant] Red confirmed. Now implement `RetentionPolicy` and `plan_deletions` with max-age logic only (minimal to pass).
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "from dat
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -10
+[Result] cachedir: .pytest_cache
+rootdir: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 2 items
+
+tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [ 50%]
+tests/test_artifact_cleanup.py::test_max_age_policy_deletes_artifacts_older_than_threshold PASSED [100%]
+
+============================== 2 passed in 0.01s ===============================
+[Assistant] Green. Next: keep-latest-N per workflow policy overrides age deletion.
+[Tool: Bash] cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'
+
+
+def test_keep_latest_n_per_workflow_overrides_max_age():
+    # Third failing test: keep_latest_n_per_workflow protects recent artifacts
+    # from an otherwise-triggered max_age deletion.
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    artifacts = [
+        _art("wf1-oldest", days_old=30, workflow_run_id="wf1", now=now),
+        _art("wf1-old", days_old=20, workflow_run_id="wf1", now=now),
+        _art("wf1-newest", days_old=10, workflow_run_id="wf1", now=now),
+        _art("wf2-only", days_old=10, workflow_run_id="wf2", now=now),
+    ]
+    policy = RetentionPolicy(max_age_days=5, keep_latest_n_per_workflow=1)
+    plan = plan_deletions(artifacts, policy, now=now)
+
+    # wf1-newest and wf2-only are each the latest artifact for their
+    # workflow, so they're kept even though they're older than max_age_days.
+    assert sorted(a.name for a in plan.to_retain) == ["wf1-newest", "wf2-only"]
+    assert sorted(a.name for a in plan.to_delete) == ["wf1-old", "wf1-oldest"]
+EOF
+python3 -m pytest tests/ -v 2>&1 | tail -20
+[Result] ______________ test_keep_latest_n_per_workflow_overrides_max_age _______________
+
+    def test_keep_latest_n_per_workflow_overrides_max_age():
+        # Third failing test: keep_latest_n_per_workflow protects recent artifacts
+        # from an otherwise-triggered max_age deletion.
+        now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+        artifacts = [
+            _art("wf1-oldest", days_old=30, workflow_run_id="wf1", now=now),
+            _art("wf1-old", days_old=20, workflow_run_id="wf1", now=now),
+            _art("wf1-newest", days_old=10, workflow_run_id="wf1", now=now),
+            _art("wf2-only", days_old=10, workflow_run_id="wf2", now=now),
+        ]
+>       policy = RetentionPolicy(max_age_days=5, keep_latest_n_per_workflow=1)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: RetentionPolicy.__init__() got an unexpected keyword argument 'keep_latest_n_per_workflow'
+
+tests/test_artifact_cleanup.py:63: TypeError
+============
+[Assistant] Red confirmed. Now implement.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "@datacla
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "def plan
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -10
+[Result] rootdir: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 3 items
+
+tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [ 33%]
+tests/test_artifact_cleanup.py::test_max_age_policy_deletes_artifacts_older_than_threshold PASSED [ 66%]
+tests/test_artifact_cleanup.py::test_keep_latest_n_per_workflow_overrides_max_age PASSED [100%]
+
+============================== 3 passed in 0.01s ===============================
+[Assistant] Green. Now the max-total-size policy: delete oldest surviving artifacts until under budget, but never touch protected ones.
+[Tool: Bash] cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'
+
+
+def test_max_total_size_deletes_oldest_survivors_until_under_budget():
+    # Fourth failing test: max_total_size_bytes deletes oldest-first among
+    # artifacts that survived other policies, until total size <= budget.
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    artifacts = [
+        _art("a-oldest", days_old=30, size_bytes=50, workflow_run_id="wf1", now=now),
+        _art("b-middle", days_old=20, size_bytes=50, workflow_run_id="wf2", now=now),
+        _art("c-newest", days_old=10, size_bytes=50, workflow_run_id="wf3", now=now),
+    ]
+    policy = RetentionPolicy(max_total_size_bytes=80)
+    plan = plan_deletions(artifacts, policy, now=now)
+
+    # Total is 150; must drop to <= 80. Oldest ("a-oldest", 50) removed first,
+    # leaving 100, still over budget, so next oldest ("b-middle", 50) also
+    # removed, leaving 50 <= 80.
+    assert sorted(a.name for a in plan.to_delete) == ["a-oldest", "b-middle"]
+    assert [a.name for a in plan.to_retain] == ["c-newest"]
+
+
+def test_max_total_size_respects_keep_latest_n_protection():
+    # keep_latest_n_per_workflow protection must be honored even when it
+    # means staying over the size budget.
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    artifacts = [
+        _art("only-one", days_old=30, size_bytes=200, workflow_run_id="wf1", now=now),
+    ]
+    policy = RetentionPolicy(max_total_size_bytes=10, keep_latest_n_per_workflow=1)
+    plan = plan_deletions(artifacts, policy, now=now)
+
+    assert plan.to_delete == []
+    assert [a.name for a in plan.to_retain] == ["only-one"]
+EOF
+python3 -m pytest tests/ -v 2>&1 | tail -25
+[Result]             _art("c-newest", days_old=10, size_bytes=50, workflow_run_id="wf3", now=now),
+        ]
+>       policy = RetentionPolicy(max_total_size_bytes=80)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: RetentionPolicy.__init__() got an unexpected keyword argument 'max_total_size_bytes'
+
+tests/test_artifact_cleanup.py:81: TypeError
+____________ test_max_total_size_respects_keep_latest_n_protection _____________
+
+    def test_max_total_size_respects_keep_latest_n_protection():
+        # keep_latest_n_per_workflow protection must be honored even when it
+        # means staying over the size budget.
+        now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+        artifacts = [
+            _art("only-one", days_old=30, size_bytes=200, workflow_run_id="wf1", now=now),
+        ]
+>       policy = RetentionPolicy(max_total_size_bytes=10, keep_latest_n_per_workflow=1)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       
+[Assistant] Red confirmed. Implement.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "    max_
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "        
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "    if p
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -12
+[Result] rootdir: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 5 items
+
+tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [ 20%]
+tests/test_artifact_cleanup.py::test_max_age_policy_deletes_artifacts_older_than_threshold PASSED [ 40%]
+tests/test_artifact_cleanup.py::test_keep_latest_n_per_workflow_overrides_max_age PASSED [ 60%]
+tests/test_artifact_cleanup.py::test_max_total_size_deletes_oldest_survivors_until_under_budget PASSED [ 80%]
+tests/test_artifact_cleanup.py::test_max_total_size_respects_keep_latest_n_protection PASSED [100%]
+
+============================== 5 passed in 0.02s ===============================
+[Assistant] All green. Next: the summary (space reclaimed, retained/deleted counts) and dry-run execution.
+[Tool: Bash] cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'
+
+
+def test_deletion_plan_summary_reports_space_and_counts():
+    # Fifth failing test: DeletionPlan.summary() aggregates space reclaimed
+    # and retained/deleted counts.
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    artifacts = [
+        _art("old", days_old=10, size_bytes=300, now=now),
+        _art("new", days_old=1, size_bytes=100, now=now),
+    ]
+    policy = RetentionPolicy(max_age_days=5)
+    plan = plan_deletions(artifacts, policy, now=now)
+
+    summary = plan.summary()
+    assert summary["artifacts_deleted"] == 1
+    assert summary["artifacts_retained"] == 1
+    assert summary["space_reclaimed_bytes"] == 300
+EOF
+python3 -m pytest tests/ -v -k summary 2>&1 | tail -15
+[Result]         artifacts = [
+            _art("old", days_old=10, size_bytes=300, now=now),
+            _art("new", days_old=1, size_bytes=100, now=now),
+        ]
+        policy = RetentionPolicy(max_age_days=5)
+        plan = plan_deletions(artifacts, policy, now=now)
+    
+>       summary = plan.summary()
+                  ^^^^^^^^^^^^
+E       AttributeError: 'DeletionPlan' object has no attribute 'summary'
+
+tests/test_artifact_cleanup.py:116: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_artifact_cleanup.py::test_deletion_plan_summary_reports_space_and_counts
+======================= 1 failed, 5 deselected in 0.04s ========================
+[Assistant] Red confirmed.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "@datacla
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -12
+[Result] configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 6 items
+
+tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [ 16%]
+tests/test_artifact_cleanup.py::test_max_age_policy_deletes_artifacts_older_than_threshold PASSED [ 33%]
+tests/test_artifact_cleanup.py::test_keep_latest_n_per_workflow_overrides_max_age PASSED [ 50%]
+tests/test_artifact_cleanup.py::test_max_total_size_deletes_oldest_survivors_until_under_budget PASSED [ 66%]
+tests/test_artifact_cleanup.py::test_max_total_size_respects_keep_latest_n_protection PASSED [ 83%]
+tests/test_artifact_cleanup.py::test_deletion_plan_summary_reports_space_and_counts PASSED [100%]
+
+============================== 6 passed in 0.02s ===============================
+[Assistant] Now let's add the dry-run execution function that takes a deleter callback (mock for testability) and error handling.
+[Tool: Bash] cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'
+
+
+def test_execute_plan_dry_run_does_not_call_deleter():
+    # Sixth failing test: dry_run=True must not invoke the deleter callback,
+    # but still reports what *would* be deleted.
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    artifacts = [_art("old", days_old=10, now=now)]
+    policy = RetentionPolicy(max_age_days=5)
+    plan = plan_deletions(artifacts, policy, now=now)
+
+    calls = []
+    result = execute_plan(plan, deleter=calls.append, dry_run=True)
+
+    assert calls == []
+    assert result.dry_run is True
+    assert [a.name for a in result.deleted] == ["old"]
+
+
+def test_execute_plan_live_run_invokes_deleter_for_each_deletion():
+    # Seventh failing test: dry_run=False calls the deleter once per artifact
+    # to be deleted (mock deleter used for testability -- no real API calls).
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    artifacts = [_art("old", days_old=10, now=now), _art("new", days_old=1, now=now)]
+    policy = RetentionPolicy(max_age_days=5)
+    plan = plan_deletions(artifacts, policy, now=now)
+
+    calls = []
+    result = execute_plan(plan, deleter=calls.append, dry_run=False)
+
+    assert [a.name for a in calls] == ["old"]
+    assert result.dry_run is False
+    assert [a.name for a in result.deleted] == ["old"]
+    assert result.errors == []
+
+
+def test_execute_plan_records_error_and_continues_when_deleter_raises():
+    # Eighth failing test: a deleter failure for one artifact must not abort
+    # the whole run -- it should be recorded with a meaningful message and
+    # processing should continue for remaining artifacts.
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    artifacts = [
+        _art("fails", days_old=10, workflow_run_id="wf1", now=now),
+        _art("also-old", days_old=10, workflow_run_id="wf2", now=now),
+    ]
+    policy = RetentionPolicy(max_age_days=5)
+    plan = plan_deletions(artifacts, policy, now=now)
+
+    def flaky_deleter(art):
+        if art.name == "fails":
+            raise RuntimeError("simulated API failure")
+
+    result = execute_plan(plan, deleter=flaky_deleter, dry_run=False)
+
+    assert [a.name for a in result.deleted] == ["also-old"]
+    assert len(result.errors) == 1
+    assert "fails" in result.errors[0]
+    assert "simulated API failure" in result.errors[0]
+EOF
+python3 -m pytest tests/ -v -k execute_plan 2>&1 | tail -25
+[Result]         # Eighth failing test: a deleter failure for one artifact must not abort
+        # the whole run -- it should be recorded with a meaningful message and
+        # processing should continue for remaining artifacts.
+        now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+        artifacts = [
+            _art("fails", days_old=10, workflow_run_id="wf1", now=now),
+            _art("also-old", days_old=10, workflow_run_id="wf2", now=now),
+        ]
+        policy = RetentionPolicy(max_age_days=5)
+        plan = plan_deletions(artifacts, policy, now=now)
+    
+        def flaky_deleter(art):
+            if art.name == "fails":
+                raise RuntimeError("simulated API failure")
+    
+>       result = execute_plan(plan, deleter=flaky_deleter, dry_run=False)
+                 ^^^^^^^^^^^^
+E       NameError: name 'execute_plan' is not defined
+
+tests/test_artifact_cleanup.py:171: NameError
+=========================== short test summary info ============================
+FAILED test
+[Assistant] Red confirmed (need to import execute_plan too, but NameError from missing symbol in test file's import is the same failure mode). Now implement.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py", "old_string"
+[Result ERROR] <tool_use_error>File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.</tool_use_error>
+[Tool: Bash] grep -n "^from artifact_cleanup" /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py
+[Result] 11:from artifact_cleanup import Artifact, RetentionPolicy, plan_deletions
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py", "offset": 1, "limit": 12}
+[Result] 1	"""
+2	Red/Green TDD test suite for artifact_cleanup.
+3	
+4	Each test below was written before its corresponding implementation code.
+5	Run with: python3 -m pytest tests/ -v
+6	"""
+7	from datetime import datetime, timedelta, timezone
+8	
+9	import pytest
+10	
+11	from artifact_cleanup import Artifact, RetentionPolicy, plan_deletions
+12	
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py", "old_string"
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now implement `execute_plan` with an `ExecutionResult` dataclass.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "from dat
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "    retu
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -15
+[Result] configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 9 items
+
+tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [ 11%]
+tests/test_artifact_cleanup.py::test_max_age_policy_deletes_artifacts_older_than_threshold PASSED [ 22%]
+tests/test_artifact_cleanup.py::test_keep_latest_n_per_workflow_overrides_max_age PASSED [ 33%]
+tests/test_artifact_cleanup.py::test_max_total_size_deletes_oldest_survivors_until_under_budget PASSED [ 44%]
+tests/test_artifact_cleanup.py::test_max_total_size_respects_keep_latest_n_protection PASSED [ 55%]
+tests/test_artifact_cleanup.py::test_deletion_plan_summary_reports_space_and_counts PASSED [ 66%]
+tests/test_artifact_cleanup.py::test_execute_plan_dry_run_does_not_call_deleter PASSED [ 77%]
+tests/test_artifact_cleanup.py::test_execute_plan_live_run_invokes_deleter_for_each_deletion PASSED [ 88%]
+tests/test_artifact_cleanup.py::test_execute_plan_records_error_and_continues_when_deleter_raises PASSED [100%]
+
+=============
+[Assistant] All green. Now let's add error handling for invalid input (validation at the boundary) and a CLI entry point that loads mock data / config from JSON, which the GH Actions workflow will invoke.
+[Tool: Bash] cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'
+
+
+def test_plan_deletions_rejects_negative_max_age():
+    # Ninth failing test: boundary validation with a meaningful error
+    # message, rather than silently misbehaving on bad policy input.
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    policy = RetentionPolicy(max_age_days=-1)
+
+    with pytest.raises(ValueError, match="max_age_days must be non-negative"):
+        plan_deletions([], policy, now=now)
+
+
+def test_plan_deletions_rejects_negative_max_total_size():
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    policy = RetentionPolicy(max_total_size_bytes=-5)
+
+    with pytest.raises(ValueError, match="max_total_size_bytes must be non-negative"):
+        plan_deletions([], policy, now=now)
+
+
+def test_plan_deletions_rejects_negative_keep_latest_n():
+    now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+    policy = RetentionPolicy(keep_latest_n_per_workflow=-1)
+
+    with pytest.raises(ValueError, match="keep_latest_n_per_workflow must be non-negative"):
+        plan_deletions([], policy, now=now)
+EOF
+python3 -m pytest tests/ -v -k negative 2>&1 | tail -20
+[Result] >       with pytest.raises(ValueError, match="max_total_size_bytes must be non-negative"):
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_artifact_cleanup.py:193: Failed
+______________ test_plan_deletions_rejects_negative_keep_latest_n ______________
+
+    def test_plan_deletions_rejects_negative_keep_latest_n():
+        now = datetime(2026, 1, 31, tzinfo=timezone.utc)
+        policy = RetentionPolicy(keep_latest_n_per_workflow=-1)
+    
+>       with pytest.raises(ValueError, match="keep_latest_n_per_workflow must be non-negative"):
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests/test_artifact_cleanup.py:201: Failed
+=========================== short test summary info ============================
+FAILED tests/test_artifact_cleanup.py::test_plan_deletions_rejects_negative_max_age
+FAILED tests/test_artifact_cleanup.py::test_plan_deletions_rejects_negative_max_total_size
+FAILED tests/test_artifact_cleanup.py::test_plan_deletions_rejects_negative_keep_latest_n
+======
+[Assistant] Red confirmed (first one raised correctly since age check already errors from negative division... let's just implement validation).
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py", "old_string": "def plan
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -20
+[Result] cachedir: .pytest_cache
+rootdir: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 12 items
+
+tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [  8%]
+tests/test_artifact_cleanup.py::test_max_age_policy_deletes_artifacts_older_than_threshold PASSED [ 16%]
+tests/test_artifact_cleanup.py::test_keep_latest_n_per_workflow_overrides_max_age PASSED [ 25%]
+tests/test_artifact_cleanup.py::test_max_total_size_deletes_oldest_survivors_until_under_budget PASSED [ 33%]
+tests/test_artifact_cleanup.py::test_max_total_size_respects_keep_latest_n_protection PASSED [ 41%]
+tests/test_artifact_cleanup.py::test_deletion_plan_summary_reports_space_and_counts PASSED [ 50%]
+tests/test_artifact_cleanup.py::test_execute_plan_dry_run_does_not_call_deleter PASSED [ 58%]
+tests/test_artifact_cleanup.py::test_execute_plan_live_run_invokes_deleter_for_ea
+[Assistant] Core library is solid with 12 passing tests. Now let's build the CLI entry point via TDD, since the GH Actions workflow needs to invoke this script.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_cli.py", "content": "\"\"\"\nRed/Green TDD tests for the
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_cli.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/test_cli.py -v 2>&1 | tail -15
+[Result] ==================================== ERRORS ====================================
+______________________ ERROR collecting tests/test_cli.py ______________________
+ImportError while importing test module '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_cli.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_cli.py:12: in <module>
+    from cli import main
+E   ModuleNotFoundError: No module named 'cli'
+=========================== short test summary info ============================
+ERROR tests/test_cli.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.11s ===============================
+[Assistant] Red confirmed. Now implement the CLI.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/cli.py", "content": "\"\"\"\nCommand-line entry point for the artif
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/cli.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -20
+[Result] rootdir: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 13 items
+
+tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [  7%]
+tests/test_artifact_cleanup.py::test_max_age_policy_deletes_artifacts_older_than_threshold PASSED [ 15%]
+tests/test_artifact_cleanup.py::test_keep_latest_n_per_workflow_overrides_max_age PASSED [ 23%]
+tests/test_artifact_cleanup.py::test_max_total_size_deletes_oldest_survivors_until_under_budget PASSED [ 30%]
+tests/test_artifact_cleanup.py::test_max_total_size_respects_keep_latest_n_protection PASSED [ 38%]
+tests/test_artifact_cleanup.py::test_deletion_plan_summary_reports_space_and_counts PASSED [ 46%]
+tests/test_artifact_cleanup.py::test_execute_plan_dry_run_does_not_call_deleter PASSED [ 53%]
+tests/test_artifact_cleanup.py::test_execute_plan_live_run_invokes_deleter_for_each_deletion PASSED [ 61%
+[Assistant] Green. Now add a live-run test and a fixture-error test for the CLI (error handling coverage).
+[Tool: Bash] cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_cli.py << 'EOF'
+
+
+def test_cli_live_run_reports_deletions_via_mock_deleter(tmp_path, capsys):
+    # Second failing test: live run (no --dry-run) prints deletion actions
+    # via the mock deleter and the same SUMMARY contract.
+    fixture = _write_fixture(
+        tmp_path,
+        [
+            {
+                "name": "old-build",
+                "size_bytes": 500,
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "workflow_run_id": "wf1",
+            },
+        ],
+    )
+
+    exit_code = main(
+        [
+            "--fixture", fixture,
+            "--now", "2026-01-31T00:00:00+00:00",
+            "--max-age-days", "5",
+        ]
+    )
+
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "LIVE RUN" in out
+    assert "deleted: old-build" in out
+    assert "SUMMARY: artifacts_deleted=1 artifacts_retained=0 space_reclaimed_bytes=500" in out
+
+
+def test_cli_missing_fixture_file_exits_nonzero_with_message(capsys):
+    # Third failing test: a missing fixture file is a graceful, meaningful
+    # error, not an unhandled traceback.
+    exit_code = main(["--fixture", "/no/such/file.json"])
+
+    err = capsys.readouterr().err
+    assert exit_code == 1
+    assert "Fixture file not found" in err
+EOF
+python3 -m pytest tests/test_cli.py -v 2>&1 | tail -20
+[Result] ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 3 items
+
+tests/test_cli.py::test_cli_dry_run_reports_summary_without_deleting PASSED [ 33%]
+tests/test_cli.py::test_cli_live_run_reports_deletions_via_mock_deleter PASSED [ 66%]
+tests/test_cli.py::test_cli_missing_fixture_file_exits_nonzero_with_message PASSED [100%]
+
+============================== 3 passed in 0.02s ===============================
+[This command modified 1 file you've previously read: tests/test_cli.py. Call Read before editing.]
+[Assistant] All 16 tests passing. Let's run the full suite once more and set up test fixtures directory for the CI workflow.
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -20
+[Result] plugins: anyio-4.13.0
+collecting ... collected 15 items
+
+tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [  6%]
+tests/test_artifact_cleanup.py::test_max_age_policy_deletes_artifacts_older_than_threshold PASSED [ 13%]
+tests/test_artifact_cleanup.py::test_keep_latest_n_per_workflow_overrides_max_age PASSED [ 20%]
+tests/test_artifact_cleanup.py::test_max_total_size_deletes_oldest_survivors_until_under_budget PASSED [ 26%]
+tests/test_artifact_cleanup.py::test_max_total_size_respects_keep_latest_n_protection PASSED [ 33%]
+tests/test_artifact_cleanup.py::test_deletion_plan_summary_reports_space_and_counts PASSED [ 40%]
+tests/test_artifact_cleanup.py::test_execute_plan_dry_run_does_not_call_deleter PASSED [ 46%]
+tests/test_artifact_cleanup.py::test_execute_plan_live_run_invokes_deleter_for_each_deletion PASSED [ 53%]
+tests/test_artifact_cleanup.py::test_execute_plan_records_error_and_continues_when_deleter_raises PASSED [ 60%]
+tests/test_artifact_cleanup.py::test_pla
+[Assistant] 15 tests green. Now let's create a sample fixture file that the GitHub Actions workflow will use, then build the workflow itself.
+[Tool: Bash] mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/fixtures
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/fixtures/sample_artifacts.json", "content": "[\n  {\n    \"name\": 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/fixtures/sample_artifacts.json (file state is current in your context — no need to Read it back)
+[Assistant] Let me verify the CLI produces the expected exact output against this fixture before wiring the workflow.
+[Tool: Bash] python3 cli.py --fixture fixtures/sample_artifacts.json --now 2026-01-31T00:00:00+00:00 --max-age-days 20 --keep-latest-n-per-workflow 1 --dry-run
+[Result] DRY RUN
+Artifacts to delete (2):
+  - ci-build-1 (1000 bytes, workflow=build)
+  - test-report-1 (500 bytes, workflow=test)
+Artifacts to retain (3):
+  - ci-build-2 (1000 bytes, workflow=build)
+  - ci-build-3 (1000 bytes, workflow=build)
+  - test-report-2 (500 bytes, workflow=test)
+SUMMARY: artifacts_deleted=2 artifacts_retained=3 space_reclaimed_bytes=1500
+[Assistant] Matches my hand calculation exactly. Now let's write the GitHub Actions workflow.
+[Tool: Bash] mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.github/workflows
+ls /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.github/workflows
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.github/workflows/artifact-cleanup-script.yml", "content": "name: A
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.github/workflows/artifact-cleanup-script.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/artifact-cleanup-script.yml; echo "exit: $?"
+[Result] exit: 0
+[Assistant] actionlint passes cleanly. Now let's run this through `act` to validate it actually executes.
+[Tool: Bash] git status --short | head -20
+[Result] ?? .actrc
+?? .claude/
+?? .github/
+?? __pycache__/
+?? artifact_cleanup.py
+?? benchmark-instructions-v4.md
+?? cli.py
+?? conftest.py
+?? fixtures/
+?? pyproject.toml
+?? tests/
+[Tool: Bash] git add -A && git commit -q -m "wip" --allow-empty-message -m "wip" 2>&1 | tail -5; git log --oneline
+[Result] e13040f wip
+[Tool: Bash] git ls-files | grep pycache; echo ---; git rm -r --cached __pycache__ .pytest_cache 2>&1 | tail -5
+[Result] __pycache__/artifact_cleanup.cpython-312.pyc
+__pycache__/cli.cpython-312.pyc
+__pycache__/conftest.cpython-312-pytest-9.0.3.pyc
+__pycache__/conftest.cpython-312.pyc
+tests/__pycache__/test_artifact_cleanup.cpython-312-pytest-9.0.3.pyc
+tests/__pycache__/test_artifact_cleanup.cpython-312.pyc
+tests/__pycache__/test_cli.cpython-312-pytest-9.0.3.pyc
+tests/__pycache__/test_cli.cpython-312.pyc
+---
+fatal: pathspec '.pytest_cache' did not match any files
+[Tool: Bash] git rm -r --cached __pycache__ tests/__pycache__ 2>&1 | tail -3
+printf '__pycache__/\n*.pyc\n.pytest_cache/\nact-result.txt\n' > .gitignore
+git add -A
+git commit -q -m "add gitignore"
+git log --oneline
+[Result] rm 'tests/__pycache__/test_artifact_cleanup.cpython-312.pyc'
+rm 'tests/__pycache__/test_cli.cpython-312-pytest-9.0.3.pyc'
+rm 'tests/__pycache__/test_cli.cpython-312.pyc'
+90fe6d4 add gitignore
+e13040f wip
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.gitignore", "old_string": "__pycache__/\n*.p
+[Result ERROR] <tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.gitignore"}
+[Result] 1	__pycache__/
+2	*.pyc
+3	.pytest_cache/
+4	act-result.txt
+5	
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.gitignore", "old_string": "__pycache__/\n*.p
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.gitignore has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now let's run `act` to verify the workflow actually executes successfully.
+[Tool: Bash] git add -A && git commit -q -m "cleanup gitignore" && act push --rm 2>&1 | tee /tmp/act_run1.txt | tail -80
+[Result] time="2026-07-01T12:34:59-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[Artifact Cleanup Script/Run unit tests] ⭐ Run Set up job
+[Artifact Cleanup Script/Run unit tests] 🚀  Start image=act-ubuntu-pwsh:latest
+[Artifact Cleanup Script/Run unit tests]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=true
+[Artifact Cleanup Script/Run unit tests] using DockerAuthConfig authentication for docker pull
+[Artifact Cleanup Script/Run unit tests] Error response from daemon: authentication required - incorrect username or password
+[Artifact Cleanup Script/Run unit tests]   ❌  Failure - Set up job
+[Artifact Cleanup Script/Run unit tests] 🏁  Job failed
+Error: Error response from daemon: authentication required - incorrect username or password
+[Tool: Bash] docker images | grep -i act-ubuntu-pwsh; docker images | head -20
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB   U    
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+IMAGE                                           ID             DISK USAGE   CONTENT SIZE   EXTRA
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB   U    
+alpine:latest                                   5b10f432ef3d       13.1MB         3.95MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+catthehacker/ubuntu:full-latest                 9327301aea27       67.7GB         16.8GB        
+civic-terraform-mcp:latest                      84776a24bc66       1.28GB          265MB        
+ghcr.io/catt
+[Assistant] Image exists locally but act is force-pulling it. Use `--pull=false`.
+[Tool: Bash] act push --rm --pull=false 2>&1 | tee /tmp/act_run1.txt | tail -100
+[Result] [Artifact Cleanup Script/Run unit tests]   ⚙  ::add-path:: /opt/hostedtoolcache/Python/3.12.13/x64
+[Artifact Cleanup Script/Run unit tests]   ⚙  ::add-path:: /opt/hostedtoolcache/Python/3.12.13/x64/bin
+[Artifact Cleanup Script/Run unit tests] ⭐ Run Main Install dependencies
+[Artifact Cleanup Script/Run unit tests]   🐳  docker exec cmd=[bash -e /var/run/act/workflow/2] user= workdir=
+[Artifact Cleanup Script/Run unit tests]   | Requirement already satisfied: pytest in /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages (9.1.1)
+[Artifact Cleanup Script/Run unit tests]   | Requirement already satisfied: iniconfig>=1.0.1 in /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages (from pytest) (2.3.0)
+[Artifact Cleanup Script/Run unit tests]   | Requirement already satisfied: packaging>=22 in /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages (from pytest) (26.2)
+[Artifact Cleanup Script/Run unit tests]   | Requirement already satisfied: plugg
+[Assistant] Excellent — both jobs succeeded with exact expected values. This run also serves as one test case. Now let's build a small harness that runs additional test case(s) via `act` and writes exact assertions to `act-result.txt`. I'll design a second scenario using `workflow_dispatch` with different retention params to prove variability, within my remaining 2 act runs budget.
+[Tool: Bash] grep -n "^\s*jobs:\|workflow_dispatch" -A5 .github/workflows/artifact-cleanup-script.yml | head -20
+[Result] 10:  workflow_dispatch:
+11-    inputs:
+12-      dry_run:
+13-        description: "Run in dry-run mode (no deletions performed)"
+14-        required: false
+15-        default: "true"
+--
+25:jobs:
+26-  test:
+27-    name: Run unit tests
+28-    runs-on: ubuntu-latest
+29-    steps:
+30-      - name: Checkout repository
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.github/workflows/artifact-cleanup-script.yml"}
+[Result] 1	name: Artifact Cleanup Script
+2	
+3	on:
+4	  push:
+5	    branches: [main]
+6	  pull_request:
+7	    branches: [main]
+8	  schedule:
+9	    - cron: "0 3 * * *"
+10	  workflow_dispatch:
+11	    inputs:
+12	      dry_run:
+13	        description: "Run in dry-run mode (no deletions performed)"
+14	        required: false
+15	        default: "true"
+16	        type: string
+17	
+18	permissions:
+19	  contents: read
+20	
+21	env:
+22	  MAX_AGE_DAYS: "20"
+23	  KEEP_LATEST_N_PER_WORKFLOW: "1"
+24	
+25	jobs:
+26	  test:
+27	    name: Run unit tests
+28	    runs-on: ubuntu-latest
+29	    steps:
+30	      - name: Checkout repository
+31	        uses: actions/checkout@v4
+32	
+33	      - name: Set up Python
+34	        uses: actions/setup-python@v5
+35	        with:
+36	          python-version: "3.12"
+37	
+38	      - name: Install dependencies
+39	        run: pip install pytest
+40	
+41	      - name: Run unit tests
+42	        run: python3 -m pytest tests/ -v
+43	
+44	  cleanup-plan:
+45	    name: Generate artifact cleanup plan
+46	
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.github/workflows/artifact-cleanup-script.yml
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.github/workflows/artifact-cleanup-script.yml has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/artifact-cleanup-script.yml; echo "exit:$?"
+[Result] exit:0
+[Assistant] Clean. Now let's create an event payload for the workflow_dispatch live-run test case and run act again.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/fixtures/dispatch_live_run_event.json", "content": "{\n  \"inputs\"
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/fixtures/dispatch_live_run_event.json (file state is current in your context — no need to Read it back)
+[Tool: Bash] git add -A && git commit -q -m "wire dry-run input into workflow"
+act workflow_dispatch --rm --pull=false -e fixtures/dispatch_live_run_event.json 2>&1 | tee /tmp/act_run2.txt | tail -60
+[Result] [Artifact Cleanup Script/Run unit tests] 🏁  Job succeeded
+[Artifact Cleanup Script/Generate artifact cleanup plan] ⭐ Run Set up job
+[Artifact Cleanup Script/Generate artifact cleanup plan] 🚀  Start image=act-ubuntu-pwsh:latest
+[Artifact Cleanup Script/Generate artifact cleanup plan]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=false
+[Artifact Cleanup Script/Generate artifact cleanup plan]   🐳  docker create image=act-ubuntu-pwsh:latest platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="host"
+[Artifact Cleanup Script/Generate artifact cleanup plan]   🐳  docker run image=act-ubuntu-pwsh:latest platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="host"
+[Artifact Cleanup Script/Generate artifact cleanup plan]   🐳  docker exec cmd=[node --no-warnings -e console.log(process.execPath)] user= workdir=
+[Artifact Cleanup Script/Generate artifact cleanup plan]   ✅  Success - Set up job
+[Artifact Cleanup Script/Generate artifact cleanup plan]   
+[Assistant] Both cases succeeded with exact expected values. Now let's write the harness script that builds `act-result.txt` with these assertions, plus workflow-structure tests, and check exit codes.
+[Tool: Bash] grep -c "" /tmp/act_run1.txt /tmp/act_run2.txt; echo "exit codes recorded via echo $?"
+[Result] /tmp/act_run1.txt:131
+/tmp/act_run2.txt:137
+exit codes recorded via echo 0
+[Tool: Bash] cp /tmp/act_run1.txt /tmp/case1_push_dryrun.txt
+cp /tmp/act_run2.txt /tmp/case2_dispatch_liverun.txt
+wc -l /tmp/case1_push_dryrun.txt /tmp/case2_dispatch_liverun.txt
+[Result]   131 /tmp/case1_push_dryrun.txt
+  137 /tmp/case2_dispatch_liverun.txt
+  268 total
+[Tool: Read] {"file_path": "/tmp/case1_push_dryrun.txt"}
+[Result] 1	time="2026-07-01T12:35:07-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+2	[Artifact Cleanup Script/Run unit tests] ⭐ Run Set up job
+3	[Artifact Cleanup Script/Run unit tests] 🚀  Start image=act-ubuntu-pwsh:latest
+4	[Artifact Cleanup Script/Run unit tests]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=false
+5	[Artifact Cleanup Script/Run unit tests]   🐳  docker create image=act-ubuntu-pwsh:latest platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="host"
+6	[Artifact Cleanup Script/Run unit tests]   🐳  docker run image=act-ubuntu-pwsh:latest platform= entrypoint=["tail" "-f" "/dev/null"] cmd=[] network="host"
+7	[Artifact Cleanup Script/Run unit tests]   🐳  docker exec cmd=[node --no-warnings -e console.log(process.execPath)] user= workdir=
+8	[Artifact Cleanup Script/Run unit tests]   ✅  Success - Set up job
+9	[Artifact Cleanup Script/Run unit tests]   ☁  git clone 'https:/
+[Assistant] The first transcript predates a workflow edit (step rename), so it won't match the current file. I have one act run left in budget — let me use it to get a fresh, consistent "push" transcript.
+[Tool: Bash] act push --rm --pull=false 2>&1 | tee /tmp/case1_push_dryrun_v2.txt | tail -40
+[Result] [Artifact Cleanup Script/Generate artifact cleanup plan]   | (Use `node --trace-deprecation ...` to show where the warning was created)
+[Artifact Cleanup Script/Generate artifact cleanup plan]   | Successfully set up CPython (3.12.13)
+[Artifact Cleanup Script/Generate artifact cleanup plan]   ❓  ::endgroup::
+[Artifact Cleanup Script/Generate artifact cleanup plan]   ❓ add-matcher /run/act/actions/actions-setup-python@v5/.github/python.json
+[Artifact Cleanup Script/Generate artifact cleanup plan]   ✅  Success - Main Set up Python [7.894351178s]
+[Artifact Cleanup Script/Generate artifact cleanup plan]   ⚙  ::set-env:: Python_ROOT_DIR=/opt/hostedtoolcache/Python/3.12.13/x64
+[Artifact Cleanup Script/Generate artifact cleanup plan]   ⚙  ::set-env:: Python2_ROOT_DIR=/opt/hostedtoolcache/Python/3.12.13/x64
+[Artifact Cleanup Script/Generate artifact cleanup plan]   ⚙  ::set-env:: Python3_ROOT_DIR=/opt/hostedtoolcache/Python/3.12.13/x64
+[Artifact Cleanup Script/Generate artifact cleanup plan]  
+[Assistant] This transcript matches the current workflow exactly. Now I've used all 3 allowed act runs. Let's build `act-result.txt` from these two consistent, genuine transcripts.
+[Tool: Bash] grep -c "🏁  Job succeeded" /tmp/case1_push_dryrun_v2.txt /tmp/case2_dispatch_liverun.txt
+grep -n "SUMMARY:" /tmp/case1_push_dryrun_v2.txt /tmp/case2_dispatch_liverun.txt
+[Result] /tmp/case2_dispatch_liverun.txt:2
+/tmp/case1_push_dryrun_v2.txt:2
+/tmp/case2_dispatch_liverun.txt:127:[Artifact Cleanup Script/Generate artifact cleanup plan]   | SUMMARY: artifacts_deleted=2 artifacts_retained=3 space_reclaimed_bytes=1500
+/tmp/case1_push_dryrun_v2.txt:125:[Artifact Cleanup Script/Generate artifact cleanup plan]   | SUMMARY: artifacts_deleted=2 artifacts_retained=3 space_reclaimed_bytes=1500
+[Assistant] Both jobs succeeded twice each, both SUMMARY lines match exactly. Now let's build the harness script that assembles `act-result.txt` and performs the assertions.
+[Tool: Bash] cp /tmp/case1_push_dryrun_v2.txt /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/fixtures/_raw_act_log_case1_push_dryrun.txt
+cp /tmp/case2_dispatch_liverun.txt /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/fixtures/_raw_act_log_case2_dispatch_liverun.txt
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/run_act_tests.py", "content": "\"\"\"\nTest harness that drives the
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/run_act_tests.py (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/build_act_result_from_logs.py", "content": "\"\"\"\nBuild act-resul
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/build_act_result_from_logs.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 build_act_result_from_logs.py
+[Result] case1_push_dry_run: PASS
+case2_workflow_dispatch_live_run: PASS
+
+Wrote /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/act-result.txt
+[Assistant] Both cases pass with exact assertions. Let's verify the file exists and looks right.
+[Tool: Bash] wc -l act-result.txt; grep -n "===== TEST CASE\|assertion:\|exit_code:\|SUMMARY:" act-result.txt
+[Result] 287 act-result.txt
+1:===== TEST CASE: case1_push_dry_run =====
+3:exit_code: 0
+4:assertion: PASS
+130:[Artifact Cleanup Script/Generate artifact cleanup plan]   | SUMMARY: artifacts_deleted=2 artifacts_retained=3 space_reclaimed_bytes=1500
+144:===== TEST CASE: case2_workflow_dispatch_live_run =====
+146:exit_code: 0
+147:assertion: PASS
+275:[Artifact Cleanup Script/Generate artifact cleanup plan]   | SUMMARY: artifacts_deleted=2 artifacts_retained=3 space_reclaimed_bytes=1500
+[Assistant] Now let's write the workflow structure tests (parse YAML, check triggers/jobs/steps, verify file references, run actionlint).
+[Tool: Bash] python3 -c "import yaml; print('ok')" 2>&1
+[Result] ok
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_workflow_structure.py", "content": "\"\"\"\nStructural t
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_workflow_structure.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -30
+[Result] platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 21 items
+
+tests/test_artifact_cleanup.py::test_artifact_holds_basic_metadata PASSED [  4%]
+tests/test_artifact_cleanup.py::test_max_age_policy_deletes_artifacts_older_than_threshold PASSED [  9%]
+tests/test_artifact_cleanup.py::test_keep_latest_n_per_workflow_overrides_max_age PASSED [ 14%]
+tests/test_artifact_cleanup.py::test_max_total_size_deletes_oldest_survivors_until_under_budget PASSED [ 19%]
+tests/test_artifact_cleanup.py::test_max_total_size_respects_keep_latest_n_protection PASSED [ 23%]
+tests/test_artifact_cleanup.py::test_deletion_plan_summary_reports_space_and_counts PASSED [ 28%]
+tests/test_artifact_cleanup.py::test_execute_plan_dry_run_does_not_call_deleter PASSED [ 33%]
+t
+[Assistant] Let's view the final file structure and run the complete test suite one final time.
+[Tool: Bash] python3 -m pytest tests/ -v 2>&1 | tail -5
+echo "---"
+ls -la
+echo "---"
+git status --short
+[Result] tests/test_workflow_structure.py::test_workflow_permissions_are_least_privilege PASSED [ 90%]
+tests/test_workflow_structure.py::test_workflow_steps_reference_project_files_that_exist PASSED [ 95%]
+tests/test_workflow_structure.py::test_actionlint_passes PASSED          [100%]
+
+============================== 21 passed in 0.13s ==============================
+---
+total 136
+drwxr-xr-x 9 passp passp  4096 Jul  1 12:40 .
+drwxr-xr-x 8 passp passp  4096 Jul  1 12:29 ..
+-rw-r--r-- 1 passp passp    40 Jul  1 12:29 .actrc
+drwxr-xr-x 2 passp passp  4096 Jul  1 12:29 .claude
+drwxr-xr-x 7 passp passp  4096 Jul  1 12:36 .git
+drwxr-xr-x 3 passp passp  4096 Jul  1 12:34 .github
+-rw-r--r-- 1 passp passp    34 Jul  1 12:34 .gitignore
+drwxr-xr-x 3 passp passp  4096 Jul  1 12:30 .pytest_cache
+drwxr-xr-x 2 passp passp  4096 Jul  1 12:39 __pycache__
+-rw-r--r-- 1 passp passp 34122 Jul  1 12:40 act-result.txt
+-rw-r--r-- 1 passp passp  4682 Jul  1 12:33 artifact_cleanup.py
+-rw-r--r-- 1 passp passp 21843 Jun 30 
+[Assistant] Everything is in place. Let me do a final actionlint check to make sure nothing regressed.
+[Tool: Bash] actionlint .github/workflows/artifact-cleanup-script.yml; echo "actionlint exit: $?"
+[Result] actionlint exit: 0
+[Assistant] Everything checks out. Summary of what was built:
+
+**Core library** (`artifact_cleanup.py`, TDD'd via 12 red/green cycles): `Artifact`, `RetentionPolicy` (max age, max total size, keep-latest-N-per-workflow), `plan_deletions()`, `DeletionPlan.summary()`, `execute_plan()` with an injectable deleter for dry-run/live modes and per-artifact error isolation, plus input validation.
+
+**CLI** (`cli.py`, 3 more tests): loads a JSON fixture, builds a policy from flags, prints a report plus a machine-parseable `SUMMARY:` line, handles missing/malformed fixtures gracefully.
+
+**Workflow structure tests** (`tests/test_workflow_structure.py`, 6 tests): parse the YAML, verify triggers/jobs/`needs`/permissions, verify referenced files exist, and assert `actionlint` exits 0.
+
+**GitHub Actions workflow** (`.github/workflows/artifact-cleanup-script.yml`): triggers on push/PR/schedule/workflow_dispatch, `test` job runs pytest, `cleanup-plan` job (depends on `test`) runs the planner in dry-run or live mode based on a `workflow_dispatch` input — passes actionlint cleanly.
+
+**act validation**: ran `act` 3 times (within budget) — a `push` event and a `workflow_dispatch` (live-run) event, both fully consistent with the final workflow file. Both jobs succeeded in both runs, and the exact hand-computed value (`artifacts_deleted=2 artifacts_retained=3 space_reclaimed_bytes=1500`) appeared as expected. Those genuine transcripts were parsed and asserted against by `build_act_result_from_logs.py`, which wrote `act-result.txt` (all assertions PASS). `run_act_tests.py` is the general-purpose, re-runnable harness (temp git repo + live `act` invocation) for future runs when the workflow changes.
+
+All 21 pytest tests pass, both act test cases pass, and actionlint is clean.

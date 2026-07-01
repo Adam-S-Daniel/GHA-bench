@@ -1,0 +1,76 @@
+name: Artifact Cleanup Script
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: read
+
+env:
+  # Reference "now" used by all cleanup-plan test cases below, so the exact
+  # deletion/retention numbers are reproducible regardless of when this
+  # workflow actually runs.
+  CLEANUP_REFERENCE_NOW: '2026-07-01T00:00:00Z'
+
+jobs:
+  unit-tests:
+    name: Run Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester 5+ is available
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [version]'5.0.0' })) {
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+
+      - name: Run ArtifactCleanup module tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./ArtifactCleanup.Tests.ps1 -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "Pester reported $($result.FailedCount) failing test(s) in ArtifactCleanup.Tests.ps1"
+          }
+          Write-Output "PESTER_ARTIFACT_TESTS_PASSED=$($result.PassedCount)"
+
+      - name: Run workflow structure tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./WorkflowStructure.Tests.ps1 -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "Pester reported $($result.FailedCount) failing test(s) in WorkflowStructure.Tests.ps1"
+          }
+          Write-Output "PESTER_WORKFLOW_TESTS_PASSED=$($result.PassedCount)"
+
+  cleanup-plan:
+    name: Run cleanup plan against fixtures
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test case - basic mixed policies
+        shell: pwsh
+        run: |
+          Write-Output '=== TESTCASE basic ==='
+          ./Invoke-ArtifactCleanup.ps1 -ArtifactsPath ./fixtures/artifacts-basic.json -MaxAgeDays 30 -MaxTotalSizeBytes 3500000 -KeepLatestN 2 -Now $env:CLEANUP_REFERENCE_NOW
+
+      - name: Test case - dry run
+        shell: pwsh
+        run: |
+          Write-Output '=== TESTCASE dryrun ==='
+          ./Invoke-ArtifactCleanup.ps1 -ArtifactsPath ./fixtures/artifacts-basic.json -MaxAgeDays 30 -MaxTotalSizeBytes 3500000 -KeepLatestN 2 -Now $env:CLEANUP_REFERENCE_NOW -DryRun
+
+      - name: Test case - keep latest N only
+        shell: pwsh
+        run: |
+          Write-Output '=== TESTCASE keeplatest ==='
+          ./Invoke-ArtifactCleanup.ps1 -ArtifactsPath ./fixtures/artifacts-keeplatest.json -MaxAgeDays 0 -MaxTotalSizeBytes 0 -KeepLatestN 1 -Now $env:CLEANUP_REFERENCE_NOW

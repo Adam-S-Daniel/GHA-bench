@@ -1,0 +1,55 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  VERSION_FILE: VERSION
+  COMMIT_LOG_FILE: fixtures/commits.txt
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  test:
+    name: Run Pester tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Pester test suite
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./tests/VersionBumper.Tests.ps1 -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) Pester test(s) failed"
+          }
+
+  bump-version:
+    name: Determine and apply the next semantic version
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bump version from commit log
+        id: bump
+        shell: pwsh
+        run: |
+          ./Invoke-VersionBump.ps1 -VersionFilePath $env:VERSION_FILE -CommitLogPath $env:COMMIT_LOG_FILE -ChangelogPath $env:CHANGELOG_FILE
+
+      - name: Show computed version
+        shell: pwsh
+        run: |
+          Write-Output "Previous version: ${{ steps.bump.outputs.previous_version }}"
+          Write-Output "New version: ${{ steps.bump.outputs.new_version }}"
+          Write-Output "Bump type: ${{ steps.bump.outputs.bump_type }}"

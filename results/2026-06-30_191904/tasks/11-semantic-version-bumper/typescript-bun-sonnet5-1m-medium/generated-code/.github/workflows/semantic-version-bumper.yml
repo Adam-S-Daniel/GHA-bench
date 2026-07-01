@@ -1,0 +1,69 @@
+name: Semantic Version Bumper
+
+# Runs on pushes/PRs to validate the bumper logic, and can also be triggered
+# manually to bump the real project version from the current commit log.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  BUMP_DATE: "2026-07-01"
+
+jobs:
+  test-and-bump:
+    name: Unit tests + fixture-driven version bumps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit tests
+        run: bun test
+
+      - name: Prepare scratch workspace
+        run: mkdir -p scratch
+
+      - name: Bump version - feat commit (expect minor bump)
+        run: |
+          cp fixtures/package-versions/feat-only.json scratch/package.json
+          bun run src/index.ts fixtures/commits/feat-only.txt scratch/package.json scratch/CHANGELOG.md
+          echo "RESULT[feat-only]=$(bun -e "console.log(JSON.parse(require('fs').readFileSync('scratch/package.json','utf-8')).version)")"
+
+      - name: Bump version - fix commit (expect patch bump)
+        run: |
+          cp fixtures/package-versions/fix-only.json scratch/package.json
+          bun run src/index.ts fixtures/commits/fix-only.txt scratch/package.json scratch/CHANGELOG.md
+          echo "RESULT[fix-only]=$(bun -e "console.log(JSON.parse(require('fs').readFileSync('scratch/package.json','utf-8')).version)")"
+
+      - name: Bump version - breaking change (expect major bump)
+        run: |
+          cp fixtures/package-versions/breaking-change.json scratch/package.json
+          bun run src/index.ts fixtures/commits/breaking-change.txt scratch/package.json scratch/CHANGELOG.md
+          echo "RESULT[breaking-change]=$(bun -e "console.log(JSON.parse(require('fs').readFileSync('scratch/package.json','utf-8')).version)")"
+
+      - name: Bump version - mixed feat+fix (expect minor to win over patch)
+        run: |
+          cp fixtures/package-versions/mixed-feat-fix.json scratch/package.json
+          bun run src/index.ts fixtures/commits/mixed-feat-fix.txt scratch/package.json scratch/CHANGELOG.md
+          echo "RESULT[mixed-feat-fix]=$(bun -e "console.log(JSON.parse(require('fs').readFileSync('scratch/package.json','utf-8')).version)")"
+
+      - name: Bump version - no relevant changes (expect no bump)
+        run: |
+          cp fixtures/package-versions/no-relevant-changes.json scratch/package.json
+          bun run src/index.ts fixtures/commits/no-relevant-changes.txt scratch/package.json scratch/CHANGELOG.md
+          echo "RESULT[no-relevant-changes]=$(bun -e "console.log(JSON.parse(require('fs').readFileSync('scratch/package.json','utf-8')).version)")"
+
+      - name: Show generated changelog for the last case
+        run: cat scratch/CHANGELOG.md

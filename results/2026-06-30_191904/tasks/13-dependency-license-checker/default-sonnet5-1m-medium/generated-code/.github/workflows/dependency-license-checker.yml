@@ -1,0 +1,65 @@
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  unit-tests:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install test dependencies
+        run: pip install pytest
+
+      - name: Run unit tests
+        run: python3 -m pytest tests/ -v
+
+  license-check:
+    name: Generate compliance report
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate text compliance report
+        id: text-report
+        run: |
+          python3 main.py \
+            --manifest fixtures/package.json \
+            --config fixtures/license-config.json \
+            --ecosystem fixture \
+            --license-data fixtures/license-data.json \
+            --format text || echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Generate JSON compliance report
+        run: |
+          python3 main.py \
+            --manifest fixtures/package.json \
+            --config fixtures/license-config.json \
+            --ecosystem fixture \
+            --license-data fixtures/license-data.json \
+            --format json || true
