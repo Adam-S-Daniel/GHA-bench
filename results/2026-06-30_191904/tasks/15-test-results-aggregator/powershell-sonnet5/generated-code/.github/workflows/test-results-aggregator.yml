@@ -1,0 +1,54 @@
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run Pester Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify PowerShell and Pester are available
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [version]'5.0.0' })) {
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+          Import-Module Pester -MinimumVersion 5.0.0
+          Write-Host "Pester version: $((Get-Module Pester).Version)"
+
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = @('Tests/TestResultsAggregator.Tests.ps1', 'Tests/Aggregate-TestResults.Tests.ps1')
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  aggregate:
+    name: Aggregate Matrix Test Results
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      RESULTS_PATH: fixtures/ci-run
+      SUMMARY_OUTPUT_PATH: aggregate-summary.md
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Aggregate test results across matrix legs
+        shell: pwsh
+        run: |
+          ./Aggregate-TestResults.ps1 -Path $env:RESULTS_PATH -OutputPath $env:SUMMARY_OUTPUT_PATH
