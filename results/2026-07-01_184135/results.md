@@ -1,12 +1,13 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-01 06:52:33 PM ET — 1/28 runs completed, 27 remaining; total cost $4.21; total agent time 9.1 min.
-**Claude Code versions used:** v2.1.198 (1 run). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
+**Last updated:** 2026-07-01 07:10:39 PM ET — 2/28 runs completed, 26 remaining; total cost $8.86; total agent time 28.1 min.
+**Claude Code versions used:** v2.1.198 (2 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
 
 - [Scoring](#scoring)
   - [Duration columns](#duration-columns)
+- [Tiers by Language/Model/Effort](#tiers-by-languagemodeleffort)
 - [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort)
 - [Savings Analysis](#savings-analysis)
   - [Hook Savings by Language/Model/Effort](#hook-savings-by-languagemodeleffort)
@@ -17,6 +18,7 @@
   - [Structural Metrics by Language/Model/Effort](#structural-metrics-by-languagemodeleffort)
 - [Per-Run Results](#per-run-results)
 - [Notes](#notes)
+  - [Tiers](#tiers)
   - [CLI Version Legend](#cli-version-legend)
 
 ## Scoring
@@ -55,12 +57,66 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 - **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.
 - **Avg Duration Net of Traps** (in the Comparison table only): mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
 - The **Tier table's Duration column** shows the tier letter (A+..F) for the combo's gross **Avg Duration** ratio. Net of Traps does not feed the tier band.
+## Tiers by Language/Model/Effort
+
+*Default sort: weighted composite of tiers (40% Tests, 25% Workflow Craft, 35% split between Duration & Cost). See [Notes](#notes) for tier-band definitions and scoring rubric.*
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| default | fable5-medium | A+ (9.1min) | A+ ($4.21) | — | — |
+| powershell | fable5-medium | D- (19.0min) | D- ($4.65) | — | — |
+
+
+<details>
+<summary>Sorted by Duration tier (best-first), then avg of Cost/Tests/Workflow Craft tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| default | fable5-medium | A+ (9.1min) | A+ ($4.21) | — | — |
+| powershell | fable5-medium | D- (19.0min) | D- ($4.65) | — | — |
+
+</details>
+
+<details>
+<summary>Sorted by Cost tier (best-first), then avg of Duration/Tests/Workflow Craft tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| default | fable5-medium | A+ (9.1min) | A+ ($4.21) | — | — |
+| powershell | fable5-medium | D- (19.0min) | D- ($4.65) | — | — |
+
+</details>
+
+<details>
+<summary>Sorted by Tests Quality tier (best-first; no-data last), then avg of other tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| default | fable5-medium | A+ (9.1min) | A+ ($4.21) | — | — |
+| powershell | fable5-medium | D- (19.0min) | D- ($4.65) | — | — |
+
+</details>
+
+<details>
+<summary>Sorted by Workflow Craft tier (best-first; no-data last), then avg of other tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| default | fable5-medium | A+ (9.1min) | A+ ($4.21) | — | — |
+| powershell | fable5-medium | D- (19.0min) | D- ($4.65) | — | — |
+
+</details>
+
+- **Estimated time remaining:** 365.3min
+- **Estimated total cost:** $124.05
+
 ## Comparison by Language/Model/Effort
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | fable5-medium | 1 | 9.1min | 8.3min | 2.0 | 35 | $4.21 | $4.21 | — | — |
+| powershell | fable5-medium | 1 | 19.0min | 19.0min | 4.0 | 36 | $4.65 | $4.65 | — | — |
 
 
 <details>
@@ -69,6 +125,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | fable5-medium | 1 | 9.1min | 8.3min | 2.0 | 35 | $4.21 | $4.21 | — | — |
+| powershell | fable5-medium | 1 | 19.0min | 19.0min | 4.0 | 36 | $4.65 | $4.65 | — | — |
 
 </details>
 
@@ -78,6 +135,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | fable5-medium | 1 | 9.1min | 8.3min | 2.0 | 35 | $4.21 | $4.21 | — | — |
+| powershell | fable5-medium | 1 | 19.0min | 19.0min | 4.0 | 36 | $4.65 | $4.65 | — | — |
 
 </details>
 
@@ -87,6 +145,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | fable5-medium | 1 | 9.1min | 8.3min | 2.0 | 35 | $4.21 | $4.21 | — | — |
+| powershell | fable5-medium | 1 | 19.0min | 19.0min | 4.0 | 36 | $4.65 | $4.65 | — | — |
 
 </details>
 
@@ -96,6 +155,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | fable5-medium | 1 | 9.1min | 8.3min | 2.0 | 35 | $4.21 | $4.21 | — | — |
+| powershell | fable5-medium | 1 | 19.0min | 19.0min | 4.0 | 36 | $4.65 | $4.65 | — | — |
 
 </details>
 
@@ -105,6 +165,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | fable5-medium | 1 | 9.1min | 8.3min | 2.0 | 35 | $4.21 | $4.21 | — | — |
+| powershell | fable5-medium | 1 | 19.0min | 19.0min | 4.0 | 36 | $4.65 | $4.65 | — | — |
 
 </details>
 
@@ -114,6 +175,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | fable5-medium | 1 | 9.1min | 8.3min | 2.0 | 35 | $4.21 | $4.21 | — | — |
+| powershell | fable5-medium | 1 | 19.0min | 19.0min | 4.0 | 36 | $4.65 | $4.65 | — | — |
 
 </details>
 
@@ -123,6 +185,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | fable5-medium | 1 | 9.1min | 8.3min | 2.0 | 35 | $4.21 | $4.21 | — | — |
+| powershell | fable5-medium | 1 | 19.0min | 19.0min | 4.0 | 36 | $4.65 | $4.65 | — | — |
 
 </details>
 
@@ -137,7 +200,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| default | fable5-medium-cli2.1.198 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.1% | -0.0min | -0.1% | 1.5min | -0.8% |
+| default | fable5-medium-cli2.1.198 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 1.5min | -0.8% |
+| powershell | fable5-medium-cli2.1.198 | 20 | 4 | 20.0% | 2.3min | 8.3% | 2.6min | 9.2% | -0.3min | -0.9% | 0.0min | 100.0% |
 
 
 <details>
@@ -145,7 +209,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| default | fable5-medium-cli2.1.198 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.1% | -0.0min | -0.1% | 1.5min | -0.8% |
+| default | fable5-medium-cli2.1.198 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 1.5min | -0.8% |
+| powershell | fable5-medium-cli2.1.198 | 20 | 4 | 20.0% | 2.3min | 8.3% | 2.6min | 9.2% | -0.3min | -0.9% | 0.0min | 100.0% |
 
 </details>
 
@@ -154,7 +219,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| default | fable5-medium-cli2.1.198 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.1% | -0.0min | -0.1% | 1.5min | -0.8% |
+| powershell | fable5-medium-cli2.1.198 | 20 | 4 | 20.0% | 2.3min | 8.3% | 2.6min | 9.2% | -0.3min | -0.9% | 0.0min | 100.0% |
+| default | fable5-medium-cli2.1.198 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 1.5min | -0.8% |
 
 </details>
 
@@ -163,7 +229,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| default | fable5-medium-cli2.1.198 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.1% | -0.0min | -0.1% | 1.5min | -0.8% |
+| powershell | fable5-medium-cli2.1.198 | 20 | 4 | 20.0% | 2.3min | 8.3% | 2.6min | 9.2% | -0.3min | -0.9% | 0.0min | 100.0% |
+| default | fable5-medium-cli2.1.198 | 17 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 1.5min | -0.8% |
 
 </details>
 
@@ -171,7 +238,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 8.3% | $0.35 | 8.28% |
+| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 2.7% | $0.35 | 3.94% |
 
 
 <details>
@@ -179,7 +246,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 8.3% | $0.35 | 8.28% |
+| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 2.7% | $0.35 | 3.94% |
 
 </details>
 
@@ -188,7 +255,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 8.3% | $0.35 | 8.28% |
+| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 2.7% | $0.35 | 3.94% |
 
 </details>
 
@@ -197,7 +264,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 8.3% | $0.35 | 8.28% |
+| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 2.7% | $0.35 | 3.94% |
 
 </details>
 
@@ -218,7 +285,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| default | fable5-medium-cli2.1.198 | 1 | 1 | 0.8min | 8.3% | $0.35 | 8.28% |
+| default | fable5-medium-cli2.1.198 | 1 | 1 | 0.8min | 2.7% | $0.35 | 3.94% |
+| powershell | fable5-medium-cli2.1.198 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 
 
 <details>
@@ -226,7 +294,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| default | fable5-medium-cli2.1.198 | 1 | 1 | 0.8min | 8.3% | $0.35 | 8.28% |
+| powershell | fable5-medium-cli2.1.198 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
+| default | fable5-medium-cli2.1.198 | 1 | 1 | 0.8min | 2.7% | $0.35 | 3.94% |
 
 </details>
 
@@ -235,7 +304,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| default | fable5-medium-cli2.1.198 | 1 | 1 | 0.8min | 8.3% | $0.35 | 8.28% |
+| powershell | fable5-medium-cli2.1.198 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
+| default | fable5-medium-cli2.1.198 | 1 | 1 | 0.8min | 2.7% | $0.35 | 3.94% |
 
 </details>
 
@@ -244,7 +314,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | Status | Runs | $ Saved | % of $ |
 |--------|------|---------|--------|
 | Full hit (100%) | 0 | $0.00 | 0.00% |
-| Partial | 0 | $0.00 | 0.00% |
+| Partial | 1 | $0.21 | 2.38% |
 | Miss | 1 | $0.00 | 0.00% |
 
 ## Test Quality Evaluation
@@ -256,6 +326,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
 | default | fable5-medium | 0.0 | 0.0 | 0.0 | 0.00 |
+| powershell | fable5-medium | 43.0 | 79.0 | 1.8 | 10.47 |
 
 
 <details>
@@ -263,6 +334,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| powershell | fable5-medium | 43.0 | 79.0 | 1.8 | 10.47 |
 | default | fable5-medium | 0.0 | 0.0 | 0.0 | 0.00 |
 
 </details>
@@ -272,6 +344,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| powershell | fable5-medium | 43.0 | 79.0 | 1.8 | 10.47 |
 | default | fable5-medium | 0.0 | 0.0 | 0.0 | 0.00 |
 
 </details>
@@ -281,6 +354,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| powershell | fable5-medium | 43.0 | 79.0 | 1.8 | 10.47 |
 | default | fable5-medium | 0.0 | 0.0 | 0.0 | 0.00 |
 
 </details>
@@ -292,6 +366,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Tests | Assertions | Assert/Test | Test Lines | Impl Lines | Test:Code |
 |------|------|-------|-------|------------|-------------|------------|------------|-----------|
 | Semantic Version Bumper | default | fable5-medium | 0 | 0 | 0.0 | 95 | 0 | 0.00 |
+| Semantic Version Bumper | powershell | fable5-medium | 43 | 79 | 1.8 | 471 | 45 | 10.47 |
 
 </details>
 
@@ -302,6 +377,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | default | fable5-medium | 9.1min | 35 | 2 | $4.21 | — | javascript | ok |
+| Semantic Version Bumper | powershell | fable5-medium | 19.0min | 36 | 4 | $4.65 | — | powershell | ok |
 
 
 <details>
@@ -310,6 +386,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | default | fable5-medium | 9.1min | 35 | 2 | $4.21 | — | javascript | ok |
+| Semantic Version Bumper | powershell | fable5-medium | 19.0min | 36 | 4 | $4.65 | — | powershell | ok |
 
 </details>
 
@@ -319,6 +396,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | default | fable5-medium | 9.1min | 35 | 2 | $4.21 | — | javascript | ok |
+| Semantic Version Bumper | powershell | fable5-medium | 19.0min | 36 | 4 | $4.65 | — | powershell | ok |
 
 </details>
 
@@ -328,6 +406,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | default | fable5-medium | 9.1min | 35 | 2 | $4.21 | — | javascript | ok |
+| Semantic Version Bumper | powershell | fable5-medium | 19.0min | 36 | 4 | $4.65 | — | powershell | ok |
 
 </details>
 
@@ -337,6 +416,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | default | fable5-medium | 9.1min | 35 | 2 | $4.21 | — | javascript | ok |
+| Semantic Version Bumper | powershell | fable5-medium | 19.0min | 36 | 4 | $4.65 | — | powershell | ok |
 
 </details>
 
@@ -346,10 +426,18 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | default | fable5-medium | 9.1min | 35 | 2 | $4.21 | — | javascript | ok |
+| Semantic Version Bumper | powershell | fable5-medium | 19.0min | 36 | 4 | $4.65 | — | powershell | ok |
 
 </details>
 
 ## Notes
+
+### Tiers
+
+- **Duration bands:** **A+** ≤1.06×, **A** ≤1.13×, **A-** ≤1.20×, **B+** ≤1.28×, **B** ≤1.36×, **B-** ≤1.45×, **C+** ≤1.54×, **C** ≤1.64×, **C-** ≤1.75×, **D+** ≤1.86×, **D** ≤1.98×, **D-** ≤2.10×, **F** >2.10×
+- **Cost bands:** **A+** ≤1.01×, **A** ≤1.02×, **A-** ≤1.02×, **B+** ≤1.03×, **B** ≤1.04×, **B-** ≤1.05×, **C+** ≤1.06×, **C** ≤1.07×, **C-** ≤1.08×, **D+** ≤1.08×, **D** ≤1.09×, **D-** ≤1.10×, **F** >1.10×
+
+*Tests/Workflow Craft bands are absolute Overall score bands:* **A+** ≥4.7, **A** ≥4.4, **A-** ≥4.1, **B+** ≥3.8, **B** ≥3.5, **B-** ≥3.2, **C+** ≥2.9, **C** ≥2.6, **C-** ≥2.3, **D+** ≥2.0, **D** ≥1.7, **D-** ≥1.4, **F** <1.4, `—` = no data.*
 
 ### CLI Version Legend
 
