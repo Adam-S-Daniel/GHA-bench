@@ -1,7 +1,7 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-01 05:55:20 PM ET — 95/100 runs completed, 5 remaining; total cost $249.52; total agent time 1343.8 min.
-**Claude Code versions used:** v2.1.197 (89 runs), v2.1.198 (6 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
+**Last updated:** 2026-07-01 06:05:55 PM ET — 96/100 runs completed, 4 remaining; total cost $250.82; total agent time 1353.1 min.
+**Claude Code versions used:** v2.1.197 (89 runs), v2.1.198 (7 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
 
@@ -69,8 +69,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | sonnet5-low | B+ (8.8min) | A+ ($0.77) | — | — |
 | powershell | sonnet5-low | A- (7.6min) | A- ($1.11) | — | — |
 | powershell-tool | sonnet5-low | B (9.4min) | A- ($1.26) | — | — |
-| typescript-bun | sonnet5-low | A- (8.2min) | B ($1.56) | — | — |
 | default | sonnet5-1m-medium | A- (8.2min) | B- ($2.06) | — | — |
+| typescript-bun | sonnet5-low | B+ (8.3min) | B ($1.52) | — | — |
 | powershell | sonnet5-1m-medium | C+ (12.4min) | C+ ($2.16) | — | — |
 | bash | sonnet5-1m-medium* | C+ (12.3min) | C ($2.86) | — | — |
 | typescript-bun | sonnet5-1m-medium | C+ (13.0min) | C ($2.68) | — | — |
@@ -89,9 +89,9 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|----------|------|-----------|-------------|
 | default | sonnet5-low | A+ (5.9min) | A- ($1.07) | — | — |
 | powershell | sonnet5-low | A- (7.6min) | A- ($1.11) | — | — |
-| typescript-bun | sonnet5-low | A- (8.2min) | B ($1.56) | — | — |
 | default | sonnet5-1m-medium | A- (8.2min) | B- ($2.06) | — | — |
 | bash | sonnet5-low | B+ (8.8min) | A+ ($0.77) | — | — |
+| typescript-bun | sonnet5-low | B+ (8.3min) | B ($1.52) | — | — |
 | powershell-tool | sonnet5-low | B (9.4min) | A- ($1.26) | — | — |
 | powershell | sonnet5-1m-medium | C+ (12.4min) | C+ ($2.16) | — | — |
 | bash | sonnet5-1m-medium* | C+ (12.3min) | C ($2.86) | — | — |
@@ -114,7 +114,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | sonnet5-low | A+ (5.9min) | A- ($1.07) | — | — |
 | powershell | sonnet5-low | A- (7.6min) | A- ($1.11) | — | — |
 | powershell-tool | sonnet5-low | B (9.4min) | A- ($1.26) | — | — |
-| typescript-bun | sonnet5-low | A- (8.2min) | B ($1.56) | — | — |
+| typescript-bun | sonnet5-low | B+ (8.3min) | B ($1.52) | — | — |
 | default | sonnet5-1m-medium | A- (8.2min) | B- ($2.06) | — | — |
 | powershell | sonnet5-1m-medium | C+ (12.4min) | C+ ($2.16) | — | — |
 | bash | sonnet5-1m-medium* | C+ (12.3min) | C ($2.86) | — | — |
@@ -137,8 +137,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | sonnet5-low | B+ (8.8min) | A+ ($0.77) | — | — |
 | powershell | sonnet5-low | A- (7.6min) | A- ($1.11) | — | — |
 | powershell-tool | sonnet5-low | B (9.4min) | A- ($1.26) | — | — |
-| typescript-bun | sonnet5-low | A- (8.2min) | B ($1.56) | — | — |
 | default | sonnet5-1m-medium | A- (8.2min) | B- ($2.06) | — | — |
+| typescript-bun | sonnet5-low | B+ (8.3min) | B ($1.52) | — | — |
 | powershell | sonnet5-1m-medium | C+ (12.4min) | C+ ($2.16) | — | — |
 | bash | sonnet5-1m-medium* | C+ (12.3min) | C ($2.86) | — | — |
 | typescript-bun | sonnet5-1m-medium | C+ (13.0min) | C ($2.68) | — | — |
@@ -160,8 +160,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | sonnet5-low | B+ (8.8min) | A+ ($0.77) | — | — |
 | powershell | sonnet5-low | A- (7.6min) | A- ($1.11) | — | — |
 | powershell-tool | sonnet5-low | B (9.4min) | A- ($1.26) | — | — |
-| typescript-bun | sonnet5-low | A- (8.2min) | B ($1.56) | — | — |
 | default | sonnet5-1m-medium | A- (8.2min) | B- ($2.06) | — | — |
+| typescript-bun | sonnet5-low | B+ (8.3min) | B ($1.52) | — | — |
 | powershell | sonnet5-1m-medium | C+ (12.4min) | C+ ($2.16) | — | — |
 | bash | sonnet5-1m-medium* | C+ (12.3min) | C ($2.86) | — | — |
 | typescript-bun | sonnet5-1m-medium | C+ (13.0min) | C ($2.68) | — | — |
@@ -174,8 +174,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 </details>
 
-- **Estimated time remaining:** 1089.2min
-- **Estimated total cost:** $262.65
+- **Estimated time remaining:** 1071.2min
+- **Estimated total cost:** $261.27
 
 ## Failed / Timed-Out Runs
 
@@ -211,7 +211,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | sonnet5-low | 2 | 9.4min | 8.0min | 1.5 | 40 | $1.26 | $2.52 | — | — |
 | typescript-bun | sonnet5-1m-medium | 7 | 13.0min | 7.1min | 1.4 | 84 | $2.68 | $18.75 | — | — |
 | typescript-bun | sonnet5 | 7 | 21.3min | 15.0min | 3.6 | 125 | $5.71 | $39.95 | — | — |
-| typescript-bun | sonnet5-low | 5 | 8.2min | 8.2min | 1.2 | 49 | $1.56 | $7.82 | — | — |
+| typescript-bun | sonnet5-low | 6 | 8.3min | 8.3min | 1.0 | 48 | $1.52 | $9.12 | — | — |
 
 
 <details>
@@ -223,7 +223,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | sonnet5-low | 6 | 5.9min | 5.9min | 0.3 | 33 | $1.07 | $6.43 | — | — |
 | powershell | sonnet5-low | 6 | 7.6min | 7.6min | 0.2 | 31 | $1.11 | $6.66 | — | — |
 | powershell-tool | sonnet5-low | 2 | 9.4min | 8.0min | 1.5 | 40 | $1.26 | $2.52 | — | — |
-| typescript-bun | sonnet5-low | 5 | 8.2min | 8.2min | 1.2 | 49 | $1.56 | $7.82 | — | — |
+| typescript-bun | sonnet5-low | 6 | 8.3min | 8.3min | 1.0 | 48 | $1.52 | $9.12 | — | — |
 | default | sonnet5-1m-medium | 7 | 8.2min | 6.5min | 1.3 | 59 | $2.06 | $14.44 | — | — |
 | powershell | sonnet5-1m-medium | 7 | 12.4min | 11.1min | 0.6 | 56 | $2.16 | $15.11 | — | — |
 | powershell-tool | sonnet5-1m-medium | 7 | 14.1min | 12.0min | 0.4 | 58 | $2.53 | $17.73 | — | — |
@@ -244,8 +244,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | sonnet5-low | 6 | 5.9min | 5.9min | 0.3 | 33 | $1.07 | $6.43 | — | — |
 | powershell | sonnet5-low | 6 | 7.6min | 7.6min | 0.2 | 31 | $1.11 | $6.66 | — | — |
-| typescript-bun | sonnet5-low | 5 | 8.2min | 8.2min | 1.2 | 49 | $1.56 | $7.82 | — | — |
 | default | sonnet5-1m-medium | 7 | 8.2min | 6.5min | 1.3 | 59 | $2.06 | $14.44 | — | — |
+| typescript-bun | sonnet5-low | 6 | 8.3min | 8.3min | 1.0 | 48 | $1.52 | $9.12 | — | — |
 | bash | sonnet5-low | 6 | 8.8min | 8.8min | 2.7 | 25 | $0.77 | $4.59 | — | — |
 | powershell-tool | sonnet5-low | 2 | 9.4min | 8.0min | 1.5 | 40 | $1.26 | $2.52 | — | — |
 | bash | sonnet5-1m-medium* | 6 | 12.3min | 8.5min | 3.3 | 76 | $2.86 | $17.14 | — | — |
@@ -270,7 +270,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | typescript-bun | sonnet5-1m-medium | 7 | 13.0min | 7.1min | 1.4 | 84 | $2.68 | $18.75 | — | — |
 | powershell | sonnet5-low | 6 | 7.6min | 7.6min | 0.2 | 31 | $1.11 | $6.66 | — | — |
 | powershell-tool | sonnet5-low | 2 | 9.4min | 8.0min | 1.5 | 40 | $1.26 | $2.52 | — | — |
-| typescript-bun | sonnet5-low | 5 | 8.2min | 8.2min | 1.2 | 49 | $1.56 | $7.82 | — | — |
+| typescript-bun | sonnet5-low | 6 | 8.3min | 8.3min | 1.0 | 48 | $1.52 | $9.12 | — | — |
 | bash | sonnet5-1m-medium* | 6 | 12.3min | 8.5min | 3.3 | 76 | $2.86 | $17.14 | — | — |
 | bash | sonnet5-low | 6 | 8.8min | 8.8min | 2.7 | 25 | $0.77 | $4.59 | — | — |
 | powershell | sonnet5* | 3 | 23.2min | 10.6min | 1.0 | 94 | $4.89 | $14.67 | — | — |
@@ -294,8 +294,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | sonnet5-1m-medium | 7 | 12.4min | 11.1min | 0.6 | 56 | $2.16 | $15.11 | — | — |
 | default | sonnet5 | 7 | 13.4min | 11.9min | 0.9 | 71 | $3.55 | $24.82 | — | — |
 | powershell | sonnet5* | 3 | 23.2min | 10.6min | 1.0 | 94 | $4.89 | $14.67 | — | — |
+| typescript-bun | sonnet5-low | 6 | 8.3min | 8.3min | 1.0 | 48 | $1.52 | $9.12 | — | — |
 | powershell-tool | sonnet5* | 6 | 22.8min | 19.6min | 1.2 | 86 | $4.55 | $27.30 | — | — |
-| typescript-bun | sonnet5-low | 5 | 8.2min | 8.2min | 1.2 | 49 | $1.56 | $7.82 | — | — |
 | default | sonnet5-1m-medium | 7 | 8.2min | 6.5min | 1.3 | 59 | $2.06 | $14.44 | — | — |
 | typescript-bun | sonnet5-1m-medium | 7 | 13.0min | 7.1min | 1.4 | 84 | $2.68 | $18.75 | — | — |
 | powershell-tool | sonnet5-low | 2 | 9.4min | 8.0min | 1.5 | 40 | $1.26 | $2.52 | — | — |
@@ -315,7 +315,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | sonnet5-low | 6 | 7.6min | 7.6min | 0.2 | 31 | $1.11 | $6.66 | — | — |
 | default | sonnet5-low | 6 | 5.9min | 5.9min | 0.3 | 33 | $1.07 | $6.43 | — | — |
 | powershell-tool | sonnet5-low | 2 | 9.4min | 8.0min | 1.5 | 40 | $1.26 | $2.52 | — | — |
-| typescript-bun | sonnet5-low | 5 | 8.2min | 8.2min | 1.2 | 49 | $1.56 | $7.82 | — | — |
+| typescript-bun | sonnet5-low | 6 | 8.3min | 8.3min | 1.0 | 48 | $1.52 | $9.12 | — | — |
 | powershell | sonnet5-1m-medium | 7 | 12.4min | 11.1min | 0.6 | 56 | $2.16 | $15.11 | — | — |
 | powershell-tool | sonnet5-1m-medium | 7 | 14.1min | 12.0min | 0.4 | 58 | $2.53 | $17.73 | — | — |
 | default | sonnet5-1m-medium | 7 | 8.2min | 6.5min | 1.3 | 59 | $2.06 | $14.44 | — | — |
@@ -348,7 +348,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | sonnet5-low | 2 | 9.4min | 8.0min | 1.5 | 40 | $1.26 | $2.52 | — | — |
 | typescript-bun | sonnet5-1m-medium | 7 | 13.0min | 7.1min | 1.4 | 84 | $2.68 | $18.75 | — | — |
 | typescript-bun | sonnet5 | 7 | 21.3min | 15.0min | 3.6 | 125 | $5.71 | $39.95 | — | — |
-| typescript-bun | sonnet5-low | 5 | 8.2min | 8.2min | 1.2 | 49 | $1.56 | $7.82 | — | — |
+| typescript-bun | sonnet5-low | 6 | 8.3min | 8.3min | 1.0 | 48 | $1.52 | $9.12 | — | — |
 
 </details>
 
@@ -371,7 +371,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | sonnet5-low | 2 | 9.4min | 8.0min | 1.5 | 40 | $1.26 | $2.52 | — | — |
 | typescript-bun | sonnet5-1m-medium | 7 | 13.0min | 7.1min | 1.4 | 84 | $2.68 | $18.75 | — | — |
 | typescript-bun | sonnet5 | 7 | 21.3min | 15.0min | 3.6 | 125 | $5.71 | $39.95 | — | — |
-| typescript-bun | sonnet5-low | 5 | 8.2min | 8.2min | 1.2 | 49 | $1.56 | $7.82 | — | — |
+| typescript-bun | sonnet5-low | 6 | 8.3min | 8.3min | 1.0 | 48 | $1.52 | $9.12 | — | — |
 
 </details>
 
@@ -396,15 +396,15 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | default | sonnet5-low-cli2.1.198 | 12 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 1.1min | -2.4% |
 | powershell | sonnet5-1m-medium-cli2.1.197 | 160 | 37 | 23.1% | 21.6min | 1.6% | 17.7min | 1.3% | 3.9min | 0.3% | 13.5min | 22.3% |
 | powershell | sonnet5-cli2.1.197 | 206 | 35 | 17.0% | 20.4min | 1.5% | 30.5min | 2.3% | -10.1min | -0.7% | 30.5min | -49.3% |
-| powershell | sonnet5-low-cli2.1.197 | 69 | 15 | 21.7% | 8.8min | 0.7% | 6.2min | 0.5% | 2.5min | 0.2% | 8.3min | 23.2% |
+| powershell | sonnet5-low-cli2.1.197 | 69 | 15 | 21.7% | 8.8min | 0.6% | 6.2min | 0.5% | 2.5min | 0.2% | 8.3min | 23.2% |
 | powershell | sonnet5-low-cli2.1.198 | 25 | 5 | 20.0% | 2.9min | 0.2% | 3.3min | 0.2% | -0.4min | -0.0% | 2.1min | -21.9% |
 | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 154 | 31 | 20.1% | 18.1min | 1.3% | 17.3min | 1.3% | 0.8min | 0.1% | 25.2min | 3.1% |
-| powershell-tool | sonnet5-cli2.1.197 | 168 | 27 | 16.1% | 15.8min | 1.2% | 24.9min | 1.9% | -9.1min | -0.7% | 27.4min | -50.1% |
+| powershell-tool | sonnet5-cli2.1.197 | 168 | 27 | 16.1% | 15.8min | 1.2% | 24.9min | 1.8% | -9.1min | -0.7% | 27.4min | -50.1% |
 | powershell-tool | sonnet5-low-cli2.1.197 | 30 | 4 | 13.3% | 2.3min | 0.2% | 3.5min | 0.3% | -1.1min | -0.1% | 5.6min | -25.3% |
 | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 206 | 83 | 40.3% | 11.1min | 0.8% | 13.5min | 1.0% | -2.4min | -0.2% | 7.5min | -48.1% |
 | typescript-bun | sonnet5-cli2.1.197 | 279 | 120 | 43.0% | 16.0min | 1.2% | 19.8min | 1.5% | -3.8min | -0.3% | 14.8min | -34.8% |
 | typescript-bun | sonnet5-low-cli2.1.197 | 73 | 24 | 32.9% | 3.2min | 0.2% | 5.1min | 0.4% | -1.9min | -0.1% | 8.3min | -29.1% |
-| typescript-bun | sonnet5-low-cli2.1.198 | 14 | 7 | 50.0% | 0.9min | 0.1% | 0.7min | 0.0% | 0.3min | 0.0% | 0.0min | 94.5% |
+| typescript-bun | sonnet5-low-cli2.1.198 | 34 | 17 | 50.0% | 2.3min | 0.2% | 2.1min | 0.2% | 0.1min | 0.0% | 0.3min | 36.4% |
 
 
 <details>
@@ -413,13 +413,13 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
 | powershell | sonnet5-1m-medium-cli2.1.197 | 160 | 37 | 23.1% | 21.6min | 1.6% | 17.7min | 1.3% | 3.9min | 0.3% | 13.5min | 22.3% |
-| powershell | sonnet5-low-cli2.1.197 | 69 | 15 | 21.7% | 8.8min | 0.7% | 6.2min | 0.5% | 2.5min | 0.2% | 8.3min | 23.2% |
+| powershell | sonnet5-low-cli2.1.197 | 69 | 15 | 21.7% | 8.8min | 0.6% | 6.2min | 0.5% | 2.5min | 0.2% | 8.3min | 23.2% |
 | bash | sonnet5-cli2.1.197 | 184 | 14 | 7.6% | 2.8min | 0.2% | 0.5min | 0.0% | 2.3min | 0.2% | 22.4min | 9.4% |
 | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 154 | 31 | 20.1% | 18.1min | 1.3% | 17.3min | 1.3% | 0.8min | 0.1% | 25.2min | 3.1% |
 | bash | sonnet5-1m-medium-cli2.1.197 | 162 | 5 | 3.1% | 1.0min | 0.1% | 0.3min | 0.0% | 0.7min | 0.1% | 20.0min | 3.5% |
 | bash | sonnet5-low-cli2.1.198 | 46 | 3 | 6.5% | 0.6min | 0.0% | 0.1min | 0.0% | 0.5min | 0.0% | 2.7min | 15.2% |
-| typescript-bun | sonnet5-low-cli2.1.198 | 14 | 7 | 50.0% | 0.9min | 0.1% | 0.7min | 0.0% | 0.3min | 0.0% | 0.0min | 94.5% |
 | bash | sonnet5-low-cli2.1.197 | 63 | 1 | 1.6% | 0.2min | 0.0% | 0.0min | 0.0% | 0.2min | 0.0% | 17.5min | 0.9% |
+| typescript-bun | sonnet5-low-cli2.1.198 | 34 | 17 | 50.0% | 2.3min | 0.2% | 2.1min | 0.2% | 0.1min | 0.0% | 0.3min | 36.4% |
 | default | sonnet5-low-cli2.1.198 | 12 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 1.1min | -2.4% |
 | default | sonnet5-low-cli2.1.197 | 70 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 4.3min | -3.1% |
 | default | sonnet5-1m-medium-cli2.1.197 | 160 | 6 | 3.8% | 0.8min | 0.1% | 1.2min | 0.1% | -0.4min | -0.0% | 9.6min | -4.0% |
@@ -429,7 +429,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | default | sonnet5-cli2.1.197 | 145 | 4 | 2.8% | 0.5min | 0.0% | 2.7min | 0.2% | -2.2min | -0.2% | 12.6min | -21.0% |
 | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 206 | 83 | 40.3% | 11.1min | 0.8% | 13.5min | 1.0% | -2.4min | -0.2% | 7.5min | -48.1% |
 | typescript-bun | sonnet5-cli2.1.197 | 279 | 120 | 43.0% | 16.0min | 1.2% | 19.8min | 1.5% | -3.8min | -0.3% | 14.8min | -34.8% |
-| powershell-tool | sonnet5-cli2.1.197 | 168 | 27 | 16.1% | 15.8min | 1.2% | 24.9min | 1.9% | -9.1min | -0.7% | 27.4min | -50.1% |
+| powershell-tool | sonnet5-cli2.1.197 | 168 | 27 | 16.1% | 15.8min | 1.2% | 24.9min | 1.8% | -9.1min | -0.7% | 27.4min | -50.1% |
 | powershell | sonnet5-cli2.1.197 | 206 | 35 | 17.0% | 20.4min | 1.5% | 30.5min | 2.3% | -10.1min | -0.7% | 30.5min | -49.3% |
 
 </details>
@@ -439,8 +439,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| typescript-bun | sonnet5-low-cli2.1.198 | 14 | 7 | 50.0% | 0.9min | 0.1% | 0.7min | 0.0% | 0.3min | 0.0% | 0.0min | 94.5% |
-| powershell | sonnet5-low-cli2.1.197 | 69 | 15 | 21.7% | 8.8min | 0.7% | 6.2min | 0.5% | 2.5min | 0.2% | 8.3min | 23.2% |
+| typescript-bun | sonnet5-low-cli2.1.198 | 34 | 17 | 50.0% | 2.3min | 0.2% | 2.1min | 0.2% | 0.1min | 0.0% | 0.3min | 36.4% |
+| powershell | sonnet5-low-cli2.1.197 | 69 | 15 | 21.7% | 8.8min | 0.6% | 6.2min | 0.5% | 2.5min | 0.2% | 8.3min | 23.2% |
 | powershell | sonnet5-1m-medium-cli2.1.197 | 160 | 37 | 23.1% | 21.6min | 1.6% | 17.7min | 1.3% | 3.9min | 0.3% | 13.5min | 22.3% |
 | bash | sonnet5-low-cli2.1.198 | 46 | 3 | 6.5% | 0.6min | 0.0% | 0.1min | 0.0% | 0.5min | 0.0% | 2.7min | 15.2% |
 | bash | sonnet5-cli2.1.197 | 184 | 14 | 7.6% | 2.8min | 0.2% | 0.5min | 0.0% | 2.3min | 0.2% | 22.4min | 9.4% |
@@ -457,7 +457,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | typescript-bun | sonnet5-cli2.1.197 | 279 | 120 | 43.0% | 16.0min | 1.2% | 19.8min | 1.5% | -3.8min | -0.3% | 14.8min | -34.8% |
 | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 206 | 83 | 40.3% | 11.1min | 0.8% | 13.5min | 1.0% | -2.4min | -0.2% | 7.5min | -48.1% |
 | powershell | sonnet5-cli2.1.197 | 206 | 35 | 17.0% | 20.4min | 1.5% | 30.5min | 2.3% | -10.1min | -0.7% | 30.5min | -49.3% |
-| powershell-tool | sonnet5-cli2.1.197 | 168 | 27 | 16.1% | 15.8min | 1.2% | 24.9min | 1.9% | -9.1min | -0.7% | 27.4min | -50.1% |
+| powershell-tool | sonnet5-cli2.1.197 | 168 | 27 | 16.1% | 15.8min | 1.2% | 24.9min | 1.8% | -9.1min | -0.7% | 27.4min | -50.1% |
 
 </details>
 
@@ -466,16 +466,16 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| typescript-bun | sonnet5-low-cli2.1.198 | 14 | 7 | 50.0% | 0.9min | 0.1% | 0.7min | 0.0% | 0.3min | 0.0% | 0.0min | 94.5% |
+| typescript-bun | sonnet5-low-cli2.1.198 | 34 | 17 | 50.0% | 2.3min | 0.2% | 2.1min | 0.2% | 0.1min | 0.0% | 0.3min | 36.4% |
 | typescript-bun | sonnet5-cli2.1.197 | 279 | 120 | 43.0% | 16.0min | 1.2% | 19.8min | 1.5% | -3.8min | -0.3% | 14.8min | -34.8% |
 | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 206 | 83 | 40.3% | 11.1min | 0.8% | 13.5min | 1.0% | -2.4min | -0.2% | 7.5min | -48.1% |
 | typescript-bun | sonnet5-low-cli2.1.197 | 73 | 24 | 32.9% | 3.2min | 0.2% | 5.1min | 0.4% | -1.9min | -0.1% | 8.3min | -29.1% |
 | powershell | sonnet5-1m-medium-cli2.1.197 | 160 | 37 | 23.1% | 21.6min | 1.6% | 17.7min | 1.3% | 3.9min | 0.3% | 13.5min | 22.3% |
-| powershell | sonnet5-low-cli2.1.197 | 69 | 15 | 21.7% | 8.8min | 0.7% | 6.2min | 0.5% | 2.5min | 0.2% | 8.3min | 23.2% |
+| powershell | sonnet5-low-cli2.1.197 | 69 | 15 | 21.7% | 8.8min | 0.6% | 6.2min | 0.5% | 2.5min | 0.2% | 8.3min | 23.2% |
 | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 154 | 31 | 20.1% | 18.1min | 1.3% | 17.3min | 1.3% | 0.8min | 0.1% | 25.2min | 3.1% |
 | powershell | sonnet5-low-cli2.1.198 | 25 | 5 | 20.0% | 2.9min | 0.2% | 3.3min | 0.2% | -0.4min | -0.0% | 2.1min | -21.9% |
 | powershell | sonnet5-cli2.1.197 | 206 | 35 | 17.0% | 20.4min | 1.5% | 30.5min | 2.3% | -10.1min | -0.7% | 30.5min | -49.3% |
-| powershell-tool | sonnet5-cli2.1.197 | 168 | 27 | 16.1% | 15.8min | 1.2% | 24.9min | 1.9% | -9.1min | -0.7% | 27.4min | -50.1% |
+| powershell-tool | sonnet5-cli2.1.197 | 168 | 27 | 16.1% | 15.8min | 1.2% | 24.9min | 1.8% | -9.1min | -0.7% | 27.4min | -50.1% |
 | powershell-tool | sonnet5-low-cli2.1.197 | 30 | 4 | 13.3% | 2.3min | 0.2% | 3.5min | 0.3% | -1.1min | -0.1% | 5.6min | -25.3% |
 | bash | sonnet5-cli2.1.197 | 184 | 14 | 7.6% | 2.8min | 0.2% | 0.5min | 0.0% | 2.3min | 0.2% | 22.4min | 9.4% |
 | bash | sonnet5-low-cli2.1.198 | 46 | 3 | 6.5% | 0.6min | 0.0% | 0.1min | 0.0% | 0.5min | 0.0% | 2.7min | 15.2% |
@@ -496,25 +496,25 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | bash | sonnet5-cli2.1.197 | 4 | 5.3min | 0.4% | $1.63 | 0.65% |
 | repeated-test-reruns | bash | sonnet5-low-cli2.1.197 | 3 | 6.3min | 0.5% | $0.35 | 0.14% |
 | repeated-test-reruns | bash | sonnet5-low-cli2.1.198 | 1 | 2.3min | 0.2% | $0.02 | 0.01% |
-| repeated-test-reruns | default | sonnet5-1m-medium-cli2.1.197 | 5 | 8.0min | 0.6% | $2.09 | 0.84% |
+| repeated-test-reruns | default | sonnet5-1m-medium-cli2.1.197 | 5 | 8.0min | 0.6% | $2.09 | 0.83% |
 | repeated-test-reruns | default | sonnet5-cli2.1.197 | 3 | 7.0min | 0.5% | $1.79 | 0.72% |
 | repeated-test-reruns | default | sonnet5-low-cli2.1.197 | 2 | 4.7min | 0.3% | $1.06 | 0.42% |
 | repeated-test-reruns | powershell | sonnet5-1m-medium-cli2.1.197 | 5 | 5.0min | 0.4% | $0.93 | 0.37% |
-| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 13 | 29.7min | 2.2% | $2.11 | 0.85% |
+| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 13 | 29.7min | 2.2% | $2.11 | 0.84% |
 | repeated-test-reruns | powershell | sonnet5-low-cli2.1.197 | 4 | 3.3min | 0.2% | $0.49 | 0.20% |
 | repeated-test-reruns | powershell | sonnet5-low-cli2.1.198 | 1 | 1.7min | 0.1% | $0.23 | 0.09% |
-| repeated-test-reruns | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 5 | 12.7min | 0.9% | $2.39 | 0.96% |
-| repeated-test-reruns | powershell-tool | sonnet5-cli2.1.197 | 7 | 14.3min | 1.1% | $2.14 | 0.86% |
+| repeated-test-reruns | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 5 | 12.7min | 0.9% | $2.39 | 0.95% |
+| repeated-test-reruns | powershell-tool | sonnet5-cli2.1.197 | 7 | 14.3min | 1.1% | $2.14 | 0.85% |
 | repeated-test-reruns | powershell-tool | sonnet5-low-cli2.1.197 | 1 | 2.3min | 0.2% | $0.31 | 0.12% |
-| repeated-test-reruns | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 12.3min | 0.9% | $2.54 | 1.02% |
+| repeated-test-reruns | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 12.3min | 0.9% | $2.54 | 1.01% |
 | repeated-test-reruns | typescript-bun | sonnet5-cli2.1.197 | 6 | 9.7min | 0.7% | $2.32 | 0.93% |
 | repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.197 | 2 | 1.7min | 0.1% | $0.36 | 0.15% |
-| repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 1.7min | 0.1% | $0.36 | 0.15% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 16.6min | 1.2% | $3.49 | 1.40% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 7 | 24.0min | 1.8% | $6.58 | 2.64% |
+| repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 4.3min | 0.3% | $0.73 | 0.29% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 16.6min | 1.2% | $3.49 | 1.39% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 7 | 24.0min | 1.8% | $6.58 | 2.62% |
 | ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.197 | 4 | 4.8min | 0.4% | $0.91 | 0.36% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 1.4min | 0.1% | $0.30 | 0.12% |
-| fixture-rework | bash | sonnet5-1m-medium-cli2.1.197 | 3 | 14.0min | 1.0% | $3.57 | 1.43% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 3.4min | 0.3% | $0.58 | 0.23% |
+| fixture-rework | bash | sonnet5-1m-medium-cli2.1.197 | 3 | 14.0min | 1.0% | $3.57 | 1.42% |
 | fixture-rework | bash | sonnet5-cli2.1.197 | 6 | 7.5min | 0.6% | $2.12 | 0.85% |
 | fixture-rework | bash | sonnet5-low-cli2.1.197 | 1 | 2.0min | 0.1% | $0.05 | 0.02% |
 | fixture-rework | bash | sonnet5-low-cli2.1.198 | 1 | 1.0min | 0.1% | $0.23 | 0.09% |
@@ -541,14 +541,14 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | act-push-debug-loops | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 2 | 1.2min | 0.1% | $0.25 | 0.10% |
 | act-push-debug-loops | powershell-tool | sonnet5-cli2.1.197 | 1 | 2.0min | 0.1% | $0.40 | 0.16% |
 | act-push-debug-loops | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 4 | 9.7min | 0.7% | $1.89 | 0.76% |
-| act-push-debug-loops | typescript-bun | sonnet5-cli2.1.197 | 1 | 2.8min | 0.2% | $0.71 | 0.29% |
+| act-push-debug-loops | typescript-bun | sonnet5-cli2.1.197 | 1 | 2.8min | 0.2% | $0.71 | 0.28% |
 | act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.197 | 1 | 2.0min | 0.1% | $0.33 | 0.13% |
-| act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 0.9min | 0.1% | $0.19 | 0.08% |
+| act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 3.7min | 0.3% | $0.58 | 0.23% |
 | docker-pwsh-install | powershell | sonnet5-cli2.1.197 | 2 | 3.8min | 0.3% | $0.72 | 0.29% |
 | bats-setup-issues | bash | sonnet5-1m-medium-cli2.1.197 | 1 | 0.8min | 0.1% | $0.23 | 0.09% |
 | bats-setup-issues | bash | sonnet5-cli2.1.197 | 2 | 1.8min | 0.1% | $0.53 | 0.21% |
 | actionlint-fix-cycles | powershell | sonnet5-1m-medium-cli2.1.197 | 1 | 0.7min | 0.0% | $0.13 | 0.05% |
-| actionlint-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 2 | 1.7min | 0.1% | $0.39 | 0.16% |
+| actionlint-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 2 | 1.7min | 0.1% | $0.39 | 0.15% |
 | act-fixture-paths | bash | sonnet5-low-cli2.1.198 | 1 | 1.0min | 0.1% | $0.01 | 0.00% |
 | act-fixture-paths | default | sonnet5-1m-medium-cli2.1.197 | 1 | 1.0min | 0.1% | $0.27 | 0.11% |
 
@@ -566,7 +566,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 1 | 0.8min | 0.1% | $0.16 | 0.06% |
 | bats-setup-issues | bash | sonnet5-1m-medium-cli2.1.197 | 1 | 0.8min | 0.1% | $0.23 | 0.09% |
 | act-push-debug-loops | bash | sonnet5-low-cli2.1.197 | 2 | 0.8min | 0.1% | $0.12 | 0.05% |
-| act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 0.9min | 0.1% | $0.19 | 0.08% |
 | fixture-rework | bash | sonnet5-low-cli2.1.198 | 1 | 1.0min | 0.1% | $0.23 | 0.09% |
 | act-fixture-paths | bash | sonnet5-low-cli2.1.198 | 1 | 1.0min | 0.1% | $0.01 | 0.00% |
 | act-fixture-paths | default | sonnet5-1m-medium-cli2.1.197 | 1 | 1.0min | 0.1% | $0.27 | 0.11% |
@@ -574,13 +573,11 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | act-push-debug-loops | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 2 | 1.2min | 0.1% | $0.25 | 0.10% |
 | fixture-rework | typescript-bun | sonnet5-low-cli2.1.197 | 2 | 1.2min | 0.1% | $0.24 | 0.09% |
 | act-push-debug-loops | powershell | sonnet5-1m-medium-cli2.1.197 | 2 | 1.3min | 0.1% | $0.24 | 0.10% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 1.4min | 0.1% | $0.30 | 0.12% |
 | repeated-test-reruns | powershell | sonnet5-low-cli2.1.198 | 1 | 1.7min | 0.1% | $0.23 | 0.09% |
 | repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.197 | 2 | 1.7min | 0.1% | $0.36 | 0.15% |
-| repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 1.7min | 0.1% | $0.36 | 0.15% |
 | act-push-debug-loops | default | sonnet5-cli2.1.197 | 1 | 1.7min | 0.1% | $0.47 | 0.19% |
 | act-push-debug-loops | powershell | sonnet5-cli2.1.197 | 1 | 1.7min | 0.1% | $0.35 | 0.14% |
-| actionlint-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 2 | 1.7min | 0.1% | $0.39 | 0.16% |
+| actionlint-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 2 | 1.7min | 0.1% | $0.39 | 0.15% |
 | fixture-rework | powershell | sonnet5-1m-medium-cli2.1.197 | 2 | 1.8min | 0.1% | $0.28 | 0.11% |
 | bats-setup-issues | bash | sonnet5-cli2.1.197 | 2 | 1.8min | 0.1% | $0.53 | 0.21% |
 | act-push-debug-loops | powershell-tool | sonnet5-cli2.1.197 | 1 | 2.0min | 0.1% | $0.40 | 0.16% |
@@ -593,10 +590,13 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 3 | 2.5min | 0.2% | $0.54 | 0.22% |
 | fixture-rework | powershell | sonnet5-cli2.1.197 | 3 | 2.8min | 0.2% | $0.12 | 0.05% |
 | fixture-rework | powershell-tool | sonnet5-cli2.1.197 | 2 | 2.8min | 0.2% | $0.52 | 0.21% |
-| act-push-debug-loops | typescript-bun | sonnet5-cli2.1.197 | 1 | 2.8min | 0.2% | $0.71 | 0.29% |
+| act-push-debug-loops | typescript-bun | sonnet5-cli2.1.197 | 1 | 2.8min | 0.2% | $0.71 | 0.28% |
 | repeated-test-reruns | powershell | sonnet5-low-cli2.1.197 | 4 | 3.3min | 0.2% | $0.49 | 0.20% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 3.4min | 0.3% | $0.58 | 0.23% |
 | act-push-debug-loops | bash | sonnet5-low-cli2.1.198 | 2 | 3.5min | 0.3% | $0.27 | 0.11% |
+| act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 3.7min | 0.3% | $0.58 | 0.23% |
 | docker-pwsh-install | powershell | sonnet5-cli2.1.197 | 2 | 3.8min | 0.3% | $0.72 | 0.29% |
+| repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 4.3min | 0.3% | $0.73 | 0.29% |
 | repeated-test-reruns | default | sonnet5-low-cli2.1.197 | 2 | 4.7min | 0.3% | $1.06 | 0.42% |
 | ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.197 | 4 | 4.8min | 0.4% | $0.91 | 0.36% |
 | repeated-test-reruns | powershell | sonnet5-1m-medium-cli2.1.197 | 5 | 5.0min | 0.4% | $0.93 | 0.37% |
@@ -607,16 +607,16 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | bash | sonnet5-1m-medium-cli2.1.197 | 6 | 7.0min | 0.5% | $1.63 | 0.65% |
 | repeated-test-reruns | default | sonnet5-cli2.1.197 | 3 | 7.0min | 0.5% | $1.79 | 0.72% |
 | fixture-rework | bash | sonnet5-cli2.1.197 | 6 | 7.5min | 0.6% | $2.12 | 0.85% |
-| repeated-test-reruns | default | sonnet5-1m-medium-cli2.1.197 | 5 | 8.0min | 0.6% | $2.09 | 0.84% |
+| repeated-test-reruns | default | sonnet5-1m-medium-cli2.1.197 | 5 | 8.0min | 0.6% | $2.09 | 0.83% |
 | act-push-debug-loops | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 4 | 9.7min | 0.7% | $1.89 | 0.76% |
 | repeated-test-reruns | typescript-bun | sonnet5-cli2.1.197 | 6 | 9.7min | 0.7% | $2.32 | 0.93% |
-| repeated-test-reruns | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 12.3min | 0.9% | $2.54 | 1.02% |
-| repeated-test-reruns | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 5 | 12.7min | 0.9% | $2.39 | 0.96% |
-| fixture-rework | bash | sonnet5-1m-medium-cli2.1.197 | 3 | 14.0min | 1.0% | $3.57 | 1.43% |
-| repeated-test-reruns | powershell-tool | sonnet5-cli2.1.197 | 7 | 14.3min | 1.1% | $2.14 | 0.86% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 16.6min | 1.2% | $3.49 | 1.40% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 7 | 24.0min | 1.8% | $6.58 | 2.64% |
-| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 13 | 29.7min | 2.2% | $2.11 | 0.85% |
+| repeated-test-reruns | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 12.3min | 0.9% | $2.54 | 1.01% |
+| repeated-test-reruns | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 5 | 12.7min | 0.9% | $2.39 | 0.95% |
+| fixture-rework | bash | sonnet5-1m-medium-cli2.1.197 | 3 | 14.0min | 1.0% | $3.57 | 1.42% |
+| repeated-test-reruns | powershell-tool | sonnet5-cli2.1.197 | 7 | 14.3min | 1.1% | $2.14 | 0.85% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 16.6min | 1.2% | $3.49 | 1.39% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 7 | 24.0min | 1.8% | $6.58 | 2.62% |
+| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 13 | 29.7min | 2.2% | $2.11 | 0.84% |
 
 </details>
 
@@ -636,7 +636,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | actionlint-fix-cycles | powershell | sonnet5-1m-medium-cli2.1.197 | 1 | 0.7min | 0.0% | $0.13 | 0.05% |
 | act-push-debug-loops | bash | sonnet5-1m-medium-cli2.1.197 | 1 | 0.7min | 0.1% | $0.14 | 0.06% |
 | fixture-rework | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 1 | 0.8min | 0.1% | $0.16 | 0.06% |
-| act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 0.9min | 0.1% | $0.19 | 0.08% |
 | bats-setup-issues | bash | sonnet5-1m-medium-cli2.1.197 | 1 | 0.8min | 0.1% | $0.23 | 0.09% |
 | fixture-rework | bash | sonnet5-low-cli2.1.198 | 1 | 1.0min | 0.1% | $0.23 | 0.09% |
 | repeated-test-reruns | powershell | sonnet5-low-cli2.1.198 | 1 | 1.7min | 0.1% | $0.23 | 0.09% |
@@ -647,14 +646,12 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | act-fixture-paths | default | sonnet5-1m-medium-cli2.1.197 | 1 | 1.0min | 0.1% | $0.27 | 0.11% |
 | act-push-debug-loops | default | sonnet5-1m-medium-cli2.1.197 | 1 | 1.0min | 0.1% | $0.27 | 0.11% |
 | fixture-rework | powershell | sonnet5-1m-medium-cli2.1.197 | 2 | 1.8min | 0.1% | $0.28 | 0.11% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 1.4min | 0.1% | $0.30 | 0.12% |
 | repeated-test-reruns | powershell-tool | sonnet5-low-cli2.1.197 | 1 | 2.3min | 0.2% | $0.31 | 0.12% |
 | act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.197 | 1 | 2.0min | 0.1% | $0.33 | 0.13% |
 | repeated-test-reruns | bash | sonnet5-low-cli2.1.197 | 3 | 6.3min | 0.5% | $0.35 | 0.14% |
 | act-push-debug-loops | powershell | sonnet5-cli2.1.197 | 1 | 1.7min | 0.1% | $0.35 | 0.14% |
-| repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 1.7min | 0.1% | $0.36 | 0.15% |
 | repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.197 | 2 | 1.7min | 0.1% | $0.36 | 0.15% |
-| actionlint-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 2 | 1.7min | 0.1% | $0.39 | 0.16% |
+| actionlint-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 2 | 1.7min | 0.1% | $0.39 | 0.15% |
 | act-push-debug-loops | powershell-tool | sonnet5-cli2.1.197 | 1 | 2.0min | 0.1% | $0.40 | 0.16% |
 | act-push-debug-loops | default | sonnet5-cli2.1.197 | 1 | 1.7min | 0.1% | $0.47 | 0.19% |
 | repeated-test-reruns | powershell | sonnet5-low-cli2.1.197 | 4 | 3.3min | 0.2% | $0.49 | 0.20% |
@@ -663,8 +660,11 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | bats-setup-issues | bash | sonnet5-cli2.1.197 | 2 | 1.8min | 0.1% | $0.53 | 0.21% |
 | fixture-rework | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 3 | 2.5min | 0.2% | $0.54 | 0.22% |
 | fixture-rework | default | sonnet5-1m-medium-cli2.1.197 | 2 | 2.0min | 0.1% | $0.55 | 0.22% |
-| act-push-debug-loops | typescript-bun | sonnet5-cli2.1.197 | 1 | 2.8min | 0.2% | $0.71 | 0.29% |
+| act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 3.7min | 0.3% | $0.58 | 0.23% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 3.4min | 0.3% | $0.58 | 0.23% |
+| act-push-debug-loops | typescript-bun | sonnet5-cli2.1.197 | 1 | 2.8min | 0.2% | $0.71 | 0.28% |
 | docker-pwsh-install | powershell | sonnet5-cli2.1.197 | 2 | 3.8min | 0.3% | $0.72 | 0.29% |
+| repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 4.3min | 0.3% | $0.73 | 0.29% |
 | ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.197 | 4 | 4.8min | 0.4% | $0.91 | 0.36% |
 | repeated-test-reruns | powershell | sonnet5-1m-medium-cli2.1.197 | 5 | 5.0min | 0.4% | $0.93 | 0.37% |
 | repeated-test-reruns | default | sonnet5-low-cli2.1.197 | 2 | 4.7min | 0.3% | $1.06 | 0.42% |
@@ -674,16 +674,16 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | bash | sonnet5-cli2.1.197 | 4 | 5.3min | 0.4% | $1.63 | 0.65% |
 | repeated-test-reruns | default | sonnet5-cli2.1.197 | 3 | 7.0min | 0.5% | $1.79 | 0.72% |
 | act-push-debug-loops | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 4 | 9.7min | 0.7% | $1.89 | 0.76% |
-| repeated-test-reruns | default | sonnet5-1m-medium-cli2.1.197 | 5 | 8.0min | 0.6% | $2.09 | 0.84% |
-| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 13 | 29.7min | 2.2% | $2.11 | 0.85% |
+| repeated-test-reruns | default | sonnet5-1m-medium-cli2.1.197 | 5 | 8.0min | 0.6% | $2.09 | 0.83% |
+| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 13 | 29.7min | 2.2% | $2.11 | 0.84% |
 | fixture-rework | bash | sonnet5-cli2.1.197 | 6 | 7.5min | 0.6% | $2.12 | 0.85% |
-| repeated-test-reruns | powershell-tool | sonnet5-cli2.1.197 | 7 | 14.3min | 1.1% | $2.14 | 0.86% |
+| repeated-test-reruns | powershell-tool | sonnet5-cli2.1.197 | 7 | 14.3min | 1.1% | $2.14 | 0.85% |
 | repeated-test-reruns | typescript-bun | sonnet5-cli2.1.197 | 6 | 9.7min | 0.7% | $2.32 | 0.93% |
-| repeated-test-reruns | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 5 | 12.7min | 0.9% | $2.39 | 0.96% |
-| repeated-test-reruns | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 12.3min | 0.9% | $2.54 | 1.02% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 16.6min | 1.2% | $3.49 | 1.40% |
-| fixture-rework | bash | sonnet5-1m-medium-cli2.1.197 | 3 | 14.0min | 1.0% | $3.57 | 1.43% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 7 | 24.0min | 1.8% | $6.58 | 2.64% |
+| repeated-test-reruns | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 5 | 12.7min | 0.9% | $2.39 | 0.95% |
+| repeated-test-reruns | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 12.3min | 0.9% | $2.54 | 1.01% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 16.6min | 1.2% | $3.49 | 1.39% |
+| fixture-rework | bash | sonnet5-1m-medium-cli2.1.197 | 3 | 14.0min | 1.0% | $3.57 | 1.42% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 7 | 24.0min | 1.8% | $6.58 | 2.62% |
 
 </details>
 
@@ -695,8 +695,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | bash | sonnet5-low-cli2.1.198 | 1 | 2.3min | 0.2% | $0.02 | 0.01% |
 | repeated-test-reruns | powershell | sonnet5-low-cli2.1.198 | 1 | 1.7min | 0.1% | $0.23 | 0.09% |
 | repeated-test-reruns | powershell-tool | sonnet5-low-cli2.1.197 | 1 | 2.3min | 0.2% | $0.31 | 0.12% |
-| repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 1.7min | 0.1% | $0.36 | 0.15% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 1.4min | 0.1% | $0.30 | 0.12% |
 | fixture-rework | bash | sonnet5-low-cli2.1.197 | 1 | 2.0min | 0.1% | $0.05 | 0.02% |
 | fixture-rework | bash | sonnet5-low-cli2.1.198 | 1 | 1.0min | 0.1% | $0.23 | 0.09% |
 | fixture-rework | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 1 | 0.8min | 0.1% | $0.16 | 0.06% |
@@ -708,15 +706,16 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | act-push-debug-loops | powershell | sonnet5-low-cli2.1.197 | 1 | 0.4min | 0.0% | $0.05 | 0.02% |
 | act-push-debug-loops | powershell | sonnet5-low-cli2.1.198 | 1 | 0.5min | 0.0% | $0.07 | 0.03% |
 | act-push-debug-loops | powershell-tool | sonnet5-cli2.1.197 | 1 | 2.0min | 0.1% | $0.40 | 0.16% |
-| act-push-debug-loops | typescript-bun | sonnet5-cli2.1.197 | 1 | 2.8min | 0.2% | $0.71 | 0.29% |
+| act-push-debug-loops | typescript-bun | sonnet5-cli2.1.197 | 1 | 2.8min | 0.2% | $0.71 | 0.28% |
 | act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.197 | 1 | 2.0min | 0.1% | $0.33 | 0.13% |
-| act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.198 | 1 | 0.9min | 0.1% | $0.19 | 0.08% |
 | bats-setup-issues | bash | sonnet5-1m-medium-cli2.1.197 | 1 | 0.8min | 0.1% | $0.23 | 0.09% |
 | actionlint-fix-cycles | powershell | sonnet5-1m-medium-cli2.1.197 | 1 | 0.7min | 0.0% | $0.13 | 0.05% |
 | act-fixture-paths | bash | sonnet5-low-cli2.1.198 | 1 | 1.0min | 0.1% | $0.01 | 0.00% |
 | act-fixture-paths | default | sonnet5-1m-medium-cli2.1.197 | 1 | 1.0min | 0.1% | $0.27 | 0.11% |
 | repeated-test-reruns | default | sonnet5-low-cli2.1.197 | 2 | 4.7min | 0.3% | $1.06 | 0.42% |
 | repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.197 | 2 | 1.7min | 0.1% | $0.36 | 0.15% |
+| repeated-test-reruns | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 4.3min | 0.3% | $0.73 | 0.29% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 3.4min | 0.3% | $0.58 | 0.23% |
 | fixture-rework | default | sonnet5-1m-medium-cli2.1.197 | 2 | 2.0min | 0.1% | $0.55 | 0.22% |
 | fixture-rework | powershell | sonnet5-1m-medium-cli2.1.197 | 2 | 1.8min | 0.1% | $0.28 | 0.11% |
 | fixture-rework | powershell-tool | sonnet5-cli2.1.197 | 2 | 2.8min | 0.2% | $0.52 | 0.21% |
@@ -726,12 +725,13 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | act-push-debug-loops | bash | sonnet5-low-cli2.1.198 | 2 | 3.5min | 0.3% | $0.27 | 0.11% |
 | act-push-debug-loops | powershell | sonnet5-1m-medium-cli2.1.197 | 2 | 1.3min | 0.1% | $0.24 | 0.10% |
 | act-push-debug-loops | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 2 | 1.2min | 0.1% | $0.25 | 0.10% |
+| act-push-debug-loops | typescript-bun | sonnet5-low-cli2.1.198 | 2 | 3.7min | 0.3% | $0.58 | 0.23% |
 | docker-pwsh-install | powershell | sonnet5-cli2.1.197 | 2 | 3.8min | 0.3% | $0.72 | 0.29% |
 | bats-setup-issues | bash | sonnet5-cli2.1.197 | 2 | 1.8min | 0.1% | $0.53 | 0.21% |
-| actionlint-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 2 | 1.7min | 0.1% | $0.39 | 0.16% |
+| actionlint-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 2 | 1.7min | 0.1% | $0.39 | 0.15% |
 | repeated-test-reruns | bash | sonnet5-low-cli2.1.197 | 3 | 6.3min | 0.5% | $0.35 | 0.14% |
 | repeated-test-reruns | default | sonnet5-cli2.1.197 | 3 | 7.0min | 0.5% | $1.79 | 0.72% |
-| fixture-rework | bash | sonnet5-1m-medium-cli2.1.197 | 3 | 14.0min | 1.0% | $3.57 | 1.43% |
+| fixture-rework | bash | sonnet5-1m-medium-cli2.1.197 | 3 | 14.0min | 1.0% | $3.57 | 1.42% |
 | fixture-rework | powershell | sonnet5-cli2.1.197 | 3 | 2.8min | 0.2% | $0.12 | 0.05% |
 | fixture-rework | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 3 | 2.5min | 0.2% | $0.54 | 0.22% |
 | repeated-test-reruns | bash | sonnet5-cli2.1.197 | 4 | 5.3min | 0.4% | $1.63 | 0.65% |
@@ -739,18 +739,18 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | ts-type-error-fix-cycles | typescript-bun | sonnet5-low-cli2.1.197 | 4 | 4.8min | 0.4% | $0.91 | 0.36% |
 | fixture-rework | default | sonnet5-cli2.1.197 | 4 | 2.0min | 0.1% | $0.51 | 0.20% |
 | act-push-debug-loops | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 4 | 9.7min | 0.7% | $1.89 | 0.76% |
-| repeated-test-reruns | default | sonnet5-1m-medium-cli2.1.197 | 5 | 8.0min | 0.6% | $2.09 | 0.84% |
+| repeated-test-reruns | default | sonnet5-1m-medium-cli2.1.197 | 5 | 8.0min | 0.6% | $2.09 | 0.83% |
 | repeated-test-reruns | powershell | sonnet5-1m-medium-cli2.1.197 | 5 | 5.0min | 0.4% | $0.93 | 0.37% |
-| repeated-test-reruns | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 5 | 12.7min | 0.9% | $2.39 | 0.96% |
+| repeated-test-reruns | powershell-tool | sonnet5-1m-medium-cli2.1.197 | 5 | 12.7min | 0.9% | $2.39 | 0.95% |
 | repeated-test-reruns | bash | sonnet5-1m-medium-cli2.1.197 | 6 | 7.0min | 0.5% | $1.63 | 0.65% |
 | repeated-test-reruns | typescript-bun | sonnet5-cli2.1.197 | 6 | 9.7min | 0.7% | $2.32 | 0.93% |
 | fixture-rework | bash | sonnet5-cli2.1.197 | 6 | 7.5min | 0.6% | $2.12 | 0.85% |
 | fixture-rework | typescript-bun | sonnet5-cli2.1.197 | 6 | 5.8min | 0.4% | $1.62 | 0.65% |
-| repeated-test-reruns | powershell-tool | sonnet5-cli2.1.197 | 7 | 14.3min | 1.1% | $2.14 | 0.86% |
-| repeated-test-reruns | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 12.3min | 0.9% | $2.54 | 1.02% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 16.6min | 1.2% | $3.49 | 1.40% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 7 | 24.0min | 1.8% | $6.58 | 2.64% |
-| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 13 | 29.7min | 2.2% | $2.11 | 0.85% |
+| repeated-test-reruns | powershell-tool | sonnet5-cli2.1.197 | 7 | 14.3min | 1.1% | $2.14 | 0.85% |
+| repeated-test-reruns | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 12.3min | 0.9% | $2.54 | 1.01% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 16.6min | 1.2% | $3.49 | 1.39% |
+| ts-type-error-fix-cycles | typescript-bun | sonnet5-cli2.1.197 | 7 | 24.0min | 1.8% | $6.58 | 2.62% |
+| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 13 | 29.7min | 2.2% | $2.11 | 0.84% |
 
 </details>
 
@@ -778,25 +778,25 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| bash | sonnet5-1m-medium-cli2.1.197 | 7 | 11 | 22.4min | 1.7% | $5.57 | 2.23% |
-| bash | sonnet5-cli2.1.197 | 7 | 14 | 19.7min | 1.5% | $5.84 | 2.34% |
+| bash | sonnet5-1m-medium-cli2.1.197 | 7 | 11 | 22.4min | 1.7% | $5.57 | 2.22% |
+| bash | sonnet5-cli2.1.197 | 7 | 14 | 19.7min | 1.5% | $5.84 | 2.33% |
 | bash | sonnet5-low-cli2.1.197 | 4 | 6 | 9.1min | 0.7% | $0.52 | 0.21% |
 | bash | sonnet5-low-cli2.1.198 | 2 | 5 | 7.9min | 0.6% | $0.53 | 0.21% |
-| default | sonnet5-1m-medium-cli2.1.197 | 7 | 9 | 12.0min | 0.9% | $3.18 | 1.28% |
+| default | sonnet5-1m-medium-cli2.1.197 | 7 | 9 | 12.0min | 0.9% | $3.18 | 1.27% |
 | default | sonnet5-cli2.1.197 | 7 | 8 | 10.7min | 0.8% | $2.77 | 1.11% |
 | default | sonnet5-low-cli2.1.197 | 5 | 2 | 4.7min | 0.3% | $1.06 | 0.42% |
 | default | sonnet5-low-cli2.1.198 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
-| powershell | sonnet5-1m-medium-cli2.1.197 | 7 | 10 | 8.8min | 0.7% | $1.59 | 0.64% |
+| powershell | sonnet5-1m-medium-cli2.1.197 | 7 | 10 | 8.8min | 0.6% | $1.59 | 0.63% |
 | powershell | sonnet5-cli2.1.197 | 7 | 19 | 37.8min | 2.8% | $3.30 | 1.32% |
 | powershell | sonnet5-low-cli2.1.197 | 4 | 5 | 3.7min | 0.3% | $0.54 | 0.22% |
 | powershell | sonnet5-low-cli2.1.198 | 2 | 2 | 2.2min | 0.2% | $0.31 | 0.12% |
-| powershell-tool | sonnet5-1m-medium-cli2.1.197 | 7 | 8 | 14.6min | 1.1% | $2.79 | 1.12% |
-| powershell-tool | sonnet5-cli2.1.197 | 7 | 10 | 19.1min | 1.4% | $3.06 | 1.23% |
+| powershell-tool | sonnet5-1m-medium-cli2.1.197 | 7 | 8 | 14.6min | 1.1% | $2.79 | 1.11% |
+| powershell-tool | sonnet5-cli2.1.197 | 7 | 10 | 19.1min | 1.4% | $3.06 | 1.22% |
 | powershell-tool | sonnet5-low-cli2.1.197 | 2 | 2 | 2.8min | 0.2% | $0.38 | 0.15% |
-| typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 21 | 41.1min | 3.1% | $8.48 | 3.40% |
-| typescript-bun | sonnet5-cli2.1.197 | 7 | 22 | 43.9min | 3.3% | $11.62 | 4.66% |
-| typescript-bun | sonnet5-low-cli2.1.197 | 4 | 9 | 9.7min | 0.7% | $1.84 | 0.74% |
-| typescript-bun | sonnet5-low-cli2.1.198 | 1 | 3 | 3.9min | 0.3% | $0.86 | 0.34% |
+| typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 21 | 41.1min | 3.0% | $8.48 | 3.38% |
+| typescript-bun | sonnet5-cli2.1.197 | 7 | 22 | 43.9min | 3.2% | $11.62 | 4.63% |
+| typescript-bun | sonnet5-low-cli2.1.197 | 4 | 9 | 9.7min | 0.7% | $1.84 | 0.73% |
+| typescript-bun | sonnet5-low-cli2.1.198 | 2 | 6 | 11.4min | 0.8% | $1.90 | 0.76% |
 
 
 <details>
@@ -808,21 +808,21 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | powershell | sonnet5-low-cli2.1.198 | 2 | 2 | 2.2min | 0.2% | $0.31 | 0.12% |
 | powershell-tool | sonnet5-low-cli2.1.197 | 2 | 2 | 2.8min | 0.2% | $0.38 | 0.15% |
 | powershell | sonnet5-low-cli2.1.197 | 4 | 5 | 3.7min | 0.3% | $0.54 | 0.22% |
-| typescript-bun | sonnet5-low-cli2.1.198 | 1 | 3 | 3.9min | 0.3% | $0.86 | 0.34% |
 | default | sonnet5-low-cli2.1.197 | 5 | 2 | 4.7min | 0.3% | $1.06 | 0.42% |
 | bash | sonnet5-low-cli2.1.198 | 2 | 5 | 7.9min | 0.6% | $0.53 | 0.21% |
-| powershell | sonnet5-1m-medium-cli2.1.197 | 7 | 10 | 8.8min | 0.7% | $1.59 | 0.64% |
+| powershell | sonnet5-1m-medium-cli2.1.197 | 7 | 10 | 8.8min | 0.6% | $1.59 | 0.63% |
 | bash | sonnet5-low-cli2.1.197 | 4 | 6 | 9.1min | 0.7% | $0.52 | 0.21% |
-| typescript-bun | sonnet5-low-cli2.1.197 | 4 | 9 | 9.7min | 0.7% | $1.84 | 0.74% |
+| typescript-bun | sonnet5-low-cli2.1.197 | 4 | 9 | 9.7min | 0.7% | $1.84 | 0.73% |
 | default | sonnet5-cli2.1.197 | 7 | 8 | 10.7min | 0.8% | $2.77 | 1.11% |
-| default | sonnet5-1m-medium-cli2.1.197 | 7 | 9 | 12.0min | 0.9% | $3.18 | 1.28% |
-| powershell-tool | sonnet5-1m-medium-cli2.1.197 | 7 | 8 | 14.6min | 1.1% | $2.79 | 1.12% |
-| powershell-tool | sonnet5-cli2.1.197 | 7 | 10 | 19.1min | 1.4% | $3.06 | 1.23% |
-| bash | sonnet5-cli2.1.197 | 7 | 14 | 19.7min | 1.5% | $5.84 | 2.34% |
-| bash | sonnet5-1m-medium-cli2.1.197 | 7 | 11 | 22.4min | 1.7% | $5.57 | 2.23% |
+| typescript-bun | sonnet5-low-cli2.1.198 | 2 | 6 | 11.4min | 0.8% | $1.90 | 0.76% |
+| default | sonnet5-1m-medium-cli2.1.197 | 7 | 9 | 12.0min | 0.9% | $3.18 | 1.27% |
+| powershell-tool | sonnet5-1m-medium-cli2.1.197 | 7 | 8 | 14.6min | 1.1% | $2.79 | 1.11% |
+| powershell-tool | sonnet5-cli2.1.197 | 7 | 10 | 19.1min | 1.4% | $3.06 | 1.22% |
+| bash | sonnet5-cli2.1.197 | 7 | 14 | 19.7min | 1.5% | $5.84 | 2.33% |
+| bash | sonnet5-1m-medium-cli2.1.197 | 7 | 11 | 22.4min | 1.7% | $5.57 | 2.22% |
 | powershell | sonnet5-cli2.1.197 | 7 | 19 | 37.8min | 2.8% | $3.30 | 1.32% |
-| typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 21 | 41.1min | 3.1% | $8.48 | 3.40% |
-| typescript-bun | sonnet5-cli2.1.197 | 7 | 22 | 43.9min | 3.3% | $11.62 | 4.66% |
+| typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 21 | 41.1min | 3.0% | $8.48 | 3.38% |
+| typescript-bun | sonnet5-cli2.1.197 | 7 | 22 | 43.9min | 3.2% | $11.62 | 4.63% |
 
 </details>
 
@@ -837,19 +837,19 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | bash | sonnet5-low-cli2.1.197 | 4 | 6 | 9.1min | 0.7% | $0.52 | 0.21% |
 | bash | sonnet5-low-cli2.1.198 | 2 | 5 | 7.9min | 0.6% | $0.53 | 0.21% |
 | powershell | sonnet5-low-cli2.1.197 | 4 | 5 | 3.7min | 0.3% | $0.54 | 0.22% |
-| typescript-bun | sonnet5-low-cli2.1.198 | 1 | 3 | 3.9min | 0.3% | $0.86 | 0.34% |
 | default | sonnet5-low-cli2.1.197 | 5 | 2 | 4.7min | 0.3% | $1.06 | 0.42% |
-| powershell | sonnet5-1m-medium-cli2.1.197 | 7 | 10 | 8.8min | 0.7% | $1.59 | 0.64% |
-| typescript-bun | sonnet5-low-cli2.1.197 | 4 | 9 | 9.7min | 0.7% | $1.84 | 0.74% |
+| powershell | sonnet5-1m-medium-cli2.1.197 | 7 | 10 | 8.8min | 0.6% | $1.59 | 0.63% |
+| typescript-bun | sonnet5-low-cli2.1.197 | 4 | 9 | 9.7min | 0.7% | $1.84 | 0.73% |
+| typescript-bun | sonnet5-low-cli2.1.198 | 2 | 6 | 11.4min | 0.8% | $1.90 | 0.76% |
 | default | sonnet5-cli2.1.197 | 7 | 8 | 10.7min | 0.8% | $2.77 | 1.11% |
-| powershell-tool | sonnet5-1m-medium-cli2.1.197 | 7 | 8 | 14.6min | 1.1% | $2.79 | 1.12% |
-| powershell-tool | sonnet5-cli2.1.197 | 7 | 10 | 19.1min | 1.4% | $3.06 | 1.23% |
-| default | sonnet5-1m-medium-cli2.1.197 | 7 | 9 | 12.0min | 0.9% | $3.18 | 1.28% |
+| powershell-tool | sonnet5-1m-medium-cli2.1.197 | 7 | 8 | 14.6min | 1.1% | $2.79 | 1.11% |
+| powershell-tool | sonnet5-cli2.1.197 | 7 | 10 | 19.1min | 1.4% | $3.06 | 1.22% |
+| default | sonnet5-1m-medium-cli2.1.197 | 7 | 9 | 12.0min | 0.9% | $3.18 | 1.27% |
 | powershell | sonnet5-cli2.1.197 | 7 | 19 | 37.8min | 2.8% | $3.30 | 1.32% |
-| bash | sonnet5-1m-medium-cli2.1.197 | 7 | 11 | 22.4min | 1.7% | $5.57 | 2.23% |
-| bash | sonnet5-cli2.1.197 | 7 | 14 | 19.7min | 1.5% | $5.84 | 2.34% |
-| typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 21 | 41.1min | 3.1% | $8.48 | 3.40% |
-| typescript-bun | sonnet5-cli2.1.197 | 7 | 22 | 43.9min | 3.3% | $11.62 | 4.66% |
+| bash | sonnet5-1m-medium-cli2.1.197 | 7 | 11 | 22.4min | 1.7% | $5.57 | 2.22% |
+| bash | sonnet5-cli2.1.197 | 7 | 14 | 19.7min | 1.5% | $5.84 | 2.33% |
+| typescript-bun | sonnet5-1m-medium-cli2.1.197 | 7 | 21 | 41.1min | 3.0% | $8.48 | 3.38% |
+| typescript-bun | sonnet5-cli2.1.197 | 7 | 22 | 43.9min | 3.2% | $11.62 | 4.63% |
 
 </details>
 
@@ -858,7 +858,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | Status | Runs | $ Saved | % of $ |
 |--------|------|---------|--------|
 | Full hit (100%) | 0 | $0.00 | 0.00% |
-| Partial | 92 | $8.33 | 3.34% |
+| Partial | 93 | $8.42 | 3.36% |
 | Miss | 3 | $0.00 | 0.00% |
 
 ## Test Quality Evaluation
@@ -883,7 +883,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | powershell-tool | sonnet5-low | 26.5 | 47.0 | 1.8 | 6.87 |
 | typescript-bun | sonnet5 | 45.1 | 83.9 | 1.9 | 1.57 |
 | typescript-bun | sonnet5-1m-medium | 27.3 | 51.6 | 1.9 | 1.12 |
-| typescript-bun | sonnet5-low | 20.4 | 41.8 | 2.0 | 1.04 |
+| typescript-bun | sonnet5-low | 20.0 | 41.0 | 2.0 | 1.00 |
 
 
 <details>
@@ -905,7 +905,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | default | sonnet5 | 22.0 | 41.1 | 1.9 | 0.86 |
 | bash | sonnet5-low | 21.8 | 50.2 | 2.3 | 0.97 |
 | powershell | sonnet5-low | 21.7 | 38.7 | 1.8 | 3.14 |
-| typescript-bun | sonnet5-low | 20.4 | 41.8 | 2.0 | 1.04 |
+| typescript-bun | sonnet5-low | 20.0 | 41.0 | 2.0 | 1.00 |
 
 </details>
 
@@ -925,8 +925,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | typescript-bun | sonnet5-1m-medium | 27.3 | 51.6 | 1.9 | 1.12 |
 | bash | sonnet5-low | 21.8 | 50.2 | 2.3 | 0.97 |
 | powershell-tool | sonnet5-low | 26.5 | 47.0 | 1.8 | 6.87 |
-| typescript-bun | sonnet5-low | 20.4 | 41.8 | 2.0 | 1.04 |
 | default | sonnet5 | 22.0 | 41.1 | 1.9 | 0.86 |
+| typescript-bun | sonnet5-low | 20.0 | 41.0 | 2.0 | 1.00 |
 | default | sonnet5-low | 23.3 | 39.3 | 1.7 | 1.16 |
 | powershell | sonnet5-low | 21.7 | 38.7 | 1.8 | 3.14 |
 
@@ -948,7 +948,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | bash | sonnet5-1m-medium | 27.6 | 71.3 | 2.6 | 1.22 |
 | default | sonnet5-low | 23.3 | 39.3 | 1.7 | 1.16 |
 | typescript-bun | sonnet5-1m-medium | 27.3 | 51.6 | 1.9 | 1.12 |
-| typescript-bun | sonnet5-low | 20.4 | 41.8 | 2.0 | 1.04 |
+| typescript-bun | sonnet5-low | 20.0 | 41.0 | 2.0 | 1.00 |
 | bash | sonnet5-low | 21.8 | 50.2 | 2.3 | 0.97 |
 | bash | sonnet5 | 34.4 | 73.3 | 2.1 | 0.89 |
 | default | sonnet5 | 22.0 | 41.1 | 1.9 | 0.86 |
@@ -1056,6 +1056,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Artifact Cleanup Script | default | sonnet5-low | 17 | 31 | 1.8 | 221 | 294 | 0.75 |
 | Artifact Cleanup Script | powershell | sonnet5-low | 17 | 38 | 2.2 | 192 | 35 | 5.49 |
 | Artifact Cleanup Script | bash | sonnet5-low | 30 | 86 | 2.9 | 250 | 368 | 0.68 |
+| Artifact Cleanup Script | typescript-bun | sonnet5-low | 18 | 37 | 2.1 | 282 | 344 | 0.82 |
 
 </details>
 
@@ -1078,6 +1079,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Artifact Cleanup Script | powershell-tool | sonnet5-1m-medium | 16.6min | 64 | 2 | $3.28 | — | powershell | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet5 | 23.5min | 150 | 2 | $6.00 | — | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet5-1m-medium | 13.7min | 109 | 0 | $3.28 | — | typescript | ok |
+| Artifact Cleanup Script | typescript-bun | sonnet5-low | 9.3min | 46 | 0 | $1.30 | — | typescript | ok |
 | Dependency License Checker | bash | sonnet5 | 17.4min | 105 | 3 | $5.57 | — | bash | ok |
 | Dependency License Checker | bash | sonnet5-1m-medium | 11.0min | 74 | 4 | $2.43 | — | bash | ok |
 | Dependency License Checker | bash | sonnet5-low | 12.3min | 49 | 4 | $1.36 | — | bash | ok |
@@ -1194,6 +1196,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Environment Matrix Generator | bash | sonnet5-low | 5.3min | 42 | 1 | $1.21 | — | bash | ok |
 | Environment Matrix Generator | typescript-bun | sonnet5-low | 5.8min | 36 | 2 | $1.26 | — | typescript | ok |
 | Semantic Version Bumper | default | sonnet5-1m-medium | 5.1min | 33 | 2 | $1.28 | — | python | ok |
+| Artifact Cleanup Script | typescript-bun | sonnet5-low | 9.3min | 46 | 0 | $1.30 | — | typescript | ok |
 | Dependency License Checker | bash | sonnet5-low | 12.3min | 49 | 4 | $1.36 | — | bash | ok |
 | Semantic Version Bumper | powershell-tool | sonnet5-1m-medium | 10.2min | 40 | 0 | $1.42 | — | powershell | ok |
 | Semantic Version Bumper | powershell | sonnet5-low | 9.6min | 43 | 0 | $1.43 | — | powershell | ok |
@@ -1295,6 +1298,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Semantic Version Bumper | bash | sonnet5-1m-medium | 8.7min | 85 | 4 | $2.67 | — | bash | ok |
 | Dependency License Checker | default | sonnet5-1m-medium | 8.9min | 73 | 0 | $2.48 | — | python | ok |
 | Secret Rotation Validator | bash | sonnet5-1m-medium | 9.3min | 0 | 4 | $0.00 | — | bash | cli_error |
+| Artifact Cleanup Script | typescript-bun | sonnet5-low | 9.3min | 46 | 0 | $1.30 | — | typescript | ok |
 | PR Label Assigner | default | sonnet5-1m-medium | 9.5min | 64 | 1 | $2.04 | — | powershell | ok |
 | PR Label Assigner | powershell | sonnet5-1m-medium | 9.6min | 40 | 0 | $1.58 | — | powershell | ok |
 | Semantic Version Bumper | powershell | sonnet5-low | 9.6min | 43 | 0 | $1.43 | — | powershell | ok |
@@ -1412,6 +1416,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Environment Matrix Generator | powershell | sonnet5-low | 7.4min | 3 | 0 | $1.10 | — | powershell | ok |
 | Artifact Cleanup Script | default | sonnet5-low | 4.5min | 32 | 0 | $1.07 | — | python | ok |
 | Artifact Cleanup Script | powershell | sonnet5-low | 7.5min | 35 | 0 | $1.05 | — | powershell | ok |
+| Artifact Cleanup Script | typescript-bun | sonnet5-low | 9.3min | 46 | 0 | $1.30 | — | typescript | ok |
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
 | Semantic Version Bumper | typescript-bun | sonnet5-1m-medium | 11.7min | 69 | 1 | $2.15 | — | typescript | ok |
 | PR Label Assigner | bash | sonnet5-low | 3.4min | 28 | 1 | $0.76 | — | bash | ok |
@@ -1511,6 +1516,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Semantic Version Bumper | powershell | sonnet5-low | 9.6min | 43 | 0 | $1.43 | — | powershell | ok |
 | Secret Rotation Validator | powershell | sonnet5-1m-medium | 10.2min | 43 | 0 | $1.49 | — | powershell | ok |
 | Test Results Aggregator | bash | sonnet5-1m-medium | 8.5min | 46 | 0 | $1.80 | — | bash | ok |
+| Artifact Cleanup Script | typescript-bun | sonnet5-low | 9.3min | 46 | 0 | $1.30 | — | typescript | ok |
 | Semantic Version Bumper | typescript-bun | sonnet5-low | 8.0min | 47 | 0 | $1.84 | — | typescript | ok |
 | PR Label Assigner | powershell-tool | sonnet5-low | 11.3min | 48 | 1 | $1.50 | — | powershell | ok |
 | Dependency License Checker | bash | sonnet5-low | 12.3min | 49 | 4 | $1.36 | — | bash | ok |
@@ -1674,6 +1680,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Artifact Cleanup Script | default | sonnet5-low | 4.5min | 32 | 0 | $1.07 | — | python | ok |
 | Artifact Cleanup Script | powershell | sonnet5-low | 7.5min | 35 | 0 | $1.05 | — | powershell | ok |
 | Artifact Cleanup Script | bash | sonnet5-low | 13.7min | 2 | 6 | $0.14 | — | bash | ok |
+| Artifact Cleanup Script | typescript-bun | sonnet5-low | 9.3min | 46 | 0 | $1.30 | — | typescript | ok |
 
 </details>
 
