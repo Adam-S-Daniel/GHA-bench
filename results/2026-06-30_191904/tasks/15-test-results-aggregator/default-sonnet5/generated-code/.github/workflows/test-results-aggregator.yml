@@ -1,0 +1,83 @@
+name: Test Results Aggregator
+
+# Aggregates JUnit XML / JSON test result files (e.g. one file per matrix
+# cell of a CI build) into a single Markdown summary, computing totals and
+# flaky-test detection, and publishes it as a GitHub Actions job summary.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly sanity check that the aggregator still runs against the
+    # committed sample fixtures, independent of any push/PR activity.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  # Directory containing this run's test result files (.xml / .json). Fixed
+  # so that different fixture sets can be swapped in at the same path for
+  # different test scenarios without changing the workflow itself.
+  FIXTURES_DIR: fixtures
+  # When "true", the report-status job fails the build if any test failed.
+  # Defaults to false: aggregation/reporting should not itself gate merges.
+  FAIL_ON_TEST_FAILURES: "false"
+
+jobs:
+  aggregate-results:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.aggregate.outputs.total }}
+      unique_tests: ${{ steps.aggregate.outputs.unique_tests }}
+      passed: ${{ steps.aggregate.outputs.passed }}
+      failed: ${{ steps.aggregate.outputs.failed }}
+      skipped: ${{ steps.aggregate.outputs.skipped }}
+      flaky: ${{ steps.aggregate.outputs.flaky }}
+      pass_rate: ${{ steps.aggregate.outputs.pass_rate }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Python is available
+        run: python3 --version
+
+      - name: Run aggregator
+        id: aggregate
+        run: |
+          set -euo pipefail
+          python3 aggregator.py "$FIXTURES_DIR"/*.xml "$FIXTURES_DIR"/*.json --stats-out stats.json
+          echo "--- stats.json ---"
+          cat stats.json
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          with open("stats.json") as fh:
+              stats = json.load(fh)
+          for key in ("total", "unique_tests", "passed", "failed", "skipped", "flaky", "pass_rate", "duration"):
+              print(f"{key}={stats[key]}")
+          PY
+
+  report-status:
+    name: Report status
+    needs: aggregate-results
+    runs-on: ubuntu-latest
+    env:
+      TOTAL: ${{ needs.aggregate-results.outputs.total }}
+      PASSED: ${{ needs.aggregate-results.outputs.passed }}
+      FAILED: ${{ needs.aggregate-results.outputs.failed }}
+      SKIPPED: ${{ needs.aggregate-results.outputs.skipped }}
+      FLAKY: ${{ needs.aggregate-results.outputs.flaky }}
+      PASS_RATE: ${{ needs.aggregate-results.outputs.pass_rate }}
+    steps:
+      - name: Print aggregate status
+        run: |
+          set -euo pipefail
+          echo "Aggregate status: total=$TOTAL passed=$PASSED failed=$FAILED skipped=$SKIPPED flaky=$FLAKY pass_rate=$PASS_RATE%"
+          if [ "$FLAKY" != "0" ]; then
+            echo "::warning::$FLAKY flaky test(s) detected across matrix runs"
+          fi
+          if [ "$FAIL_ON_TEST_FAILURES" = "true" ] && [ "$FAILED" != "0" ]; then
+            echo "::error::$FAILED failing test(s) detected"
+            exit 1
+          fi
