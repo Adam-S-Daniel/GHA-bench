@@ -1,12 +1,13 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-06-30 08:03:13 PM ET — 2/35 runs completed, 33 remaining; total cost $3.54; total agent time 42.4 min.
-**Claude Code versions used:** v2.1.197 (2 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
+**Last updated:** 2026-06-30 08:14:11 PM ET — 3/35 runs completed, 32 remaining; total cost $6.38; total agent time 54.2 min.
+**Claude Code versions used:** v2.1.197 (3 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
 
 - [Scoring](#scoring)
   - [Duration columns](#duration-columns)
+- [Tiers by Language/Model/Effort](#tiers-by-languagemodeleffort)
 - [Failed / Timed-Out Runs](#failed-timed-out-runs)
 - [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort)
 - [Savings Analysis](#savings-analysis)
@@ -18,6 +19,7 @@
   - [Structural Metrics by Language/Model/Effort](#structural-metrics-by-languagemodeleffort)
 - [Per-Run Results](#per-run-results)
 - [Notes](#notes)
+  - [Tiers](#tiers)
   - [CLI Version Legend](#cli-version-legend)
 
 ## Scoring
@@ -56,6 +58,59 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 - **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.
 - **Avg Duration Net of Traps** (in the Comparison table only): mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
 - The **Tier table's Duration column** shows the tier letter (A+..F) for the combo's gross **Avg Duration** ratio. Net of Traps does not feed the tier band.
+## Tiers by Language/Model/Effort
+
+*Default sort: weighted composite of tiers (40% Tests, 25% Workflow Craft, 35% split between Duration & Cost). See [Notes](#notes) for tier-band definitions and scoring rubric.*
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| bash | sonnet5 | A+ (11.8min) | A+ ($2.84) | — | — |
+| default | sonnet5 | D- (12.5min) | D- ($3.54) | — | — |
+
+
+<details>
+<summary>Sorted by Duration tier (best-first), then avg of Cost/Tests/Workflow Craft tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| bash | sonnet5 | A+ (11.8min) | A+ ($2.84) | — | — |
+| default | sonnet5 | D- (12.5min) | D- ($3.54) | — | — |
+
+</details>
+
+<details>
+<summary>Sorted by Cost tier (best-first), then avg of Duration/Tests/Workflow Craft tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| bash | sonnet5 | A+ (11.8min) | A+ ($2.84) | — | — |
+| default | sonnet5 | D- (12.5min) | D- ($3.54) | — | — |
+
+</details>
+
+<details>
+<summary>Sorted by Tests Quality tier (best-first; no-data last), then avg of other tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| bash | sonnet5 | A+ (11.8min) | A+ ($2.84) | — | — |
+| default | sonnet5 | D- (12.5min) | D- ($3.54) | — | — |
+
+</details>
+
+<details>
+<summary>Sorted by Workflow Craft tier (best-first; no-data last), then avg of other tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| bash | sonnet5 | A+ (11.8min) | A+ ($2.84) | — | — |
+| default | sonnet5 | D- (12.5min) | D- ($3.54) | — | — |
+
+</details>
+
+- **Estimated time remaining:** 578.6min
+- **Estimated total cost:** $74.42
+
 ## Failed / Timed-Out Runs
 
 | Task | Language | Model | Duration | Reason | Lines | actionlint | act-result.txt |
@@ -70,6 +125,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | sonnet5 | 1 | 11.8min | 11.1min | 3.0 | 57 | $2.84 | $2.84 | — | — |
 | default | sonnet5 | 1 | 12.5min | 10.5min | 2.0 | 80 | $3.54 | $3.54 | — | — |
 
 
@@ -78,6 +134,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | sonnet5 | 1 | 11.8min | 11.1min | 3.0 | 57 | $2.84 | $2.84 | — | — |
 | default | sonnet5 | 1 | 12.5min | 10.5min | 2.0 | 80 | $3.54 | $3.54 | — | — |
 
 </details>
@@ -87,6 +144,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | sonnet5 | 1 | 11.8min | 11.1min | 3.0 | 57 | $2.84 | $2.84 | — | — |
 | default | sonnet5 | 1 | 12.5min | 10.5min | 2.0 | 80 | $3.54 | $3.54 | — | — |
 
 </details>
@@ -97,6 +155,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | sonnet5 | 1 | 12.5min | 10.5min | 2.0 | 80 | $3.54 | $3.54 | — | — |
+| bash | sonnet5 | 1 | 11.8min | 11.1min | 3.0 | 57 | $2.84 | $2.84 | — | — |
 
 </details>
 
@@ -106,6 +165,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | sonnet5 | 1 | 12.5min | 10.5min | 2.0 | 80 | $3.54 | $3.54 | — | — |
+| bash | sonnet5 | 1 | 11.8min | 11.1min | 3.0 | 57 | $2.84 | $2.84 | — | — |
 
 </details>
 
@@ -114,6 +174,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | sonnet5 | 1 | 11.8min | 11.1min | 3.0 | 57 | $2.84 | $2.84 | — | — |
 | default | sonnet5 | 1 | 12.5min | 10.5min | 2.0 | 80 | $3.54 | $3.54 | — | — |
 
 </details>
@@ -123,6 +184,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | sonnet5 | 1 | 11.8min | 11.1min | 3.0 | 57 | $2.84 | $2.84 | — | — |
 | default | sonnet5 | 1 | 12.5min | 10.5min | 2.0 | 80 | $3.54 | $3.54 | — | — |
 
 </details>
@@ -132,6 +194,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | sonnet5 | 1 | 11.8min | 11.1min | 3.0 | 57 | $2.84 | $2.84 | — | — |
 | default | sonnet5 | 1 | 12.5min | 10.5min | 2.0 | 80 | $3.54 | $3.54 | — | — |
 
 </details>
@@ -147,8 +210,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
+| bash | sonnet5-cli2.1.197 | 13 | 1 | 7.7% | 0.2min | 0.4% | 0.1min | 0.1% | 0.1min | 0.3% | 1.2min | 11.1% |
 | default | sonnet5-cli2.1.197 | 24 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.1% | -0.0min | -0.1% | 2.2min | -1.3% |
-| powershell | sonnet5-cli2.1.197 | 36 | 1 | 2.8% | 0.6min | 1.4% | 5.3min | 12.5% | -4.7min | -11.1% | 4.0min | 675.7% |
+| powershell | sonnet5-cli2.1.197 | 36 | 1 | 2.8% | 0.6min | 1.1% | 5.3min | 9.8% | -4.7min | -8.7% | 4.0min | 675.7% |
 
 
 <details>
@@ -156,8 +220,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
+| bash | sonnet5-cli2.1.197 | 13 | 1 | 7.7% | 0.2min | 0.4% | 0.1min | 0.1% | 0.1min | 0.3% | 1.2min | 11.1% |
 | default | sonnet5-cli2.1.197 | 24 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.1% | -0.0min | -0.1% | 2.2min | -1.3% |
-| powershell | sonnet5-cli2.1.197 | 36 | 1 | 2.8% | 0.6min | 1.4% | 5.3min | 12.5% | -4.7min | -11.1% | 4.0min | 675.7% |
+| powershell | sonnet5-cli2.1.197 | 36 | 1 | 2.8% | 0.6min | 1.1% | 5.3min | 9.8% | -4.7min | -8.7% | 4.0min | 675.7% |
 
 </details>
 
@@ -166,7 +231,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| powershell | sonnet5-cli2.1.197 | 36 | 1 | 2.8% | 0.6min | 1.4% | 5.3min | 12.5% | -4.7min | -11.1% | 4.0min | 675.7% |
+| powershell | sonnet5-cli2.1.197 | 36 | 1 | 2.8% | 0.6min | 1.1% | 5.3min | 9.8% | -4.7min | -8.7% | 4.0min | 675.7% |
+| bash | sonnet5-cli2.1.197 | 13 | 1 | 7.7% | 0.2min | 0.4% | 0.1min | 0.1% | 0.1min | 0.3% | 1.2min | 11.1% |
 | default | sonnet5-cli2.1.197 | 24 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.1% | -0.0min | -0.1% | 2.2min | -1.3% |
 
 </details>
@@ -176,7 +242,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| powershell | sonnet5-cli2.1.197 | 36 | 1 | 2.8% | 0.6min | 1.4% | 5.3min | 12.5% | -4.7min | -11.1% | 4.0min | 675.7% |
+| bash | sonnet5-cli2.1.197 | 13 | 1 | 7.7% | 0.2min | 0.4% | 0.1min | 0.1% | 0.1min | 0.3% | 1.2min | 11.1% |
+| powershell | sonnet5-cli2.1.197 | 36 | 1 | 2.8% | 0.6min | 1.1% | 5.3min | 9.8% | -4.7min | -8.7% | 4.0min | 675.7% |
 | default | sonnet5-cli2.1.197 | 24 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.1% | -0.0min | -0.1% | 2.2min | -1.3% |
 
 </details>
@@ -185,8 +252,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | default | sonnet5-cli2.1.197 | 1 | 2.0min | 4.7% | $0.57 | 16.06% |
-| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 2 | 5.7min | 13.4% | $0.00 | 0.00% |
+| repeated-test-reruns | default | sonnet5-cli2.1.197 | 1 | 2.0min | 3.7% | $0.57 | 8.91% |
+| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 2 | 5.7min | 10.4% | $0.00 | 0.00% |
+| fixture-rework | bash | sonnet5-cli2.1.197 | 1 | 0.8min | 1.4% | $0.18 | 2.83% |
 
 
 <details>
@@ -194,8 +262,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | default | sonnet5-cli2.1.197 | 1 | 2.0min | 4.7% | $0.57 | 16.06% |
-| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 2 | 5.7min | 13.4% | $0.00 | 0.00% |
+| fixture-rework | bash | sonnet5-cli2.1.197 | 1 | 0.8min | 1.4% | $0.18 | 2.83% |
+| repeated-test-reruns | default | sonnet5-cli2.1.197 | 1 | 2.0min | 3.7% | $0.57 | 8.91% |
+| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 2 | 5.7min | 10.4% | $0.00 | 0.00% |
 
 </details>
 
@@ -204,8 +273,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 2 | 5.7min | 13.4% | $0.00 | 0.00% |
-| repeated-test-reruns | default | sonnet5-cli2.1.197 | 1 | 2.0min | 4.7% | $0.57 | 16.06% |
+| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 2 | 5.7min | 10.4% | $0.00 | 0.00% |
+| fixture-rework | bash | sonnet5-cli2.1.197 | 1 | 0.8min | 1.4% | $0.18 | 2.83% |
+| repeated-test-reruns | default | sonnet5-cli2.1.197 | 1 | 2.0min | 3.7% | $0.57 | 8.91% |
 
 </details>
 
@@ -214,13 +284,15 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | default | sonnet5-cli2.1.197 | 1 | 2.0min | 4.7% | $0.57 | 16.06% |
-| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 2 | 5.7min | 13.4% | $0.00 | 0.00% |
+| repeated-test-reruns | default | sonnet5-cli2.1.197 | 1 | 2.0min | 3.7% | $0.57 | 8.91% |
+| fixture-rework | bash | sonnet5-cli2.1.197 | 1 | 0.8min | 1.4% | $0.18 | 2.83% |
+| repeated-test-reruns | powershell | sonnet5-cli2.1.197 | 2 | 5.7min | 10.4% | $0.00 | 0.00% |
 
 </details>
 
 #### Trap Descriptions
 
+- **fixture-rework**: Agent wrote, broke, and rewrote test fixture data (4+ fixture-related commands).
 - **repeated-test-reruns**: Same test command executed 4+ times without the underlying code changing.
 
 #### Column Definitions
@@ -236,8 +308,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| default | sonnet5-cli2.1.197 | 1 | 1 | 2.0min | 4.7% | $0.57 | 16.06% |
-| powershell | sonnet5-cli2.1.197 | 1 | 2 | 5.7min | 13.4% | $0.00 | 0.00% |
+| bash | sonnet5-cli2.1.197 | 1 | 1 | 0.8min | 1.4% | $0.18 | 2.83% |
+| default | sonnet5-cli2.1.197 | 1 | 1 | 2.0min | 3.7% | $0.57 | 8.91% |
+| powershell | sonnet5-cli2.1.197 | 1 | 2 | 5.7min | 10.4% | $0.00 | 0.00% |
 
 
 <details>
@@ -245,8 +318,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| default | sonnet5-cli2.1.197 | 1 | 1 | 2.0min | 4.7% | $0.57 | 16.06% |
-| powershell | sonnet5-cli2.1.197 | 1 | 2 | 5.7min | 13.4% | $0.00 | 0.00% |
+| bash | sonnet5-cli2.1.197 | 1 | 1 | 0.8min | 1.4% | $0.18 | 2.83% |
+| default | sonnet5-cli2.1.197 | 1 | 1 | 2.0min | 3.7% | $0.57 | 8.91% |
+| powershell | sonnet5-cli2.1.197 | 1 | 2 | 5.7min | 10.4% | $0.00 | 0.00% |
 
 </details>
 
@@ -255,8 +329,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| powershell | sonnet5-cli2.1.197 | 1 | 2 | 5.7min | 13.4% | $0.00 | 0.00% |
-| default | sonnet5-cli2.1.197 | 1 | 1 | 2.0min | 4.7% | $0.57 | 16.06% |
+| powershell | sonnet5-cli2.1.197 | 1 | 2 | 5.7min | 10.4% | $0.00 | 0.00% |
+| bash | sonnet5-cli2.1.197 | 1 | 1 | 0.8min | 1.4% | $0.18 | 2.83% |
+| default | sonnet5-cli2.1.197 | 1 | 1 | 2.0min | 3.7% | $0.57 | 8.91% |
 
 </details>
 
@@ -265,7 +340,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | Status | Runs | $ Saved | % of $ |
 |--------|------|---------|--------|
 | Full hit (100%) | 0 | $0.00 | 0.00% |
-| Partial | 2 | $0.18 | 5.11% |
+| Partial | 3 | $0.27 | 4.26% |
 | Miss | 0 | $0.00 | 0.00% |
 
 ## Test Quality Evaluation
@@ -276,6 +351,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| bash | sonnet5 | 7.0 | 20.0 | 2.9 | 0.32 |
 | default | sonnet5 | 38.0 | 60.0 | 1.6 | 1.30 |
 | powershell | sonnet5 | 43.0 | 87.0 | 2.0 | 5.78 |
 
@@ -287,6 +363,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|-------|-----------|----------------|-----------------|---------------------|
 | powershell | sonnet5 | 43.0 | 87.0 | 2.0 | 5.78 |
 | default | sonnet5 | 38.0 | 60.0 | 1.6 | 1.30 |
+| bash | sonnet5 | 7.0 | 20.0 | 2.9 | 0.32 |
 
 </details>
 
@@ -297,6 +374,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|-------|-----------|----------------|-----------------|---------------------|
 | powershell | sonnet5 | 43.0 | 87.0 | 2.0 | 5.78 |
 | default | sonnet5 | 38.0 | 60.0 | 1.6 | 1.30 |
+| bash | sonnet5 | 7.0 | 20.0 | 2.9 | 0.32 |
 
 </details>
 
@@ -307,6 +385,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|-------|-----------|----------------|-----------------|---------------------|
 | powershell | sonnet5 | 43.0 | 87.0 | 2.0 | 5.78 |
 | default | sonnet5 | 38.0 | 60.0 | 1.6 | 1.30 |
+| bash | sonnet5 | 7.0 | 20.0 | 2.9 | 0.32 |
 
 </details>
 
@@ -318,6 +397,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|------|-------|-------|------------|-------------|------------|------------|-----------|
 | Semantic Version Bumper | default | sonnet5 | 38 | 60 | 1.6 | 438 | 336 | 1.30 |
 | Semantic Version Bumper | powershell | sonnet5 | 43 | 87 | 2.0 | 514 | 89 | 5.78 |
+| Semantic Version Bumper | bash | sonnet5 | 7 | 20 | 2.9 | 77 | 238 | 0.32 |
 
 </details>
 
@@ -327,6 +407,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
+| Semantic Version Bumper | bash | sonnet5 | 11.8min | 57 | 3 | $2.84 | — | bash | ok |
 | Semantic Version Bumper | default | sonnet5 | 12.5min | 80 | 2 | $3.54 | — | python | ok |
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
 
@@ -337,6 +418,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
+| Semantic Version Bumper | bash | sonnet5 | 11.8min | 57 | 3 | $2.84 | — | bash | ok |
 | Semantic Version Bumper | default | sonnet5 | 12.5min | 80 | 2 | $3.54 | — | python | ok |
 
 </details>
@@ -346,6 +428,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
+| Semantic Version Bumper | bash | sonnet5 | 11.8min | 57 | 3 | $2.84 | — | bash | ok |
 | Semantic Version Bumper | default | sonnet5 | 12.5min | 80 | 2 | $3.54 | — | python | ok |
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
 
@@ -358,6 +441,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
 | Semantic Version Bumper | default | sonnet5 | 12.5min | 80 | 2 | $3.54 | — | python | ok |
+| Semantic Version Bumper | bash | sonnet5 | 11.8min | 57 | 3 | $2.84 | — | bash | ok |
 
 </details>
 
@@ -367,6 +451,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
+| Semantic Version Bumper | bash | sonnet5 | 11.8min | 57 | 3 | $2.84 | — | bash | ok |
 | Semantic Version Bumper | default | sonnet5 | 12.5min | 80 | 2 | $3.54 | — | python | ok |
 
 </details>
@@ -378,10 +463,18 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | default | sonnet5 | 12.5min | 80 | 2 | $3.54 | — | python | ok |
 | Semantic Version Bumper | powershell | sonnet5 | 30.0min | 0 | 1 | $0.00 | — | powershell | timeout |
+| Semantic Version Bumper | bash | sonnet5 | 11.8min | 57 | 3 | $2.84 | — | bash | ok |
 
 </details>
 
 ## Notes
+
+### Tiers
+
+- **Duration bands:** **A+** ≤1.00×, **A** ≤1.01×, **A-** ≤1.01×, **B+** ≤1.02×, **B** ≤1.02×, **B-** ≤1.03×, **C+** ≤1.03×, **C** ≤1.04×, **C-** ≤1.04×, **D+** ≤1.05×, **D** ≤1.05×, **D-** ≤1.05×, **F** >1.05×
+- **Cost bands:** **A+** ≤1.02×, **A** ≤1.04×, **A-** ≤1.06×, **B+** ≤1.08×, **B** ≤1.10×, **B-** ≤1.12×, **C+** ≤1.14×, **C** ≤1.16×, **C-** ≤1.18×, **D+** ≤1.20×, **D** ≤1.22×, **D-** ≤1.25×, **F** >1.25×
+
+*Tests/Workflow Craft bands are absolute Overall score bands:* **A+** ≥4.7, **A** ≥4.4, **A-** ≥4.1, **B+** ≥3.8, **B** ≥3.5, **B-** ≥3.2, **C+** ≥2.9, **C** ≥2.6, **C-** ≥2.3, **D+** ≥2.0, **D** ≥1.7, **D-** ≥1.4, **F** <1.4, `—` = no data.*
 
 ### CLI Version Legend
 
