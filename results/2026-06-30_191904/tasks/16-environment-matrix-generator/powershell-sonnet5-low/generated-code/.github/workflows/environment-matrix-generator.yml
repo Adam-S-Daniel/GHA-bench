@@ -1,0 +1,66 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Pester is available
+        shell: pwsh
+        run: |
+          $module = Get-Module -ListAvailable -Name Pester | Select-Object -First 1
+          if (-not $module) {
+            Write-Host "Pester not found, installing..."
+            Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser
+          } else {
+            Write-Host "Pester version $($module.Version) already available."
+          }
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./New-EnvironmentMatrix.Tests.ps1 -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) Pester test(s) failed."
+          }
+
+      - name: Generate matrix - basic fixture
+        shell: pwsh
+        run: |
+          . ./New-EnvironmentMatrix.ps1
+          $config = Get-Content ./fixtures/basic.json -Raw | ConvertFrom-Json
+          $json = New-EnvironmentMatrixJson -Config $config
+          Write-Host "=== MATRIX OUTPUT: basic ==="
+          Write-Host $json
+
+      - name: Generate matrix - with-include-exclude fixture
+        shell: pwsh
+        run: |
+          . ./New-EnvironmentMatrix.ps1
+          $config = Get-Content ./fixtures/with-include-exclude.json -Raw | ConvertFrom-Json
+          $json = New-EnvironmentMatrixJson -Config $config
+          Write-Host "=== MATRIX OUTPUT: with-include-exclude ==="
+          Write-Host $json
+
+      - name: Generate matrix - exceeds-max fixture (expected failure)
+        shell: pwsh
+        run: |
+          . ./New-EnvironmentMatrix.ps1
+          $config = Get-Content ./fixtures/exceeds-max.json -Raw | ConvertFrom-Json
+          Write-Host "=== MATRIX OUTPUT: exceeds-max ==="
+          try {
+            $json = New-EnvironmentMatrixJson -Config $config
+            Write-Host $json
+          } catch {
+            Write-Host "EXPECTED ERROR: $($_.Exception.Message)"
+          }
