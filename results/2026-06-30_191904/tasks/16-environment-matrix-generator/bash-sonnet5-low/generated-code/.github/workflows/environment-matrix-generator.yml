@@ -1,0 +1,63 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  CONFIG_FILE: test/fixtures/full_config.json
+
+jobs:
+  generate:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify jq is available
+        run: jq --version
+
+      - name: Install bats-core
+        run: |
+          if ! command -v bats >/dev/null 2>&1; then
+            git clone --depth 1 https://github.com/bats-core/bats-core.git /tmp/bats-core
+            /tmp/bats-core/install.sh /usr/local
+          fi
+          bats --version
+
+      - name: Run test suite
+        run: bats test/generate_matrix.bats
+
+      - name: Generate matrix
+        id: generate
+        run: |
+          set -euo pipefail
+          output=$(./generate_matrix.sh "${CONFIG_FILE}")
+          echo "Generated matrix:"
+          echo "$output" | jq .
+          {
+            echo "matrix<<EOF"
+            echo "$output"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.os }}, ${{ matrix.versions }})
+    needs: generate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: ${{ fromJson(needs.generate.outputs.matrix)['fail-fast'] }}
+      matrix: ${{ fromJson(needs.generate.outputs.matrix).matrix }}
+    steps:
+      - name: Show matrix entry
+        run: |
+          echo "os=${{ matrix.os }} versions=${{ matrix.versions }}"
