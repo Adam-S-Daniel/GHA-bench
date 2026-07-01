@@ -1,0 +1,54 @@
+name: Test Results Aggregator
+
+# Simulates a CI matrix build: the "collect" job stands in for the point at
+# which every matrix cell's test-result file (JUnit XML or JSON) has already
+# landed under TEST_RESULTS_PATH (in a real pipeline these would come from
+# actions/upload-artifact + actions/download-artifact across matrix jobs).
+# The "aggregate" job then combines them, computes totals, flags flaky
+# tests, and publishes a Markdown job summary.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TEST_RESULTS_PATH: test-results
+
+jobs:
+  collect:
+    name: Collect matrix build results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify test result files are present
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem -Path $env:TEST_RESULTS_PATH -File -Include '*.xml', '*.json' -Recurse
+          if (-not $files -or $files.Count -eq 0) {
+            Write-Error "No test result files found under '$env:TEST_RESULTS_PATH'."
+            exit 1
+          }
+          Write-Output "Found $($files.Count) test result file(s):"
+          $files | ForEach-Object { Write-Output " - $($_.Name)" }
+
+  aggregate:
+    name: Aggregate and summarize
+    needs: collect
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify PowerShell is available
+        shell: pwsh
+        run: $PSVersionTable.PSVersion
+
+      - name: Run test results aggregator
+        shell: pwsh
+        run: |
+          ./Aggregate-TestResults.ps1 -Path $env:TEST_RESULTS_PATH -SummaryPath $env:GITHUB_STEP_SUMMARY

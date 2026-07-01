@@ -1,0 +1,1193 @@
+{
+  "task_id": "15-test-results-aggregator",
+  "task_name": "Test Results Aggregator",
+  "task_category": "GitHub Actions / CI Reporting",
+  "language_mode": "powershell-tool",
+  "language_chosen": "powershell",
+  "language_breakdown": {
+    "powershell": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-sonnet-5",
+  "model_short": "sonnet5",
+  "variant": "sonnet5",
+  "claude_code_version": "2.1.197",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-07-01T05:16:00.460762+00:00",
+  "timestamp_end": "2026-07-01T05:42:03.175355+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use PowerShell as your implementation language.\n\nTASK: Parse test result files in multiple formats (JUnit XML, and JSON), aggregate results across multiple files (simulating a matrix build), compute totals (passed, failed, skipped, duration), identify flaky tests (passed in some runs, failed in others), and generate a markdown summary suitable for a GitHub Actions job summary. Create sample test result files as fixtures.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use Pester as the testing framework.\n3. All tests must be runnable with `Invoke-Pester` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/test-results-aggregator.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/test-results-aggregator.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "490bb457-1c70-4564-9dae-757e5f99d5db",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 30,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1420,
+      "outputTokens": 20,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.00152,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-sonnet-5": {
+      "inputTokens": 4308,
+      "outputTokens": 87617,
+      "cacheReadInputTokens": 7700835,
+      "cacheCreationInputTokens": 196034,
+      "webSearchRequests": 0,
+      "costUSD": 4.8136335,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": null,
+  "timing": {
+    "grand_total_duration_ms": 1562714,
+    "total_api_duration_ms": 961784,
+    "total_execution_duration_ms": 597899,
+    "num_turns": 87
+  },
+  "tokens": {
+    "input_tokens": 4308,
+    "output_tokens": 87617,
+    "cache_read_tokens": 7700835,
+    "cache_creation_tokens": 196034,
+    "total_context_consumed": 7901177,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 4.815153499999999,
+    "assumed_input_cost_per_mtok": 3.0,
+    "assumed_output_cost_per_mtok": 15.0,
+    "assumed_cache_read_cost_per_mtok": 0.3,
+    "assumed_cache_write_cost_per_mtok": 3.75
+  },
+  "code_metrics": {
+    "code_lines": 397,
+    "total_tokens_estimate": 11192,
+    "file_count": 14,
+    "files": [
+      "Aggregate-TestResults.ps1",
+      "TestResultsAggregator.psm1",
+      "act-result.txt",
+      "fixtures/clean-matrix/run1-ubuntu-py38.xml",
+      "fixtures/clean-matrix/run2-ubuntu-py39.xml",
+      "fixtures/clean-matrix/run3-macos-py38.json",
+      "fixtures/flaky-and-failures/run1-junit.xml",
+      "fixtures/flaky-and-failures/run2-results.json",
+      ".github/workflows/test-results-aggregator.yml",
+      "Tests/Pipeline.Act.Tests.ps1",
+      "Tests/Workflow.Structure.Tests.ps1",
+      "test-results/run1-ubuntu-py38.xml",
+      "test-results/run2-ubuntu-py39.xml",
+      "test-results/run3-macos-py38.json"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 4,
+    "error_details": [
+      "Exit code 1\n\u001b[31;1mWrite-Error: \u001b[31;1mTest results aggregation failed: The property 'message' cannot be found on this object. Verify that the property exists.\u001b[0m",
+      "Exit code 1\n\u001b[31;1mMeasure-Object: \u001b[31;1mCannot process argument because the value of argument \"DurationSeconds\" is not\u001b[0m\n\u001b[31;1m\u001b[31;1mvalid. Change the value of the \"DurationSeconds\" argument and",
+      "Exit code 1\n\u001b[31;1mMeasure-Object: \u001b[31;1mCannot process argument because the value of argument \"DurationSeconds\" is not\u001b[0m\n\u001b[31;1m\u001b[31;1mvalid. Change the value of the \"DurationSeconds\" argument and",
+      "Exit code 1\n\u001b[31;1mMeasure-Object: \u001b[31;1mCannot process argument because the value of argument \"DurationSeconds\" is not\u001b[0m\n\u001b[31;1m\u001b[31;1mvalid. Change the value of the \"DurationSeconds\" argument and"
+    ],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/test-results-aggregator.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 14474,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 86,
+    "total_tool_duration_ms": 602139,
+    "bash_tool_uses": 34,
+    "bash_total_ms": 391009,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests -Output Detailed\" 2>&1 | tail -15",
+        "duration_ms": 95273,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests/Pipeline.Act.Tests.ps1 -Output Detailed\" 2>&1 | tail -200",
+        "duration_ms": 79966,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"./Aggregate-TestResults.ps1 -Path ./fixtures/clean-matrix\" 2>&1",
+        "duration_ms": 59813,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests/Pipeline.Act.Tests.ps1 -Output Detailed\" 2>&1 | tee /tmp/pipeline-run3.log | tail -60",
+        "duration_ms": 33290,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"./Aggregate-TestResults.ps1 -Path ./fixtures/clean-matrix\" 2>&1",
+        "duration_ms": 24393,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests/Pipeline.Act.Tests.ps1 -Output Detailed\" 2>&1 | tail -150",
+        "duration_ms": 19424,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15803,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15594,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"=== clean-matrix ===\"; pwsh -NoLogo -NoProfile -Command \"./Aggregate-TestResults.ps1 -Path ./fixtures/clean-matrix\" 2>&1\necho \"\"\necho \"=== flaky-and-failures ===\"; pwsh -NoLogo -NoProfile -Comma",
+        "duration_ms": 15447,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15262,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "pwd && ls -la && git status",
+        "duration_ms": 267,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "which pwsh act actionlint docker 2>&1; pwsh -v 2>&1; act --version 2>&1; actionlint --version 2>&1",
+        "duration_ms": 1136,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 27,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 21,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Get-Module -ListAvailable Pester | Select-Object Name,Version | Format-Table -AutoSize; Get-Command git,act,docker | Select-Object Name,Source\"",
+        "duration_ms": 1745,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p Tests fixtures/clean-matrix fixtures/flaky-and-failures test-results .github/workflows && ls -la",
+        "duration_ms": 165,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 66,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 111,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 128,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "ToolSearch",
+        "command": "",
+        "duration_ms": 10,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 15,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 11,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 115,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 13,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 14,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 95,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 109,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cp fixtures/clean-matrix/*.xml fixtures/clean-matrix/*.json test-results/ && ls -la test-results/",
+        "duration_ms": 335,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 14,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 17,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Get-Module -ListAvailable powershell-yaml | Select-Object Name,Version\"; which yq python3 2>&1; python3 -c \"import yaml\" 2>&1 && echo \"pyyaml available\"",
+        "duration_ms": 8662,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15059,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests/Workflow.Structure.Tests.ps1 -Output Detailed\" 2>&1 | tail -40",
+        "duration_ms": 7840,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15262,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15803,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"./Aggregate-TestResults.ps1 -Path ./fixtures/clean-matrix\" 2>&1",
+        "duration_ms": 59813,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15594,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15079,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15033,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"./Aggregate-TestResults.ps1 -Path ./fixtures/clean-matrix\" 2>&1",
+        "duration_ms": 5721,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 9,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15099,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"./Aggregate-TestResults.ps1 -Path ./fixtures/clean-matrix\" 2>&1",
+        "duration_ms": 3121,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"\nImport-Module ./TestResultsAggregator.psm1 -Force\n\\$r = Get-AggregatedTestResults -Path ./fixtures/clean-matrix\nWrite-Host 'Count:' \\$r.Count\nWrite-Host 'Type:' (\\$r",
+        "duration_ms": 1713,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15078,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 34,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15218,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 55,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15236,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"./Aggregate-TestResults.ps1 -Path ./fixtures/clean-matrix\" 2>&1",
+        "duration_ms": 24393,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"\nImport-Module ./TestResultsAggregator.psm1 -Force\n\\$r = Get-AggregatedTestResults -Path ./fixtures/clean-matrix\nWrite-Host 'Count:' \\$r.Count\nWrite-Host 'Type:' (\\$r",
+        "duration_ms": 3677,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15048,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"\nImport-Module ./TestResultsAggregator.psm1 -Force\n\\$r = Get-AggregatedTestResults -Path ./fixtures/clean-matrix\nWrite-Host 'Count:' \\$r.Count\n\\$r | ForEach-Object { ",
+        "duration_ms": 2705,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"=== clean-matrix ===\"; pwsh -NoLogo -NoProfile -Command \"./Aggregate-TestResults.ps1 -Path ./fixtures/clean-matrix\" 2>&1\necho \"\"\necho \"=== flaky-and-failures ===\"; pwsh -NoLogo -NoProfile -Comma",
+        "duration_ms": 15447,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"=== missing path ===\"; pwsh -NoLogo -NoProfile -Command \"./Aggregate-TestResults.ps1 -Path ./does-not-exist\" 2>&1\necho \"exit: $?\"",
+        "duration_ms": 11138,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 37,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 36,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 475,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/test-results-aggregator.yml; echo \"exit: $?\"",
+        "duration_ms": 626,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 16,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests/Workflow.Structure.Tests.ps1 -Output Detailed\" 2>&1 | tail -40",
+        "duration_ms": 7568,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git --version; git config --global --get commit.gpgsign; git config --global --get user.email; git config --global --get user.name; echo done",
+        "duration_ms": 67,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker images | grep -i pwsh; docker images | grep -i act-ubuntu",
+        "duration_ms": 557,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15027,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests/Pipeline.Act.Tests.ps1 -Output Detailed\" 2>&1 | tail -150",
+        "duration_ms": 19424,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "act --help 2>&1 | grep -i pull",
+        "duration_ms": 72,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 11902,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 53,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "find ~/.cache/act -maxdepth 3 -iname \"*checkout*\" 2>&1 | head -20; echo \"---\"; ls ~/.cache/act 2>&1 | head -20",
+        "duration_ms": 152,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests/Pipeline.Act.Tests.ps1 -Output Detailed\" 2>&1 | tail -200",
+        "duration_ms": 79966,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15101,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 16,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat > /tmp/quicktest.Tests.ps1 << 'EOF'\nDescribe 'sanity' {\n    It 'old buggy pattern' {\n        \"hello Skipped:** 2 world\" | Should -Match [regex]::Escape(\"Skipped:** 2 \")\n    }\n    It 'new fixed pat",
+        "duration_ms": 5501,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "wc -l act-result.txt; grep -n \"SCENARIO:\\|EXIT CODE:\\|Job succeeded\\|Job failed\\|Total:\\*\\*\\|Passed:\\*\\*\\|Failed:\\*\\*\\|Skipped:\\*\\*\\|Duration:\\*\\*\\|flaky test(s)\\|No flaky\" act-result.txt",
+        "duration_ms": 88,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests/Pipeline.Act.Tests.ps1 -Output Detailed\" 2>&1 | tee /tmp/pipeline-run3.log | tail -60",
+        "duration_ms": 33290,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "ls -la act-result.txt && head -5 act-result.txt",
+        "duration_ms": 73,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoLogo -NoProfile -Command \"Invoke-Pester -Path ./Tests -Output Detailed\" 2>&1 | tail -15",
+        "duration_ms": 95273,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "ls -la act-result.txt && wc -l act-result.txt && git status --short",
+        "duration_ms": 80,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "ls /tmp | grep -i aggregator-act; echo \"---check none leftover---\"",
+        "duration_ms": 56,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "find . -not -path './.git*' -not -path './.claude*' -type f | sort",
+        "duration_ms": 99,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 9,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/test-results-aggregator.yml; echo \"actionlint exit: $?\"\necho \"---\"\ncat .actrc",
+        "duration_ms": 148,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "echo \"=== Task list status ===\" \ngit status --short | head -30",
+        "duration_ms": 91,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 243361,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 23,
+    "hook_errors_caught": 1,
+    "hook_failures": 13,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "6c34be5a-cecf-49d0-a474-ae5f9a09f35d",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ce9c84fb-423c-4e8d-b148-274f94c5668c",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6c34be5a-cecf-49d0-a474-ae5f9a09f35d",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ce9c84fb-423c-4e8d-b148-274f94c5668c",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2f4861b3-be6c-48d7-a6a9-dd6deb4d5b04",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2f4861b3-be6c-48d7-a6a9-dd6deb4d5b04",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "25f8b91d-1105-4462-b7c9-5498254b5b4f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "25f8b91d-1105-4462-b7c9-5498254b5b4f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "155ac3d4-3655-4673-b84c-8d6e8d3dac8b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "155ac3d4-3655-4673-b84c-8d6e8d3dac8b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "0e71559c-15ff-4345-bab4-017b0f3830b4",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "0e71559c-15ff-4345-bab4-017b0f3830b4",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a2bcf6b8-f7b7-4ad4-9240-840e7cda0940",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a2bcf6b8-f7b7-4ad4-9240-840e7cda0940",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b12948ca-8eeb-491b-bc21-967dc7afa1de",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b12948ca-8eeb-491b-bc21-967dc7afa1de",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b3203ad8-0e23-4385-ae08-966535afcd3a",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b3203ad8-0e23-4385-ae08-966535afcd3a",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "405b3f9d-a72b-43af-8482-97c203564b35",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "405b3f9d-a72b-43af-8482-97c203564b35",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "13f84855-1036-412c-a790-03e4a53443d9",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "13f84855-1036-412c-a790-03e4a53443d9",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f524dcd9-70b4-4f83-8b78-4e43be301f5c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f524dcd9-70b4-4f83-8b78-4e43be301f5c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "64bc9b7b-a725-440f-adea-af88e3f2deca",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "64bc9b7b-a725-440f-adea-af88e3f2deca",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "633c5775-ff7f-4d8e-8c28-36033e86e1aa",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "633c5775-ff7f-4d8e-8c28-36033e86e1aa",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "3bc33def-d353-4343-a2b0-8c392770b634",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3bc33def-d353-4343-a2b0-8c392770b634",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "11fe913f-88eb-4044-8cf3-f33f5c1ff7f8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "11fe913f-88eb-4044-8cf3-f33f5c1ff7f8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "483c5f91-e16f-45a0-a964-c236fe0cf2f2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "483c5f91-e16f-45a0-a964-c236fe0cf2f2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b6dd051b-3607-409f-95bc-00d37bd23b9b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b6dd051b-3607-409f-95bc-00d37bd23b9b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "77b41f84-cdbc-42be-98a8-33a0cb2cebff",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "77b41f84-cdbc-42be-98a8-33a0cb2cebff",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "568c056f-8dc6-430e-b218-057f60f1b64a",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "568c056f-8dc6-430e-b218-057f60f1b64a",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "680477fe-ef8a-485d-8a2d-cf9c6c96e69e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "680477fe-ef8a-485d-8a2d-cf9c6c96e69e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The Variable 'matches' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name. (Line 143)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "8d33da42-fb4c-40ed-9764-2d591993a30a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "8d33da42-fb4c-40ed-9764-2d591993a30a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "1d7a4970-cd6b-4c8f-aebf-a7d270616184",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "1d7a4970-cd6b-4c8f-aebf-a7d270616184",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}
