@@ -20,6 +20,7 @@ MODELS = {
     "opus47-1m": "claude-opus-4-7[1m]",
     "opus46-1m": "claude-opus-4-6[1m]",
     "sonnet46-1m": "claude-sonnet-4-6[1m]",
+    "fable5": "claude-fable-5",
     "haiku45": "claude-haiku-4-5",
 }
 
@@ -43,5 +44,12 @@ COST_PER_MTOK = {
     "claude-opus-4-7[1m]":   {"input": 5.0, "output": 25.0, "cache_read": 0.50, "cache_write": 6.25},
     "claude-sonnet-4-6":     {"input": 3.0, "output": 15.0, "cache_read": 0.30, "cache_write": 3.75},
     "claude-sonnet-4-6[1m]": {"input": 3.0, "output": 15.0, "cache_read": 0.30, "cache_write": 3.75},
+    # Claude Fable 5 — Anthropic's most capable model (1M context by default,
+    # like Sonnet 5; no [1m] suffix needed). Pricing $10 in / $50 out per MTok
+    # (https://claude.com/pricing). cache_read = 0.1x input, cache_write = 1.25x
+    # input (5m TTL) per the standard ratios; docs give no Fable-specific cache
+    # rates, so these are derived. The CLI's reported total_cost_usd is
+    # authoritative in results.
+    "claude-fable-5":        {"input": 10.0, "output": 50.0, "cache_read": 1.0, "cache_write": 12.5},
     "claude-haiku-4-5":      {"input": 1.0, "output": 5.0,  "cache_read": 0.10, "cache_write": 1.25},
 }
