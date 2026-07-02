@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-01 11:41:28 PM ET — 28/28 runs completed, 0 remaining; total cost $119.28; total agent time 299.2 min.
+**Last updated:** 2026-07-01 11:44:01 PM ET — 28/56 runs completed, 28 remaining; total cost $119.28; total agent time 299.2 min.
 **Claude Code versions used:** v2.1.198 (28 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -116,6 +116,9 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | fable5-medium | D- (15.0min) | D- ($4.70) | — | — |
 
 </details>
+
+- **Estimated time remaining:** 299.2min
+- **Estimated total cost:** $238.56
 
 ## Comparison by Language/Model/Effort
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
@@ -436,33 +439,33 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Tests | Assertions | Assert/Test | Test Lines | Impl Lines | Test:Code |
 |------|------|-------|-------|------------|-------------|------------|------------|-----------|
+| Semantic Version Bumper | bash | fable5-medium | 32 | 57 | 1.8 | 269 | 274 | 0.98 |
 | Semantic Version Bumper | default | fable5-medium | 0 | 0 | 0.0 | 95 | 0 | 0.00 |
 | Semantic Version Bumper | powershell | fable5-medium | 43 | 79 | 1.8 | 471 | 45 | 10.47 |
-| Semantic Version Bumper | bash | fable5-medium | 32 | 57 | 1.8 | 269 | 274 | 0.98 |
 | Semantic Version Bumper | typescript-bun | fable5-medium | 41 | 66 | 1.6 | 365 | 504 | 0.72 |
+| PR Label Assigner | bash | fable5-medium | 25 | 39 | 1.6 | 215 | 276 | 0.78 |
 | PR Label Assigner | default | fable5-medium | 28 | 45 | 1.6 | 314 | 163 | 1.93 |
 | PR Label Assigner | powershell | fable5-medium | 37 | 47 | 1.3 | 299 | 170 | 1.76 |
-| PR Label Assigner | bash | fable5-medium | 25 | 39 | 1.6 | 215 | 276 | 0.78 |
 | PR Label Assigner | typescript-bun | fable5-medium | 32 | 73 | 2.3 | 511 | 214 | 2.39 |
+| Dependency License Checker | bash | fable5-medium | 19 | 36 | 1.9 | 158 | 257 | 0.61 |
 | Dependency License Checker | default | fable5-medium | 24 | 33 | 1.4 | 312 | 360 | 0.87 |
 | Dependency License Checker | powershell | fable5-medium | 38 | 65 | 1.7 | 480 | 79 | 6.08 |
-| Dependency License Checker | bash | fable5-medium | 19 | 36 | 1.9 | 158 | 257 | 0.61 |
 | Dependency License Checker | typescript-bun | fable5-medium | 34 | 50 | 1.5 | 422 | 510 | 0.83 |
+| Test Results Aggregator | bash | fable5-medium | 26 | 60 | 2.3 | 240 | 327 | 0.73 |
 | Test Results Aggregator | default | fable5-medium | 26 | 59 | 2.3 | 345 | 420 | 0.82 |
 | Test Results Aggregator | powershell | fable5-medium | 43 | 86 | 2.0 | 497 | 66 | 7.53 |
-| Test Results Aggregator | bash | fable5-medium | 26 | 60 | 2.3 | 240 | 327 | 0.73 |
 | Test Results Aggregator | typescript-bun | fable5-medium | 33 | 70 | 2.1 | 661 | 487 | 1.36 |
+| Environment Matrix Generator | bash | fable5-medium | 16 | 23 | 1.4 | 138 | 233 | 0.59 |
 | Environment Matrix Generator | default | fable5-medium | 25 | 53 | 2.1 | 279 | 377 | 0.74 |
 | Environment Matrix Generator | powershell | fable5-medium | 31 | 63 | 2.0 | 399 | 42 | 9.50 |
-| Environment Matrix Generator | bash | fable5-medium | 16 | 23 | 1.4 | 138 | 233 | 0.59 |
 | Environment Matrix Generator | typescript-bun | fable5-medium | 27 | 50 | 1.9 | 384 | 422 | 0.91 |
+| Artifact Cleanup Script | bash | fable5-medium | 18 | 50 | 2.8 | 185 | 335 | 0.55 |
 | Artifact Cleanup Script | default | fable5-medium | 25 | 54 | 2.2 | 337 | 441 | 0.76 |
 | Artifact Cleanup Script | powershell | fable5-medium | 27 | 65 | 2.4 | 348 | 298 | 1.17 |
-| Artifact Cleanup Script | bash | fable5-medium | 18 | 50 | 2.8 | 185 | 335 | 0.55 |
 | Artifact Cleanup Script | typescript-bun | fable5-medium | 33 | 75 | 2.3 | 579 | 437 | 1.32 |
+| Secret Rotation Validator | bash | fable5-medium | 22 | 59 | 2.7 | 205 | 355 | 0.58 |
 | Secret Rotation Validator | default | fable5-medium | 32 | 62 | 1.9 | 370 | 233 | 1.59 |
 | Secret Rotation Validator | powershell | fable5-medium | 39 | 79 | 2.0 | 460 | 279 | 1.65 |
-| Secret Rotation Validator | bash | fable5-medium | 22 | 59 | 2.7 | 205 | 355 | 0.58 |
 | Secret Rotation Validator | typescript-bun | fable5-medium | 41 | 86 | 2.1 | 496 | 733 | 0.68 |
 
 </details>
@@ -586,8 +589,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Test Results Aggregator | typescript-bun | fable5-medium | 10.7min | 46 | 0 | $4.98 | — | typescript | ok |
 | Artifact Cleanup Script | default | fable5-medium | 12.1min | 52 | 0 | $5.22 | — | python | ok |
 | Artifact Cleanup Script | typescript-bun | fable5-medium | 14.5min | 51 | 0 | $5.68 | — | typescript | ok |
-| Secret Rotation Validator | default | fable5-medium | 7.3min | 32 | 0 | $3.13 | — | python | ok |
 | Secret Rotation Validator | bash | fable5-medium | 9.4min | 37 | 0 | $3.92 | — | bash | ok |
+| Secret Rotation Validator | default | fable5-medium | 7.3min | 32 | 0 | $3.13 | — | python | ok |
 | Secret Rotation Validator | typescript-bun | fable5-medium | 12.7min | 42 | 0 | $4.84 | — | typescript | ok |
 | Semantic Version Bumper | bash | fable5-medium | 8.4min | 39 | 1 | $3.99 | — | bash | ok |
 | PR Label Assigner | default | fable5-medium | 6.8min | 35 | 1 | $3.04 | — | python | ok |
@@ -652,33 +655,33 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
+| Semantic Version Bumper | bash | fable5-medium | 8.4min | 39 | 1 | $3.99 | — | bash | ok |
 | Semantic Version Bumper | default | fable5-medium | 9.1min | 35 | 2 | $4.21 | — | javascript | ok |
 | Semantic Version Bumper | powershell | fable5-medium | 19.0min | 36 | 4 | $4.65 | — | powershell | ok |
-| Semantic Version Bumper | bash | fable5-medium | 8.4min | 39 | 1 | $3.99 | — | bash | ok |
 | Semantic Version Bumper | typescript-bun | fable5-medium | 8.9min | 36 | 0 | $3.39 | — | typescript | ok |
+| PR Label Assigner | bash | fable5-medium | 8.6min | 46 | 2 | $4.15 | — | bash | ok |
 | PR Label Assigner | default | fable5-medium | 6.8min | 35 | 1 | $3.04 | — | python | ok |
 | PR Label Assigner | powershell | fable5-medium | 12.0min | 32 | 1 | $3.41 | — | powershell | ok |
-| PR Label Assigner | bash | fable5-medium | 8.6min | 46 | 2 | $4.15 | — | bash | ok |
 | PR Label Assigner | typescript-bun | fable5-medium | 11.9min | 46 | 0 | $4.46 | — | typescript | ok |
+| Dependency License Checker | bash | fable5-medium | 6.3min | 36 | 1 | $2.95 | — | bash | ok |
 | Dependency License Checker | default | fable5-medium | 6.8min | 29 | 2 | $2.90 | — | python | ok |
 | Dependency License Checker | powershell | fable5-medium | 11.2min | 20 | 2 | $3.23 | — | powershell | ok |
-| Dependency License Checker | bash | fable5-medium | 6.3min | 36 | 1 | $2.95 | — | bash | ok |
 | Dependency License Checker | typescript-bun | fable5-medium | 9.2min | 46 | 0 | $4.24 | — | typescript | ok |
+| Test Results Aggregator | bash | fable5-medium | 7.8min | 34 | 3 | $3.46 | — | bash | ok |
 | Test Results Aggregator | default | fable5-medium | 9.8min | 47 | 1 | $5.30 | — | python | ok |
 | Test Results Aggregator | powershell | fable5-medium | 15.2min | 40 | 5 | $5.09 | — | powershell | ok |
-| Test Results Aggregator | bash | fable5-medium | 7.8min | 34 | 3 | $3.46 | — | bash | ok |
 | Test Results Aggregator | typescript-bun | fable5-medium | 10.7min | 46 | 0 | $4.98 | — | typescript | ok |
+| Environment Matrix Generator | bash | fable5-medium | 7.5min | 37 | 1 | $3.41 | — | bash | ok |
 | Environment Matrix Generator | default | fable5-medium | 10.6min | 47 | 2 | $4.57 | — | python | ok |
 | Environment Matrix Generator | powershell | fable5-medium | 12.6min | 34 | 6 | $4.34 | — | powershell | ok |
-| Environment Matrix Generator | bash | fable5-medium | 7.5min | 37 | 1 | $3.41 | — | bash | ok |
 | Environment Matrix Generator | typescript-bun | fable5-medium | 7.9min | 36 | 3 | $5.00 | — | typescript | ok |
+| Artifact Cleanup Script | bash | fable5-medium | 7.7min | 31 | 5 | $3.53 | — | bash | ok |
 | Artifact Cleanup Script | default | fable5-medium | 12.1min | 52 | 0 | $5.22 | — | python | ok |
 | Artifact Cleanup Script | powershell | fable5-medium | 17.1min | 46 | 1 | $6.86 | — | powershell | ok |
-| Artifact Cleanup Script | bash | fable5-medium | 7.7min | 31 | 5 | $3.53 | — | bash | ok |
 | Artifact Cleanup Script | typescript-bun | fable5-medium | 14.5min | 51 | 0 | $5.68 | — | typescript | ok |
+| Secret Rotation Validator | bash | fable5-medium | 9.4min | 37 | 0 | $3.92 | — | bash | ok |
 | Secret Rotation Validator | default | fable5-medium | 7.3min | 32 | 0 | $3.13 | — | python | ok |
 | Secret Rotation Validator | powershell | fable5-medium | 18.0min | 30 | 5 | $5.33 | — | powershell | ok |
-| Secret Rotation Validator | bash | fable5-medium | 9.4min | 37 | 0 | $3.92 | — | bash | ok |
 | Secret Rotation Validator | typescript-bun | fable5-medium | 12.7min | 42 | 0 | $4.84 | — | typescript | ok |
 
 </details>
