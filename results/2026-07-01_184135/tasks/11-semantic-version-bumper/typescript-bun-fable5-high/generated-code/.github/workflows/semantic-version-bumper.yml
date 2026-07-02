@@ -1,0 +1,90 @@
+# CI pipeline for the semantic version bumper.
+#
+# Job layout:
+#   test  — install Bun + actionlint, run the whole bun test suite
+#           (unit tests AND workflow-structure tests).
+#   bump  — depends on test; runs the bumper CLI against the repo's VERSION
+#           file and a commit log, then prints the machine-readable result
+#           lines (OLD_VERSION= / BUMP= / NEW_VERSION=) that the act test
+#           harness asserts exact values against.
+#
+# Commit-log selection: if a `commits.log` file exists at the repo root
+# (the act harness drops one in per test case), it is used; otherwise the
+# checked-in default fixture `fixtures/commits-feat.log` is used, so the
+# workflow also runs standalone on plain pushes.
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Pinned so CI stays reproducible inside isolated act containers.
+  ACTIONLINT_VERSION: 1.7.12
+
+jobs:
+  test:
+    name: Unit and workflow-structure tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Install actionlint (needed by the workflow-structure tests)
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            | tar xz -C "$HOME/.local/bin" actionlint
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run bun test suite
+        run: bun test
+
+  bump:
+    name: Bump version and generate changelog
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Select commit log
+        id: log
+        run: |
+          if [ -f commits.log ]; then
+            echo "file=commits.log" >> "$GITHUB_OUTPUT"
+          else
+            echo "file=fixtures/commits-feat.log" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run semantic version bumper
+        id: bump
+        run: |
+          bun run src/cli.ts \
+            --version-file VERSION \
+            --commits-file "${{ steps.log.outputs.file }}" \
+            --changelog-file CHANGELOG.md | tee bump-output.txt
+          grep '^NEW_VERSION=' bump-output.txt >> "$GITHUB_OUTPUT"
+
+      - name: Show bump results
+        run: |
+          echo "RESULT_NEW_VERSION=${{ steps.bump.outputs.NEW_VERSION }}"
+          echo "--- VERSION file after bump ---"
+          cat VERSION
+          echo "--- CHANGELOG.md after bump ---"
+          cat CHANGELOG.md 2>/dev/null || echo "(no changelog written — bump was 'none')"

@@ -1,0 +1,119 @@
+name: Semantic Version Bumper
+
+# Real-world triggers: bump on every push to a mainline branch, dry-run on
+# PRs so authors see the would-be version before merge, allow manual runs,
+# and a weekly schedule as a safety net for branches that batch commits.
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  bump-version:
+    name: "bump-version (${{ matrix.case.name }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # Each matrix entry is one test case: a (version file, commit log)
+      # pair plus the known-good expected result. Running them as a matrix
+      # means a single `act push` invocation exercises every case.
+      matrix:
+        case:
+          - name: feat-bump
+            version_file: fixtures/version-start.txt
+            commits_file: fixtures/commits-feat.txt
+            expected_version: 1.5.0
+            expected_bumped: "true"
+          - name: fix-bump
+            version_file: fixtures/version-start.txt
+            commits_file: fixtures/commits-fix.txt
+            expected_version: 1.4.3
+            expected_bumped: "true"
+          - name: breaking-bump
+            version_file: fixtures/version-start.txt
+            commits_file: fixtures/commits-breaking.txt
+            expected_version: 2.0.0
+            expected_bumped: "true"
+          - name: mixed-precedence
+            version_file: fixtures/version-start.txt
+            commits_file: fixtures/commits-mixed.txt
+            expected_version: 1.5.0
+            expected_bumped: "true"
+          - name: package-json-bump
+            version_file: fixtures/package-start.json
+            commits_file: fixtures/commits-feat.txt
+            expected_version: 2.1.0
+            expected_bumped: "true"
+          - name: no-bump
+            version_file: fixtures/version-start.txt
+            commits_file: fixtures/commits-none.txt
+            expected_version: 1.4.2
+            expected_bumped: "false"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Stage a private working copy of the version file
+        # Bump in a scratch copy so each matrix job's mutation never touches
+        # the checked-in fixture (and never collides with other jobs).
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work
+          src="${{ matrix.case.version_file }}"
+          dest="work/$(basename "$src")"
+          cp "$src" "$dest"
+          echo "WORK_VERSION_FILE=$dest" >> "$GITHUB_ENV"
+
+      - name: Run version bumper
+        id: bump
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 version_bumper.py \
+            --version-file "$WORK_VERSION_FILE" \
+            --commits-file "${{ matrix.case.commits_file }}" \
+            --changelog-file "work/$CHANGELOG_FILE" \
+            --entry-date 2026-01-01
+
+      - name: Report result
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "RESULT case=${{ matrix.case.name }} version=${{ steps.bump.outputs.version }} bumped=${{ steps.bump.outputs.bumped }} bump_type=${{ steps.bump.outputs.bump_type }}"
+          echo "### ${{ matrix.case.name }}: version ${{ steps.bump.outputs.version }} (bumped=${{ steps.bump.outputs.bumped }})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify against known-good expected value
+        # Belt-and-suspenders: fail the job itself on a mismatch, in addition
+        # to the external harness asserting on the captured `act` output.
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_version="${{ steps.bump.outputs.version }}"
+          expected_version="${{ matrix.case.expected_version }}"
+          actual_bumped="${{ steps.bump.outputs.bumped }}"
+          expected_bumped="${{ matrix.case.expected_bumped }}"
+
+          if [ "$actual_version" != "$expected_version" ]; then
+            echo "::error::case ${{ matrix.case.name }}: expected version $expected_version but got $actual_version"
+            exit 1
+          fi
+          if [ "$actual_bumped" != "$expected_bumped" ]; then
+            echo "::error::case ${{ matrix.case.name }}: expected bumped=$expected_bumped but got $actual_bumped"
+            exit 1
+          fi
+          echo "Test case ${{ matrix.case.name }} PASSED"

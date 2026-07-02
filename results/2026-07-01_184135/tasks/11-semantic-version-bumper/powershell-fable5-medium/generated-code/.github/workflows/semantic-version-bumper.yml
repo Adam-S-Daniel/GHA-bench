@@ -1,0 +1,79 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The harness drops a case-specific version.txt + commits.txt into the
+  # repo root; these defaults let the workflow also run against the
+  # checked-in fixtures when none are provided.
+  VERSION_FILE: version.txt
+  COMMIT_LOG: commits.txt
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests/VersionBumper.Tests.ps1'
+          $config.Output.Verbosity = 'Detailed'
+          $config.Run.Exit = $true
+          Invoke-Pester -Configuration $config
+
+  bump:
+    name: Bump version
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare inputs (fall back to fixtures)
+        shell: pwsh
+        run: |
+          # When the repo carries no case-specific inputs, use the checked-in
+          # feat fixture with a default starting version so the workflow is
+          # runnable on any push.
+          if (-not (Test-Path $env:VERSION_FILE)) {
+            Set-Content -Path $env:VERSION_FILE -Value '0.1.0'
+          }
+          if (-not (Test-Path $env:COMMIT_LOG)) {
+            Copy-Item fixtures/commits-feat.txt $env:COMMIT_LOG
+          }
+          Write-Host "Version file: $env:VERSION_FILE -> $((Get-Content $env:VERSION_FILE -Raw).Trim())"
+          Write-Host "Commit log:"
+          Get-Content $env:COMMIT_LOG
+
+      - name: Bump version and generate changelog
+        id: bump
+        shell: pwsh
+        run: |
+          ./Invoke-VersionBump.ps1 -VersionFile $env:VERSION_FILE `
+            -CommitLog $env:COMMIT_LOG -ChangelogPath CHANGELOG.md
+
+      - name: Show results
+        shell: pwsh
+        run: |
+          Write-Host "New version from step output: ${{ steps.bump.outputs.new_version }}"
+          Write-Host "Bump type from step output: ${{ steps.bump.outputs.bump_type }}"
+          Write-Host '--- Updated version file ---'
+          Get-Content $env:VERSION_FILE
+          if (Test-Path CHANGELOG.md) {
+            Write-Host '--- CHANGELOG.md ---'
+            Get-Content CHANGELOG.md
+          } else {
+            Write-Host 'No changelog written (no bump required).'
+          }

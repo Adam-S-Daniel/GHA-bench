@@ -1,0 +1,163 @@
+name: Artifact Cleanup Script
+
+# Triggers: verify on every push/PR, run the real cleanup nightly, and
+# allow an ad-hoc run (optionally targeting a different fixtures/policy
+# directory, and toggling dry-run) via workflow_dispatch.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    # Nightly at 02:30 UTC.
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+    inputs:
+      artifacts_dir:
+        description: Directory containing artifacts.json and policy.json.
+        required: false
+        default: fixtures
+      dry_run:
+        description: Force dry-run mode regardless of the policy file.
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  ARTIFACTS_DIR: ${{ github.event.inputs.artifacts_dir || 'fixtures' }}
+
+jobs:
+  test:
+    name: Run bats test suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (jq, bats-core, shellcheck)
+        shell: bash
+        run: |
+          set -euo pipefail
+          need_update=0
+          command -v jq >/dev/null 2>&1 || need_update=1
+          command -v bats >/dev/null 2>&1 || need_update=1
+          command -v shellcheck >/dev/null 2>&1 || need_update=1
+          if [ "$need_update" -eq 1 ]; then
+            sudo apt-get update -y
+          fi
+          command -v jq >/dev/null 2>&1 || sudo apt-get install -y jq
+          command -v bats >/dev/null 2>&1 || sudo apt-get install -y bats
+          command -v shellcheck >/dev/null 2>&1 || sudo apt-get install -y shellcheck
+          jq --version
+          bats --version
+          shellcheck --version
+
+      - name: Shellcheck and syntax validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n artifact_cleanup.sh
+          shellcheck artifact_cleanup.sh
+
+      - name: Run unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          bats test_artifact_cleanup.bats
+
+  cleanup:
+    name: Generate artifact cleanup plan
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      total_count: ${{ steps.plan.outputs.total_count }}
+      retained_count: ${{ steps.plan.outputs.retained_count }}
+      deleted_count: ${{ steps.plan.outputs.deleted_count }}
+      reclaimed_size_bytes: ${{ steps.plan.outputs.reclaimed_size_bytes }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (jq)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y jq
+          fi
+          jq --version
+
+      - name: Build and run the deletion plan
+        id: plan
+        shell: bash
+        env:
+          FORCE_DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          chmod +x ./artifact_cleanup.sh
+
+          policy_file="${ARTIFACTS_DIR}/policy.json"
+          artifacts_file="${ARTIFACTS_DIR}/artifacts.json"
+
+          now="$(jq -r '.now' "$policy_file")"
+          max_age_days="$(jq -r '.max_age_days' "$policy_file")"
+          max_total_size_bytes="$(jq -r '.max_total_size_bytes' "$policy_file")"
+          keep_latest_n="$(jq -r '.keep_latest_n' "$policy_file")"
+          dry_run="$(jq -r '.dry_run' "$policy_file")"
+
+          if [ "${FORCE_DRY_RUN:-}" = "true" ]; then
+            dry_run="true"
+          fi
+
+          args=(--input "$artifacts_file" --now "$now" \
+                --max-age-days "$max_age_days" \
+                --max-total-size-bytes "$max_total_size_bytes" \
+                --keep-latest-n "$keep_latest_n")
+          if [ "$dry_run" = "true" ]; then
+            args+=(--dry-run)
+          fi
+
+          output="$(./artifact_cleanup.sh "${args[@]}")"
+
+          echo "----- BEGIN CLEANUP PLAN -----"
+          printf '%s\n' "$output"
+          echo "----- END CLEANUP PLAN -----"
+
+          plan_json="$(printf '%s\n' "$output" | head -n1)"
+          {
+            echo "## Artifact cleanup plan"
+            echo
+            echo '```json'
+            printf '%s\n' "$plan_json" | jq .
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          {
+            echo "total_count=$(printf '%s' "$plan_json" | jq -r '.summary.total_count')"
+            echo "retained_count=$(printf '%s' "$plan_json" | jq -r '.summary.retained_count')"
+            echo "deleted_count=$(printf '%s' "$plan_json" | jq -r '.summary.deleted_count')"
+            echo "reclaimed_size_bytes=$(printf '%s' "$plan_json" | jq -r '.summary.reclaimed_size_bytes')"
+          } >> "$GITHUB_OUTPUT"
+
+  report:
+    name: Report cleanup summary
+    needs: cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emit final status line
+        shell: bash
+        env:
+          TOTAL: ${{ needs.cleanup.outputs.total_count }}
+          RETAINED: ${{ needs.cleanup.outputs.retained_count }}
+          DELETED: ${{ needs.cleanup.outputs.deleted_count }}
+          RECLAIMED: ${{ needs.cleanup.outputs.reclaimed_size_bytes }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TOTAL}" ]; then
+            echo "cleanup job produced no summary — failing" >&2
+            exit 1
+          fi
+          echo "FINAL_SUMMARY total=${TOTAL} retained=${RETAINED} deleted=${DELETED} reclaimed_bytes=${RECLAIMED}"

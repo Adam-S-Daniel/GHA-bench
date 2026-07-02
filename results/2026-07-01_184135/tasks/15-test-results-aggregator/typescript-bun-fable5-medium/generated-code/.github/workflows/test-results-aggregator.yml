@@ -1,0 +1,51 @@
+# Test Results Aggregator pipeline.
+#
+# Runs the unit test suite, then aggregates test-result fixtures (JUnit XML +
+# JSON) into a markdown job summary. The aggregate step prefers a `results/`
+# directory when one exists (the act-based test harness injects per-case
+# fixture data there) and falls back to the committed sample fixtures.
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_RESULTS_DIR: fixtures/matrix
+
+jobs:
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit tests
+        run: bun test tests/
+
+      - name: Aggregate test results
+        run: |
+          if [ -d results ]; then dir=results; else dir="$DEFAULT_RESULTS_DIR"; fi
+          echo "===== AGGREGATOR OUTPUT ====="
+          bun run src/cli.ts --dir "$dir" --out summary.md
+          echo "===== END AGGREGATOR OUTPUT ====="
+
+      - name: Upload summary artifact
+        if: ${{ !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-summary
+          path: summary.md

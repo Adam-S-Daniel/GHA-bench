@@ -1,0 +1,60 @@
+name: Semantic Version Bumper
+
+# Triggered on pushes (e.g. after merging conventional-commit PRs) and can
+# also be run manually from the Actions tab.
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      commits_file:
+        description: "Path to the commit-log fixture to bump against"
+        required: false
+        default: "commits.txt"
+
+permissions:
+  contents: read
+
+env:
+  VERSION_FILE: version.json
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test
+
+  bump-version:
+    name: Determine and apply next version
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      COMMITS_FILE: ${{ github.event.inputs.commits_file || 'commits.txt' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Bump version from conventional commits
+        run: bun run src/cli.ts

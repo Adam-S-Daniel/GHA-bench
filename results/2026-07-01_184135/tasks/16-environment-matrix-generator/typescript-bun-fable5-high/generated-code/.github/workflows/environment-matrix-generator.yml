@@ -1,0 +1,88 @@
+# CI pipeline for the environment matrix generator.
+#
+# Three-stage pipeline:
+#   1. unit-tests      — full `bun test` suite (unit + CLI + workflow structure)
+#   2. generate-matrix — runs the generator over fixture cases and emits the
+#                        pipeline matrix as a job output
+#   3. consume-matrix  — real strategy.matrix job driven by the generated JSON,
+#                        proving the output is directly usable by GitHub Actions
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Pin the Bun toolchain for reproducible CI runs.
+  BUN_VERSION: "1.3.11"
+  # Version of actionlint installed for the workflow structure tests.
+  ACTIONLINT_VERSION: "1.7.7"
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install actionlint (used by workflow structure tests)
+        run: |
+          mkdir -p "$RUNNER_TEMP/actionlint-bin"
+          curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash \
+            | bash -s -- "$ACTIONLINT_VERSION" "$RUNNER_TEMP/actionlint-bin"
+          echo "$RUNNER_TEMP/actionlint-bin" >> "$GITHUB_PATH"
+
+      - name: Run test suite (bun test)
+        run: bun test
+
+  generate-matrix:
+    name: Generate matrix
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run fixture cases through the generator
+        run: bash scripts/run-cases.sh
+
+      - name: Generate pipeline matrix
+        id: generate
+        run: |
+          matrix_json=$(bun run src/cli.ts fixtures/pipeline.json --matrix-only)
+          echo "PIPELINE_MATRIX ${matrix_json}"
+          echo "matrix=${matrix_json}" >> "$GITHUB_OUTPUT"
+
+  consume-matrix:
+    name: Consume generated matrix
+    runs-on: ubuntu-latest
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Report matrix combination
+        run: echo "MATRIX_JOB os=${{ matrix.os }} version=${{ matrix['language-version'] }} cache=${{ matrix.cache }}"

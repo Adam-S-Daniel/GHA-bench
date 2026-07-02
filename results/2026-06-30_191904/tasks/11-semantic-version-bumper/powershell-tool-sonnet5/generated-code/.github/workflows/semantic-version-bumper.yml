@@ -1,0 +1,67 @@
+name: Semantic Version Bumper
+
+# Triggers: real commits (push), review builds (pull_request), and manual
+# runs (workflow_dispatch) for ad-hoc use.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Least-privilege default: this workflow only reads repo contents. It
+# computes and prints the next version/changelog but does not push commits
+# back, so no write access or secrets are required.
+permissions:
+  contents: read
+
+env:
+  VERSION_FILE_PATH: VERSION
+  COMMIT_LOG_PATH: fixtures/commits.log
+  CHANGELOG_FILE_PATH: CHANGELOG.md
+
+jobs:
+  test:
+    name: Run Pester Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Pester Unit Tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = @('./tests/VersionBumper.Tests.ps1', './tests/CliScript.Tests.ps1')
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $result = Invoke-Pester -Configuration $config
+
+          if ($result.FailedCount -gt 0) {
+            Write-Error "Pester reported $($result.FailedCount) failing test(s)"
+            exit 1
+          }
+
+          Write-Host "All $($result.PassedCount) Pester tests passed"
+
+  bump-version:
+    name: Bump Version
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semantic Version Bumper
+        id: bump
+        shell: pwsh
+        run: |
+          ./scripts/Invoke-SemanticVersionBumper.ps1 `
+            -VersionFilePath $env:VERSION_FILE_PATH `
+            -CommitLogPath $env:COMMIT_LOG_PATH `
+            -ChangelogFilePath $env:CHANGELOG_FILE_PATH
+
+      - name: Report Result
+        shell: pwsh
+        run: |
+          Write-Host "RESULT_VERSION=${{ steps.bump.outputs.new_version }}"
+          Write-Host "RESULT_BUMP_TYPE=${{ steps.bump.outputs.bump_type }}"
+          Write-Host "RESULT_OLD_VERSION=${{ steps.bump.outputs.old_version }}"

@@ -1,0 +1,711 @@
+[Assistant] I'll start by reading the project instructions (AGENTS.md) and checking the environment (bun, act, actionlint, .actrc), then begin TDD.
+[Tool: Bash] cat /home/passp/repos/GHA-bench-fable5/AGENTS.md 2>/dev/null; echo "---CWD---"; ls -la; echo "---ACTRC---"; cat .actrc 2>/dev/null; cat ../../../.actrc 2>/dev/null; cat /home/passp/repos/GHA-bench-fable5/.actrc 2>/dev/null
+[Result ERROR] Exit code 1
+# Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3
+[Tool: Bash] bun --version; actionlint --version | head -1; act --version; docker version --format '{{.Server.Version}}' 2>&1 | head -1
+[Result] 1.3.11
+1.7.12
+act version 0.2.87
+29.4.3
+[Tool: Bash] docker image inspect act-ubuntu-pwsh:latest --format '{{.Config.Image}} {{.Size}}' 2>&1; docker run --rm act-ubuntu-pwsh:latest bash -lc 'which node bun curl git unzip; node --version 2>/dev/null; bun --version 2>/dev/null' 2>&1
+[Result ERROR] Exit code 127
+
+template parsing error: template: :1:9: executing "" at <.Config.Image>: map has no entry for key "Image"
+/opt/acttoolcache/node/24.15.0/x64/bin/node
+/usr/bin/curl
+/usr/bin/git
+/usr/bin/unzip
+v24.15.0
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/package.json", "content": "{\n  \"name\": \"environment-matrix
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/package.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tsconfig.json", "content": "{\n  \"compilerOptions\": {\n    \
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tsconfig.json (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun install 2>&1 | tail -3
+[Result] + yaml@2.9.0
+
+5 packages installed [219.00ms]
+[Assistant] **TDD cycle 1 (RED):** first failing test — expanding the cartesian product of os × language versions × feature flags.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/matrix.test.ts", "content": "/**\n * Unit tests for the 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/matrix.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -8
+[Result] error: Cannot find module '../src/matrix' from '/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/matrix.test.ts'
+-------------------------------
+
+
+ 0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [22.00ms]
+[Assistant] RED confirmed. Now the minimal implementation (**GREEN**):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/matrix.ts", "content": "/**\n * Environment matrix generat
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/matrix.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -4
+[Result]  2 pass
+ 0 fail
+ 2 expect() calls
+Ran 2 tests across 1 file. [13.00ms]
+[Assistant] **Cycle 2 (RED):** exclude rules — GitHub semantics where a partial match removes combinations.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/matrix.test.ts", "old_string": "im
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/matrix.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cat >> tests/matrix.test.ts <<'EOF'
+
+describe("applyExcludes (cycle 2: exclude rules)", () => {
+  const combos = [
+    { os: "ubuntu-latest", "language-version": "18" },
+    { os: "ubuntu-latest", "language-version": "20" },
+    { os: "macos-latest", "language-version": "18" },
+    { os: "macos-latest", "language-version": "20" },
+  ];
+
+  test("removes combinations where ALL exclude keys match (partial match)", () => {
+    // GitHub semantics: an exclude entry removes any combination that matches
+    // every key/value in the entry — unlisted keys match anything.
+    const result = applyExcludes(combos, [{ os: "macos-latest" }]);
+    expect(result).toEqual([
+      { os: "ubuntu-latest", "language-version": "18" },
+      { os: "ubuntu-latest", "language-version": "20" },
+    ]);
+  });
+
+  test("exact exclude removes only the single matching combination", () => {
+    const result = applyExcludes(combos, [
+      { os: "ubuntu-latest", "language-version": "20" },
+    ]);
+    expect(result).toHaveLength(3);
+    expect(result).not.toContainEqual({ os: "ubuntu-latest", "language-version": "20" });
+  });
+
+  test("exclude entry that matches nothing leaves the matrix untouched", () => {
+    const result = applyExcludes(combos, [{ os: "windows-latest" }]);
+    expect(result).toEqual(combos);
+  });
+});
+EOF
+bun test 2>&1 | tail -5
+[Result]  0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [15.00ms]
+[Assistant] **GREEN** for cycle 2:
+[Tool: Bash] cat >> src/matrix.ts <<'EOF'
+
+/**
+ * A rule used by include/exclude: a partial combination. For excludes,
+ * a combination is removed when EVERY key in the rule matches it
+ * (keys not listed in the rule match anything) — GitHub Actions semantics.
+ */
+export type MatrixRule = Record<string, string>;
+
+/** True when every key/value in `rule` is present and equal in `combo`. */
+function ruleMatches(combo: Combination, rule: MatrixRule): boolean {
+  return Object.entries(rule).every(([key, value]) => combo[key] === value);
+}
+
+/** Remove every combination matched by any exclude rule. */
+export function applyExcludes(
+  combos: Combination[],
+  excludes: MatrixRule[],
+): Combination[] {
+  return combos.filter((combo) => !excludes.some((rule) => ruleMatches(combo, rule)));
+}
+EOF
+bun test 2>&1 | tail -4
+[Result]  5 pass
+ 0 fail
+ 6 expect() calls
+Ran 5 tests across 1 file. [18.00ms]
+[Assistant] **Cycle 3 (RED):** include rules — GitHub semantics (merge extra keys into matching combos, or append new combinations).
+[Tool: Bash] cat >> tests/matrix.test.ts <<'EOF'
+
+describe("applyIncludes (cycle 3: include rules)", () => {
+  const original = [
+    { os: "ubuntu-latest", "language-version": "18" },
+    { os: "ubuntu-latest", "language-version": "20" },
+    { os: "macos-latest", "language-version": "20" },
+  ];
+  const originalKeys = ["os", "language-version"];
+
+  test("include with matching matrix keys merges extra keys into matches only", () => {
+    const result = applyIncludes(
+      original,
+      [{ os: "ubuntu-latest", "experimental": "true" }],
+      originalKeys,
+    );
+    expect(result).toEqual([
+      { os: "ubuntu-latest", "language-version": "18", experimental: "true" },
+      { os: "ubuntu-latest", "language-version": "20", experimental: "true" },
+      { os: "macos-latest", "language-version": "20" },
+    ]);
+  });
+
+  test("include with only new keys is merged into every combination", () => {
+    const result = applyIncludes(original, [{ cache: "npm" }], originalKeys);
+    expect(result.every((c) => c.cache === "npm")).toBe(true);
+    expect(result).toHaveLength(3);
+  });
+
+  test("include that matches no combination is appended as a new combination", () => {
+    const result = applyIncludes(
+      original,
+      [{ os: "windows-latest", "language-version": "22" }],
+      originalKeys,
+    );
+    expect(result).toHaveLength(4);
+    expect(result[3]).toEqual({ os: "windows-latest", "language-version": "22" });
+  });
+});
+EOF
+bun test 2>&1 | tail -4
+[Result]  5 pass
+ 3 fail
+ 6 expect() calls
+Ran 8 tests across 1 file. [13.00ms]
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/matrix.test.ts", "old_string": "im
+[Result ERROR] <tool_use_error>File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.</tool_use_error>
+[Tool: Bash] cat >> src/matrix.ts <<'EOF'
+
+/**
+ * Apply include rules following GitHub Actions semantics:
+ *
+ * - Keys of an include entry are split into "original matrix keys"
+ *   (dimensions of the expanded matrix) and "extra keys".
+ * - If at least one existing combination matches ALL of the entry's original
+ *   matrix keys, the entry's extra keys are merged into every matching
+ *   combination (original values are never overwritten).
+ * - If no combination matches, the entry is appended as a brand-new
+ *   standalone combination.
+ * - An entry with only extra keys matches (and is merged into) everything.
+ */
+export function applyIncludes(
+  combos: Combination[],
+  includes: MatrixRule[],
+  originalKeys: string[],
+): Combination[] {
+  const result = combos.map((combo) => ({ ...combo }));
+  const keySet = new Set(originalKeys);
+
+  for (const entry of includes) {
+    // Only the entry's original-dimension keys participate in matching.
+    const matchRule: MatrixRule = {};
+    const extras: MatrixRule = {};
+    for (const [key, value] of Object.entries(entry)) {
+      if (keySet.has(key)) {
+        matchRule[key] = value;
+      } else {
+        extras[key] = value;
+      }
+    }
+
+    const matches = result.filter((combo) => ruleMatches(combo, matchRule));
+    if (matches.length > 0) {
+      for (const combo of matches) {
+        Object.assign(combo, extras);
+      }
+    } else {
+      // No existing combination can absorb this entry without overwriting
+      // original values -> it becomes a new combination.
+      result.push({ ...entry });
+    }
+  }
+  return result;
+}
+EOF
+bun test 2>&1 | tail -4
+[Result]  5 pass
+ 3 fail
+ 6 expect() calls
+Ran 8 tests across 1 file. [16.00ms]
+[Tool: Bash] grep -n "import {" tests/matrix.test.ts
+[Result] 8:import { describe, expect, test } from "bun:test";
+9:import { applyExcludes, expandCombinations } from "../src/matrix";
+[Tool: Bash] sed -i 's/import { applyExcludes, expandCombinations }/import { applyExcludes, applyIncludes, expandCombinations }/' tests/matrix.test.ts && bun test 2>&1 | tail -4
+[Result]  8 pass
+ 0 fail
+ 11 expect() calls
+Ran 8 tests across 1 file. [16.00ms]
+[Assistant] **Cycle 4 (RED):** the top-level `generateMatrix` — assembling the full `strategy` object with fail-fast, max-parallel, and wired include/exclude.
+[Tool: Bash] cat >> tests/matrix.test.ts <<'EOF'
+
+describe("generateMatrix (cycle 4: full strategy assembly)", () => {
+  test("produces a complete strategy object with fail-fast, max-parallel and expanded matrix", () => {
+    const result = generateMatrix({
+      os: ["ubuntu-latest", "macos-latest"],
+      languageVersions: ["18", "20"],
+      featureFlags: ["telemetry"],
+      exclude: [{ os: "macos-latest", "language-version": "18" }],
+      include: [{ os: "ubuntu-latest", experimental: "true" }],
+      maxParallel: 2,
+      failFast: false,
+    });
+
+    expect(result.jobCount).toBe(3);
+    expect(result.strategy).toEqual({
+      "fail-fast": false,
+      "max-parallel": 2,
+      matrix: {
+        include: [
+          { os: "ubuntu-latest", "language-version": "18", feature: "telemetry", experimental: "true" },
+          { os: "ubuntu-latest", "language-version": "20", feature: "telemetry", experimental: "true" },
+          { os: "macos-latest", "language-version": "20", feature: "telemetry" },
+        ],
+      },
+    });
+  });
+
+  test("defaults: fail-fast true, no max-parallel key when not configured", () => {
+    const result = generateMatrix({ os: ["ubuntu-latest"], languageVersions: ["20"] });
+    expect(result.strategy["fail-fast"]).toBe(true);
+    expect("max-parallel" in result.strategy).toBe(false);
+    expect(result.jobCount).toBe(1);
+  });
+
+  test("include-only new combination counts toward jobCount", () => {
+    const result = generateMatrix({
+      os: ["ubuntu-latest"],
+      languageVersions: ["20"],
+      include: [{ os: "windows-latest", "language-version": "22" }],
+    });
+    expect(result.jobCount).toBe(2);
+  });
+});
+EOF
+sed -i 's/import { applyExcludes, applyIncludes, expandCombinations }/import { applyExcludes, applyIncludes, expandCombinations, generateMatrix }/' tests/matrix.test.ts
+bun test 2>&1 | tail -4
+[Result]  0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [13.00ms]
+[Tool: Bash] cat >> src/matrix.ts <<'EOF'
+
+/** Full generator options: dimensions plus strategy-level settings. */
+export interface GeneratorConfig extends MatrixConfig {
+  /** Combinations (partial) to remove from the expanded matrix. */
+  exclude?: MatrixRule[];
+  /** Combinations to extend or add, GitHub Actions include semantics. */
+  include?: MatrixRule[];
+  /** strategy.max-parallel — omit to let GitHub use all available runners. */
+  maxParallel?: number;
+  /** strategy.fail-fast — defaults to true, matching GitHub Actions. */
+  failFast?: boolean;
+  /** Maximum number of jobs allowed; defaults to GitHub's 256-job limit. */
+  maxSize?: number;
+}
+
+/** The generated `strategy` block, ready for a GitHub Actions workflow. */
+export interface Strategy {
+  "fail-fast": boolean;
+  "max-parallel"?: number;
+  /** Fully-expanded combinations, expressed via matrix.include. */
+  matrix: { include: Combination[] };
+}
+
+export interface GenerateResult {
+  strategy: Strategy;
+  /** Number of jobs the matrix will spawn. */
+  jobCount: number;
+}
+
+/**
+ * Generate the complete strategy.matrix from a configuration:
+ * expand -> exclude -> include, then wrap with fail-fast / max-parallel.
+ * The result uses the `matrix.include` form (a list of explicit
+ * combinations), which GitHub Actions accepts as a full matrix definition.
+ */
+export function generateMatrix(config: GeneratorConfig): GenerateResult {
+  const expanded = expandCombinations(config);
+  const originalKeys = expanded.length > 0 ? Object.keys(expanded[0]!) : [];
+
+  const afterExcludes = applyExcludes(expanded, config.exclude ?? []);
+  const combos = applyIncludes(afterExcludes, config.include ?? [], originalKeys);
+
+  const strategy: Strategy = {
+    // GitHub defaults fail-fast to true; mirror that here.
+    "fail-fast": config.failFast ?? true,
+    matrix: { include: combos },
+  };
+  if (config.maxParallel !== undefined) {
+    // Keep key order stable: rebuild with max-parallel between the others.
+    return {
+      strategy: {
+        "fail-fast": strategy["fail-fast"],
+        "max-parallel": config.maxParallel,
+        matrix: strategy.matrix,
+      },
+      jobCount: combos.length,
+    };
+  }
+  return { strategy, jobCount: combos.length };
+}
+EOF
+bun test 2>&1 | tail -4
+[Result]  11 pass
+ 0 fail
+ 17 expect() calls
+Ran 11 tests across 1 file. [14.00ms]
+[Assistant] **Cycle 5 (RED):** validation — malformed configs and the maximum-size limit.
+[Tool: Bash] cat >> tests/matrix.test.ts <<'EOF'
+
+describe("validation (cycle 5: config errors and size limit)", () => {
+  test("rejects a config with missing or empty os", () => {
+    expect(() => validateConfig({ languageVersions: ["20"] })).toThrow(
+      MatrixValidationError,
+    );
+    expect(() => validateConfig({ os: [], languageVersions: ["20"] })).toThrow(
+      '"os" must be a non-empty array',
+    );
+  });
+
+  test("rejects empty languageVersions with a meaningful message", () => {
+    expect(() => validateConfig({ os: ["ubuntu-latest"], languageVersions: [] })).toThrow(
+      '"languageVersions" must be a non-empty array',
+    );
+  });
+
+  test("rejects non-object input and bad option types", () => {
+    expect(() => validateConfig("nope")).toThrow("must be a JSON object");
+    expect(() =>
+      validateConfig({ os: ["u"], languageVersions: ["20"], maxParallel: 0 }),
+    ).toThrow('"maxParallel" must be a positive integer');
+    expect(() =>
+      validateConfig({ os: ["u"], languageVersions: ["20"], failFast: "yes" }),
+    ).toThrow('"failFast" must be a boolean');
+    expect(() =>
+      validateConfig({ os: ["u"], languageVersions: ["20"], exclude: [42] }),
+    ).toThrow('"exclude[0]" must be an object');
+  });
+
+  test("numeric version values are coerced to strings", () => {
+    const config = validateConfig({ os: ["ubuntu-latest"], languageVersions: [18, 20] });
+    expect(config.languageVersions).toEqual(["18", "20"]);
+  });
+
+  test("generateMatrix enforces the configured maxSize", () => {
+    expect(() =>
+      generateMatrix({
+        os: ["a", "b"],
+        languageVersions: ["1", "2"],
+        maxSize: 3,
+      }),
+    ).toThrow("Matrix size 4 exceeds the maximum allowed size 3");
+  });
+
+  test("generateMatrix enforces GitHub's 256-job default limit", () => {
+    const os = Array.from({ length: 16 }, (_, i) => `os-${i}`);
+    const versions = Array.from({ length: 16 }, (_, i) => `v${i}`);
+    // 16 x 16 = 256 is fine; one extra include pushes it to 257.
+    expect(() => generateMatrix({ os, languageVersions: versions })).not.toThrow();
+    expect(() =>
+      generateMatrix({
+        os,
+        languageVersions: versions,
+        include: [{ os: "extra", "language-version": "v99" }],
+      }),
+    ).toThrow("Matrix size 257 exceeds the maximum allowed size 256");
+  });
+});
+EOF
+sed -i 's/import { applyExcludes, applyIncludes, expandCombinations, generateMatrix }/import { applyExcludes, applyIncludes, expandCombinations, generateMatrix, MatrixValidationError, validateConfig }/' tests/matrix.test.ts
+bun test 2>&1 | tail -4
+[Result]  0 pass
+ 1 fail
+ 1 error
+Ran 1 test across 1 file. [12.00ms]
+[Tool: Bash] cat >> src/matrix.ts <<'EOF'
+
+/** Error thrown for any invalid configuration or oversized matrix. */
+export class MatrixValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MatrixValidationError";
+  }
+}
+
+/** GitHub Actions caps a job matrix at 256 jobs per workflow run. */
+export const GITHUB_MATRIX_LIMIT = 256;
+
+/** Narrowing helper: non-null plain object. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Coerce a config array of strings/numbers to strings, rejecting anything
+ * else with a message that names the offending field.
+ */
+function toStringArray(value: unknown, field: string): string[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new MatrixValidationError(
+      `Config error: "${field}" must be a non-empty array of strings`,
+    );
+  }
+  return value.map((item, i) => {
+    if (typeof item === "string") return item;
+    if (typeof item === "number" && Number.isFinite(item)) return String(item);
+    throw new MatrixValidationError(
+      `Config error: "${field}[${i}]" must be a string or number, got ${typeof item}`,
+    );
+  });
+}
+
+/** Validate an array of include/exclude rules, coercing values to strings. */
+function toRuleArray(value: unknown, field: string): MatrixRule[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    throw new MatrixValidationError(`Config error: "${field}" must be an array of objects`);
+  }
+  return value.map((entry, i) => {
+    if (!isPlainObject(entry)) {
+      throw new MatrixValidationError(`Config error: "${field}[${i}]" must be an object`);
+    }
+    const rule: MatrixRule = {};
+    for (const [key, raw] of Object.entries(entry)) {
+      if (typeof raw === "string") rule[key] = raw;
+      else if (typeof raw === "number" && Number.isFinite(raw)) rule[key] = String(raw);
+      else if (typeof raw === "boolean") rule[key] = String(raw);
+      else {
+        throw new MatrixValidationError(
+          `Config error: "${field}[${i}].${key}" must be a string, number or boolean`,
+        );
+      }
+    }
+    return rule;
+  });
+}
+
+/**
+ * Validate raw JSON input (e.g. a parsed config file) and normalize it into
+ * a typed GeneratorConfig. Throws MatrixValidationError with a message that
+ * pinpoints the invalid field.
+ */
+export function validateConfig(raw: unknown): GeneratorConfig {
+  if (!isPlainObject(raw)) {
+    throw new MatrixValidationError("Config error: input must be a JSON object");
+  }
+
+  const config: GeneratorConfig = {
+    os: toStringArray(raw.os, "os"),
+    languageVersions: toStringArray(raw.languageVersions, "languageVersions"),
+  };
+
+  if (raw.featureFlags !== undefined) {
+    config.featureFlags = toStringArray(raw.featureFlags, "featureFlags");
+  }
+  config.exclude = toRuleArray(raw.exclude, "exclude");
+  config.include = toRuleArray(raw.include, "include");
+
+  if (raw.maxParallel !== undefined) {
+    if (
+      typeof raw.maxParallel !== "number" ||
+      !Number.isInteger(raw.maxParallel) ||
+      raw.maxParallel < 1
+    ) {
+      throw new MatrixValidationError(
+        'Config error: "maxParallel" must be a positive integer',
+      );
+    }
+    config.maxParallel = raw.maxParallel;
+  }
+  if (raw.failFast !== undefined) {
+    if (typeof raw.failFast !== "boolean") {
+      throw new MatrixValidationError('Config error: "failFast" must be a boolean');
+    }
+    config.failFast = raw.failFast;
+  }
+  if (raw.maxSize !== undefined) {
+    if (typeof raw.maxSize !== "number" || !Number.isInteger(raw.maxSize) || raw.maxSize < 1) {
+      throw new MatrixValidationError('Config error: "maxSize" must be a positive integer');
+    }
+    config.maxSize = raw.maxSize;
+  }
+  return config;
+}
+EOF
+echo "done"
+[Result] done
+[Assistant] Now wire the size check into `generateMatrix`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/matrix.ts", "old_string": "  const a
+[Result ERROR] <tool_use_error>File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.</tool_use_error>
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/matrix.ts", "offset": 150, "limit": 50}
+[Result] 150	  jobCount: number;
+151	}
+152	
+153	/**
+154	 * Generate the complete strategy.matrix from a configuration:
+155	 * expand -> exclude -> include, then wrap with fail-fast / max-parallel.
+156	 * The result uses the `matrix.include` form (a list of explicit
+157	 * combinations), which GitHub Actions accepts as a full matrix definition.
+158	 */
+159	export function generateMatrix(config: GeneratorConfig): GenerateResult {
+160	  const expanded = expandCombinations(config);
+161	  const originalKeys = expanded.length > 0 ? Object.keys(expanded[0]!) : [];
+162	
+163	  const afterExcludes = applyExcludes(expanded, config.exclude ?? []);
+164	  const combos = applyIncludes(afterExcludes, config.include ?? [], originalKeys);
+165	
+166	  const strategy: Strategy = {
+167	    // GitHub defaults fail-fast to true; mirror that here.
+168	    "fail-fast": config.failFast ?? true,
+169	    matrix: { include: combos },
+170	  };
+171	  if (config.maxParallel !== undefined) {
+172	    // Keep key order stable: re
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/matrix.ts", "old_string": "  const a
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/matrix.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -4
+[Result]  17 pass
+ 0 fail
+ 28 expect() calls
+Ran 17 tests across 1 file. [36.00ms]
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/basic.json", "content": "{\n  \"os\": [\"ubuntu-lates
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/basic.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/include-exclude.json", "content": "{\n  \"os\": [\"ub
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/include-exclude.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/oversized.json", "content": "{\n  \"os\": [\"ubuntu-l
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/oversized.json (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/include-exclude.json", "old_str
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/include-exclude.json has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/cli.test.ts", "content": "/**\n * CLI tests (TDD cycle 6
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/cli.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cli.test.ts 2>&1 | tail -4
+[Result]  0 pass
+ 7 fail
+ 12 expect() calls
+Ran 7 tests across 1 file. [30.00ms]
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/cli.test.ts", "old_string": "  tes
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/cli.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/cli.ts", "content": "/**\n * CLI entry point for the envir
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/cli.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -4
+[Result]  24 pass
+ 0 fail
+ 49 expect() calls
+Ran 24 tests across 2 files. [147.00ms]
+[Assistant] All green. Quick **cycle 7**: a `--matrix-only` CLI flag (the workflow will feed its output straight into `fromJSON` for a downstream matrix job). RED first:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/cli.test.ts", "old_string": "  tes
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/cli.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cli.test.ts 2>&1 | tail -3
+[Result]  1 fail
+ 23 expect() calls
+Ran 8 tests across 1 file. [213.00ms]
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/cli.ts", "old_string": "export async
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/src/cli.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -3
+[Result]  0 fail
+ 52 expect() calls
+Ran 25 tests across 2 files. [194.00ms]
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/workflow.test.ts", "content": "/**\n * Workflow structur
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/tests/workflow.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/workflow.test.ts 2>&1 | tail -3
+[Result]  7 fail
+ 2 expect() calls
+Ran 7 tests across 1 file. [156.00ms]
+[Assistant] RED as expected. Now the workflow, the case-runner script, and pipeline fixtures (**GREEN** step):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/scripts/run-cases.sh", "content": "#!/usr/bin/env bash\n# Run 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/scripts/run-cases.sh (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/pipeline.json", "content": "{\n  \"os\": [\"ubuntu-la
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/fixtures/pipeline.json (file state is current in your context — no need to Read it back)
+[Tool: Bash] mkdir -p fixtures/cases && cp fixtures/basic.json fixtures/cases/ok-basic.json && cp fixtures/include-exclude.json fixtures/cases/ok-include-exclude.json && cp fixtures/oversized.json fixtures/cases/fail-oversized.json && chmod +x scripts/run-cases.sh && ls fixtures/cases
+[Result] fail-oversized.json
+ok-basic.json
+ok-include-exclude.json
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/.github/workflows/environment-matrix-generator.yml", "content"
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/.github/workflows/environment-matrix-generator.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/environment-matrix-generator.yml && echo "ACTIONLINT OK"; bun test 2>&1 | tail -4
+[Result] ACTIONLINT OK
+ 32 pass
+ 0 fail
+ 73 expect() calls
+Ran 32 tests across 3 files. [408.00ms]
+[Assistant] actionlint passes and all 32 tests are green. Quick local sanity check of the case-runner before spending act runs:
+[Tool: Bash] bash scripts/run-cases.sh; echo "SCRIPT_EXIT=$?"; bun run src/cli.ts fixtures/pipeline.json --matrix-only
+[Result] ::CASE::fail-oversized::BEGIN
+CASE_OUTPUT fail-oversized EXIT=1 Validation error: Matrix size 12 exceeds the maximum allowed size 10. Reduce dimensions or add exclude rules.
+::CASE::fail-oversized::END
+::CASE::ok-basic::BEGIN
+CASE_OUTPUT ok-basic EXIT=0 {"strategy":{"fail-fast":false,"max-parallel":2,"matrix":{"include":[{"os":"ubuntu-latest","language-version":"18","feature":"telemetry"},{"os":"ubuntu-latest","language-version":"20","feature":"telemetry"},{"os":"macos-latest","language-version":"18","feature":"telemetry"},{"os":"macos-latest","language-version":"20","feature":"telemetry"}]}},"jobCount":4}
+::CASE::ok-basic::END
+::CASE::ok-include-exclude::BEGIN
+CASE_OUTPUT ok-include-exclude EXIT=0 {"strategy":{"fail-fast":true,"matrix":{"include":[{"os":"ubuntu-latest","language-version":"18","experimental":"true"},{"os":"ubuntu-latest","language-version":"20","experimental":"true"},{"os":"macos-latest","language-version":"20"}]}},"jobCount":3}
+::CASE::ok-include-exclude::END
+SCRIPT_E
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/scripts/act-harness.ts", "content": "/**\n * End-to-end test h
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/scripts/act-harness.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] ls bun.lock >/dev/null && echo lock-ok; bun run scripts/act-harness.ts --reset
+[Result] lock-ok
+Truncated /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/act-result.txt
+[Assistant] Now the first of my (at most 3) act runs — case `ok-basic`:
+[Tool: Bash] bun run scripts/act-harness.ts ok-basic 2>&1 | tail -15
+[Result] === Running act case: ok-basic ===
+PASS ok-basic
+[Assistant] Case 1 passed with all assertions. Running the remaining two cases:
+[Tool: Bash] bun run scripts/act-harness.ts ok-include-exclude 2>&1 | tail -8 && bun run scripts/act-harness.ts fail-oversized 2>&1 | tail -8
+[Result] === Running act case: ok-include-exclude ===
+PASS ok-include-exclude
+
+=== Running act case: fail-oversized ===
+PASS fail-oversized
+[Tool: Bash] grep -c "Job succeeded" act-result.txt; grep -n "ACT CASE\|ALL ASSERTIONS PASSED\|ASSERTION FAILED" act-result.txt; grep -o "CASE_OUTPUT [a-z-]* EXIT=[0-9]*" act-result.txt | sort -u; wc -l act-result.txt
+[Result] 15
+4:=== ACT CASE: ok-basic (exit code 0) ===
+206:ALL ASSERTIONS PASSED (4 exact-output checks, exit code 0, 4x "Job succeeded")
+209:=== ACT CASE: ok-include-exclude (exit code 0) ===
+411:ALL ASSERTIONS PASSED (4 exact-output checks, exit code 0, 4x "Job succeeded")
+414:=== ACT CASE: fail-oversized (exit code 0) ===
+616:ALL ASSERTIONS PASSED (4 exact-output checks, exit code 0, 4x "Job succeeded")
+CASE_OUTPUT fail-oversized EXIT=1
+CASE_OUTPUT ok-basic EXIT=0
+CASE_OUTPUT ok-include-exclude EXIT=0
+616 act-result.txt
+[Assistant] Everything checks out. Final housekeeping — a README documenting the approach, then one last full verification:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/README.md", "content": "# Environment Matrix Generator (TypeSc
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/typescript-bun-fable5-high/README.md (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -4 && actionlint .github/workflows/environment-matrix-generator.yml && echo ACTIONLINT-OK && ls act-result.txt
+[Result]  32 pass
+ 0 fail
+ 73 expect() calls
+Ran 32 tests across 3 files. [463.00ms]
+ACTIONLINT-OK
+act-result.txt
+[Assistant] Done — all 32 tests pass, actionlint is clean, and all 3 act runs succeeded with exact-value assertions. `act-result.txt` (616 lines, 3 delimited cases, all verdicts "ALL ASSERTIONS PASSED") is in place.
+
+## What was built
+
+**Generator (`src/matrix.ts` + `src/cli.ts`)** — takes a JSON config (`os`, `languageVersions`, optional `featureFlags`, plus `include`, `exclude`, `maxParallel`, `failFast`, `maxSize`) and emits a complete strategy object: `{"strategy": {"fail-fast": …, "max-parallel": …, "matrix": {"include": [combos]}}, "jobCount": N}`. Include/exclude follow GitHub Actions semantics (partial-match excludes; includes merge extra keys into matching combos or append new ones). Size is validated against `maxSize` (default 256, GitHub's limit) and any config or size error exits 1 with a message naming the offending field, e.g. `Matrix size 12 exceeds the maximum allowed size 10`. A `--matrix-only` flag prints just `{"include":[…]}` for direct use with `fromJSON()`.
+
+**TDD** — 8 red/green cycles, each with a failing run observed first: cartesian product → excludes → includes → strategy assembly → validation/size limit → CLI → `--matrix-only` → workflow structure. Final suite: 32 tests, 73 assertions.
+
+**Workflow (`.github/workflows/environment-matrix-generator.yml`)** — push/pull_request/workflow_dispatch triggers, `contents: read` permissions, pinned env (`BUN_VERSION`), and a real three-job pipeline: `unit-tests` (bun test, incl. actionlint structure check) → `generate-matrix` (runs all fixture cases via `scripts/run-cases.sh`, exports the generated matrix as a job output) → `consume-matrix`, an actual matrix job driven by `${{ fromJSON(needs.generate-matrix.outputs.matrix) }}` — proving the generated JSON is directly usable by Actions. actionlint passes cleanly.
+
+**act verification (3 runs, the allowed maximum, zero retries)** — `scripts/act-harness.ts` built a temp git repo per case, ran `act push --rm`, and asserted exit 0, exactly 4 "Job succeeded" per run, and **exact** output values:
+- `ok-basic` (2 OS × 2 versions × 1 flag, fail-fast false, max-parallel 2) → exact 4-combo strategy JSON, `jobCount: 4`
+- `ok-include-exclude` → exact 3 combos with `experimental: "true"` merged into the ubuntu rows and macos+18 excluded
+- `fail-oversized` (12 combos vs `maxSize: 10`) → exact validation error and exit 1, while the job itself still succeeds (expected-failure case)
+
+Every run also asserted the exact pipeline matrix output and both downstream matrix-job echoes (`MATRIX_JOB os=ubuntu-latest version=18/20 cache=bun`).

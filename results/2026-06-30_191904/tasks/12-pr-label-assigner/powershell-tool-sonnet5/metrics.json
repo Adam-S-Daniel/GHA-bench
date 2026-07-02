@@ -1,0 +1,1402 @@
+{
+  "task_id": "12-pr-label-assigner",
+  "task_name": "PR Label Assigner",
+  "task_category": "GitHub Actions / Triage",
+  "language_mode": "powershell-tool",
+  "language_chosen": "powershell",
+  "language_breakdown": {
+    "powershell": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-sonnet-5",
+  "model_short": "sonnet5",
+  "variant": "sonnet5",
+  "claude_code_version": "2.1.197",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-07-01T02:10:42.433969+00:00",
+  "timestamp_end": "2026-07-01T02:40:42.251234+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use PowerShell as your implementation language.\n\nTASK: Given a list of changed file paths (simulating a PR's changed files), apply labels based on configurable path-to-label mapping rules (e.g., docs/** -> documentation, src/api/** -> api, *.test.* -> tests). Support glob patterns, multiple labels per file, and priority ordering when rules conflict. Output the final label set. Mock the file list for testing.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use Pester as the testing framework.\n3. All tests must be runnable with `Invoke-Pester` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/pr-label-assigner.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/pr-label-assigner.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": -9,
+  "run_success": false,
+  "failure_reason": "timeout",
+  "session": {
+    "session_id": "",
+    "stop_reason": "",
+    "terminal_reason": "",
+    "fast_mode_state": "",
+    "service_tier": "",
+    "speed": "",
+    "inference_geo": "",
+    "context_window": null,
+    "max_output_tokens": null,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 30,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {},
+  "effort_level": null,
+  "timing": {
+    "grand_total_duration_ms": 1799817,
+    "total_api_duration_ms": 0,
+    "total_execution_duration_ms": 0,
+    "num_turns": 0
+  },
+  "tokens": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cache_read_tokens": 0,
+    "cache_creation_tokens": 0,
+    "total_context_consumed": 0,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 0.0,
+    "assumed_input_cost_per_mtok": 3.0,
+    "assumed_output_cost_per_mtok": 15.0,
+    "assumed_cache_read_cost_per_mtok": 0.3,
+    "assumed_cache_write_cost_per_mtok": 3.75
+  },
+  "code_metrics": {
+    "code_lines": 621,
+    "total_tokens_estimate": 9734,
+    "file_count": 13,
+    "files": [
+      "Assign-PrLabels.ps1",
+      "LabelAssigner.psm1",
+      "changed-files.json",
+      "label-rules.json",
+      "fixtures/case1-docs.json",
+      "fixtures/case2-api-and-tests.json",
+      "fixtures/case3-priority-conflict.json",
+      ".github/workflows/pr-label-assigner.yml",
+      "tests/AssignPrLabels.Tests.ps1",
+      "tests/LabelAssigner.Tests.ps1",
+      "tests/SimpleYaml.Tests.ps1",
+      "tests/WorkflowStructure.Tests.ps1",
+      "tests/Helpers/SimpleYaml.psm1"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 4,
+    "error_details": [
+      "Exit code 1\n\u001b[31;1mTest-Foo: \u001b[0m\n\u001b[31;1m\u001b[36;1mLine |\u001b[0m\n\u001b[31;1m\u001b[36;1m\u001b[36;1m   3 | \u001b[0m Test-Foo -Lines \u001b[36;1m@('a','','b')\u001b[0m\n\u001b[31;1m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m     | \u001b[31;1m          ",
+      "Exit code 1\n\u001b[31;1mException: \u001b[31;1mSimpleYaml parse error: sequence item found under a non-sequence key near '- a'\u001b[0m",
+      "Exit code 1\n\u001b[31;1mResourceUnavailable: \u001b[0m\n\u001b[31;1m\u001b[36;1mLine |\u001b[0m\n\u001b[31;1m\u001b[36;1m\u001b[36;1m   2 | \u001b[0m \u001b[36;1m. ./tests/Helpers/SimpleYaml.psm1\u001b[0m\n\u001b[31;1m\u001b[36;1m\u001b[36;1m\u001b[0m\u001b[36;1m\u001b[0m\u001b[36;1m     | \u001b[",
+      "Exit code 1\n\u001b[31;1mInvalidOperation: \u001b[0m\n\u001b[31;1m\u001b[36;1mLine |\u001b[0m\n\u001b[31;1m\u001b[36;1m\u001b[36;1m  16 | \u001b[0m Write-Host \"type=$(\u001b[36;1m$result.GetType().FullName\u001b[0m) count=$($result.Count) \u2026\u001b[0m\n\u001b[31;1m\u001b[36;1"
+    ],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/pr-label-assigner.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": false,
+    "act_result_txt_size": 0,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 103,
+    "total_tool_duration_ms": 794952,
+    "bash_tool_uses": 48,
+    "bash_total_ms": 487111,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 80067,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x Assign-PrLabels.ps1 2>/dev/null; pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/AssignPrLabels.Tests.ps1 -Output Detailed\" 2>&1 | tail -25",
+        "duration_ms": 48026,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -30",
+        "duration_ms": 47728,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/AssignPrLabels.Tests.ps1 -Output Detailed\" 2>&1 | head -40",
+        "duration_ms": 27088,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 21071,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 20231,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1 -Output Detailed\" 2>&1 | tail -25",
+        "duration_ms": 18832,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git status && git remote -v; echo \"---\"; which pwsh act actionlint docker; pwsh -v; act --version; actionlint --version 2>&1 | head -5",
+        "duration_ms": 17108,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1 -Output Detailed\" 2>&1 | tail -25",
+        "duration_ms": 16922,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15754,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "pwd && ls -la && find . -maxdepth 3 -not -path '*/.git*' | head -100",
+        "duration_ms": 2409,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 133,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 70,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "find / -maxdepth 2 -iname 'AGENTS.md' 2>/dev/null; find /home/passp/repos/GHA-bench-sonnet5 -maxdepth 1 2>/dev/null",
+        "duration_ms": 997,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat /home/passp/repos/GHA-bench-sonnet5/AGENTS.md 2>/dev/null | head -200",
+        "duration_ms": 1182,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git status && git remote -v; echo \"---\"; which pwsh act actionlint docker; pwsh -v; act --version; actionlint --version 2>&1 | head -5",
+        "duration_ms": 17108,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Get-Module -ListAvailable Pester | Select-Object Name, Version\"",
+        "duration_ms": 13357,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat /home/passp/repos/GHA-bench-sonnet5/Dockerfile.act",
+        "duration_ms": 80,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p tests fixtures .github/workflows && ls -la",
+        "duration_ms": 78,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "ToolSearch",
+        "command": "",
+        "duration_ms": 22,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 13,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 11,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 10,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 13391,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -40",
+        "duration_ms": 14971,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15192,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 21071,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 12838,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -40",
+        "duration_ms": 4723,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 10,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 10761,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -25",
+        "duration_ms": 9246,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15032,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -10",
+        "duration_ms": 12499,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 14,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 14,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15123,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -30",
+        "duration_ms": 47728,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15030,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 12949,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 6687,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15140,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 80067,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15130,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -Output Detailed\" 2>&1 | tail -25",
+        "duration_ms": 14975,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 15,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 40,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 40,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 42,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 67,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 41,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 11938,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/AssignPrLabels.Tests.ps1 -Output Detailed\" 2>&1 | tail -30",
+        "duration_ms": 8232,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15548,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x Assign-PrLabels.ps1 2>/dev/null; pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/AssignPrLabels.Tests.ps1 -Output Detailed\" 2>&1 | tail -25",
+        "duration_ms": 48026,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/AssignPrLabels.Tests.ps1 -Output Detailed\" 2>&1 | head -40",
+        "duration_ms": 27088,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 5552,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/AssignPrLabels.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 4800,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests -Output Detailed\" 2>&1 | tail -10",
+        "duration_ms": 6542,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 253,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/pr-label-assigner.yml; echo \"exit: $?\"",
+        "duration_ms": 610,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Get-Module -ListAvailable powershell-yaml, Yayaml, PSYaml 2>\\$null | Select-Object Name, Version\"",
+        "duration_ms": 3266,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p tests/Helpers",
+        "duration_ms": 54,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 12379,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 13110,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15179,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1 -Output Detailed\" 2>&1 | tail -25",
+        "duration_ms": 18832,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 14643,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1 -Output Detailed\" 2>&1 | tail -12",
+        "duration_ms": 4891,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15054,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/WorkflowStructure.Tests.ps1 -Output Detailed\" 2>&1 | tail -60",
+        "duration_ms": 12764,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Join-Path '/tmp/x' '..' '.github' 'workflows' 'pr-label-assigner.yml'\"",
+        "duration_ms": 3324,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"\n\\$p = Join-Path './tests' '..' '.github' 'workflows' 'pr-label-assigner.yml'\nWrite-Host \\$p\nWrite-Host (Test-Path \\$p)\n\\$c = Get-Content -Path \\$p\nWrite-Host \\$c.GetType()\nW",
+        "duration_ms": 8202,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"\nImport-Module ./tests/Helpers/SimpleYaml.psm1 -Force\n\\$repoRoot = Join-Path './tests' '..'\n\\$wfPath = Join-Path \\$repoRoot '.github' 'workflows' 'pr-label-assigner.yml'\nWrit",
+        "duration_ms": 5519,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -n \"ValidateNotNull\\|Lines\" /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/12-pr-label-assigner/powershell-tool-sonnet5/tests/Helpers/SimpleYaml.psm1 | head -20",
+        "duration_ms": 118,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"\nfunction Test-Foo { param([Parameter(Mandatory)][string[]]\\$Lines) \\$Lines.Count }\nTest-Foo -Lines @('a','','b')\n\"\n",
+        "duration_ms": 1247,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"\nfunction Test-Foo { param([Parameter(Mandatory)][AllowEmptyString()][string[]]\\$Lines) \\$Lines.Count }\nTest-Foo -Lines @('a','','b')\n\"\n",
+        "duration_ms": 750,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15014,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1,./tests/WorkflowStructure.Tests.ps1 -Output Detailed\" 2>&1 | tail -60",
+        "duration_ms": 7168,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15754,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15106,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1 -Output Detailed\" 2>&1 | tail -25",
+        "duration_ms": 16922,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"\nImport-Module ./tests/Helpers/SimpleYaml.psm1 -Force\n\\$yaml = @('options:','  - a','  - b')\n\\$doc = ConvertFrom-SimpleYaml -Lines \\$yaml\n\\$doc.options\n\"\n",
+        "duration_ms": 1584,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"\nImport-Module ./tests/Helpers/SimpleYaml.psm1 -Force -Force\n\\$m = Get-Module SimpleYaml\n\\$m.ExportedFunctions.Keys\n\"\n",
+        "duration_ms": 805,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"\n. ./tests/Helpers/SimpleYaml.psm1\n\\$c = New-YamlChildContainer -Lines @('options:','  - a','  - b') -FromIndex 1 -MinIndent 1\n\\$c.GetType().FullName\n\"\n",
+        "duration_ms": 1340,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command '\nImport-Module ./tests/Helpers/SimpleYaml.psm1 -Force\n$mod = Get-Module SimpleYaml\n$c = & $mod { New-YamlChildContainer -Lines @(\"options:\",\"  - a\",\"  - b\") -FromIndex 1 -Min",
+        "duration_ms": 1285,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command '\nImport-Module ./tests/Helpers/SimpleYaml.psm1 -Force\n$mod = Get-Module SimpleYaml\n$c = & $mod { New-YamlChildContainer -Lines @(\"options:\",\"  - a\",\"  - b\") -FromIndex 1 -Min",
+        "duration_ms": 1365,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command '\n$ErrorActionPreference = \"Stop\"\nImport-Module ./tests/Helpers/SimpleYaml.psm1 -Force\n$mod = Get-Module SimpleYaml\ntry {\n  $c = & $mod { New-YamlChildContainer -Lines @(\"opti",
+        "duration_ms": 1314,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command '\n$ErrorActionPreference = \"Stop\"\nImport-Module ./tests/Helpers/SimpleYaml.psm1 -Force\n$mod = Get-Module SimpleYaml\n$result = & $mod {\n  $next = Find-NextSignificantLine -Line",
+        "duration_ms": 1965,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -n \"function New-YamlChildContainer\" -A 15 /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/12-pr-label-assigner/powershell-tool-sonnet5/tests/Helpers/SimpleYaml.psm1",
+        "duration_ms": 94,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command '\n$ErrorActionPreference = \"Stop\"\nImport-Module ./tests/Helpers/SimpleYaml.psm1 -Force\n$mod = Get-Module SimpleYaml\n$result = & $mod {\n  function New-YamlChildContainer2 {\n   ",
+        "duration_ms": 1239,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15159,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 20231,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 9,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15035,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/SimpleYaml.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 6717,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -NoProfile -Command \"Invoke-Pester -Path ./tests/WorkflowStructure.Tests.ps1 -Output Detailed\" 2>&1 | tail -60",
+        "duration_ms": 10529,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 417819,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 30,
+    "hook_errors_caught": 2,
+    "hook_failures": 14,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "3a68609b-a5dc-436d-9273-7b56290d8853",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7fefe2cf-fddb-4c16-b677-96e20b27d2ea",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3a68609b-a5dc-436d-9273-7b56290d8853",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7fefe2cf-fddb-4c16-b677-96e20b27d2ea",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "0d10562c-2109-4d55-87f0-136581bb32a2",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "0d10562c-2109-4d55-87f0-136581bb32a2",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b7af5f06-f76e-4181-ad79-113533e4842b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b7af5f06-f76e-4181-ad79-113533e4842b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "cda524ed-1687-488c-92aa-c2fdcf894a68",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "cda524ed-1687-488c-92aa-c2fdcf894a68",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "864d1531-558c-49fe-bda6-8c0a3c6c6231",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "864d1531-558c-49fe-bda6-8c0a3c6c6231",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "334df0f4-b6e3-4988-934a-cc0864a36873",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "334df0f4-b6e3-4988-934a-cc0864a36873",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "77e68668-87fe-4740-bd7a-91537537383d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "77e68668-87fe-4740-bd7a-91537537383d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "3d9cee87-e9dc-4609-be5a-e98ca09fd394",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3d9cee87-e9dc-4609-be5a-e98ca09fd394",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "93438f9a-7dab-4910-88ca-e00aeba89b12",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "93438f9a-7dab-4910-88ca-e00aeba89b12",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: Function 'New-LabelRule' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'. (Line 93)\\nWarning: The cmdlet 'Import-LabelRules' uses a plural noun. A singular noun should be used instead. (Line 128)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b93d17bc-c0ed-4e31-868f-7867377b7169",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b93d17bc-c0ed-4e31-868f-7867377b7169",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "d3c93c5d-76b1-4164-86ec-c081a492ffd7",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "d3c93c5d-76b1-4164-86ec-c081a492ffd7",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "e849fe66-2d7f-439a-9e6f-2bb987fd89cf",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "e849fe66-2d7f-439a-9e6f-2bb987fd89cf",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "20442941-b875-4ea1-aa4d-5337d09b1863",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "20442941-b875-4ea1-aa4d-5337d09b1863",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "c4c43251-cc35-41fb-904d-1631d9591964",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "c4c43251-cc35-41fb-904d-1631d9591964",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "93fc858b-912c-4e4e-82eb-52af6b08f515",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "93fc858b-912c-4e4e-82eb-52af6b08f515",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "674344e2-346e-48c1-9708-d1fc38f941f6",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "674344e2-346e-48c1-9708-d1fc38f941f6",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "3532f891-3a94-4567-82f7-d60402a63129",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3532f891-3a94-4567-82f7-d60402a63129",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "0c51e660-0152-4df6-8270-1369e72bca50",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "0c51e660-0152-4df6-8270-1369e72bca50",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "e3993c63-1359-46a6-a0e9-6bfd486b0ad5",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "e3993c63-1359-46a6-a0e9-6bfd486b0ad5",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "26de5af2-bd95-4969-8d9e-114400051298",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "26de5af2-bd95-4969-8d9e-114400051298",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "62a8ab7c-a37d-4df2-b16d-96ad580008e8",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "62a8ab7c-a37d-4df2-b16d-96ad580008e8",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "85a38d95-f9b5-46bc-a654-5205367cd6ef",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "85a38d95-f9b5-46bc-a654-5205367cd6ef",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "16c544ab-8a5b-43b6-8b99-2f88af631257",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "16c544ab-8a5b-43b6-8b99-2f88af631257",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: Function 'New-YamlPlaceholder' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'. (Line 117)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "3f92553a-5aff-4681-9368-0eee12b06e7d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3f92553a-5aff-4681-9368-0eee12b06e7d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "17daed14-0066-4cd0-8569-50fd95532da7",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "17daed14-0066-4cd0-8569-50fd95532da7",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7413962a-7b74-4917-94c5-a9d6d8029a6f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7413962a-7b74-4917-94c5-a9d6d8029a6f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f3319a7b-cf93-4101-ab44-4e3bfe372951",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f3319a7b-cf93-4101-ab44-4e3bfe372951",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "1fa7778a-0086-4eb3-8773-60fb545ea8b0",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "1fa7778a-0086-4eb3-8773-60fb545ea8b0",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "fae4c3fd-ef0e-4aa4-b731-7a6fe60844d2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "fae4c3fd-ef0e-4aa4-b731-7a6fe60844d2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}

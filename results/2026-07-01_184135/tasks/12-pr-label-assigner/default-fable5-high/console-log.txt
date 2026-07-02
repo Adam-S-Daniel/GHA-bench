@@ -1,0 +1,226 @@
+[Assistant] I'll build this in Python (stdlib only, so the CI container needs no extra deps), following red/green TDD. Let me first check the environment.
+[Tool: Bash] ls -la && cat .actrc 2>/dev/null; cat benchmark-instructions-v4.md 2>/dev/null | head -50; python3 --version; actionlint --version; act --version; docker --version
+[Result] total 44
+drwxr-xr-x 4 passp passp  4096 Jul  2 00:37 .
+drwxr-xr-x 7 passp passp  4096 Jul  2 00:37 ..
+-rw-r--r-- 1 passp passp    40 Jul  2 00:37 .actrc
+drwxr-xr-x 2 passp passp  4096 Jul  2 00:37 .claude
+drwxr-xr-x 6 passp passp  4096 Jul  2 00:37 .git
+-rw-r--r-- 1 passp passp 21843 Jul  1 16:21 benchmark-instructions-v4.md
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+# Benchmark Instructions v4 — GitHub Actions
+
+**Version**: v4
+**Date**: 2026-04-09
+**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+
+**Changes from v3**:
+- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+- GHA workflo
+[Tool: Bash] python3 -c "import yaml; print('pyyaml ok')" 2>&1; docker run --rm act-ubuntu-pwsh:latest bash -c "python3 --version" 2>&1 | tail -2
+[Result] pyyaml ok
+Python 3.12.3
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py", "content": "\"\"\"Unit tests for the PR label assigner.\
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -5
+[Result]     self.test = loader.discover(self.start, self.pattern, self.top)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/loader.py", line 307, in discover
+    raise ImportError('Start directory is not importable: %r' % start_dir)
+ImportError: Start directory is not importable: '/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests'
+[Tool: Bash] touch tests/__init__.py && python3 -m unittest discover -s tests -t . 2>&1 | tail -4
+[Result] ----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (errors=1)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py", "content": "\"\"\"PR label assigner: map changed file paths to labe
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -3
+[Result] Ran 3 tests in 0.000s
+
+OK
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py", "old_string": "    def test_single
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -4
+[Result] ----------------------------------------------------------------------
+Ran 5 tests in 0.001s
+
+FAILED (failures=1)
+[Assistant] RED as expected. Green step — slashless patterns match the basename:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py", "old_string": "def match_pattern(path, patter
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -3
+[Result] Ran 5 tests in 0.000s
+
+OK
+[Assistant] Cycle 3: applying a rule set to a file list — multiple labels per rule, union across files. Failing test first:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py", "old_string": "from labeler import
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py", "old_string": "if __name__ == \"__
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -3
+[Result] Ran 1 test in 0.000s
+
+FAILED (errors=1)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py", "old_string": "    target = path if \"/\" in 
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -3
+[Result] Ran 10 tests in 0.001s
+
+OK
+[Assistant] GREEN. Cycle 4: priority ordering when rules conflict — for each file, only the highest-priority matching rules contribute. Failing test:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py", "old_string": "if __name__ == \"__
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -3
+[Result] Ran 13 tests in 0.008s
+
+FAILED (failures=2)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py", "old_string": "    Every rule whose pattern m
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -3
+[Result] Ran 13 tests in 0.005s
+
+OK
+[Assistant] Cycle 5: config loading, validation with meaningful errors, and the CLI. Failing tests:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py", "old_string": "import unittest\n\n
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py", "old_string": "if __name__ == \"__
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -3
+[Result] Ran 1 test in 0.000s
+
+FAILED (errors=1)
+[Assistant] Green step — add `LabelerError`, `load_config`, and the CLI `main`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py", "old_string": "\"\"\"PR label assigner: map c
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py", "old_string": "        for rule in matching:\
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -3
+[Result] Ran 24 tests in 0.004s
+
+OK
+[Assistant] All 24 unit tests green. Now the default fixtures (mocked PR changed-file list + rules config) that the workflow consumes:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/fixtures/rules.json", "content": "{\n  \"rules\": [\n    { \"pattern\": \"docs/*
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/fixtures/rules.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/fixtures/changed_files.txt", "content": "docs/getting-started.md\nsrc/api/users.
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/fixtures/changed_files.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/.github/workflows/pr-label-assigner.yml", "content": "# PR Label Assigner pipeli
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/.github/workflows/pr-label-assigner.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/pr-label-assigner.yml && echo "ACTIONLINT PASS"
+[Result ERROR] Exit code 1
+.github/workflows/pr-label-assigner.yml:54:34: could not parse as YAML: mapping values are not allowed in this context [syntax-check]
+   |
+54 |         run: echo "FINAL LABEL SET: $LABELS"
+   |                                  ^~
+[Assistant] YAML quirk — a colon inside an unquoted scalar. Fixing with a block scalar:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/.github/workflows/pr-label-assigner.yml", "old_string": " 
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/.github/workflows/pr-label-assigner.yml has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/pr-label-assigner.yml && echo "ACTIONLINT PASS"
+[Result] ACTIONLINT PASS
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_workflow.py", "content": "\"\"\"Workflow structure tests (run on the 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/tests/test_workflow.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest tests.test_workflow -v 2>&1 | tail -5 && bash -c 'python3 labeler.py --config fixtures/rules.json --files fixtures/changed_files.txt | tee /tmp/labeler-output.txt && sed -n "s/^LABELS: //p" /tmp/labeler-output.txt'
+[Result] ----------------------------------------------------------------------
+Ran 7 tests in 0.074s
+
+OK
+  input: docs/getting-started.md
+  input: src/api/users.py
+  input: src/core/engine.py
+  input: webapp/app.test.js
+LABELS: api,backend,documentation,source,tests
+api,backend,documentation,source,tests
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/act_harness.py", "content": "\"\"\"End-to-end test harness: run every labeler te
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/act_harness.py (file state is current in your context — no need to Read it back)
+[Assistant] Before spending the act budget, verify my expected values for cases 2 and 3 against the script locally:
+[Tool: Bash] cd /tmp && mkdir -p precheck && cd precheck && printf 'src/generated/schema_pb2.py\nsrc/main.py\n' > f2.txt && printf 'LICENSE\nMakefile\n' > f3.txt && cat > r2.json <<'EOF'
+{"rules": [
+  {"pattern": "src/**", "labels": ["source"]},
+  {"pattern": "src/generated/**", "labels": ["generated", "skip-review"], "priority": 5},
+  {"pattern": "docs/**", "labels": ["documentation"]}
+]}
+EOF
+python3 /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py --config r2.json --files f2.txt | grep LABELS
+python3 /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/labeler.py --config /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/fixtures/rules.json --files f3.txt | grep LABELS
+[Result] LABELS: generated,skip-review,source
+LABELS: (none)
+Shell cwd was reset to /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high
+[Assistant] Expected values confirmed. Running the full harness — 3 act runs, sequential (this takes a few minutes):
+[Tool: Bash] python3 act_harness.py
+[Result] [pre-flight] actionlint: PASS
+[pre-flight] workflow structure tests: PASS
+[pre-flight] unit test suite: PASS
+[act] running case1-mixed-changes ...
+[act] case1-mixed-changes: PASS
+[act] running case2-priority-conflict ...
+[act] case2-priority-conflict: PASS
+[act] running case3-no-matching-rules ...
+[act] case3-no-matching-rules: PASS
+All 3 act test cases passed. Results in /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/act-result.txt
+[Tool: Bash] grep -E "CASE VERDICT|OVERALL|LABELS: |FINAL LABEL SET|Job succeeded|Ran 24 tests|exit code" act-result.txt | head -40; echo ---; wc -l act-result.txt
+[Result] === act exit code: 0
+[PR Label Assigner/unit-tests]   | Ran 24 tests in 0.044s
+[PR Label Assigner/unit-tests] 🏁  Job succeeded
+[PR Label Assigner/assign-labels]   | LABELS: api,backend,documentation,source,tests
+[PR Label Assigner/assign-labels]   | FINAL LABEL SET: api,backend,documentation,source,tests
+[PR Label Assigner/assign-labels] 🏁  Job succeeded
+>>> CASE VERDICT [case1-mixed-changes]: PASS
+=== act exit code: 0
+[PR Label Assigner/unit-tests]   | Ran 24 tests in 0.035s
+[PR Label Assigner/unit-tests] 🏁  Job succeeded
+[PR Label Assigner/assign-labels]   | LABELS: generated,skip-review,source
+[PR Label Assigner/assign-labels]   | FINAL LABEL SET: generated,skip-review,source
+[PR Label Assigner/assign-labels] 🏁  Job succeeded
+>>> CASE VERDICT [case2-priority-conflict]: PASS
+=== act exit code: 0
+[PR Label Assigner/unit-tests]   | Ran 24 tests in 0.033s
+[PR Label Assigner/unit-tests] 🏁  Job succeeded
+[PR Label Assigner/assign-labels]   | LABELS: (none)
+[PR Label Assigner/assign-labels
+[Assistant] Everything passes. Adding a short README documenting the approach, then a final full verification:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/README.md", "content": "# PR Label Assigner\n\nAssigns labels to a PR from its c
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/default-fable5-high/README.md (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m unittest discover -s tests -t . 2>&1 | tail -3 && actionlint .github/workflows/pr-label-assigner.yml && echo "ACTIONLINT PASS" && ls act-result.txt && find . -path ./.git -prune -o -type f -print | sort
+[Result] Ran 31 tests in 0.083s
+
+OK
+ACTIONLINT PASS
+act-result.txt
+./.actrc
+./.claude/settings.json
+./.github/workflows/pr-label-assigner.yml
+./README.md
+./__pycache__/act_harness.cpython-312.pyc
+./__pycache__/labeler.cpython-312.pyc
+./act-result.txt
+./act_harness.py
+./benchmark-instructions-v4.md
+./fixtures/changed_files.txt
+./fixtures/rules.json
+./labeler.py
+./tests/__init__.py
+./tests/__pycache__/__init__.cpython-312.pyc
+./tests/__pycache__/test_labeler.cpython-312.pyc
+./tests/__pycache__/test_workflow.cpython-312.pyc
+./tests/test_labeler.py
+./tests/test_workflow.py
+[Assistant] Done. All 31 tests pass, actionlint is clean, and all 3 end-to-end cases ran through the workflow via `act` and passed on the first attempt — `act-result.txt` is in place.
+
+**What was built (Python, stdlib-only so the CI container needs no installs):**
+
+- **`labeler.py`** — the label assigner, grown through 5 red/green TDD cycles: (1) glob matching where `**` crosses directories but `*` doesn't, (2) gitignore-style basename matching for slashless patterns like `*.test.*`, (3) label assignment with multiple labels per rule and union across files, (4) priority conflict resolution — per file, only the highest-priority matching rules contribute, so `src/generated/**` (priority 5) suppresses the generic `src/** → source` label without affecting other files, (5) config loading/CLI with meaningful errors (`rule #1 needs a non-empty string 'pattern'`, exit code 2).
+- **`tests/test_labeler.py`** — 24 unit tests with temp-file fixtures; the changed-file list is mocked as a text fixture simulating a PR's files.
+- **`tests/test_workflow.py`** — 7 workflow structure tests: YAML parses with push/pull_request/workflow_dispatch triggers, permissions declared, `label` job `needs: test`, checkout first in every job, all referenced paths exist, and actionlint exits 0.
+- **`.github/workflows/pr-label-assigner.yml`** — two jobs on the local runner image: `unit-tests` runs the TDD suite, then `assign-labels` runs the script, exports the label set through `GITHUB_OUTPUT`, and echoes `FINAL LABEL SET: …`. One actionlint fix was needed along the way (a colon inside an unquoted YAML scalar).
+- **`act_harness.py`** — builds a fresh temp git repo per test case (project files + case-specific fixtures), runs `act push --rm`, and asserts exact values, not just presence: act exit 0, the exact `LABELS:` line, the exact `FINAL LABEL SET:` line (proving the value flowed through step outputs), and `Job succeeded` for both jobs.
+
+**The 3 act cases and their verified exact outputs:**
+
+| Case | Input | Asserted output |
+|---|---|---|
+| Mixed changes | docs, src/api, src/core, a `.test.js` file | `LABELS: api,backend,documentation,source,tests` |
+| Priority conflict | `src/generated/schema_pb2.py` + `src/main.py` | `LABELS: generated,skip-review,source` (generic `source` suppressed only for the generated file) |
+| No matching rules | `LICENSE`, `Makefile` | `LABELS: (none)` |
+
+Each act run also re-executed all 24 unit tests inside the container (`Ran 24 tests … OK` appears in every case's log), so every test case went through the pipeline. The act budget was respected: exactly 3 runs, with expected values pre-verified locally before spending them.

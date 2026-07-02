@@ -1,0 +1,75 @@
+# Dependency license compliance pipeline.
+#
+# Job graph: test (Pester unit + workflow-structure tests) -> license-check
+# (runs check-licenses.ps1 and prints the machine-readable report).
+#
+# Test-harness hook: when a `test-input/` directory exists in the repo (the
+# act harness drops one fixture manifest per test case there), the check runs
+# against that manifest; otherwise it defaults to fixtures/package.json.
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly compliance sweep, Mondays 06:00 UTC.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  # License policy + mock registry database used by every check.
+  CONFIG_PATH: fixtures/license-config.json
+  LICENSE_DB_PATH: fixtures/mock-license-db.json
+
+jobs:
+  test:
+    name: Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          # pwsh + Pester are preinstalled in the runner image.
+          $config = New-PesterConfiguration
+          $config.Run.Path = @(
+            'tests/DependencyLicenseChecker.Tests.ps1',
+            'tests/Workflow.Tests.ps1'
+          )
+          $config.Run.Exit = $true          # non-zero exit on any failure
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  license-check:
+    name: License compliance report
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run license compliance check
+        shell: pwsh
+        run: |
+          # Harness runs place one manifest in test-input/; fall back to the
+          # bundled npm fixture for plain pushes.
+          $manifest = if (Test-Path 'test-input') {
+            (Get-ChildItem -Path 'test-input' -File | Select-Object -First 1).FullName
+          } else {
+            'fixtures/package.json'
+          }
+          Write-Host "Checking manifest: $manifest"
+          ./check-licenses.ps1 `
+            -ManifestPath $manifest `
+            -ConfigPath $env:CONFIG_PATH `
+            -LicenseDatabasePath $env:LICENSE_DB_PATH `
+            -OutputPath compliance-report.json
+
+      - name: Show JSON report
+        shell: pwsh
+        run: Get-Content -Path compliance-report.json

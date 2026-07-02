@@ -1,0 +1,44 @@
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  MANIFEST_PATH: fixtures/clean-package.json
+  POLICY_PATH: fixtures/policy.json
+
+jobs:
+  unit-tests:
+    name: Run Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./LicenseChecker.Tests.ps1 -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) Pester test(s) failed."
+          }
+
+  license-check:
+    name: Check dependency licenses
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run dependency license compliance check
+        shell: pwsh
+        run: |
+          ./Invoke-LicenseCheck.ps1 -ManifestPath $env:MANIFEST_PATH -PolicyPath $env:POLICY_PATH

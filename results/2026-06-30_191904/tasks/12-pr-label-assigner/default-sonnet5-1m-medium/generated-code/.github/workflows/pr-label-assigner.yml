@@ -1,0 +1,76 @@
+name: PR Label Assigner
+
+# Runs unit tests then computes (and, on real pull requests, applies) labels
+# for a set of changed files based on rules.json. workflow_dispatch lets the
+# path to the changed-files list and rules file be overridden, which is what
+# the act-based integration test harness (scripts/run-act-tests.sh) uses to
+# exercise different fixture cases via `act push`.
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      changed_files_path:
+        description: "Path to a JSON file listing changed file paths"
+        required: false
+        default: "fixtures/changed-files.json"
+      rules_path:
+        description: "Path to the JSON label rules file"
+        required: false
+        default: "rules.json"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  CHANGED_FILES_PATH: ${{ github.event.inputs.changed_files_path || 'fixtures/changed-files.json' }}
+  RULES_PATH: ${{ github.event.inputs.rules_path || 'rules.json' }}
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify PowerShell and Pester are available
+        shell: pwsh
+        run: |
+          $PSVersionTable.PSVersion
+          Import-Module Pester -ErrorAction Stop
+          (Get-Module Pester).Version
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./PrLabelAssigner.Tests.ps1 -CI -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) unit test(s) failed"
+          }
+          Write-Output "All $($result.PassedCount) unit tests passed."
+
+  assign-labels:
+    name: Assign labels
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute labels from changed files
+        id: labels
+        shell: pwsh
+        run: |
+          ./PrLabelAssigner.ps1 -ChangedFilesPath $env:CHANGED_FILES_PATH -RulesPath $env:RULES_PATH -OutputFormat text
+
+      - name: Apply labels to pull request
+        if: github.event_name == 'pull_request' && steps.labels.outputs.labels != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LABELS: ${{ steps.labels.outputs.labels }}
+        run: |
+          gh pr edit "$PR_NUMBER" --add-label "$LABELS"

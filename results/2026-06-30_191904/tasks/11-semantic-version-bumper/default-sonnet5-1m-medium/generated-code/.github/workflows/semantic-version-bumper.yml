@@ -1,0 +1,88 @@
+name: Semantic Version Bumper
+
+# Runs on pushes/PRs to main so every merge can compute the next semantic
+# version from conventional commits, plus workflow_dispatch for ad-hoc runs
+# and a weekly schedule as a periodic sanity check.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  CHANGELOG_DATE: "2026-07-01"
+
+jobs:
+  bump-version:
+    name: Bump version (${{ matrix.case.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+          - name: patch
+            commits_fixture: fixtures/commits_fix.txt
+            expected_version: "1.0.1"
+          - name: minor
+            commits_fixture: fixtures/commits_feat.txt
+            expected_version: "1.1.0"
+          - name: major
+            commits_fixture: fixtures/commits_breaking.txt
+            expected_version: "2.0.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Prepare scratch version/changelog files
+        run: |
+          cp fixtures/version_1.0.0.txt VERSION
+          rm -f CHANGELOG.md
+
+      - name: Run semantic version bumper
+        id: bump
+        run: |
+          new_version=$(python3 version_bumper.py \
+            --version-file VERSION \
+            --commits-file "${{ matrix.case.commits_fixture }}" \
+            --changelog-file CHANGELOG.md \
+            --date "${CHANGELOG_DATE}")
+          echo "new_version=${new_version}" >> "$GITHUB_OUTPUT"
+          echo "Computed new version: ${new_version}"
+
+      - name: Verify computed version matches expected fixture result
+        run: |
+          expected="${{ matrix.case.expected_version }}"
+          actual="${{ steps.bump.outputs.new_version }}"
+          echo "expected=${expected} actual=${actual}"
+          if [ "${actual}" != "${expected}" ]; then
+            echo "::error::Version mismatch for case '${{ matrix.case.name }}': expected ${expected}, got ${actual}"
+            exit 1
+          fi
+          if [ "$(cat VERSION)" != "${expected}" ]; then
+            echo "::error::VERSION file was not updated correctly"
+            exit 1
+          fi
+          if ! grep -q "## ${expected}" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md missing expected entry heading"
+            exit 1
+          fi
+
+      - name: Write job summary
+        run: |
+          {
+            echo "### Semantic Version Bumper — ${{ matrix.case.name }}"
+            echo "New version: **${{ steps.bump.outputs.new_version }}**"
+            echo ""
+            cat CHANGELOG.md
+          } >> "$GITHUB_STEP_SUMMARY"

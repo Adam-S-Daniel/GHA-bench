@@ -1,0 +1,47 @@
+name: PR Label Assigner
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  FIXTURES_DIR: fixtures
+
+jobs:
+  unit-tests:
+    name: Run Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester test suite
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./tests/LabelAssigner.Tests.ps1 -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) Pester test(s) failed."
+          }
+
+  assign-labels:
+    name: Compute labels from fixtures
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compute labels for docs-and-api fixture
+        shell: pwsh
+        run: ./src/Invoke-LabelAssigner.ps1 -FixturePath "$env:FIXTURES_DIR/case1-docs-and-api.json"
+
+      - name: Compute labels for priority-conflict fixture
+        shell: pwsh
+        run: ./src/Invoke-LabelAssigner.ps1 -FixturePath "$env:FIXTURES_DIR/case2-priority-conflict.json"

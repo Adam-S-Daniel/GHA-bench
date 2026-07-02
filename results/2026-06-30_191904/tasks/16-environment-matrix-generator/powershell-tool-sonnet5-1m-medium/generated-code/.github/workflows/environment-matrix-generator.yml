@@ -1,0 +1,85 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      config_path:
+        description: 'Path to the matrix config JSON to use when no config.json override is present'
+        required: false
+        default: 'fixtures/basic.json'
+  schedule:
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_CONFIG: fixtures/basic.json
+
+jobs:
+  test:
+    name: Run Pester test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [version]'5.0.0' })) {
+            Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser -MinimumVersion 5.0.0
+          }
+
+      - name: Run matrix generator tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./MatrixGenerator.Tests.ps1 -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "Pester reported $($result.FailedCount) failing test(s)."
+          }
+          Write-Output "All $($result.PassedCount) Pester tests passed."
+
+  generate-matrix:
+    name: Generate build matrix
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate matrix for every fixture (verifiable multi-case output)
+        shell: pwsh
+        run: |
+          foreach ($fixture in Get-ChildItem -Path ./fixtures -Filter '*.json' | Sort-Object Name) {
+            Write-Output "=== FIXTURE: $($fixture.Name) ==="
+            try {
+              ./Generate-Matrix.ps1 -ConfigPath $fixture.FullName
+            } catch {
+              Write-Output "VALIDATION ERROR: $($_.Exception.Message)"
+            }
+          }
+
+      - name: Generate matrix output for downstream build job
+        id: generate
+        shell: pwsh
+        run: |
+          $configPath = if (Test-Path './config.json') { './config.json' } else { $env:DEFAULT_CONFIG }
+          Write-Output "=== ACTIVE CONFIG: $configPath ==="
+          ./Generate-Matrix.ps1 -ConfigPath $configPath
+
+  build:
+    name: Build
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: ${{ fromJson(needs.generate-matrix.outputs.matrix)['fail-fast'] }}
+      max-parallel: ${{ fromJson(needs.generate-matrix.outputs.matrix)['max-parallel'] }}
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix).matrix }}
+    steps:
+      - name: Show matrix cell
+        shell: pwsh
+        run: |
+          Write-Output "os=${{ matrix.os }} version=${{ matrix.version }} experimental=${{ matrix.experimental }}"

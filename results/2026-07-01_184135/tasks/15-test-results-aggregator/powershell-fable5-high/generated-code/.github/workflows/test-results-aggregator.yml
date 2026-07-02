@@ -1,0 +1,56 @@
+# Aggregates matrix-build test results (JUnit XML + JSON) into a markdown
+# job summary. Two jobs:
+#   test      - runs the Pester suite (unit + workflow structure tests)
+#   aggregate - depends on test; parses fixtures/, prints the markdown
+#               summary to the log and publishes it to the job summary.
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Directory holding the per-matrix-leg result files to aggregate.
+  RESULTS_DIR: fixtures
+
+jobs:
+  test:
+    name: Pester tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester test suite
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Aggregate results and build summary
+        shell: pwsh
+        run: ./scripts/Invoke-Aggregator.ps1 -InputPath $env:RESULTS_DIR -OutputPath summary.md
+
+      - name: Verify summary artifact exists
+        shell: pwsh
+        run: |
+          if (-not (Test-Path summary.md)) {
+            Write-Error 'summary.md was not produced'
+            exit 1
+          }
+          Write-Host "summary.md written, $((Get-Item summary.md).Length) bytes"

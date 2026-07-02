@@ -1,0 +1,97 @@
+# CI pipeline for the semantic version bumper.
+#
+# Two jobs, chained with `needs`:
+#   1. unit-tests    — runs the full bats suite (unit + workflow-structure tests).
+#   2. bump-version  — runs bump_version.sh against the fixture data in
+#                      ci-fixture/ and asserts the bumped version matches the
+#                      fixture's expected_version.txt exactly.
+#
+# The fixture directory is the test-injection point: the local act-based test
+# harness (run_act_tests.sh) swaps ci-fixture/ contents per test case, so the
+# same workflow validates feat->minor, fix->patch and breaking->major bumps.
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  FIXTURE_DIR: ci-fixture
+
+jobs:
+  unit-tests:
+    name: Unit tests (bats)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: |
+          if ! command -v bats >/dev/null 2>&1; then
+            npm install -g bats@1.11.1
+          fi
+          bats --version
+
+      - name: Validate script syntax
+        run: bash -n bump_version.sh
+
+      - name: Run bats test suite
+        run: bats tests
+
+  bump-version:
+    name: Bump version from fixture
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run semantic version bumper
+        id: bump
+        run: |
+          set -euo pipefail
+          # The fixture ships either a plain VERSION file or a package.json;
+          # exercise whichever this test case provides.
+          if [ -f "$FIXTURE_DIR/package.json" ]; then
+            version_file="$FIXTURE_DIR/package.json"
+          else
+            version_file="$FIXTURE_DIR/VERSION"
+          fi
+          ./bump_version.sh \
+            --version-file "$version_file" \
+            --commits "$FIXTURE_DIR/commits.txt" \
+            --changelog "$FIXTURE_DIR/CHANGELOG.md"
+
+      - name: Verify bumped version against fixture expectation
+        env:
+          OLD_VERSION: ${{ steps.bump.outputs.old_version }}
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+          BUMP_TYPE: ${{ steps.bump.outputs.bump_type }}
+        run: |
+          set -euo pipefail
+          expected="$(cat "$FIXTURE_DIR/expected_version.txt")"
+          echo "CASE=$(cat "$FIXTURE_DIR/case_name.txt")"
+          echo "OLD_VERSION=$OLD_VERSION"
+          echo "BUMP_TYPE=$BUMP_TYPE"
+          echo "NEW_VERSION=$NEW_VERSION"
+          if [ "$NEW_VERSION" != "$expected" ]; then
+            echo "FAIL: expected version $expected but got $NEW_VERSION" >&2
+            exit 1
+          fi
+          echo "VERSION_CHECK=PASS expected=$expected actual=$NEW_VERSION"
+
+      - name: Show generated changelog entry
+        run: |
+          set -euo pipefail
+          if [ -f "$FIXTURE_DIR/CHANGELOG.md" ]; then
+            echo "---CHANGELOG-BEGIN---"
+            cat "$FIXTURE_DIR/CHANGELOG.md"
+            echo "---CHANGELOG-END---"
+          else
+            echo "no changelog generated (no release-worthy commits)"
+          fi

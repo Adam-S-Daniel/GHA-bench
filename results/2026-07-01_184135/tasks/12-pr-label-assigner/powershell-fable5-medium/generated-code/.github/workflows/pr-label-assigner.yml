@@ -1,0 +1,60 @@
+# PR Label Assigner pipeline.
+#
+# Runs the Pester unit suite first; only if it passes does the label
+# assignment job run against the fixture data (a mocked PR changed-file
+# list). The fixture paths can be overridden via env for other repos.
+name: PR Label Assigner
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CHANGED_FILES_PATH: fixtures/changed-files.txt
+  RULES_PATH: fixtures/label-rules.json
+
+jobs:
+  test:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          # GitHub runners and the act image ship Pester; install if absent
+          # so the workflow also works on vanilla containers.
+          if (-not (Get-Module -ListAvailable -Name Pester)) {
+            Install-Module Pester -Force -Scope CurrentUser -SkipPublisherCheck
+          }
+          (Get-Module -ListAvailable Pester | Select-Object -First 1).Version
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = @('./tests/LabelAssigner.Tests.ps1', './tests/InvokeLabelAssigner.Tests.ps1')
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  assign-labels:
+    name: Assign PR labels
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compute label set from changed files
+        shell: pwsh
+        run: |
+          ./Invoke-LabelAssigner.ps1 `
+            -ChangedFilesPath $env:CHANGED_FILES_PATH `
+            -RulesPath $env:RULES_PATH

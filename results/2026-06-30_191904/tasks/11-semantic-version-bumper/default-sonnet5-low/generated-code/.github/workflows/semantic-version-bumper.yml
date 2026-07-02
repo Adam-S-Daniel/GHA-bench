@@ -1,0 +1,59 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  VERSION_FILE: package.json
+  CHANGELOG_FILE: CHANGELOG.md
+  # The active fixture is selected by overwriting this file's contents in
+  # the checked-out repo before the workflow runs (see run_act_tests.sh),
+  # so a plain `push` event always exercises whichever fixture is currently
+  # committed at this path.
+  COMMITS_FIXTURE: commits.txt
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        run: python3 --version
+
+      - name: Install test dependencies
+        run: pip install --quiet --break-system-packages pytest
+
+      - name: Run pytest suite
+        run: python3 -m pytest tests/ -v
+
+  bump-version:
+    name: Bump semantic version
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run semantic version bumper
+        id: bump
+        run: |
+          python3 bumper.py \
+            --version-file "$VERSION_FILE" \
+            --commits-file "$COMMITS_FIXTURE" \
+            --changelog-file "$CHANGELOG_FILE"
+
+      - name: Show resulting version file
+        run: cat "$VERSION_FILE"
+
+      - name: Show generated changelog
+        run: cat "$CHANGELOG_FILE"

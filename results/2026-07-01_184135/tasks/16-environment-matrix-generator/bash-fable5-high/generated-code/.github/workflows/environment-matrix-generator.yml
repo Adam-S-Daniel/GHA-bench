@@ -1,0 +1,83 @@
+# Environment Matrix Generator pipeline.
+#
+# Pipeline shape:
+#   unit_tests  ->  generate_matrix  ->  build
+#
+#   * unit_tests      runs the bats suite for matrix-gen.sh
+#   * generate_matrix runs matrix-gen.sh against the repository's
+#                     config.json and publishes the strategy JSON as
+#                     job outputs
+#   * build           consumes the generated matrix via fromJSON, proving
+#                     the output is a valid strategy.matrix document
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      config-file:
+        description: Path to the matrix configuration file
+        required: false
+        default: config.json
+
+permissions:
+  contents: read
+
+env:
+  # Allow workflow_dispatch to point at an alternative configuration.
+  CONFIG_FILE: ${{ github.event.inputs.config-file || 'config.json' }}
+
+jobs:
+  unit_tests:
+    name: Unit tests (bats)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: npm install --global bats
+
+      - name: Validate script syntax
+        run: bash -n matrix-gen.sh
+
+      - name: Run bats test suite
+        run: bats test/matrix_gen.bats
+
+  generate_matrix:
+    name: Generate build matrix
+    needs: unit_tests
+    runs-on: ubuntu-latest
+    outputs:
+      strategy: ${{ steps.gen.outputs.strategy }}
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate matrix JSON
+        id: gen
+        run: |
+          strategy="$(./matrix-gen.sh --config "$CONFIG_FILE" --compact)"
+          # Echo the full document so CI logs (and the act harness) can
+          # assert on the exact generated value.
+          echo "MATRIX_RESULT=${strategy}"
+          {
+            echo "strategy=${strategy}"
+            echo "matrix=$(jq -c '.matrix' <<< "$strategy")"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.os }}, ${{ matrix['language-version'] }}, ${{ matrix['feature-flag'] }})
+    needs: generate_matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: ${{ fromJSON(needs.generate_matrix.outputs.strategy)['fail-fast'] }}
+      max-parallel: ${{ fromJSON(needs.generate_matrix.outputs.strategy)['max-parallel'] || 4 }}
+      matrix: ${{ fromJSON(needs.generate_matrix.outputs.matrix) }}
+    steps:
+      - name: Simulate build for one matrix combination
+        run: |
+          echo "BUILD_COMBO os=${{ matrix.os }} lang=${{ matrix['language-version'] }} flag=${{ matrix['feature-flag'] }}"

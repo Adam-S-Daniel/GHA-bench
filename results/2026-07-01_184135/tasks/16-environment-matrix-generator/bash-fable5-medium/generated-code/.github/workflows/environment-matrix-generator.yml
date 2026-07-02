@@ -1,0 +1,89 @@
+# CI pipeline for the environment matrix generator.
+#
+# Jobs:
+#   test            - installs bats, runs the full test suite, then exercises
+#                     the generator against every fixture and prints delimited
+#                     results (MATRIX_* / *_ERROR lines) that the act-based
+#                     harness asserts exact values against.
+#   generate-matrix - runs the generator on the CI fixture and publishes the
+#                     resulting strategy JSON as a job output.
+#   use-matrix      - consumes that output as a real dynamic strategy.matrix,
+#                     proving the generated JSON is valid for GitHub Actions.
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FIXTURES: test/fixtures
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install test dependencies (bats, actionlint)
+        run: |
+          npm install -g bats
+          curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash \
+            | bash -s -- 1.7.7 /usr/local/bin
+          bats --version
+          actionlint --version
+          jq --version
+
+      - name: Run bats test suite
+        run: bats test/
+
+      - name: Generate matrices from fixtures (exact-value verification)
+        run: |
+          # Positive cases: emit normalized JSON on single delimited lines so
+          # the act harness can assert exact expected values.
+          echo "MATRIX_BASIC=$(./matrix_generator.sh "$FIXTURES/basic.json" | jq -c -S .)"
+          echo "MATRIX_FULL=$(./matrix_generator.sh "$FIXTURES/full.json" | jq -c -S .)"
+          echo "MATRIX_CI=$(./matrix_generator.sh "$FIXTURES/ci.json" | jq -c -S .)"
+
+          # Negative cases: the generator must fail with the exact message.
+          if err=$(./matrix_generator.sh "$FIXTURES/too_big.json" 2>&1); then
+            echo "TOO_BIG_UNEXPECTEDLY_SUCCEEDED"; exit 1
+          else
+            echo "TOO_BIG_ERROR=$err"
+          fi
+          if err=$(./matrix_generator.sh "$FIXTURES/invalid.json" 2>&1); then
+            echo "INVALID_UNEXPECTEDLY_SUCCEEDED"; exit 1
+          else
+            echo "INVALID_ERROR=$err"
+          fi
+
+  generate-matrix:
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      strategy: ${{ steps.gen.outputs.strategy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate CI strategy
+        id: gen
+        run: |
+          strategy=$(./matrix_generator.sh "$FIXTURES/ci.json")
+          echo "Generated strategy: $strategy"
+          echo "strategy=$strategy" >> "$GITHUB_OUTPUT"
+
+  use-matrix:
+    runs-on: ${{ matrix.os }}
+    needs: generate-matrix
+    strategy:
+      fail-fast: ${{ fromJSON(needs.generate-matrix.outputs.strategy)['fail-fast'] }}
+      max-parallel: ${{ fromJSON(needs.generate-matrix.outputs.strategy)['max-parallel'] }}
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.strategy).matrix }}
+    steps:
+      - name: Report matrix leg
+        run: echo "MATRIX_LEG os=${{ matrix.os }} version=${{ matrix.version }}"

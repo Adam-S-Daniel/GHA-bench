@@ -1,0 +1,73 @@
+# CI pipeline for the dependency license checker.
+#
+# The license-check job runs the full bun test suite, then executes the
+# checker CLI. Input files are resolved from an optional `ci-input/`
+# directory so a caller (or the act-based test harness) can drop in a
+# per-case manifest/config/license-database; when absent, the committed
+# fixtures are used as sensible defaults.
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly compliance sweep, Mondays 06:00 UTC.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  # Keep CLI/test output deterministic for log assertions.
+  CI: "true"
+  FORCE_COLOR: "0"
+
+jobs:
+  license-check:
+    name: License compliance check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.11"
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit and workflow-structure tests
+        run: bun test
+
+      - name: Generate license compliance report
+        run: |
+          # Prefer per-case input dropped into ci-input/ by the caller;
+          # fall back to the committed fixtures.
+          if [ -f ci-input/package.json ]; then
+            manifest=ci-input/package.json
+          elif [ -f ci-input/requirements.txt ]; then
+            manifest=ci-input/requirements.txt
+          else
+            manifest=tests/fixtures/npm/package.json
+          fi
+          config=ci-input/license-config.json
+          [ -f "$config" ] || config=tests/fixtures/license-config.json
+          licenses=ci-input/licenses.json
+          [ -f "$licenses" ] || licenses=tests/fixtures/licenses.json
+
+          echo "Checking manifest: $manifest"
+          bun run src/cli.ts --manifest "$manifest" --config "$config" --licenses "$licenses" | tee license-report.txt
+
+      - name: Show report summary
+        run: grep '^Summary:' license-report.txt
+
+  summary:
+    name: Pipeline summary
+    runs-on: ubuntu-latest
+    needs: license-check
+    steps:
+      - name: Confirm completion
+        run: echo "License check pipeline completed"

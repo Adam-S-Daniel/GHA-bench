@@ -1,0 +1,106 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Nightly check that matrix generation still behaves as expected.
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+
+env:
+  MATRIX_SCRIPT: matrix-generator.sh
+
+jobs:
+  # Generates the canonical matrix once (single job, not a job-matrix) so its
+  # output can be consumed by a downstream job via fromJson().
+  generate:
+    name: Generate canonical matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate matrix JSON
+        id: generate
+        run: |
+          set -euo pipefail
+          chmod +x "${MATRIX_SCRIPT}"
+          result=$(./"${MATRIX_SCRIPT}" fixtures/basic.json)
+          echo "matrix=${result}" >> "$GITHUB_OUTPUT"
+
+  # Consumes the generated matrix in a real strategy.matrix, demonstrating
+  # the output is directly usable by GitHub Actions.
+  build:
+    name: Build (${{ matrix.os }} / ${{ matrix.version }})
+    needs: generate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: ${{ fromJson(needs.generate.outputs.matrix)['fail-fast'] }}
+      matrix: ${{ fromJson(needs.generate.outputs.matrix).matrix }}
+    steps:
+      - name: Show matrix entry
+        run: echo "Would build on ${{ matrix.os }} with version ${{ matrix.version }}"
+
+  # Runs the generator once per fixture (as a job matrix) so a single
+  # workflow execution exercises every "golden path" test case.
+  generate-matrix:
+    name: Generate matrix (${{ matrix.fixture }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture:
+          - basic
+          - exclude_flags_include
+          - minimal_defaults
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify jq is available
+        run: jq --version
+
+      - name: Generate matrix JSON
+        id: generate
+        run: |
+          set -euo pipefail
+          chmod +x "${MATRIX_SCRIPT}"
+          result=$(./"${MATRIX_SCRIPT}" "fixtures/${{ matrix.fixture }}.json")
+          echo "matrix=${result}" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Matrix for ${{ matrix.fixture }}"
+            echo '```json'
+            echo "${result}" | jq '.'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Print generated matrix
+        run: echo '${{ steps.generate.outputs.matrix }}' | jq '.'
+
+  # Confirms the script rejects configs whose generated matrix would
+  # exceed the configured max-size, without failing the overall workflow.
+  validate-size-limit:
+    name: Validate max-size enforcement
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Expect rejection of an oversized matrix
+        run: |
+          set -euo pipefail
+          chmod +x "${MATRIX_SCRIPT}"
+          if ./"${MATRIX_SCRIPT}" fixtures/too_big.json > output.log 2>&1; then
+            echo "ERROR: expected matrix-generator.sh to fail for an oversized matrix"
+            cat output.log
+            exit 1
+          fi
+          echo "Correctly rejected oversized matrix:"
+          cat output.log
+          grep -q "exceeds max-size" output.log

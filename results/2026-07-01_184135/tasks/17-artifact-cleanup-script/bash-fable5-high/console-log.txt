@@ -1,0 +1,307 @@
+[Assistant] I'll build this with bats-driven TDD, then wire it into a GitHub Actions workflow validated with actionlint and run through `act`. First, let me check the environment and available tooling.
+[Tool: Bash] bats --version; shellcheck --version | head -2; actionlint --version | head -1; act --version; docker images --format '{{.Repository}}:{{.Tag}}' | head -20; cat /home/passp/repos/GHA-bench-fable5/.actrc 2>/dev/null; ls -la
+[Result] Bats 1.13.0
+ShellCheck - shell script analysis tool
+version: 0.10.0
+1.7.12
+act version 0.2.87
+ghcr.io/catthehacker/ubuntu:pwsh-latest
+act-ubuntu-pwsh:latest
+civic-terraform-mcp:latest
+ghcr.io/catthehacker/ubuntu:act-latest
+catthehacker/ubuntu:act-latest
+hashicorp/terraform-mcp-server:0.5.2
+ubuntu:latest
+alpine:latest
+ubuntu:22.04
+catthehacker/ubuntu:act-22.04
+mcr.microsoft.com/playwright:v1.59.1-noble
+hello-world:latest
+catthehacker/ubuntu:full-latest
+ghcr.io/catthehacker/ubuntu:full-latest
+hashicorp/terraform-mcp-server:0.4.0
+mcr.microsoft.com/powershell:lts-ubuntu-22.04
+mcr.microsoft.com/powershell:7.4-ubuntu-22.04
+mcr.microsoft.com/powershell:latest
+node:16-bullseye-slim
+total 44
+drwxr-xr-x 4 passp passp  4096 Jul  2 04:31 .
+drwxr-xr-x 9 passp passp  4096 Jul  2 04:31 ..
+-rw-r--r-- 1 passp passp    40 Jul  2 04:31 .actrc
+drwxr-xr-x 2 passp passp  4096 Jul  2 04:31 .claude
+drwxr-xr-x 6 passp passp  4096 Jul  2 04:31 .git
+-rw-r--r-- 1 passp passp 21843 Jul  1 16:21 benchmark-instructi
+[Tool: Bash] cat .actrc; echo ---; ls .claude/ 2>/dev/null; cat .claude/* 2>/dev/null | head -30
+[Result] -P ubuntu-latest=act-ubuntu-pwsh:latest
+---
+settings.json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /home/passp/repos/GHA-bench-fable5/hooks/syntax-check.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats", "content": "#!/usr/bin/env bats\n#\n# Unit tests
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/artifact_cleanup.bats 2>&1 | tail -15
+[Result] #   `[ "$status" -eq 2 ]' failed
+not ok 3 exits 2 on unknown option
+# (in test file test/artifact_cleanup.bats, line 34)
+#   `[ "$status" -eq 2 ]' failed
+
+The following warnings were encountered during tests:
+BW01: `run`'s command `/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/../artifact-cleanup.sh` exited with code 127, indicating 'Command not found'. Use run's return code checks, e.g. `run -127`, to fix this message.
+      (from function `run' in file /home/passp/.npm-global/lib/node_modules/bats/lib/bats-core/test_functions.bash, line 420,
+       in test file test/artifact_cleanup.bats, line 21)
+BW01: `run`'s command `/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/../artifact-cleanup.sh --input /nonexistent/artifacts.tsv` exited with code 127, indicating 'Command not found'. Use run's return code checks, e.g. `run -127`, to fix this message.
+      (fr
+[Assistant] RED confirmed — all 3 tests fail because the script doesn't exist. **Cycle 1 (GREEN)**: minimal script with CLI parsing and validation.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "content": "#!/usr/bin/env bash\n#\n# artifact-cleanup.
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] chmod +x artifact-cleanup.sh && bats test/artifact_cleanup.bats 2>&1 | tail -6
+[Result] 1..3
+ok 1 exits 2 with usage error when --input is missing
+ok 2 exits 2 with clear message when input file does not exist
+ok 3 exits 2 on unknown option
+[Assistant] Cycle 1 green. **Cycle 2 (RED)**: the max-age retention policy plus input validation errors. Adding fixtures and tests first.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/age.tsv", "content": "# Mock artifact inventory: age-policy sce
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/age.tsv (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/malformed.tsv", "content": "1\tbuild-logs\t1000\t2026-05-01T00:
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/malformed.tsv (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats", "old_string": "@test \"exi
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/artifact_cleanup.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)' 
+[Result] 1..7
+ok 1 exits 2 with usage error when --input is missing
+ok 2 exits 2 with clear message when input file does not exist
+ok 3 exits 2 on unknown option
+not ok 4 rejects malformed rows with a line-numbered error
+not ok 5 rejects a non-numeric --max-age-days value
+not ok 6 max-age policy deletes artifacts older than the limit
+not ok 7 no policies given means everything is retained
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "content": "#!/usr/bin/env bash\n#\n# artifact-cleanup.
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/artifact_cleanup.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)'
+[Result] 1..7
+ok 1 exits 2 with usage error when --input is missing
+ok 2 exits 2 with clear message when input file does not exist
+ok 3 exits 2 on unknown option
+ok 4 rejects malformed rows with a line-numbered error
+ok 5 rejects a non-numeric --max-age-days value
+ok 6 max-age policy deletes artifacts older than the limit
+ok 7 no policies given means everything is retained
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/keepn.tsv", "content": "# Mock artifact inventory: keep-latest-
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/keepn.tsv (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats", "old_string": "@test \"no 
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/artifact_cleanup.bats 2>&1 | grep -E '^(not ok|1\.\.)'
+[Result] 1..9
+not ok 7 keep-latest keeps the N newest artifacts per workflow group
+not ok 8 rejects a non-numeric --keep-latest value
+[Assistant] **Cycle 3 (GREEN)**: implement the keep-latest-N policy.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "MAX_AGE_DAYS=\"\" 
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "    --max-age-days
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "if [ -n \"$MAX_AGE
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "# ----------------
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/artifact_cleanup.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)'
+[Result] 1..9
+ok 1 exits 2 with usage error when --input is missing
+ok 2 exits 2 with clear message when input file does not exist
+ok 3 exits 2 on unknown option
+ok 4 rejects malformed rows with a line-numbered error
+ok 5 rejects a non-numeric --max-age-days value
+ok 6 max-age policy deletes artifacts older than the limit
+ok 7 keep-latest keeps the N newest artifacts per workflow group
+ok 8 rejects a non-numeric --keep-latest value
+ok 9 no policies given means everything is retained
+[Assistant] **Cycle 4 (RED)**: max-total-size budget, pruning oldest-first after the other policies.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/size.tsv", "content": "# Mock artifact inventory: max-total-siz
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/size.tsv (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats", "old_string": "@test \"no 
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/artifact_cleanup.bats 2>&1 | grep -E '^(not ok|1\.\.)'
+[Result] 1..12
+not ok 9 max-total-size evicts oldest artifacts until under the budget
+not ok 10 max-total-size does nothing when already under budget
+not ok 11 rejects a non-numeric --max-total-size value
+[Assistant] **Cycle 4 (GREEN)**: implement the size-budget policy.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "MAX_AGE_DAYS=\"\" 
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "    --keep-latest)
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "if [ -n \"$KEEP_LA
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "# ----------------
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/artifact_cleanup.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)'
+[Result] 1..12
+ok 1 exits 2 with usage error when --input is missing
+ok 2 exits 2 with clear message when input file does not exist
+ok 3 exits 2 on unknown option
+ok 4 rejects malformed rows with a line-numbered error
+ok 5 rejects a non-numeric --max-age-days value
+ok 6 max-age policy deletes artifacts older than the limit
+ok 7 keep-latest keeps the N newest artifacts per workflow group
+ok 8 rejects a non-numeric --keep-latest value
+ok 9 max-total-size evicts oldest artifacts until under the budget
+ok 10 max-total-size does nothing when already under budget
+ok 11 rejects a non-numeric --max-total-size value
+ok 12 no policies given means everything is retained
+[Assistant] All green. **Cycle 5 (RED)**: the summary line, dry-run vs apply behavior (mock deletion log), and a combined-policy scenario.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/combined.tsv", "content": "# Mock artifact inventory: all three
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/combined.tsv (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/empty.tsv", "content": "# Empty inventory \u2014 only comments 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/fixtures/empty.tsv (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats", "old_string": "@test \"no 
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/artifact_cleanup.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/artifact_cleanup.bats 2>&1 | grep -E '^(not ok|1\.\.)'
+[Result] 1..17
+not ok 13 summary reports retained/deleted counts and reclaimed bytes
+not ok 14 all three policies compose: age, then keep-latest, then size budget
+not ok 15 empty inventory yields an all-zero summary
+not ok 16 dry-run mode announces itself and performs no deletions
+not ok 17 apply mode records deleted artifact ids in the deletion log
+[Assistant] **Cycle 5 (GREEN)**: implement the summary and the mock deletion (apply vs dry-run).
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "    --dry-run)    
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "MAX_TOTAL_SIZE=\"\
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh", "old_string": "mode=\"apply\"\n[ 
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/artifact-cleanup.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/artifact_cleanup.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)'
+[Result] 1..17
+ok 1 exits 2 with usage error when --input is missing
+ok 2 exits 2 with clear message when input file does not exist
+ok 3 exits 2 on unknown option
+ok 4 rejects malformed rows with a line-numbered error
+ok 5 rejects a non-numeric --max-age-days value
+ok 6 max-age policy deletes artifacts older than the limit
+ok 7 keep-latest keeps the N newest artifacts per workflow group
+ok 8 rejects a non-numeric --keep-latest value
+ok 9 max-total-size evicts oldest artifacts until under the budget
+ok 10 max-total-size does nothing when already under budget
+ok 11 rejects a non-numeric --max-total-size value
+ok 12 no policies given means everything is retained
+ok 13 summary reports retained/deleted counts and reclaimed bytes
+ok 14 all three policies compose: age, then keep-latest, then size budget
+ok 15 empty inventory yields an all-zero summary
+ok 16 dry-run mode announces itself and performs no deletions
+ok 17 apply mode records deleted artifact ids in the deletion log
+[Assistant] All 17 tests green. **Refactor step**: validate with `shellcheck` and `bash -n`, and tidy any duplication.
+[Tool: Bash] bash -n artifact-cleanup.sh && shellcheck artifact-cleanup.sh && echo SHELLCHECK-OK
+[Result] SHELLCHECK-OK
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/workflow.bats", "content": "#!/usr/bin/env bats\n#\n# Workflow structure
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/test/workflow.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/workflow.bats 2>&1 | grep -cE '^not ok' 
+[Result] 7
+[Assistant] All 7 red (workflow missing). Now writing the workflow (GREEN).
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/.github/workflows/artifact-cleanup-script.yml", "content": "# CI pipeline for
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/.github/workflows/artifact-cleanup-script.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/artifact-cleanup-script.yml && echo ACTIONLINT-OK; bats test/workflow.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)'
+[Result] ACTIONLINT-OK
+1..7
+ok 1 workflow file exists
+ok 2 actionlint passes with exit code 0
+ok 3 workflow declares the expected triggers
+ok 4 workflow defines lint and test jobs with a dependency between them
+ok 5 workflow restricts permissions to contents: read
+ok 6 workflow uses actions/checkout@v4
+ok 7 every file path the workflow references exists in the repo
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/run-act-tests.sh", "content": "#!/usr/bin/env bash\n#\n# run-act-tests.sh \u2
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-high/run-act-tests.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] chmod +x run-act-tests.sh && bash -n run-act-tests.sh && shellcheck run-act-tests.sh && echo HARNESS-LINT-OK
+[Result] HARNESS-LINT-OK
+[Assistant] Before spending an act run, let me verify my expected values locally so the single run counts.
+[Tool: Bash] NOW=2026-07-02T00:00:00Z
+./artifact-cleanup.sh --input test/fixtures/keepn.tsv --keep-latest 2 --now $NOW --dry-run | grep SUMMARY
+./artifact-cleanup.sh --input test/fixtures/size.tsv --max-total-size 6000 --now $NOW --dry-run | grep SUMMARY
+log=$(mktemp); ./artifact-cleanup.sh --input test/fixtures/combined.tsv --max-age-days 60 --keep-latest 1 --max-total-size 5000 --now $NOW --deleted-log "$log" | grep -E 'SUMMARY|Deleted'; cat "$log"; rm -f "$log"
+[Result] SUMMARY: retained=3 deleted=1 reclaimed_bytes=100 retained_bytes=300
+SUMMARY: retained=2 deleted=1 reclaimed_bytes=4000 retained_bytes=5000
+SUMMARY: retained=2 deleted=3 reclaimed_bytes=6000 retained_bytes=4000
+Deleted 3 artifact(s)
+1	ci-logs-old
+2	ci-logs-new
+4	ci-bin-old
+[Assistant] All expected values confirmed locally. Now running the full pipeline through `act` (run 1 of max 3):
+[Tool: Bash] ./run-act-tests.sh
+[Result] Running act push (this takes a minute)...
+ok: act exited 0
+ok: both jobs report 'Job succeeded'
+ok: all 29 exact-value assertions passed
+PASS: act pipeline verified; full log in act-result.txt
+[Tool: Bash] ls -la act-result.txt && grep -cE 'Job succeeded' act-result.txt && grep -E '1\.\.17|CASE:|Success - Main (Run unit|Case)' act-result.txt | head -20
+[Result] -rw-r--r-- 1 passp passp 10669 Jul  2 04:42 act-result.txt
+2
+[artifact-cleanup-script/test]   | 1..17
+[artifact-cleanup-script/test]   ✅  Success - Main Run unit test suite (bats) [2.31430711s]
+[artifact-cleanup-script/test]   | === CASE:max-age ===
+[artifact-cleanup-script/test]   | === END CASE:max-age ===
+[artifact-cleanup-script/test]   ✅  Success - Main Case 1: max-age policy (dry-run) [386.479985ms]
+[artifact-cleanup-script/test]   | === CASE:keep-latest ===
+[artifact-cleanup-script/test]   | === END CASE:keep-latest ===
+[artifact-cleanup-script/test]   ✅  Success - Main Case 2: keep-latest per workflow (dry-run) [413.741933ms]
+[artifact-cleanup-script/test]   | === CASE:size-budget ===
+[artifact-cleanup-script/test]   | === END CASE:size-budget ===
+[artifact-cleanup-script/test]   ✅  Success - Main Case 3: max-total-size budget (dry-run) [438.816884ms]
+[artifact-cleanup-script/test]   | === CASE:combined ===
+[artifact-cleanup-script/test]   | === END CASE:combined ===
+[artifact-
+[Tool: Bash] bash -n artifact-cleanup.sh && bash -n run-act-tests.sh && shellcheck artifact-cleanup.sh run-act-tests.sh && actionlint .github/workflows/artifact-cleanup-script.yml && echo LINT-ALL-OK; bats test/ 2>&1 | tail -3; ls -R --ignore=.git
+[Result] LINT-ALL-OK
+ok 22 workflow restricts permissions to contents: read
+ok 23 workflow uses actions/checkout@v4
+ok 24 every file path the workflow references exists in the repo
+.:
+act-result.txt
+artifact-cleanup.sh
+benchmark-instructions-v4.md
+run-act-tests.sh
+test
+
+./test:
+artifact_cleanup.bats
+fixtures
+workflow.bats
+
+./test/fixtures:
+age.tsv
+combined.tsv
+empty.tsv
+keepn.tsv
+malformed.tsv
+size.tsv
+[Tool: Bash] bats test/ 2>&1 | grep -cE '^ok'; bats test/ 2>&1 | grep -cE '^not ok' || true
+[Result] 24
+0
+[Assistant] Done — the full pipeline is green on the first `act` run. Here's what was built:
+
+## Result
+
+**All 24 bats tests pass** (17 unit + 7 workflow-structure), `shellcheck`, `bash -n`, and `actionlint` are all clean, and the workflow ran successfully through `act` with **29 exact-value assertions verified** against the pipeline output. `act-result.txt` is saved in the working directory (both jobs show "Job succeeded").
+
+## What was created
+
+- **`artifact-cleanup.sh`** — reads a mock artifact inventory (TSV: id, name, size, ISO-8601 creation date, workflow run ID) and applies three retention policies in order: `--max-age-days` deletes anything older than the limit, `--keep-latest N` keeps only the N newest artifacts per workflow group, and `--max-total-size` then evicts the oldest survivors until the retained total fits the budget. It prints a `DELETE`/`KEEP` plan with a per-artifact reason, a machine-parseable `SUMMARY: retained=… deleted=… reclaimed_bytes=… retained_bytes=…` line, and supports `--dry-run` (no deletions) vs apply mode, where "deletion" writes to a `--deleted-log` file — the seam where a real GitHub API call would go. A `--now` flag injects the clock for deterministic tests, and bad input (missing file, malformed rows, non-numeric values) produces line-numbered errors with exit code 2.
+
+- **`test/artifact_cleanup.bats`** — 17 tests written strictly red/green: five cycles (CLI contract → max-age → keep-latest → size budget → summary/dry-run/apply), each demonstrated failing before the implementation made it pass. Fixtures live in `test/fixtures/`.
+
+- **`.github/workflows/artifact-cleanup-script.yml`** — triggers on push, pull_request, nightly schedule, and workflow_dispatch; `permissions: contents: read`; a `lint` job (bash -n + shellcheck) gating a `test` job via `needs`, which runs the full bats suite plus four delimited scenario cases with a pinned clock so output is byte-exact.
+
+- **`test/workflow.bats`** — structure tests: actionlint exits 0, expected triggers/jobs/dependency exist, and every path the workflow references exists on disk.
+
+- **`run-act-tests.sh`** — stages a temp git repo with the project and fixtures, runs `act push --rm`, appends the delimited log to `act-result.txt`, and asserts act exit 0, both jobs succeeded, the in-pipeline bats suite reported `1..17` with no failures, and exact expected values per case (e.g. the combined scenario must show precisely `retained=2 deleted=3 reclaimed_bytes=6000` and deletion-log entries `1 ci-logs-old`, `2 ci-logs-new`, `4 ci-bin-old`). I bundled all four cases into one act invocation since runs were budgeted at three; only one was needed.

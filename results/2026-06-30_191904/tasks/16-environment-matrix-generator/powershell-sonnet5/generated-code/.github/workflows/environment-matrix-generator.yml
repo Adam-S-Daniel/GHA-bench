@@ -1,0 +1,114 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      config-path:
+        description: 'Path to a matrix config JSON file to generate'
+        required: false
+        default: fixtures/basic.config.json
+  schedule:
+    # Weekly sanity check that the generator still runs cleanly.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  FIXTURES_DIR: fixtures
+
+jobs:
+  validate:
+    name: Validate environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify PowerShell and Pester are available
+        shell: pwsh
+        run: |
+          Write-Output "PowerShell version: $($PSVersionTable.PSVersion)"
+          $pester = Get-Module -ListAvailable -Name Pester | Sort-Object Version -Descending | Select-Object -First 1
+          if (-not $pester) {
+            throw "Pester module is not installed."
+          }
+          Write-Output "Pester version: $($pester.Version)"
+
+      - name: Import matrix generator module
+        shell: pwsh
+        run: |
+          Import-Module ./EnvironmentMatrixGenerator.psm1 -Force
+          $cmds = Get-Command -Module EnvironmentMatrixGenerator | Select-Object -ExpandProperty Name
+          Write-Output "Exported commands: $($cmds -join ', ')"
+          if ($cmds -notcontains 'New-EnvironmentMatrix') {
+            throw "Expected function 'New-EnvironmentMatrix' was not exported by the module."
+          }
+
+  generate-matrix:
+    name: Generate build matrix
+    needs: validate
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.full.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate basic matrix (cartesian product only)
+        shell: pwsh
+        run: |
+          $json = ./Generate-Matrix.ps1 -ConfigPath "$env:FIXTURES_DIR/basic.config.json" -Compress
+          Write-Output "MATRIX_JSON_BASIC:$json"
+
+      - name: Generate full matrix (include, exclude, fail-fast, max-parallel)
+        id: full
+        shell: pwsh
+        run: |
+          $json = ./Generate-Matrix.ps1 -ConfigPath "$env:FIXTURES_DIR/full.config.json" -Compress
+          Write-Output "MATRIX_JSON_FULL:$json"
+          "matrix=$json" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Reject matrices exceeding max-size
+        shell: pwsh
+        run: |
+          $output = & pwsh -NoProfile -File ./Generate-Matrix.ps1 -ConfigPath "$env:FIXTURES_DIR/max-size-exceeded.config.json" -Compress 2>&1
+          $exitCode = $LASTEXITCODE
+          Write-Output "MAX_SIZE_EXIT_CODE:$exitCode"
+          Write-Output "MAX_SIZE_OUTPUT:$output"
+          if ($exitCode -eq 0) {
+            throw "Expected the oversized matrix to be rejected, but Generate-Matrix.ps1 exited 0."
+          }
+          if ($output -notmatch 'exceeds the configured maximum') {
+            throw "Expected a max-size error message, got: $output"
+          }
+          Write-Output "MAX_SIZE_CHECK:PASSED"
+          # The nested pwsh call's non-zero $LASTEXITCODE would otherwise
+          # leak through as this step's own exit code even though the
+          # expected-failure check above passed - reset it explicitly.
+          $global:LASTEXITCODE = 0
+
+      - name: Generate matrix for manual dispatch input
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          $configPath = "${{ inputs.config-path }}"
+          $json = ./Generate-Matrix.ps1 -ConfigPath $configPath -Compress
+          Write-Output "MATRIX_JSON_CUSTOM:$json"
+
+      - name: Write job summary
+        shell: pwsh
+        run: |
+          $fence = '`' * 3
+          $lines = @(
+            '### Generated matrix'
+            ''
+            "$fence json"
+            '${{ steps.full.outputs.matrix }}'
+            $fence
+          )
+          $lines -join "`n" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

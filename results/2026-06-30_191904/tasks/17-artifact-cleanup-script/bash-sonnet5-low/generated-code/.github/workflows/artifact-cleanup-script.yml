@@ -1,0 +1,97 @@
+name: Artifact Cleanup Script
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: read
+
+env:
+  FIXTURES_DIR: test/fixtures
+
+jobs:
+  test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tooling (bats, shellcheck, jq)
+        run: |
+          set -e
+          if ! command -v bats >/dev/null 2>&1 || ! command -v shellcheck >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y bats shellcheck jq
+          fi
+          command -v bats
+          command -v shellcheck
+          command -v jq
+
+      - name: Shellcheck
+        run: shellcheck scripts/artifact-cleanup.sh
+
+      - name: bash -n syntax check
+        run: bash -n scripts/artifact-cleanup.sh
+
+      - name: Run bats test suite
+        run: bats test/artifact_cleanup.bats
+
+      # Note: actionlint itself is not installed in this container (it is a
+      # host-side/offline linting tool, not a runtime dependency of the
+      # cleanup script). The workflow's structural checks that do not
+      # require actionlint still run here; the actionlint check itself is
+      # run separately by test/run-act-harness.sh on the host, which has
+      # actionlint pre-installed.
+      - name: Run workflow structure checks (excluding actionlint)
+        run: bats --filter-tags '!requires-actionlint' test/workflow_structure.bats
+
+  dry-run-scenarios:
+    name: Dry-run retention policy scenarios
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tooling (jq)
+        run: |
+          set -e
+          if ! command -v jq >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y jq
+          fi
+          command -v jq
+
+      - name: "SCENARIO: age-policy"
+        run: |
+          echo "=== SCENARIO: age-policy ==="
+          scripts/artifact-cleanup.sh --fixture "${FIXTURES_DIR}/age-policy.json" \
+            --max-age-days 30 --now "2024-03-01T00:00:00Z" --dry-run
+          echo "=== END SCENARIO: age-policy ==="
+
+      - name: "SCENARIO: size-policy"
+        run: |
+          echo "=== SCENARIO: size-policy ==="
+          scripts/artifact-cleanup.sh --fixture "${FIXTURES_DIR}/size-policy.json" \
+            --max-total-size-bytes 5000 --dry-run
+          echo "=== END SCENARIO: size-policy ==="
+
+      - name: "SCENARIO: keep-latest-n"
+        run: |
+          echo "=== SCENARIO: keep-latest-n ==="
+          scripts/artifact-cleanup.sh --fixture "${FIXTURES_DIR}/keep-latest.json" \
+            --keep-latest-n 1 --max-age-days 10 --now "2024-02-01T00:00:00Z" --dry-run
+          echo "=== END SCENARIO: keep-latest-n ==="
+
+      - name: "SCENARIO: combined"
+        run: |
+          echo "=== SCENARIO: combined ==="
+          scripts/artifact-cleanup.sh --fixture "${FIXTURES_DIR}/combined.json" \
+            --keep-latest-n 1 --max-age-days 20 --max-total-size-bytes 1000 \
+            --now "2024-03-01T00:00:00Z" --dry-run
+          echo "=== END SCENARIO: combined ==="

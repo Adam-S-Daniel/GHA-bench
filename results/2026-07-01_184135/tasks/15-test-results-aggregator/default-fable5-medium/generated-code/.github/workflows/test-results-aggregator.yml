@@ -1,0 +1,50 @@
+name: Test Results Aggregator
+
+# Runs the TDD unit suite, then aggregates the fixture matrix results and
+# publishes a markdown job summary. Triggers cover CI pushes/PRs plus a
+# nightly schedule and manual dispatch.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  unit-tests:
+    name: Unit tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: python3 -m pip install --quiet --break-system-packages pytest pyyaml || python3 -m pip install --quiet pytest pyyaml
+
+      - name: Run unit tests
+        run: python3 -m pytest tests/ -v
+
+  aggregate-results:
+    name: Aggregate matrix test results
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Aggregate fixture results and publish job summary
+        # aggregator.py appends the markdown to $GITHUB_STEP_SUMMARY itself
+        # and prints machine-readable TOTALS/FLAKY lines for CI assertions.
+        # RESULTS_DIR lets the act test harness point at per-case fixture
+        # data; it defaults to the checked-in fixtures/ directory.
+        run: python3 aggregator.py "${RESULTS_DIR:-fixtures}" --output summary.md
+
+      - name: Show markdown summary in the log
+        run: cat summary.md

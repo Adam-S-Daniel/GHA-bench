@@ -1,0 +1,63 @@
+# Semantic version bumper pipeline.
+#
+# On every push (or manual dispatch) it:
+#   1. runs the full bats unit/e2e suite for bump-version.sh
+#   2. runs bump-version.sh against the repo's fixture data (a version file
+#      plus a conventional-commit log) and prints the resulting version as
+#      "NEW_VERSION=X.Y.Z" so callers (and the act test harness) can assert
+#      on the exact value.
+name: semantic-version-bumper
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Directory holding the version file + commit log the pipeline bumps.
+  # Overridable so alternative fixture sets can be injected.
+  FIXTURE_DIR: fixture
+
+jobs:
+  version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: |
+          if ! command -v bats >/dev/null 2>&1; then
+            npm install -g bats
+          fi
+          bats --version
+
+      - name: Run bats test suite
+        run: bats tests/bump-version.bats
+
+      - name: Bump version from fixture commits
+        id: bump
+        run: |
+          # The fixture dir provides either a plain VERSION file or a
+          # package.json; pick whichever exists.
+          if [ -f "$FIXTURE_DIR/VERSION" ]; then
+            version_file="$FIXTURE_DIR/VERSION"
+          elif [ -f "$FIXTURE_DIR/package.json" ]; then
+            version_file="$FIXTURE_DIR/package.json"
+          else
+            echo "ERROR: no version file found in $FIXTURE_DIR" >&2
+            exit 1
+          fi
+          new_version="$(./bump-version.sh \
+            --version-file "$version_file" \
+            --commits-file "$FIXTURE_DIR/commits.txt" \
+            --changelog "$FIXTURE_DIR/CHANGELOG.md")"
+          echo "NEW_VERSION=$new_version"
+          echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
+
+      - name: Show generated changelog
+        run: |
+          echo "--- CHANGELOG (${{ steps.bump.outputs.new_version }}) ---"
+          cat "$FIXTURE_DIR/CHANGELOG.md"

@@ -1,0 +1,83 @@
+name: Artifact Cleanup Script
+
+# Runs on every push/PR (fast feedback for changes to the cleanup logic),
+# on a weekly schedule (the real-world use case: periodic artifact
+# housekeeping), and on-demand via workflow_dispatch for a manual run.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Preview deletions without removing anything'
+        required: false
+        type: boolean
+        default: true
+  schedule:
+    - cron: '0 3 * * 0'
+
+permissions:
+  contents: read
+
+env:
+  ARTIFACT_CLEANUP_LOG_LEVEL: info
+
+jobs:
+  unit-tests:
+    name: Unit tests (Pester)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pester (no-op if already present)
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object Version -GE '5.0.0')) {
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+          Get-Module -ListAvailable Pester | Select-Object -First 1 Name, Version
+
+      - name: Run ArtifactCleanup module unit tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./tests/ArtifactCleanup.Tests.ps1 -Output Detailed -PassThru
+          Write-Output "Unit tests: $($result.PassedCount) passed, $($result.FailedCount) failed, $($result.SkippedCount) skipped."
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) unit test(s) failed."
+          }
+
+  cleanup-simulation:
+    name: Retention policy scenarios
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write # a real run needs this to call the Artifacts delete API
+    env:
+      DEFAULT_MAX_AGE_DAYS: "30"
+      DEFAULT_MAX_TOTAL_SIZE_BYTES: "500000000"
+      DEFAULT_KEEP_LATEST_PER_WORKFLOW: "2"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show default retention policy configuration
+        shell: pwsh
+        run: |
+          Write-Output "Default retention policy (from environment):"
+          Write-Output "  MaxAgeDays=$env:DEFAULT_MAX_AGE_DAYS"
+          Write-Output "  MaxTotalSizeBytes=$env:DEFAULT_MAX_TOTAL_SIZE_BYTES"
+          Write-Output "  KeepLatestPerWorkflow=$env:DEFAULT_KEEP_LATEST_PER_WORKFLOW"
+
+      - name: 'Scenario: max age + keep-latest-N protection'
+        shell: pwsh
+        run: ./artifact-cleanup.ps1 -ConfigPath ./fixtures/scenario-age-and-keep-latest.json
+
+      - name: 'Scenario: max total size eviction'
+        shell: pwsh
+        run: ./artifact-cleanup.ps1 -ConfigPath ./fixtures/scenario-size-cap-eviction.json
+
+      - name: 'Scenario: dry-run mode'
+        shell: pwsh
+        run: ./artifact-cleanup.ps1 -ConfigPath ./fixtures/scenario-dry-run.json

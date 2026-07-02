@@ -1,0 +1,65 @@
+name: Artifact Cleanup Script
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 03:00 UTC to prune old CI artifacts.
+    - cron: "0 3 * * *"
+
+permissions:
+  contents: read
+
+env:
+  # Pinned so the deletion plan's byte totals are reproducible in CI logs
+  # regardless of the actual wall-clock date the workflow runs on.
+  NOW: "2030-06-01T00:00:00.000Z"
+  MAX_AGE_DAYS: "30"
+  MAX_TOTAL_SIZE_BYTES: "200000000"
+  KEEP_LATEST_PER_WORKFLOW: "1"
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test
+
+  cleanup-plan:
+    name: Generate artifact deletion plan (dry run)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: "Generate dry-run plan (case A: mixed old/fresh artifacts)"
+        run: bun run src/main.ts
+        env:
+          ARTIFACTS_FILE: "fixtures/mock-artifacts.json"
+
+      - name: "Generate dry-run plan (case B: nothing eligible for deletion)"
+        run: bun run src/main.ts
+        env:
+          ARTIFACTS_FILE: "fixtures/case-b-nothing-to-delete.json"

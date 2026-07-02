@@ -1,0 +1,54 @@
+# CI pipeline for the dependency license checker.
+#
+# Job 1 (test) runs the full pytest suite; job 2 (license-report) depends
+# on it and runs the checker against the manifest at test-data/manifest,
+# using the mocked license database so no network access is needed.
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'  # weekly compliance sweep, Mondays 06:00 UTC
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        run: python3 -m pip install --quiet pytest pyyaml || python3 -m pip install --quiet --break-system-packages pytest pyyaml
+
+      - name: Run pytest suite
+        run: python3 -m pytest tests/ -v
+
+  license-report:
+    name: License compliance report
+    runs-on: ubuntu-latest
+    needs: test
+    env:
+      MANIFEST_PATH: test-data/manifest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate compliance report
+        run: |
+          python3 license_checker.py \
+            --manifest "$MANIFEST_PATH" \
+            --config fixtures/config.json \
+            --licenses fixtures/mock_licenses.json | tee license-report.txt
+
+      - name: Show report summary
+        run: grep '^Summary:' license-report.txt

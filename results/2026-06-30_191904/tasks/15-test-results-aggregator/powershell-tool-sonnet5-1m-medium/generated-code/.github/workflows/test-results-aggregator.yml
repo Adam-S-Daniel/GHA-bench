@@ -1,0 +1,60 @@
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  RESULTS_DIR: fixtures
+  SUMMARY_PATH: aggregate-summary.md
+
+jobs:
+  test:
+    name: Run Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [version]'5.0.0' })) {
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./TestResultsAggregator.Tests.ps1 -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) test(s) failed"
+          }
+
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Aggregate fixture results and write job summary
+        shell: pwsh
+        run: |
+          . ./TestResultsAggregator.ps1
+          $summary = Invoke-TestResultsAggregation -InputDirectory $env:RESULTS_DIR -OutputPath $env:SUMMARY_PATH -Include 'junit-run1-ubuntu.xml', 'junit-run2-windows.xml', 'results-run3-macos.json'
+
+          Write-Host "Total: $($summary.Aggregate.TotalTests)"
+          Write-Host "Passed: $($summary.Aggregate.Passed)"
+          Write-Host "Failed: $($summary.Aggregate.Failed)"
+          Write-Host "Skipped: $($summary.Aggregate.Skipped)"
+          Write-Host "FlakyCount: $($summary.FlakyTests.Count)"
+
+          Get-Content -LiteralPath $env:SUMMARY_PATH -Raw | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

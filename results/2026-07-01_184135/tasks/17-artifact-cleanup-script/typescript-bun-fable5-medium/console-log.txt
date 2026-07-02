@@ -1,0 +1,532 @@
+[Assistant] I'll start by reviewing the benchmark instructions and current directory state.
+[Tool: Bash] ls -la /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium && cat /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/.actrc 2>/dev/null; bun --version; actionlint --version; act --version
+[Result] total 44
+drwxr-xr-x 4 passp passp  4096 Jul  1 22:39 .
+drwxr-xr-x 6 passp passp  4096 Jul  1 22:39 ..
+-rw-r--r-- 1 passp passp    40 Jul  1 22:39 .actrc
+drwxr-xr-x 2 passp passp  4096 Jul  1 22:39 .claude
+drwxr-xr-x 6 passp passp  4096 Jul  1 22:39 .git
+-rw-r--r-- 1 passp passp 21843 Jul  1 16:21 benchmark-instructions-v4.md
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+1.3.11
+1.7.12
+installed by downloading from release page
+built with go1.26.1 compiler for linux/amd64
+act version 0.2.87
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/benchmark-instructions-v4.md"}
+[Result] 1	# Benchmark Instructions v4 — GitHub Actions
+2	
+3	**Version**: v4
+4	**Date**: 2026-04-09
+5	**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+6	
+7	**Changes from v3**:
+8	- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+9	- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+10	- GHA workflow addendum expanded with `shell: pwsh` guidance for PowerShell mode
+11	- All other methodology, tasks, modes, and models are unchanged from v3
+12	
+13	## Methodology
+14	
+15	### Overview
+16	
+17	Each task is executed by a Claude Code agent under 4 different language constraints ("modes") and with 2 different models, yielding **8 runs per task**. A
+[Tool: Bash] docker run --rm act-ubuntu-pwsh:latest bash -lc 'which bun node; bun --version' 2>&1 | head -5
+[Result] /opt/acttoolcache/node/24.15.0/x64/bin/node
+bash: line 1: bun: command not found
+[Assistant] Bun isn't in the container, so the workflow will need an install step. Let me verify the container has network access to install it:
+[Tool: Bash] docker run --rm act-ubuntu-pwsh:latest bash -lc 'curl -sSf -m 10 -o /dev/null -w "%{http_code}" https://bun.sh/install && echo OK' 2>&1 | tail -2
+[Result] 200OK
+[Assistant] Network works, so the workflow can install Bun. Now I'll scaffold the project and start TDD. First cycle: a failing test for the max-age policy.
+[Tool: Bash] bun init -y 2>&1 | tail -2 && ls
+[Result] 5 packages installed [181.00ms]
+
+CLAUDE.md
+README.md
+benchmark-instructions-v4.md
+bun.lock
+index.ts
+node_modules
+package.json
+tsconfig.json
+[Tool: Bash] rm index.ts CLAUDE.md README.md && cat package.json tsconfig.json
+[Result] {
+  "name": "typescript-bun-fable5-medium",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
+{
+  "compilerOptions": {
+    // Environment setup & latest features
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "allowJs": true,
+
+    // Bundler mode
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+
+    // Best practices
+    "strict": true,
+    "skipLibCheck": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+
+    // Some stricter flags (disabled by default)
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noPropertyAccessFromIndexSignature": false
+  }
+}
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "content": "/**\n * Artifact cleanup core logic.
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/cleanup.test.ts", "content": "/**\n * Unit tests for the ar
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/cleanup.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cleanup.test.ts 2>&1 | tail -15
+[Result] 39 |     const bad = [art("bad", 1, "not-a-date", 1)];
+40 |     expect(() => partitionByMaxAge(bad, 30, NOW)).toThrow(
+                                                       ^
+error: expect(received).toThrow(expected)
+
+Expected substring: "artifact \"bad\" has invalid createdAt: \"not-a-date\""
+Received message: "not implemented"
+
+      at <anonymous> (/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/cleanup.test.ts:40:51)
+(fail) partitionByMaxAge > rejects artifacts with unparseable createdAt [0.12ms]
+
+ 0 pass
+ 3 fail
+ 2 expect() calls
+Ran 3 tests across 1 file. [17.00ms]
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "export func
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cleanup.test.ts 2>&1 | tail -4
+[Result]  3 pass
+ 0 fail
+ 4 expect() calls
+Ran 3 tests across 1 file. [17.00ms]
+[Assistant] Green. Cycle 2 — RED test for keep-latest-N per workflow, with a throwing stub:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "const MS_PE
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/cleanup.test.ts", "old_string": "impo
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/cleanup.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/cleanup.test.ts", "old_string": "  te
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/cleanup.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] cat >> tests/cleanup.test.ts <<'EOF'
+
+describe("partitionByKeepLatest", () => {
+  test("keeps only the newest N per workflow run ID", () => {
+    const artifacts: Artifact[] = [
+      art("a3", 1, "2026-06-24T00:00:00Z", 100), // 3rd newest in run 100 -> evicted
+      art("a1", 1, "2026-06-29T00:00:00Z", 100),
+      art("a2", 1, "2026-06-27T00:00:00Z", 100),
+      art("b1", 1, "2026-06-30T00:00:00Z", 200), // only one in run 200 -> kept
+    ];
+    const { evicted, kept } = partitionByKeepLatest(artifacts, 2);
+    expect(evicted.map((a) => a.name)).toEqual(["a3"]);
+    expect(kept.map((a) => a.name).sort()).toEqual(["a1", "a2", "b1"]);
+  });
+
+  test("rejects a non-positive-integer N with a meaningful error", () => {
+    expect(() => partitionByKeepLatest([], 0)).toThrow(
+      "keepLatestPerWorkflow must be a positive integer, got 0",
+    );
+  });
+});
+EOF
+bun test tests/cleanup.test.ts 2>&1 | tail -4
+[Result]  3 pass
+ 2 fail
+ 5 expect() calls
+Ran 5 tests across 1 file. [14.00ms]
+[Assistant] RED. Implementing keep-latest:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "export func
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cleanup.test.ts 2>&1 | tail -4
+[Result]  5 pass
+ 0 fail
+ 7 expect() calls
+Ran 5 tests across 1 file. [14.00ms]
+[Assistant] Cycle 3 — RED test for the max-total-size rule:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "const MS_PE
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 - <<'EOF'
+import re
+p='tests/cleanup.test.ts'
+s=open(p).read()
+s=s.replace("  partitionByKeepLatest,\n","  partitionByKeepLatest,\n  partitionByMaxTotalSize,\n")
+s+='''
+describe("partitionByMaxTotalSize", () => {
+  test("evicts oldest artifacts until total size fits the cap", () => {
+    const artifacts: Artifact[] = [
+      art("newest", 100, "2026-06-29T00:00:00Z", 1),
+      art("middle", 80, "2026-06-27T00:00:00Z", 1),
+      art("oldest", 70, "2026-06-24T00:00:00Z", 2),
+    ]; // total 250, cap 200 -> evict "oldest" (70), still 180 <= 200 done
+    const { overflow, kept } = partitionByMaxTotalSize(artifacts, 200);
+    expect(overflow.map((a) => a.name)).toEqual(["oldest"]);
+    expect(kept.map((a) => a.name).sort()).toEqual(["middle", "newest"]);
+  });
+
+  test("returns everything kept when already under the cap", () => {
+    const artifacts: Artifact[] = [art("only", 50, "2026-06-29T00:00:00Z", 1)];
+    const { overflow, kept } = partitionByMaxTotalSize(artifacts, 50);
+    expect(overflow).toEqual([]);
+    expect(kept.map((a) => a.name)).toEqual(["only"]);
+  });
+
+  test("rejects a negative size cap with a meaningful error", () => {
+    expect(() => partitionByMaxTotalSize([], -5)).toThrow(
+      "maxTotalSizeBytes must be a non-negative number, got -5",
+    );
+  });
+});
+'''
+open(p,'w').write(s)
+EOF
+bun test tests/cleanup.test.ts 2>&1 | tail -4
+[Result]  5 pass
+ 3 fail
+ 8 expect() calls
+Ran 8 tests across 1 file. [13.00ms]
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "export func
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cleanup.test.ts 2>&1 | tail -4
+[Result]  8 pass
+ 0 fail
+ 12 expect() calls
+Ran 8 tests across 1 file. [13.00ms]
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "const MS_PE
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 - <<'EOF'
+p='tests/cleanup.test.ts'
+s=open(p).read()
+s=s.replace("import {\n","import {\n  buildDeletionPlan,\n",1)
+s+='''
+describe("buildDeletionPlan", () => {
+  // This fixture mirrors fixtures/case1: three policies each claim one artifact.
+  const artifacts: Artifact[] = [
+    art("a-old", 52428800, "2026-05-15T00:00:00Z", 100), // 47d -> max-age
+    art("a-new1", 104857600, "2026-06-29T00:00:00Z", 100),
+    art("a-new2", 83886080, "2026-06-27T00:00:00Z", 100), // -> max-total-size
+    art("a-new3", 62914560, "2026-06-24T00:00:00Z", 100), // -> keep-latest
+    art("b-1", 73400320, "2026-06-30T00:00:00Z", 200),
+  ];
+
+  test("applies max-age, keep-latest, then max-total-size with reasons", () => {
+    const plan = buildDeletionPlan(
+      artifacts,
+      {
+        maxAgeDays: 30,
+        keepLatestPerWorkflow: 2,
+        maxTotalSizeBytes: 209715200, // 200 MiB
+        dryRun: true,
+      },
+      NOW,
+    );
+    const reasons = new Map(
+      plan.toDelete.map((d) => [d.artifact.name, d.reason]),
+    );
+    expect(reasons.get("a-old")).toBe("max-age");
+    expect(reasons.get("a-new3")).toBe("keep-latest");
+    expect(reasons.get("a-new2")).toBe("max-total-size");
+    expect(plan.retained.map((a) => a.name).sort()).toEqual(["a-new1", "b-1"]);
+    expect(plan.summary).toEqual({
+      deletedCount: 3,
+      retainedCount: 2,
+      spaceReclaimedBytes: 199229440,
+      dryRun: true,
+    });
+  });
+
+  test("an empty policy retains everything", () => {
+    const plan = buildDeletionPlan(artifacts, {}, NOW);
+    expect(plan.toDelete).toEqual([]);
+    expect(plan.summary).toEqual({
+      deletedCount: 0,
+      retainedCount: 5,
+      spaceReclaimedBytes: 0,
+      dryRun: false,
+    });
+  });
+
+  test("rejects artifacts with negative sizeBytes", () => {
+    const bad = [art("neg", -1, "2026-06-29T00:00:00Z", 1)];
+    expect(() => buildDeletionPlan(bad, {}, NOW)).toThrow(
+      'artifact "neg" has invalid sizeBytes: -1',
+    );
+  });
+
+  test("rejects duplicate artifact names", () => {
+    const dupes = [
+      art("dup", 1, "2026-06-29T00:00:00Z", 1),
+      art("dup", 2, "2026-06-30T00:00:00Z", 2),
+    ];
+    expect(() => buildDeletionPlan(dupes, {}, NOW)).toThrow(
+      'duplicate artifact name: "dup"',
+    );
+  });
+});
+'''
+open(p,'w').write(s)
+EOF
+bun test tests/cleanup.test.ts 2>&1 | tail -4
+[Result]  8 pass
+ 4 fail
+ 14 expect() calls
+Ran 12 tests across 1 file. [15.00ms]
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "export func
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cleanup.test.ts 2>&1 | tail -4
+[Result]  12 pass
+ 0 fail
+ 21 expect() calls
+Ran 12 tests across 1 file. [15.00ms]
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "const MS_PE
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 - <<'EOF'
+p='tests/cleanup.test.ts'
+s=open(p).read()
+s=s.replace("import {\n","import {\n  executePlan,\n  formatPlanReport,\n",1)
+s+='''
+describe("executePlan / formatPlanReport", () => {
+  const artifacts: Artifact[] = [
+    art("x1", 10485760, "2026-06-20T00:00:00Z", 300), // 11d -> deleted
+    art("x2", 20971520, "2026-06-29T00:00:00Z", 300), // 2d -> retained
+  ];
+
+  test("dry-run never calls the deleter", async () => {
+    const plan = buildDeletionPlan(artifacts, { maxAgeDays: 7, dryRun: true }, NOW);
+    const deleted: string[] = [];
+    const result = await executePlan(plan, async (a) => {
+      deleted.push(a.name);
+    });
+    expect(deleted).toEqual([]);
+    expect(result).toEqual([]);
+  });
+
+  test("real run calls the deleter once per planned deletion", async () => {
+    const plan = buildDeletionPlan(artifacts, { maxAgeDays: 7 }, NOW);
+    const deleted: string[] = [];
+    const result = await executePlan(plan, async (a) => {
+      deleted.push(a.name);
+    });
+    expect(deleted).toEqual(["x1"]);
+    expect(result).toEqual(["x1"]);
+  });
+
+  test("a failing deleter surfaces a meaningful error", async () => {
+    const plan = buildDeletionPlan(artifacts, { maxAgeDays: 7 }, NOW);
+    await expect(
+      executePlan(plan, async () => {
+        throw new Error("API rate limit");
+      }),
+    ).rejects.toThrow('failed to delete artifact "x1": API rate limit');
+  });
+
+  test("report contains stable DELETE/RETAIN/SUMMARY lines", () => {
+    const plan = buildDeletionPlan(artifacts, { maxAgeDays: 7, dryRun: true }, NOW);
+    const report = formatPlanReport(plan);
+    expect(report).toContain("MODE dry-run");
+    expect(report).toContain("DELETE x1 reason=max-age size=10485760");
+    expect(report).toContain("RETAIN x2 size=20971520");
+    expect(report).toContain(
+      "SUMMARY deleted=1 retained=1 reclaimed_bytes=10485760",
+    );
+  });
+});
+'''
+open(p,'w').write(s)
+EOF
+bun test tests/cleanup.test.ts 2>&1 | tail -4
+[Result]  12 pass
+ 4 fail
+ 22 expect() calls
+Ran 16 tests across 1 file. [16.00ms]
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "export asyn
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts", "old_string": "export func
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cleanup.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/cleanup.test.ts 2>&1 | tail -4
+[Result]  16 pass
+ 0 fail
+ 30 expect() calls
+Ran 16 tests across 1 file. [15.00ms]
+[Assistant] Cycle 6 — RED tests for the JSON config loaders that the CLI will use:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/config.ts", "content": "/**\n * Config loading: parse and val
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/config.ts (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/config.test.ts", "content": "/**\n * Tests for JSON config 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/config.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/config.test.ts 2>&1 | tail -4
+[Result]  0 pass
+ 8 fail
+ 5 expect() calls
+Ran 8 tests across 1 file. [33.00ms]
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/config.ts", "content": "/**\n * Config loading: parse and val
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/config.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -4
+[Result]  24 pass
+ 0 fail
+ 41 expect() calls
+Ran 24 tests across 2 files. [45.00ms]
+[Assistant] All 24 unit tests pass. Now the CLI entry point and fixtures:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cli.ts", "content": "/**\n * CLI entry point for the artifact
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/src/cli.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] mkdir -p fixtures && cat > fixtures/case1-artifacts.json <<'EOF'
+[
+  { "name": "a-old",  "sizeBytes": 52428800,  "createdAt": "2026-05-15T00:00:00Z", "workflowRunId": 100 },
+  { "name": "a-new1", "sizeBytes": 104857600, "createdAt": "2026-06-29T00:00:00Z", "workflowRunId": 100 },
+  { "name": "a-new2", "sizeBytes": 83886080,  "createdAt": "2026-06-27T00:00:00Z", "workflowRunId": 100 },
+  { "name": "a-new3", "sizeBytes": 62914560,  "createdAt": "2026-06-24T00:00:00Z", "workflowRunId": 100 },
+  { "name": "b-1",    "sizeBytes": 73400320,  "createdAt": "2026-06-30T00:00:00Z", "workflowRunId": 200 }
+]
+EOF
+cat > fixtures/case1-policy.json <<'EOF'
+{
+  "maxAgeDays": 30,
+  "keepLatestPerWorkflow": 2,
+  "maxTotalSizeBytes": 209715200,
+  "dryRun": true
+}
+EOF
+cat > fixtures/case2-artifacts.json <<'EOF'
+[
+  { "name": "x1", "sizeBytes": 10485760, "createdAt": "2026-06-20T00:00:00Z", "workflowRunId": 300 },
+  { "name": "x2", "sizeBytes": 20971520, "createdAt": "2026-06-29T00:00:00Z", "workflowRunId": 300 }
+]
+EOF
+cat > fixtures/case2-policy.json <<'EOF'
+{
+  "maxAgeDays": 7,
+  "dryRun": false
+}
+EOF
+cp fixtures/case1-artifacts.json fixtures/artifacts.json
+cp fixtures/case1-policy.json fixtures/policy.json
+bun run src/cli.ts --artifacts fixtures/case1-artifacts.json --policy fixtures/case1-policy.json --now 2026-07-01T00:00:00Z && echo --- && bun run src/cli.ts --artifacts fixtures/case2-artifacts.json --policy fixtures/case2-policy.json --now 2026-07-01T00:00:00Z
+[Result] MODE dry-run
+DELETE a-old reason=max-age size=52428800
+DELETE a-new3 reason=keep-latest size=62914560
+DELETE a-new2 reason=max-total-size size=83886080
+RETAIN a-new1 size=104857600
+RETAIN b-1 size=73400320
+SUMMARY deleted=3 retained=2 reclaimed_bytes=199229440
+---
+MODE execute
+DELETE x1 reason=max-age size=10485760
+RETAIN x2 size=20971520
+SUMMARY deleted=1 retained=1 reclaimed_bytes=10485760
+Deleting artifact: x1
+EXECUTED deletions=1
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/.github/workflows/artifact-cleanup-script.yml", "content": "# Art
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/.github/workflows/artifact-cleanup-script.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/artifact-cleanup-script.yml && echo ACTIONLINT_OK
+[Result] ACTIONLINT_OK
+[Assistant] actionlint passes first try. Now the workflow structure tests. Let me check if Bun has a built-in YAML parser:
+[Tool: Bash] bun -e 'console.log(typeof Bun.YAML?.parse)'
+[Result] function
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/workflow.test.ts", "content": "/**\n * Workflow structure t
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/workflow.test.ts (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test tests/workflow.test.ts 2>&1 | tail -4
+[Result]  7 pass
+ 0 fail
+ 21 expect() calls
+Ran 7 tests across 1 file. [574.00ms]
+[Assistant] Structure tests pass. Now the act harness — this runs each test case through the full workflow in Docker and writes `act-result.txt`:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/act.test.ts", "content": "/**\n * End-to-end pipeline tests
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/act.test.ts (file state is current in your context — no need to Read it back)
+[Assistant] Let me clean up that awkward git setup loop before running:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/act.test.ts", "old_string": "    for 
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/act.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bunx tsc --noEmit && echo TSC_OK
+[Result] TSC_OK
+[Tool: Bash] bun test 2>&1 | tail -25
+[Result] Expected: 0
+Received: 1
+
+      at <anonymous> (/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/act.test.ts:113:24)
+(fail) workflow via act > case1: dry-run plan with all three policies (exact values) [566.93ms]
+142 |       const { exitCode, output } = await runCaseThroughAct(
+143 |         "case2-execute",
+144 |         "fixtures/case2-artifacts.json",
+145 |         "fixtures/case2-policy.json",
+146 |       );
+147 |       expect(exitCode).toBe(0);
+                             ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/act.test.ts:147:24)
+(fail) workflow via act > case2: execute mode deletes expired artifact (exact values) [528.67ms]
+
+ 31 pass
+ 2 fail
+ 64 expect() calls
+Ran 33 tests across 4 files. [1249.00ms]
+[Assistant] The act invocations failed instantly (~500ms) — a setup issue, not a workflow failure. Checking the captured output:
+[Tool: Bash] head -20 act-result.txt
+[Result] ===================== CASE case1-dry-run (exit 1) =====================
+[artifact-cleanup-script/Unit tests] ⭐ Run Set up job
+[artifact-cleanup-script/Unit tests] 🚀  Start image=act-ubuntu-pwsh:latest
+[artifact-cleanup-script/Unit tests]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=true
+[artifact-cleanup-script/Unit tests] using DockerAuthConfig authentication for docker pull
+[artifact-cleanup-script/Unit tests] Error response from daemon: authentication required - incorrect username or password
+[artifact-cleanup-script/Unit tests]   ❌  Failure - Set up job
+[artifact-cleanup-script/Unit tests] 🏁  Job failed
+time="2026-07-01T22:51:41-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+Error: Error response from daemon: authentication required - incorrect username or password
+
+===================== CASE case2-execute (exit 1) =====================
+[artifact-cleanup-script/Unit tests] ⭐ Run
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/act.test.ts", "old_string": "      [\
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium/tests/act.test.ts has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bun test 2>&1 | tail -8
+[Result] bun test v1.3.11 (af24e281)
+
+ 33 pass
+ 0 fail
+ 84 expect() calls
+Ran 33 tests across 4 files. [81.20s]
+[Assistant] All 33 tests pass, including both act pipeline runs. Verifying the required artifact:
+[Tool: Bash] grep -E "^===|SUMMARY|Job succeeded|EXECUTED" act-result.txt | head -20 && echo "---" && wc -l act-result.txt && ls
+[Result] ===================== CASE case1-dry-run (exit 0) =====================
+[artifact-cleanup-script/Unit tests]   | (pass) executePlan / formatPlanReport > report contains stable DELETE/RETAIN/SUMMARY lines [0.90ms]
+[artifact-cleanup-script/Unit tests] 🏁  Job succeeded
+[artifact-cleanup-script/Artifact cleanup plan]   | SUMMARY deleted=3 retained=2 reclaimed_bytes=199229440
+SUMMARY deleted=3 retained=2 reclaimed_bytes=199229440
+[artifact-cleanup-script/Artifact cleanup plan] 🏁  Job succeeded
+===================== CASE case2-execute (exit 0) =====================
+[artifact-cleanup-script/Unit tests]   | (pass) executePlan / formatPlanReport > report contains stable DELETE/RETAIN/SUMMARY lines [0.34ms]
+[artifact-cleanup-script/Unit tests] 🏁  Job succeeded
+[artifact-cleanup-script/Artifact cleanup plan]   | SUMMARY deleted=1 retained=1 reclaimed_bytes=10485760
+[artifact-cleanup-script/Artifact cleanup plan]   | EXECUTED deletions=1
+SUMMARY deleted=1 retained=1 reclaimed_bytes=10485760
+EXECUT
+[Assistant] Done. The full solution is built with TDD, all 33 tests pass via `bun test`, actionlint is clean, and both test cases ran successfully through the GitHub Actions workflow via act (`act-result.txt` is written with exit codes 0 and all four jobs showing "Job succeeded").
+
+**What was built**
+
+- `src/cleanup.ts` — the core logic, developed in five red/green cycles as pure, clock-injected functions: `partitionByMaxAge` (max-age rule), `partitionByKeepLatest` (newest-N per workflow run ID), `partitionByMaxTotalSize` (evict oldest until under the size cap), `buildDeletionPlan` (applies the three rules in that order, tagging each deletion with its reason and producing a summary of deleted/retained counts and bytes reclaimed), plus `executePlan` (takes an injectable deleter and skips it entirely in dry-run mode) and `formatPlanReport` (stable `DELETE`/`RETAIN`/`SUMMARY` text lines).
+- `src/config.ts` — JSON loaders for the artifacts and policy files with field-level validation and precise error messages (missing file, malformed JSON, wrong types, duplicate names, invalid dates all produce named errors).
+- `src/cli.ts` — entry point: `bun run src/cli.ts --artifacts <file> --policy <file> [--now <ISO>]`. The `--now` flag pins the clock so CI output is deterministic; the deleter is a mock that logs `Deleting artifact: <name>` since the data is mock.
+- `fixtures/` — two designed-up-front cases: case 1 exercises all three policies at once in dry-run mode (each policy claims exactly one artifact: `a-old` by max-age, `a-new3` by keep-latest-2, `a-new2` by the 200 MiB size cap → 3 deleted, 2 retained, 199,229,440 bytes reclaimed), and case 2 is execute mode (1 deleted, 10,485,760 bytes).
+- `.github/workflows/artifact-cleanup-script.yml` — push/PR/schedule/dispatch triggers, `contents: read` permissions, a `test` job (installs Bun, runs the unit suite in-container) and a dependent `cleanup` job that runs the CLI against env-configured fixture paths and publishes the report to the job summary.
+
+**Testing** — 33 tests in four files: 24 unit tests for the logic and config loaders, 7 workflow-structure tests (YAML parse of triggers/jobs/steps, referenced paths exist, actionlint exits 0), and 2 act pipeline tests. The act harness builds a temp git repo per case with that case's fixtures installed as the workflow defaults, runs `act push --rm`, appends delimited output to `act-result.txt`, and asserts exit code 0, the exact plan lines and summary numbers above, exactly 2 "Job succeeded" per run, and that dry-run never triggers a deletion.
+
+One hiccup worth noting: the first act attempt failed instantly because act force-pulls the runner image by default and `act-ubuntu-pwsh:latest` only exists locally; adding `--pull=false` fixed it, and both cases then passed on the next (and only other) run.

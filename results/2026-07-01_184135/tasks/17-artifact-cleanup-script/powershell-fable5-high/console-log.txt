@@ -1,0 +1,241 @@
+[Assistant] I'll start by reviewing the project instructions and current directory state.
+[Tool: Bash] cat /home/passp/repos/GHA-bench-fable5/AGENTS.md 2>/dev/null; echo "---"; ls -la /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high; echo "---"; cat /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/.actrc 2>/dev/null; echo "---"; ls /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/.claude 2>/dev/null
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Tool: Bash] which pwsh actionlint act docker && pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString(); (Get-Module -ListAvailable Pester | Select-Object -First 1).Version.ToString()'
+[Result] /snap/bin/pwsh
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/usr/bin/docker
+7.6.3
+5.7.1
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1", "content": "<#\n.SYNOPSIS\n    Pester
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1 -Output Detailed" 2>&1 | tail -20
+[Result] [95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1'[0m
+[31;1mImport-Module: [0m/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1:17[0m
+[31;1m[0m[36;1mLine |[0m
+[31;1m[0m[36;1m[36;1m  17 | [0m     [36;1mImport-Module (Join-Path $PSScriptRoot '..' 'ArtifactCleanup.psm1[0m …[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m     | [31;1m     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m     | [31;1mThe specified module[0m
+[31;1m[0m[36;1m[36;1m[0m[36;1m[0m[36;1m[31;1m[31;1m[36;1m[31;1m[36;1m     | [31;1m'/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/..
+[Assistant] RED confirmed — the module doesn't exist. Now the minimum implementation to go green.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "content": "<#\n.SYNOPSIS\n    Artifact retentio
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1[0m[90m 1.22s (257ms|590ms)[0m
+[97mTests completed in 1.27s[0m
+[32mTests Passed: 2, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Green. Cycle 2: keep-latest-N per workflow protection — failing tests first.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1", "old_string": "
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -3
+[Result] [91m at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1:90[0m
+[97mTests completed in 1.46s[0m
+[97mTests Passed: 2, [0m[91mFailed: 2, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] RED (parameter doesn't exist). Implementing the protection set:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "old_string": "        # A
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1[0m[90m 4.78s (1.16s|2s)[0m
+[97mTests completed in 4.85s[0m
+[32mTests Passed: 4, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Green. Cycle 3: max-total-size policy and plan summary — failing tests first.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1", "old_string": "
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Fixing an arithmetic error in my summary test expectations (only one artifact exceeds the age limit):
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1", "old_string": "
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -3
+[Result] [91m at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1:139[0m
+[97mTests completed in 1.15s[0m
+[97mTests Passed: 4, [0m[91mFailed: 3, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] RED as expected. Implementing the size policy and summary:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "old_string": "        # T
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "old_string": "        els
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -3
+[Result] [91m at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1:121[0m
+[97mTests completed in 2.35s[0m
+[97mTests Passed: 5, [0m[91mFailed: 2, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1 -Output Detailed" 2>&1 | grep -A8 '\[-\]'
+[Result] [91m  [-] retains everything when no artifact exceeds the age limit[0m[90m 45ms (39ms|6ms)[0m
+[91m   PropertyNotFoundException: The property 'Sum' cannot be found on this object. Verify that the property exists.
+[91m   at Get-ArtifactRetentionPlan, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1:93
+[91m   at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1:59[0m
+[0m
+[92mDescribing Get-ArtifactRetentionPlan - keep-latest-N per workflow[0m
+[32m  [+] protects the N newest artifacts of each workflow run from the age policy[0m[90m 47ms (41ms|6ms)[0m
+[32m  [+] protects the top N (not just 1) when KeepLatestPerWorkflow is larger[0m[90m 19ms (16ms|3ms)[0m
+[0m
+--
+[91m  [-] never evicts protected artifacts even when the cap cannot be met[0m[90m 18ms (9ms|9ms)[0m
+[91m   Proper
+[Assistant] The failure: `Measure-Object` returns nothing on empty input, and `.Sum` on `$null` throws under StrictMode. Replacing with explicit accumulation:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "old_string": "    if ($Ma
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "old_string": "    $reclai
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -2
+[Result] [97mTests completed in 1.08s[0m
+[32mTests Passed: 7, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Green (7/7). Cycle 4: input validation errors and the dry-run/execute cleanup function with a mockable deleter — tests first.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1", "old_string": "
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -2
+[Result] [97mTests completed in 4.18s[0m
+[97mTests Passed: 7, [0m[91mFailed: 6, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] RED (6 new failures). Implementing validation and `Invoke-ArtifactCleanup`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "old_string": "Set-StrictM
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "old_string": "    $delete
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "old_string": "Export-Modu
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -2
+[Result] [97mTests completed in 1.38s[0m
+[32mTests Passed: 13, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1", "old_string": "
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/ArtifactCleanup.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -2
+[Result] [97mTests completed in 3.76s[0m
+[97mTests Passed: 13, [0m[91mFailed: 4, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/fixtures/case1.json", "content": "{\n  \"description\": \"Case 1: dry-r
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/fixtures/case1.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/fixtures/case2.json", "content": "{\n  \"description\": \"Case 2: execu
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/fixtures/case2.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/Invoke-ArtifactCleanup.ps1", "content": "<#\n.SYNOPSIS\n    CLI entry p
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/Invoke-ArtifactCleanup.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1", "old_string": "        if 
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/Invoke-ArtifactCleanup.ps1", "old_string": "# ---
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/ArtifactCleanup.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/Invoke-ArtifactCleanup.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1" 2>&1 | tail -2 && pwsh -NoProfile -File Invoke-ArtifactCleanup.ps1 -ConfigPath fixtures/case1.json
+[Result] [97mTests completed in 1.89s[0m
+[32mTests Passed: 17, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+=== Artifact Cleanup Plan ===
+Mode: DRY RUN
+DELETE app-build-ancient (run 100, 200 MB, exceeds max age of 30 days)
+DELETE test-logs-old (run 200, 90 MB, evicted to satisfy max total size of 419430400 bytes)
+DELETE app-build-prev (run 100, 120 MB, evicted to satisfy max total size of 419430400 bytes)
+RETAIN app-build (run 100, 150 MB)
+RETAIN test-logs (run 200, 180 MB)
+=== Summary ===
+Artifacts retained: 2
+Artifacts deleted: 3
+Space reclaimed: 410 MB
+Retained size: 330 MB
+[Tool: Bash] pwsh -NoProfile -Command "Get-Module -ListAvailable powershell-yaml, Yayaml | Select-Object Name, Version" ; python3 -c "import yaml; print('pyyaml ok')" 2>&1; docker images | grep -i act-ubuntu
+[Result] [32;1mName           [0m[32;1m Version[0m
+[32;1m----           [0m [32;1m-------[0m
+powershell-yaml 0.4.12
+
+pyyaml ok
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB   U
+[Assistant] `powershell-yaml` is available locally and the custom act image exists. Continuing TDD — cycle 6: workflow structure tests first (RED, since the workflow file doesn't exist yet):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/Workflow.Tests.ps1", "content": "<#\n.SYNOPSIS\n    Structure tes
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/Workflow.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path tests/Workflow.Tests.ps1" 2>&1 | tail -2
+[Result] [91mBeforeAll \ AfterAll failed: 1[0m
+[91m  - Workflow triggers[0m
+[Assistant] RED. Creating the workflow and default fixture:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/.github/workflows/artifact-cleanup-script.yml", "content": "# CI pipeli
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/.github/workflows/artifact-cleanup-script.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cp fixtures/case1.json fixtures/artifacts.json
+[Result] (Bash completed with no output)
+[Tool: Bash] actionlint .github/workflows/artifact-cleanup-script.yml && echo "ACTIONLINT OK" ; pwsh -NoProfile -Command "Invoke-Pester -Path tests/Workflow.Tests.ps1" 2>&1 | tail -2
+[Result] ACTIONLINT OK
+[97mTests completed in 2.36s[0m
+[32mTests Passed: 13, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] actionlint passes and all 13 workflow structure tests are green (30 tests total). Now the act test harness that runs every test case through the pipeline:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/Run-ActTests.ps1", "content": "<#\n.SYNOPSIS\n    End-to-end test
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/Run-ActTests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Before spending act runs, a quick local sanity check that case2's exact output lines match the harness expectations:
+[Tool: Bash] pwsh -NoProfile -File Invoke-ArtifactCleanup.ps1 -ConfigPath fixtures/case2.json
+[Result] === Artifact Cleanup Plan ===
+Mode: EXECUTE
+DELETE nightly-3 (run 500, 70 MB, exceeds max age of 7 days)
+DELETE nightly-4 (run 500, 80 MB, exceeds max age of 7 days)
+RETAIN nightly-1 (run 500, 50 MB)
+RETAIN nightly-2 (run 500, 60 MB)
+RETAIN release-bundle (run 600, 500 MB)
+Deleted artifact: nightly-3
+Deleted artifact: nightly-4
+=== Summary ===
+Artifacts retained: 3
+Artifacts deleted: 2
+Space reclaimed: 150 MB
+Retained size: 610 MB
+[Assistant] Output matches the harness expectations exactly. Running the act harness now (2 act runs, one per test case — this takes a few minutes):
+[Tool: Bash] pwsh -NoProfile -File tests/Run-ActTests.ps1 2>&1 | tail -50
+[Result] === Running test case 'case1-dry-run-mixed-policies' through act ===
+  [PASS] act exited with code 0
+  [PASS] both jobs report 'Job succeeded' (found 2 of 2)
+  [PASS] no job reports 'Job failed'
+  [PASS] output contains exact value: 'Mode: DRY RUN'
+  [PASS] output contains exact value: 'DELETE app-build-ancient (run 100, 200 MB, exceeds max age of 30 days)'
+  [PASS] output contains exact value: 'DELETE test-logs-old (run 200, 90 MB, evicted to satisfy max total size of 419430400 bytes)'
+  [PASS] output contains exact value: 'DELETE app-build-prev (run 100, 120 MB, evicted to satisfy max total size of 419430400 bytes)'
+  [PASS] output contains exact value: 'RETAIN app-build (run 100, 150 MB)'
+  [PASS] output contains exact value: 'RETAIN test-logs (run 200, 180 MB)'
+  [PASS] output contains exact value: 'Artifacts retained: 2'
+  [PASS] output contains exact value: 'Artifacts deleted: 3'
+  [PASS] output contains exact value: 'Space reclaimed: 410 MB'
+  [PASS] output contains exact value:
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester" 2>&1 | tail -3; echo "---"; ls -la act-result.txt; grep -c "TEST CASE:" act-result.txt; grep -E "Job succeeded|act exit code" act-result.txt
+[Result] [32m[+] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/tests/Workflow.Tests.ps1[0m[90m 1.17s (941ms|182ms)[0m
+[97mTests completed in 3.92s[0m
+[32mTests Passed: 30, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+---
+-rw-r--r-- 1 passp passp 14962 Jul  2 04:31 act-result.txt
+2
+===== act exit code: 0
+[Artifact Cleanup/test] 🏁  Job succeeded
+[Artifact Cleanup/cleanup-plan] 🏁  Job succeeded
+===== act exit code: 0
+[Artifact Cleanup/test] 🏁  Job succeeded
+[Artifact Cleanup/cleanup-plan] 🏁  Job succeeded
+[Assistant] Everything is green. Adding a brief README to document the approach, then done:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/README.md", "content": "# Artifact Cleanup Script (PowerShell)\n\nAppli
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/powershell-fable5-high/README.md (file state is current in your context — no need to Read it back)
+[Assistant] Done. The artifact cleanup tool is complete, fully tested, and validated end-to-end through the GitHub Actions pipeline.
+
+**What was built** (all in PowerShell, via red/green TDD — six cycles, each with a watched-failing test before implementation):
+
+- **`ArtifactCleanup.psm1`** — the policy engine. `Get-ArtifactRetentionPlan` applies three retention policies in a defined order: keep-latest-N per workflow run (protected artifacts are never deleted), max age (against a fixed reference date so runs are deterministic), and max total size (evicts oldest unprotected artifacts until the cap fits). `Invoke-ArtifactCleanup` executes or dry-runs the plan with an injectable deleter scriptblock, which the tests mock to verify exactly what gets deleted (or that nothing does in dry-run). Invalid records — missing properties, negative sizes, unparseable dates, negative policy values — throw errors naming the offending artifact and problem.
+- **`Invoke-ArtifactCleanup.ps1`** — CLI that reads a JSON config (artifacts + policy + reference date) and prints a line-oriented plan plus summary: per-artifact DELETE/RETAIN lines with reasons, counts, space reclaimed, and retained size.
+- **Tests: 30 passing via bare `Invoke-Pester`** — 17 unit/CLI tests (`ArtifactCleanup.Tests.ps1`) and 13 workflow structure tests (`Workflow.Tests.ps1`) that parse the YAML, verify triggers/permissions/job dependencies/`shell: pwsh` steps, check every referenced file exists, and assert actionlint exits 0.
+- **`.github/workflows/artifact-cleanup-script.yml`** — push/pull_request/schedule/workflow_dispatch triggers, `contents: read` permissions, a `test` job (Pester) gating a `cleanup-plan` job that runs the script on the fixture inventory. Passes actionlint cleanly.
+- **`tests/Run-ActTests.ps1`** — the E2E harness. For each of two fixture cases (case 1: dry-run with all three policies interacting — 3 deleted, 2 retained, 410 MB reclaimed; case 2: execute mode with keep-latest-2 protecting a 61-day-old release bundle — 2 deleted, 3 retained, 150 MB reclaimed) it builds a temp git repo, runs `act push --rm`, and asserts exit code 0, both jobs' "Job succeeded", and the exact expected output lines.
+
+**Results:** both act runs succeeded on the first attempt (2 of the 3 allowed runs used) — all 33 harness assertions passed, and `act-result.txt` contains the delimited output of both cases with exit code 0 and both jobs succeeding in each.

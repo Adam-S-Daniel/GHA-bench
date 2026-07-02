@@ -1,0 +1,297 @@
+[Tool: Bash] ls -la && cat AGENTS.md 2>/dev/null | head -50
+[Result] total 44
+drwxr-xr-x  4 passp passp  4096 Jul  1 14:58 .
+drwxr-xr-x 16 passp passp  4096 Jul  1 14:58 ..
+-rw-r--r--  1 passp passp    40 Jul  1 14:58 .actrc
+drwxr-xr-x  2 passp passp  4096 Jul  1 14:58 .claude
+drwxr-xr-x  6 passp passp  4096 Jul  1 14:58 .git
+-rw-r--r--  1 passp passp 21843 Jun 30 19:11 benchmark-instructions-v4.md
+[Tool: Bash] cat .actrc; pwsh -v; which act actionlint; docker ps 2>&1 | head -5
+[Result] -P ubuntu-latest=act-ubuntu-pwsh:latest
+PowerShell 7.6.3
+/home/passp/.local/bin/act
+/home/passp/.local/bin/actionlint
+CONTAINER ID   IMAGE                                  COMMAND                  CREATED       STATUS       PORTS     NAMES
+c20c317fdc02   act-ubuntu-pwsh:latest                 "tail -f /dev/null"      3 hours ago   Up 3 hours             act-Environment-Matrix-Generator-Run-unit-tests-e2b1c3f0e4e196c08e8a5f64a5ea9967ae4e39dfb58fdae780d45f5df70fed40
+4dd47777aa43   hashicorp/terraform-mcp-server:0.4.0   "/bin/terraform-mcp-…"   2 days ago    Up 2 days              flamboyant_keldysh
+[Assistant] Now let me build the solution. I'll create the module script, tests, and fixtures using TDD approach, then wire up the GitHub Actions workflow.
+[Tool: Bash] mkdir -p tests/fixtures scripts
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/VersionBumper.Tests.ps1", "content": "# Pester tests for th
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/VersionBumper.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Assistant] Now the fixtures:
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/fixtures
+
+printf '1.2.3' > VERSION-simple
+printf 'not-a-version-string' > VERSION-invalid
+
+cat > package-simple.json <<'EOF'
+{
+  "name": "sample-package",
+  "version": "2.0.1",
+  "description": "A sample package for testing"
+}
+EOF
+
+cat > commits-feat.log <<'EOF'
+feat(auth): add OAuth2 login support
+docs: update README with usage examples
+chore: bump dev dependencies
+EOF
+
+cat > commits-fix.log <<'EOF'
+fix(parser): correct off-by-one error in tokenizer
+docs: clarify installation steps
+EOF
+
+cat > commits-breaking.log <<'EOF'
+feat(api): redesign the public API surface
+
+BREAKING CHANGE: the old `connect()` signature has been removed
+fix(cli): handle missing config file gracefully
+EOF
+
+cat > commits-breaking-bang.log <<'EOF'
+feat(config)!: drop support for legacy config format
+chore: update CI badge
+EOF
+
+cat > commits-none.log <<'EOF'
+docs: fix typo in CONTRIBUTING.md
+chore: update .gitignore
+EOF
+
+cat > commits-mixed.log <<'EOF'
+feat(ui): add dark mode toggle
+fix(ui): correct button alignment on mobile
+
+BREAKING CHANGE: removes the deprecated `theme` prop
+chore: tidy up lint config
+EOF
+
+ls -la
+[Result] total 44
+drwxr-xr-x 2 passp passp 4096 Jul  1 14:59 .
+drwxr-xr-x 3 passp passp 4096 Jul  1 14:59 ..
+-rw-r--r-- 1 passp passp   20 Jul  1 14:59 VERSION-invalid
+-rw-r--r-- 1 passp passp    5 Jul  1 14:59 VERSION-simple
+-rw-r--r-- 1 passp passp   76 Jul  1 14:59 commits-breaking-bang.log
+-rw-r--r-- 1 passp passp  156 Jul  1 14:59 commits-breaking.log
+-rw-r--r-- 1 passp passp  106 Jul  1 14:59 commits-feat.log
+-rw-r--r-- 1 passp passp   84 Jul  1 14:59 commits-fix.log
+-rw-r--r-- 1 passp passp  156 Jul  1 14:59 commits-mixed.log
+-rw-r--r-- 1 passp passp   59 Jul  1 14:59 commits-none.log
+-rw-r--r-- 1 passp passp  102 Jul  1 14:59 package-simple.json
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low && pwsh -Command "Invoke-Pester -Path ./tests -Output Detailed" 2>&1 | tail -30
+[Result] [91m   at Should -Throw -ExpectedMessage '*Invalid semantic version*', /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/VersionBumper.Tests.ps1:85
+[91m   at <ScriptBlock>, /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/VersionBumper.Tests.ps1:84[0m
+[0m
+[92mDescribing Update-VersionFile[0m
+[91m  [-] updates a plain VERSION file in place[0m[90m 618ms (614ms|4ms)[0m
+[91m   CommandNotFoundException: The term 'Update-VersionFile' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91m   Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[91m   at <ScriptBlock>, /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/VersionBumper.Tests.ps1:102[0m
+[91m  [-] updates 
+[Assistant] All failing as expected (red). Now implement the module (green).
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1", "content": "# VersionBumper.psm1\n# 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -Command "Invoke-Pester -Path ./tests -Output Detailed" 2>&1 | tail -50
+[Result] [95mPester v5.7.1[0m
+[95m
+[95mStarting discovery in 1 files.[0m
+[95mDiscovery found 20 tests in 440ms.[0m
+[95mRunning tests.[0m
+[95m
+[95mRunning tests from '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/VersionBumper.Tests.ps1'[0m
+[92mDescribing Get-CurrentVersion[0m
+[32m  [+] reads a version from a plain VERSION file[0m[90m 183ms (136ms|47ms)[0m
+[32m  [+] reads a version from a package.json file[0m[90m 33ms (31ms|3ms)[0m
+[32m  [+] throws a meaningful error when the file does not exist[0m[90m 83ms (80ms|2ms)[0m
+[32m  [+] throws a meaningful error when no version can be parsed[0m[90m 15ms (11ms|3ms)[0m
+[0m
+[92mDescribing Get-VersionBumpType[0m
+[91m  [-] returns "major" when a commit contains a breaking change marker[0m[90m 16ms (11ms|5ms)[0m
+[91m   ParameterBindingValidationException: Cannot bind argument to parameter 'CommitMessages' because it is an empty string.
+[91m
+[Tool: Bash] pwsh -Command '$c = Get-Content ./tests/fixtures/commits-breaking.log; $c.GetType(); $c | ForEach-Object { "[$_]" }'
+[Result] [32;1mIsPublic[0m [32;1;3mIsSerial[0m[32;1m Name                                    [0m[32;1m BaseType[0m
+[32;1m--------[0m [32;1m--------[0m [32;1m----                                    [0m [32;1m--------[0m
+True     True     Object[]                                 System.Array
+[feat(api): redesign the public API surface]
+[]
+[BREAKING CHANGE: the old `connect()` signature has been removed]
+[fix(cli): handle missing config file gracefully]
+[Tool: Bash] pwsh -Command "Import-Module ./scripts/VersionBumper.psm1 -Force; \$c = Get-Content ./tests/fixtures/commits-breaking.log; Get-VersionBumpType -CommitMessages \$c"
+[Result ERROR] Exit code 1
+[31;1mGet-VersionBumpType: [31;1mCannot bind argument to parameter 'CommitMessages' because it is an empty string.[0m
+[Tool: Bash] pwsh -Command "Import-Module ./scripts/VersionBumper.psm1 -Force; Get-VersionBumpType -CommitMessages @('feat: x','','fix: y')"
+[Result ERROR] Exit code 1
+[31;1mGet-VersionBumpType: [31;1mCannot bind argument to parameter 'CommitMessages' because it is an empty string.[0m
+[Tool: Bash] grep -n "CommitMessages" scripts/VersionBumper.psm1 | head -20
+[Result] 60:        [string[]]$CommitMessages
+67:    foreach ($line in $CommitMessages) {
+152:        [string[]]$CommitMessages
+159:    foreach ($line in $CommitMessages) {
+207:        [string[]]$CommitMessages
+211:    $bumpType = Get-VersionBumpType -CommitMessages $CommitMessages
+216:    $entry = New-ChangelogEntry -Version $newVersion -CommitMessages $CommitMessages
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low
+perl -0pi -e 's/\[Parameter\(Mandatory\)\]\n(\s*)\[string\[\]\]\$CommitMessages/[AllowEmptyCollection()]\n$1[string[]]\$CommitMessages = @()/g' scripts/VersionBumper.psm1
+grep -n "CommitMessages" scripts/VersionBumper.psm1
+[Result] syntax error at -e line 1, near "string["
+Execution of -e aborted due to compilation errors.
+60:        [string[]]$CommitMessages
+67:    foreach ($line in $CommitMessages) {
+152:        [string[]]$CommitMessages
+159:    foreach ($line in $CommitMessages) {
+207:        [string[]]$CommitMessages
+211:    $bumpType = Get-VersionBumpType -CommitMessages $CommitMessages
+216:    $entry = New-ChangelogEntry -Version $newVersion -CommitMessages $CommitMessages
+[Assistant] I'll edit directly instead.
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1", "offset": 55, "limit": 10}
+[Result] 55	          - a "fix" prefix -> patch
+56	          - anything else -> no impact
+57	    #>
+58	    param(
+59	        [Parameter(Mandatory)]
+60	        [string[]]$CommitMessages
+61	    )
+62	
+63	    $hasMajor = $false
+64	    $hasMinor = $false
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1", "old_string": 
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1", "offset": 145, "limit": 15}
+[Result] 145	        conventional commits into Breaking Changes / Features / Fixes / Other.
+146	    #>
+147	    param(
+148	        [Parameter(Mandatory)]
+149	        [string]$Version,
+150	
+151	        [Parameter(Mandatory)]
+152	        [string[]]$CommitMessages
+153	    )
+154	
+155	    $breaking = @()
+156	    $features = @()
+157	    $fixes = @()
+158	
+159	    foreach ($line in $CommitMessages) {
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1", "old_string": 
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Read] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1", "offset": 198, "limit": 15}
+[Result] 198	    #>
+199	    param(
+200	        [Parameter(Mandatory)]
+201	        [string]$VersionFilePath,
+202	
+203	        [Parameter(Mandatory)]
+204	        [string]$ChangelogPath,
+205	
+206	        [Parameter(Mandatory)]
+207	        [string[]]$CommitMessages
+208	    )
+209	
+210	    $currentVersion = Get-CurrentVersion -Path $VersionFilePath
+211	    $bumpType = Get-VersionBumpType -CommitMessages $CommitMessages
+212	    $newVersion = Get-NextVersion -CurrentVersion $currentVersion -BumpType $bumpType
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1", "old_string": 
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/VersionBumper.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -Command "Invoke-Pester -Path ./tests -Output Detailed" 2>&1 | tail -35
+[Result] [95m
+[95mRunning tests from '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/VersionBumper.Tests.ps1'[0m
+[92mDescribing Get-CurrentVersion[0m
+[32m  [+] reads a version from a plain VERSION file[0m[90m 676ms (457ms|219ms)[0m
+[32m  [+] reads a version from a package.json file[0m[90m 106ms (96ms|10ms)[0m
+[32m  [+] throws a meaningful error when the file does not exist[0m[90m 242ms (234ms|8ms)[0m
+[32m  [+] throws a meaningful error when no version can be parsed[0m[90m 26ms (21ms|5ms)[0m
+[0m
+[92mDescribing Get-VersionBumpType[0m
+[32m  [+] returns "major" when a commit contains a breaking change marker[0m[90m 96ms (85ms|11ms)[0m
+[32m  [+] returns "major" when a commit subject has a "!" breaking indicator[0m[90m 18ms (14ms|5ms)[0m
+[32m  [+] returns "minor" when the highest-impact commit is a feat[0m[90m 16ms (12ms|4ms)[0m
+[32m  [+] returns "patch" when the highest-impact commit i
+[Assistant] All 20 tests pass (green). Now let's build the CLI entry script and the GitHub Actions workflow.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/Invoke-Bump.ps1", "content": "# Invoke-Bump.ps1\n# CLI en
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/scripts/Invoke-Bump.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/.github/workflows/semantic-version-bumper.yml", "content": "name:
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/.github/workflows/semantic-version-bumper.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/semantic-version-bumper.yml; echo "EXIT:$?"
+[Result] EXIT:0
+[Assistant] actionlint passes. Now let's commit test files to git (act needs a git repo with committed content typically) and run act.
+[Tool: Bash] git add -A && git status --short | head -20
+[Result] A  .actrc
+A  .claude/settings.json
+A  .github/workflows/semantic-version-bumper.yml
+A  benchmark-instructions-v4.md
+A  scripts/Invoke-Bump.ps1
+A  scripts/VersionBumper.psm1
+A  tests/VersionBumper.Tests.ps1
+A  tests/fixtures/VERSION-invalid
+A  tests/fixtures/VERSION-simple
+A  tests/fixtures/commits-breaking-bang.log
+A  tests/fixtures/commits-breaking.log
+A  tests/fixtures/commits-feat.log
+A  tests/fixtures/commits-fix.log
+A  tests/fixtures/commits-mixed.log
+A  tests/fixtures/commits-none.log
+A  tests/fixtures/package-simple.json
+[Tool: Bash] act push --rm 2>&1 | tee act-result.txt | tail -80
+[Result] time="2026-07-01T15:03:44-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+time="2026-07-01T15:03:48-04:00" level=warning msg="unable to get git ref: reference not found"
+time="2026-07-01T15:03:48-04:00" level=warning msg="unable to get git revision: reference not found"
+[Semantic Version Bumper/Run unit tests] ⭐ Run Set up job
+[Semantic Version Bumper/Run unit tests] 🚀  Start image=act-ubuntu-pwsh:latest
+[Semantic Version Bumper/Run unit tests]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=true
+[Semantic Version Bumper/Run unit tests] using DockerAuthConfig authentication for docker pull
+[Semantic Version Bumper/Run unit tests] Error response from daemon: authentication required - incorrect username or password
+[Semantic Version Bumper/Run unit tests]   ❌  Failure - Set up job
+[Semantic Version Bumper/Run unit tests] 🏁  Job failed
+Error: Error response from daemon: authentication requ
+[Tool: Bash] git init -q 2>/dev/null; git add -A; git commit -q -m tmp --allow-empty-message -m "" 2>&1 | tail -5; git log --oneline | head -3
+[Result] 693567e tmp
+[Tool: Bash] act push --rm --pull=false > act-result.txt 2>&1; echo "EXIT:$?"; tail -100 act-result.txt
+[Result] EXIT:0
+[Semantic Version Bumper/Run unit tests]   | [95mRunning tests.[0m
+[Semantic Version Bumper/Run unit tests]   | [95m
+[Semantic Version Bumper/Run unit tests]   | [95mRunning tests from '/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/VersionBumper.Tests.ps1'[0m
+[Semantic Version Bumper/Run unit tests]   | [92mDescribing Get-CurrentVersion[0m
+[Semantic Version Bumper/Run unit tests]   | [32m  [+] reads a version from a plain VERSION file[0m[90m 2s (1.42s|582ms)[0m
+[Semantic Version Bumper/Run unit tests]   | [32m  [+] reads a version from a package.json file[0m[90m 615ms (441ms|174ms)[0m
+[Semantic Version Bumper/Run unit tests]   | [32m  [+] throws a meaningful error when the file does not exist[0m[90m 1.16s (1.13s|24ms)[0m
+[Semantic Version Bumper/Run unit tests]   | [32m  [+] throws a meaningful error when no version can be parsed[0m[90m 160ms (128ms|32ms)[0m
+[Semantic Version B
+[Assistant] All jobs succeeded with exact expected version values (1.2.0, 1.1.1, 2.0.0, 2.1.0, 1.1.0). Now let's write the workflow structure tests and verify act-result.txt content.
+[Tool: Bash] grep -c "Job succeeded" act-result.txt; wc -l act-result.txt
+[Result] 2
+117 act-result.txt
+[Assistant] Both jobs succeeded (2 "Job succeeded" lines). Now add the workflow-structure tests file.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/Workflow.Structure.Tests.ps1", "content": "# Structural tes
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/11-semantic-version-bumper/powershell-tool-sonnet5-low/tests/Workflow.Structure.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -Command "Invoke-Pester -Path ./tests -Output Detailed" 2>&1 | tail -40
+[Result] [32m  [+] returns "major" when a commit contains a breaking change marker[0m[90m 47ms (33ms|14ms)[0m
+[32m  [+] returns "major" when a commit subject has a "!" breaking indicator[0m[90m 44ms (31ms|13ms)[0m
+[32m  [+] returns "minor" when the highest-impact commit is a feat[0m[90m 32ms (25ms|7ms)[0m
+[32m  [+] returns "patch" when the highest-impact commit is a fix[0m[90m 20ms (13ms|6ms)[0m
+[32m  [+] returns "none" when there are no conventional commit prefixes[0m[90m 17ms (13ms|4ms)[0m
+[32m  [+] prioritizes major over minor and patch when commits are mixed[0m[90m 23ms (16ms|7ms)[0m
+[0m
+[92mDescribing Get-NextVersion[0m
+[32m  [+] bumps the major version and resets minor/patch to 0[0m[90m 33ms (27ms|6ms)[0m
+[32m  [+] bumps the minor version and resets patch to 0[0m[90m 20ms (14ms|5ms)[0m
+[32m  [+] bumps the patch version[0m[90m 55ms (48ms|7ms)[0m
+[32m  [+] returns the same version when there is nothing to bump[0m[90m 56ms (18ms|37ms)[0m
+[32m  [+] 
+[Assistant] All 29 tests pass, actionlint is clean, and act-result.txt captures a full successful pipeline run with exact expected version values.
+[Tool: Bash] git status --short
+[Result]  M act-result.txt
+?? tests/Workflow.Structure.Tests.ps1
+[Assistant] Solution complete. Summary:
+
+- **`scripts/VersionBumper.psm1`** — module with `Get-CurrentVersion`, `Get-VersionBumpType`, `Get-NextVersion`, `Update-VersionFile`, `New-ChangelogEntry`, `Invoke-VersionBump`, built via red/green TDD.
+- **`scripts/Invoke-Bump.ps1`** — CLI entry point used by CI.
+- **`tests/VersionBumper.Tests.ps1`** + **`tests/fixtures/*`** — 20 Pester unit tests with mock commit logs and version files.
+- **`tests/Workflow.Structure.Tests.ps1`** — 9 tests validating workflow structure, script references, actionlint, and the act-result.txt artifact.
+- **`.github/workflows/semantic-version-bumper.yml`** — two jobs (`unit-tests`, `integration-tests`), triggers on push/pull_request/workflow_dispatch/schedule, `contents: read` permissions, runs Pester then 5 integration cases (feat/fix/breaking/package.json/no-op) asserting exact version outputs.
+- actionlint passes cleanly; ran `act push --pull=false` once, captured to `act-result.txt`, both jobs show "Job succeeded" with exact expected versions (1.2.0, 1.1.1, 2.0.0, 2.1.0, 1.1.0).
+- Full local Pester suite: 29/29 passing.

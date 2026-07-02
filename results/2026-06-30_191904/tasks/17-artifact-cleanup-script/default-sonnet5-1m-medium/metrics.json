@@ -1,0 +1,1282 @@
+{
+  "task_id": "17-artifact-cleanup-script",
+  "task_name": "Artifact Cleanup Script",
+  "task_category": "GitHub Actions / Maintenance",
+  "language_mode": "default",
+  "language_chosen": "python",
+  "language_breakdown": {
+    "python": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-sonnet-5[1m]",
+  "model_short": "sonnet5-1m",
+  "variant": "sonnet5-1m-medium",
+  "claude_code_version": "2.1.197",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-07-01T16:29:19.545049+00:00",
+  "timestamp_end": "2026-07-01T16:40:50.422336+00:00",
+  "prompt_text": "You are completing a scripting task. Choose whatever programming language you think is best for this task.\n\nTASK: Given a list of artifacts with metadata (name, size, creation date, workflow run ID \u2014 provided as mock data), apply retention policies (max age, max total size, keep-latest-N per workflow), determine which artifacts to delete, and generate a deletion plan with a summary (total space reclaimed, artifacts retained vs deleted). Support dry-run mode.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability.\n3. All tests must be runnable and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/artifact-cleanup-script.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/artifact-cleanup-script.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "18085707-d385-49a2-9ab3-c778b8e06640",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 30,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1399,
+      "outputTokens": 18,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.001489,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-sonnet-5[1m]": {
+      "inputTokens": 9500,
+      "outputTokens": 40492,
+      "cacheReadInputTokens": 6221513,
+      "cacheCreationInputTokens": 99661,
+      "webSearchRequests": 0,
+      "costUSD": 3.1002999,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "medium",
+  "timing": {
+    "grand_total_duration_ms": 690877,
+    "total_api_duration_ms": 514644,
+    "total_execution_duration_ms": 155929,
+    "num_turns": 86
+  },
+  "tokens": {
+    "input_tokens": 9500,
+    "output_tokens": 40492,
+    "cache_read_tokens": 6221513,
+    "cache_creation_tokens": 99661,
+    "total_context_consumed": 6330674,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 3.1017889000000003,
+    "assumed_input_cost_per_mtok": 3.0,
+    "assumed_output_cost_per_mtok": 15.0,
+    "assumed_cache_read_cost_per_mtok": 0.3,
+    "assumed_cache_write_cost_per_mtok": 3.75
+  },
+  "code_metrics": {
+    "code_lines": 925,
+    "total_tokens_estimate": 24490,
+    "file_count": 15,
+    "files": [
+      "act-result.txt",
+      "artifact_cleanup.py",
+      "build_act_result_from_logs.py",
+      "cli.py",
+      "conftest.py",
+      "pyproject.toml",
+      "run_act_tests.py",
+      "fixtures/_raw_act_log_case1_push_dryrun.txt",
+      "fixtures/_raw_act_log_case2_dispatch_liverun.txt",
+      "fixtures/dispatch_live_run_event.json",
+      "fixtures/sample_artifacts.json",
+      ".github/workflows/artifact-cleanup-script.yml",
+      "tests/test_artifact_cleanup.py",
+      "tests/test_cli.py",
+      "tests/test_workflow_structure.py"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 3,
+    "error_details": [
+      "Exit code 1\n# Agent Instructions\n\nAll agent-facing instructions live in this file. `CLAUDE.md` contains only a\nreference here. If you are a Claude Code agent, you have already loaded this\nvia `CLAUDE.",
+      "<tool_use_error>File has been modified since read, either by the user or by a linter. Read it again before attempting to write it.</tool_use_error>",
+      "<tool_use_error>File has not been read yet. Read it first before writing to it.</tool_use_error>"
+    ],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/artifact-cleanup-script.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 34122,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 85,
+    "total_tool_duration_ms": 165795,
+    "bash_tool_uses": 52,
+    "bash_total_ms": 158042,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "act push --rm --pull=false 2>&1 | tee /tmp/case1_push_dryrun_v2.txt | tail -40",
+        "duration_ms": 62751,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "act push --rm --pull=false 2>&1 | tee /tmp/act_run1.txt | tail -100",
+        "duration_ms": 58429,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git add -A && git commit -q -m \"wire dry-run input into workflow\"\nact workflow_dispatch --rm --pull=false -e fixtures/dispatch_live_run_event.json 2>&1 | tee /tmp/act_run2.txt | tail -60",
+        "duration_ms": 14019,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 5444,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5 && cat AGENTS.md 2>/dev/null | head -200; echo ---; ls -la; echo ---; cd workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium && ls ",
+        "duration_ms": 2960,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -c \"import pytest; print(pytest.__version__)\" 2>&1",
+        "duration_ms": 1880,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat .actrc; echo ---; git log --oneline -5; git status; echo ---; which python3 node pwsh act actionlint 2>&1; python3 --version; node --version",
+        "duration_ms": 1300,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -c \"\ud83c\udfc1  Job succeeded\" /tmp/case1_push_dryrun_v2.txt /tmp/case2_dispatch_liverun.txt\ngrep -n \"SUMMARY:\" /tmp/case1_push_dryrun_v2.txt /tmp/case2_dispatch_liverun.txt",
+        "duration_ms": 906,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -15",
+        "duration_ms": 826,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/artifact-cleanup-script.yml; echo \"exit: $?\"",
+        "duration_ms": 814,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5 && cat AGENTS.md 2>/dev/null | head -200; echo ---; ls -la; echo ---; cd workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium && ls ",
+        "duration_ms": 2960,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat .actrc; echo ---; git log --oneline -5; git status; echo ---; which python3 node pwsh act actionlint 2>&1; python3 --version; node --version",
+        "duration_ms": 1300,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -c \"import pytest; print(pytest.__version__)\" 2>&1",
+        "duration_ms": 1880,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests",
+        "duration_ms": 137,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 97,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -20",
+        "duration_ms": 579,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -20",
+        "duration_ms": 539,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwd",
+        "duration_ms": 69,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 64,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 100,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v -c pyproject.toml 2>&1 | tail -20",
+        "duration_ms": 742,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 97,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -10",
+        "duration_ms": 428,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 61,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 87,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'\n\n\ndef test_max_age_policy_deletes_a",
+        "duration_ms": 63,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -15",
+        "duration_ms": 481,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 69,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -10",
+        "duration_ms": 345,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'\n\n\ndef test_keep_latest_n_per_workfl",
+        "duration_ms": 338,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 79,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 81,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -10",
+        "duration_ms": 356,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'\n\n\ndef test_max_total_size_deletes_o",
+        "duration_ms": 389,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 70,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 72,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 76,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -12",
+        "duration_ms": 368,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'\n\n\ndef test_deletion_plan_summary_re",
+        "duration_ms": 482,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 111,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -12",
+        "duration_ms": 501,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'\n\n\ndef test_execute_plan_dry_run_doe",
+        "duration_ms": 664,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 2,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -n \"^from artifact_cleanup\" /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py",
+        "duration_ms": 111,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 107,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 97,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 104,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -15",
+        "duration_ms": 826,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_artifact_cleanup.py << 'EOF'\n\n\ndef test_plan_deletions_rejects_n",
+        "duration_ms": 549,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 88,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -20",
+        "duration_ms": 767,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 113,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/test_cli.py -v 2>&1 | tail -15",
+        "duration_ms": 526,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 72,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -20",
+        "duration_ms": 316,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/tests/test_cli.py << 'EOF'\n\n\ndef test_cli_live_run_reports_deletions_via_mo",
+        "duration_ms": 402,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -20",
+        "duration_ms": 347,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/fixtures",
+        "duration_ms": 57,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 54,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 cli.py --fixture fixtures/sample_artifacts.json --now 2026-01-31T00:00:00+00:00 --max-age-days 20 --keep-latest-n-per-workflow 1 --dry-run",
+        "duration_ms": 105,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/.github/workflows\nls /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-",
+        "duration_ms": 56,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 5444,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/artifact-cleanup-script.yml; echo \"exit: $?\"",
+        "duration_ms": 814,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git status --short | head -20",
+        "duration_ms": 100,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git add -A && git commit -q -m \"wip\" --allow-empty-message -m \"wip\" 2>&1 | tail -5; git log --oneline",
+        "duration_ms": 184,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git ls-files | grep pycache; echo ---; git rm -r --cached __pycache__ .pytest_cache 2>&1 | tail -5",
+        "duration_ms": 89,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git rm -r --cached __pycache__ tests/__pycache__ 2>&1 | tail -3\nprintf '__pycache__/\\n*.pyc\\n.pytest_cache/\\nact-result.txt\\n' > .gitignore\ngit add -A\ngit commit -q -m \"add gitignore\"\ngit log --onelin",
+        "duration_ms": 100,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 3,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 46,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git add -A && git commit -q -m \"cleanup gitignore\" && act push --rm 2>&1 | tee /tmp/act_run1.txt | tail -80",
+        "duration_ms": 789,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker images | grep -i act-ubuntu-pwsh; docker images | head -20",
+        "duration_ms": 701,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "act push --rm --pull=false 2>&1 | tee /tmp/act_run1.txt | tail -100",
+        "duration_ms": 58429,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -n \"^\\s*jobs:\\|workflow_dispatch\" -A5 .github/workflows/artifact-cleanup-script.yml | head -20",
+        "duration_ms": 63,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 123,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/artifact-cleanup-script.yml; echo \"exit:$?\"",
+        "duration_ms": 140,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 43,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "git add -A && git commit -q -m \"wire dry-run input into workflow\"\nact workflow_dispatch --rm --pull=false -e fixtures/dispatch_live_run_event.json 2>&1 | tee /tmp/act_run2.txt | tail -60",
+        "duration_ms": 14019,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -c \"\" /tmp/act_run1.txt /tmp/act_run2.txt; echo \"exit codes recorded via echo $?\"",
+        "duration_ms": 57,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cp /tmp/act_run1.txt /tmp/case1_push_dryrun.txt\ncp /tmp/act_run2.txt /tmp/case2_dispatch_liverun.txt\nwc -l /tmp/case1_push_dryrun.txt /tmp/case2_dispatch_liverun.txt",
+        "duration_ms": 108,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "act push --rm --pull=false 2>&1 | tee /tmp/case1_push_dryrun_v2.txt | tail -40",
+        "duration_ms": 62751,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -c \"\ud83c\udfc1  Job succeeded\" /tmp/case1_push_dryrun_v2.txt /tmp/case2_dispatch_liverun.txt\ngrep -n \"SUMMARY:\" /tmp/case1_push_dryrun_v2.txt /tmp/case2_dispatch_liverun.txt",
+        "duration_ms": 906,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cp /tmp/case1_push_dryrun_v2.txt /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/default-sonnet5-1m-medium/fixtures/_raw_act_log_case1_push_dryrun.txt\ncp /t",
+        "duration_ms": 740,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 200,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 69,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 build_act_result_from_logs.py",
+        "duration_ms": 81,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "wc -l act-result.txt; grep -n \"===== TEST CASE\\|assertion:\\|exit_code:\\|SUMMARY:\" act-result.txt",
+        "duration_ms": 74,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -c \"import yaml; print('ok')\" 2>&1",
+        "duration_ms": 122,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 97,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -30",
+        "duration_ms": 478,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -m pytest tests/ -v 2>&1 | tail -5\necho \"---\"\nls -la\necho \"---\"\ngit status --short",
+        "duration_ms": 478,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/artifact-cleanup-script.yml; echo \"actionlint exit: $?\"",
+        "duration_ms": 136,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 10146,
+    "act_duration_ms": 121969
+  },
+  "hooks": {
+    "hook_fires": 29,
+    "hook_errors_caught": 0,
+    "hook_failures": 0,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "2f743d6e-e9fb-41d4-b33f-e2001d6531ad",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6aa4c862-2d15-46dd-9111-15acd174f554",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2f743d6e-e9fb-41d4-b33f-e2001d6531ad",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6aa4c862-2d15-46dd-9111-15acd174f554",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ca7a0862-f046-4051-9b29-d16caf90195e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ca7a0862-f046-4051-9b29-d16caf90195e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "67b60b65-1c8b-43c9-b94d-88722e5a108e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "67b60b65-1c8b-43c9-b94d-88722e5a108e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "fd236913-cfd5-488f-a2b6-38f67f35dcff",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "fd236913-cfd5-488f-a2b6-38f67f35dcff",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6a3836d7-27c9-404e-a4f6-df0378d73b54",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6a3836d7-27c9-404e-a4f6-df0378d73b54",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a05ec891-d16d-4ba0-a20b-186103ba90b5",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a05ec891-d16d-4ba0-a20b-186103ba90b5",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b2268889-84c4-43d3-8b8e-b1e76f10497e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b2268889-84c4-43d3-8b8e-b1e76f10497e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9a7e0be8-3906-41a1-bc10-fb9d96a03b52",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9a7e0be8-3906-41a1-bc10-fb9d96a03b52",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "fd445c45-1388-4d86-b8bd-0ed5d8d7464e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "fd445c45-1388-4d86-b8bd-0ed5d8d7464e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "c0db0c34-10df-4d84-b7cd-1a5a58986010",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "c0db0c34-10df-4d84-b7cd-1a5a58986010",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "59e3ffa0-889c-4c92-89d2-999791776e19",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "59e3ffa0-889c-4c92-89d2-999791776e19",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a159370b-cfa1-4733-8827-61bf2d8b866a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a159370b-cfa1-4733-8827-61bf2d8b866a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "93f5b38c-8be3-4fb0-935f-2525bea759ac",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "93f5b38c-8be3-4fb0-935f-2525bea759ac",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "39e3e655-1203-4478-8ac0-b8c849ba37ab",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "39e3e655-1203-4478-8ac0-b8c849ba37ab",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "c1779dfc-5b6e-4fcf-87b9-4cfa3ec2d8a8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "c1779dfc-5b6e-4fcf-87b9-4cfa3ec2d8a8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ac2ed5fc-ea87-4608-97c7-8c0fb6a186ed",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ac2ed5fc-ea87-4608-97c7-8c0fb6a186ed",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "95532a03-dfe3-40ab-bba5-db5bd72e2e68",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "95532a03-dfe3-40ab-bba5-db5bd72e2e68",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "894fb27d-df54-4c00-83b0-d9eee3f8664a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "894fb27d-df54-4c00-83b0-d9eee3f8664a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "15475d7d-6d17-40e7-bada-8183bfc93f94",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "15475d7d-6d17-40e7-bada-8183bfc93f94",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "0c3509d4-dec6-41ac-bd9a-2bfb197844f0",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "0c3509d4-dec6-41ac-bd9a-2bfb197844f0",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2a645e8a-2f4c-44b1-a276-65958be356c0",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2a645e8a-2f4c-44b1-a276-65958be356c0",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f7b01a81-241b-4a01-86eb-ee0828cf345f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f7b01a81-241b-4a01-86eb-ee0828cf345f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ea6bcff4-741c-4d62-8e81-53be4ea50582",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ea6bcff4-741c-4d62-8e81-53be4ea50582",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "35c48332-3132-450b-a44a-92b8f762926b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "35c48332-3132-450b-a44a-92b8f762926b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "c3b991d5-bf20-413f-b4ba-e71aad3da877",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "c3b991d5-bf20-413f-b4ba-e71aad3da877",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6993f260-5bc4-453b-a17a-b02f554ddc26",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6993f260-5bc4-453b-a17a-b02f554ddc26",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4e9a6722-481e-4ad6-8a71-f1900e28617b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4e9a6722-481e-4ad6-8a71-f1900e28617b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9253c585-2c31-4a6f-92a2-d550b7de06e5",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9253c585-2c31-4a6f-92a2-d550b7de06e5",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+# PR Label Assigner pipeline.
+#
+# Job 1 (test): installs Bun + actionlint and runs the full unit/structure
+#               test suite with `bun test`.
+# Job 2 (label): depends on job 1; runs the labeler CLI against the
+#               (mocked) changed-file list in input/ and publishes the
+#               computed label set as a step output, log line, and job summary.
+#
+# The changed-file list is mocked via input/changed-files.json so the same
+# pipeline runs identically on GitHub and locally under `act`.
+name: PR Label Assigner
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege: we only read the repo. (A real "apply labels via the API"
+# step would additionally need `pull-requests: write`.)
+permissions:
+  contents: read
+
+env:
+  BUN_INSTALL_DIR: ${{ github.workspace }}/.bun-runtime
+  ACTIONLINT_VERSION: 1.7.12
+
+jobs:
+  test:
+    name: Unit and workflow-structure tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | BUN_INSTALL="$BUN_INSTALL_DIR" bash
+          echo "$BUN_INSTALL_DIR/bin" >> "$GITHUB_PATH"
+
+      - name: Install actionlint (used by the workflow-structure tests)
+        run: |
+          mkdir -p "$BUN_INSTALL_DIR/bin"
+          curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash \
+            | bash -s -- "$ACTIONLINT_VERSION" "$BUN_INSTALL_DIR/bin"
+
+      - name: Run test suite
+        run: bun test
+
+  label:
+    name: Compute PR labels
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | BUN_INSTALL="$BUN_INSTALL_DIR" bash
+          echo "$BUN_INSTALL_DIR/bin" >> "$GITHUB_PATH"
+
+      - name: Compute labels from changed files
+        id: labels
+        run: |
+          bun run src/cli.ts --config input/rules.json --files input/changed-files.json | tee label-output.txt
+          final="$(grep '^FINAL LABELS: ' label-output.txt | sed 's/^FINAL LABELS: //')"
+          echo "labels=$final" >> "$GITHUB_OUTPUT"
+
+      - name: Publish label set
+        env:
+          LABELS: ${{ steps.labels.outputs.labels }}
+        run: |
+          echo "Computed label set: $LABELS"
+          echo "### PR Label Assigner" >> "$GITHUB_STEP_SUMMARY"
+          echo "Labels: \`$LABELS\`" >> "$GITHUB_STEP_SUMMARY"

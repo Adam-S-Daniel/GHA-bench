@@ -1,0 +1,706 @@
+{
+  "task_id": "17-artifact-cleanup-script",
+  "task_name": "Artifact Cleanup Script",
+  "task_category": "GitHub Actions / Maintenance",
+  "language_mode": "bash",
+  "language_chosen": "bash",
+  "language_breakdown": {
+    "bash": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-fable-5",
+  "model_short": "fable5",
+  "variant": "fable5-medium",
+  "claude_code_version": "2.1.198",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-07-02T02:31:48.394689+00:00",
+  "timestamp_end": "2026-07-02T02:39:31.400789+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use Bash as your implementation language.\n\nTASK: Given a list of artifacts with metadata (name, size, creation date, workflow run ID \u2014 provided as mock data), apply retention policies (max age, max total size, keep-latest-N per workflow), determine which artifacts to delete, and generate a deletion plan with a summary (total space reclaimed, artifacts retained vs deleted). Support dry-run mode.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use bats-core (bats) as the testing framework.\n3. All tests must be runnable with `bats` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n6. Use `#!/usr/bin/env bash` shebang. Scripts must pass `shellcheck` and `bash -n` syntax validation.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/artifact-cleanup-script.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/artifact-cleanup-script.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "31aa6a98-6b0d-42dc-a916-7b6a072542cc",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 30,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1466,
+      "outputTokens": 18,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.001556,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-fable-5": {
+      "inputTokens": 3398,
+      "outputTokens": 24864,
+      "cacheReadInputTokens": 1417630,
+      "cacheCreationInputTokens": 41850,
+      "webSearchRequests": 0,
+      "costUSD": 3.5318100000000006,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "medium",
+  "timing": {
+    "grand_total_duration_ms": 463006,
+    "total_api_duration_ms": 392448,
+    "total_execution_duration_ms": 66043,
+    "num_turns": 31
+  },
+  "tokens": {
+    "input_tokens": 3398,
+    "output_tokens": 24864,
+    "cache_read_tokens": 1417630,
+    "cache_creation_tokens": 41850,
+    "total_context_consumed": 1462878,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 3.5333660000000005,
+    "assumed_input_cost_per_mtok": 10.0,
+    "assumed_output_cost_per_mtok": 50.0,
+    "assumed_cache_read_cost_per_mtok": 1.0,
+    "assumed_cache_write_cost_per_mtok": 12.5
+  },
+  "code_metrics": {
+    "code_lines": 574,
+    "total_tokens_estimate": 8441,
+    "file_count": 14,
+    "files": [
+      "act-result.txt",
+      "artifact-cleanup.sh",
+      "run-act-tests.sh",
+      ".github/workflows/artifact-cleanup-script.yml",
+      "ci/run-cleanup.sh",
+      "tests/artifact_cleanup.bats",
+      "tests/workflow.bats",
+      "tests/fixtures/basic.tsv",
+      "tests/fixtures/combined.tsv",
+      "tests/fixtures/keep_latest.tsv",
+      "tests/fixtures/malformed.tsv",
+      "tests/fixtures/size.tsv",
+      "ci-fixtures/artifacts.tsv",
+      "ci-fixtures/policy.env"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 5,
+    "error_details": [
+      "Exit code 1\n\nIn artifact-cleanup.sh line 134:\n      STATUS[${ordered[k]}]=\"keep-latest\"\n             ^-----------^ SC2004 (style): $/${} is unnecessary on arithmetic variables.\n\nFor more information:\n",
+      "Exit code 1\n\nIn ci/run-cleanup.sh line 5:\n# shellcheck-able and lets the act test harness swap fixture data per case.\n^-- SC1073 (error): Couldn't parse this shellcheck directive. Fix to allow more ch",
+      "Exit code 1\n\nIn run-act-tests.sh line 55:\n    cd \"$tmp\"\n    ^-------^ SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.\n\nDid you mean: \n    cd \"$tmp\" || exit\n\n\nIn run-act-",
+      "Exit code 1\n\nIn run-act-tests.sh line 97:\nn=$(grep -c \"Job succeeded\" \"$CASE1_LOG\"); [[ $n -eq 2 ]]; ok=$?\n                                                              ^-- SC2319 (warning): This $? r",
+      "Exit code 1\n== Workflow structure tests (host) ==\n  PASS: actionlint exits 0\n1..6\nok 1 workflow file exists and is valid YAML\nok 2 workflow declares the expected triggers\nok 3 workflow defines test an"
+    ],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/artifact-cleanup-script.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 12251,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 30,
+    "total_tool_duration_ms": 66280,
+    "bash_tool_uses": 15,
+    "bash_total_ms": 64270,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "shellcheck run-act-tests.sh && ./run-act-tests.sh",
+        "duration_ms": 54558,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "ls -la act-result.txt && grep -c \"Job succeeded\" act-result.txt && grep -m2 \"ok 12\" act-result.txt; bats tests/ && shellcheck artifact-cleanup.sh ci/run-cleanup.sh run-act-tests.sh && bash -n artifact",
+        "duration_ms": 3061,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "./run-act-tests.sh",
+        "duration_ms": 1673,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n artifact-cleanup.sh && shellcheck artifact-cleanup.sh && bats tests/artifact_cleanup.bats",
+        "duration_ms": 1584,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p tests/fixtures && printf 'old-build\\t1000\\t2026-05-01T00:00:00Z\\t100\\nfresh-build\\t2000\\t2026-06-25T00:00:00Z\\t100\\nfresh-docs\\t3000\\t2026-06-28T00:00:00Z\\t200\\n' > tests/fixtures/basic.tsv &",
+        "duration_ms": 603,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker run --rm act-ubuntu-pwsh:latest bash -c 'which bats node npm jq; bats --version 2>/dev/null; node --version 2>/dev/null'",
+        "duration_ms": 569,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n run-act-tests.sh && shellcheck run-act-tests.sh && bats tests/workflow.bats && echo LINT_AND_STRUCTURE_OK",
+        "duration_ms": 534,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 371,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "which bats shellcheck actionlint act jq docker; bats --version; act --version 2>/dev/null; docker images | head -10",
+        "duration_ms": 325,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "ls -la /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-medium && cat /home/passp/repos/GHA-bench-fable5/AGENTS.md 2>/dev/null | head -50 && cat /",
+        "duration_ms": 315,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "ls -la /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-medium && cat /home/passp/repos/GHA-bench-fable5/AGENTS.md 2>/dev/null | head -50 && cat /",
+        "duration_ms": 315,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "which bats shellcheck actionlint act jq docker; bats --version; act --version 2>/dev/null; docker images | head -10",
+        "duration_ms": 325,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 58,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p tests/fixtures && printf 'old-build\\t1000\\t2026-05-01T00:00:00Z\\t100\\nfresh-build\\t2000\\t2026-06-25T00:00:00Z\\t100\\nfresh-docs\\t3000\\t2026-06-28T00:00:00Z\\t200\\n' > tests/fixtures/basic.tsv &",
+        "duration_ms": 603,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 176,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x artifact-cleanup.sh && bash -n artifact-cleanup.sh && shellcheck artifact-cleanup.sh && bats tests/artifact_cleanup.bats",
+        "duration_ms": 288,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 371,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n artifact-cleanup.sh && shellcheck artifact-cleanup.sh && bats tests/artifact_cleanup.bats",
+        "duration_ms": 1584,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker run --rm act-ubuntu-pwsh:latest bash -c 'which bats node npm jq; bats --version 2>/dev/null; node --version 2>/dev/null'",
+        "duration_ms": 569,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 65,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 122,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x ci/run-cleanup.sh && mkdir -p ci-fixtures && cp tests/fixtures/combined.tsv ci-fixtures/artifacts.tsv && printf 'POLICY_NOW=2026-07-01T00:00:00Z\\nPOLICY_MAX_AGE_DAYS=30\\nPOLICY_KEEP_LATEST=1\\",
+        "duration_ms": 86,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 63,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "shellcheck ci/run-cleanup.sh && bash -n ci/run-cleanup.sh && actionlint .github/workflows/artifact-cleanup-script.yml && echo ACTIONLINT_OK && ./ci/run-cleanup.sh",
+        "duration_ms": 197,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 46,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 158,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 143,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x run-act-tests.sh && bash -n run-act-tests.sh && shellcheck run-act-tests.sh && bats tests/workflow.bats",
+        "duration_ms": 160,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 126,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 148,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 128,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n run-act-tests.sh && shellcheck run-act-tests.sh && bats tests/workflow.bats && echo LINT_AND_STRUCTURE_OK",
+        "duration_ms": 248,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 135,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 127,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n run-act-tests.sh && shellcheck run-act-tests.sh && bats tests/workflow.bats && echo LINT_AND_STRUCTURE_OK",
+        "duration_ms": 534,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "./run-act-tests.sh",
+        "duration_ms": 1673,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "head -40 act-result.txt; echo ---; grep -niE 'error|fail' act-result.txt | head -20",
+        "duration_ms": 69,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 144,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "shellcheck run-act-tests.sh && ./run-act-tests.sh",
+        "duration_ms": 54558,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "ls -la act-result.txt && grep -c \"Job succeeded\" act-result.txt && grep -m2 \"ok 12\" act-result.txt; bats tests/ && shellcheck artifact-cleanup.sh ci/run-cleanup.sh run-act-tests.sh && bash -n artifact",
+        "duration_ms": 3061,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 63000,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 17,
+    "hook_errors_caught": 5,
+    "hook_failures": 0,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "93ed6e62-2874-47b2-96bb-d65b29c3c469",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "35f3263d-144c-4e9b-bb57-68e03221de1b",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "93ed6e62-2874-47b2-96bb-d65b29c3c469",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "35f3263d-144c-4e9b-bb57-68e03221de1b",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "96091801-7d0e-449b-84e9-7659828e528e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "96091801-7d0e-449b-84e9-7659828e528e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "117db36f-42a8-4772-bcbe-368836a86568",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "117db36f-42a8-4772-bcbe-368836a86568",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a4f5b8da-cca4-472c-9410-318ff1076cb6",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a4f5b8da-cca4-472c-9410-318ff1076cb6",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "76eda05f-deb5-4399-bbb9-1fc3f4bd4571",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "76eda05f-deb5-4399-bbb9-1fc3f4bd4571",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\n/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-medium/ci/run-cleanup.sh:5:1: error: Couldn't parse this shellcheck directive. Fix to allow more checks. [SC1073]\\n/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-medium/ci/run-cleanup.sh:5:13: error:  Fix any mentioned pro",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "46678ec5-44ba-477a-b19c-b3b8c9bffbe9",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "46678ec5-44ba-477a-b19c-b3b8c9bffbe9",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b43887e5-ce25-455b-b554-c02825bc9e3f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b43887e5-ce25-455b-b554-c02825bc9e3f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "33fafbea-848d-403c-b6e5-62b2d89d2acb",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "33fafbea-848d-403c-b6e5-62b2d89d2acb",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9c870db5-e525-44ba-bf77-97b35d4a1cfa",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9c870db5-e525-44ba-bf77-97b35d4a1cfa",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "02884d37-5399-47ae-aa18-668767e8f121",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "02884d37-5399-47ae-aa18-668767e8f121",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\n/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-medium/run-act-tests.sh:55:5: warning: Use 'cd ... || exit' or 'cd ... || return' in case cd fails. [SC2164]\\n/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-medium/run-act-tests.sh:97:115: warning: This $? refers to a cond",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "410d1560-9f54-491c-87e2-e05cfc0eb93b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "410d1560-9f54-491c-87e2-e05cfc0eb93b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\n/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-medium/run-act-tests.sh:97:115: warning: This $? refers to a condition, not a command. Assign to a variable to avoid it being overwritten. [SC2319]\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "74c67c7a-73c9-4ccf-87ad-04a843039b04",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "74c67c7a-73c9-4ccf-87ad-04a843039b04",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\n/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-medium/run-act-tests.sh:97:63: warning: This $? refers to a condition, not a command. Assign to a variable to avoid it being overwritten. [SC2319]\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2e014d4f-0b2c-454a-8336-bcd4e40ac459",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2e014d4f-0b2c-454a-8336-bcd4e40ac459",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\n/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/bash-fable5-medium/run-act-tests.sh:97:63: warning: This $? refers to a condition, not a command. Assign to a variable to avoid it being overwritten. [SC2319]\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6e49c2c4-6a9c-47fc-9ea1-73e4809c2933",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6e49c2c4-6a9c-47fc-9ea1-73e4809c2933",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "fa87a992-72f2-4eb5-ba36-31ea4a2ab692",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "fa87a992-72f2-4eb5-ba36-31ea4a2ab692",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "8de8b031-3bea-4ca6-b9b8-eaa27f4b08ab",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "8de8b031-3bea-4ca6-b9b8-eaa27f4b08ab",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}
