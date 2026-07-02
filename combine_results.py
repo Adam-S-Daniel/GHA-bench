@@ -537,10 +537,14 @@ def _build_markdown(
         "`opus47-200k` that actually served a 1M window is labeled `1m`.",
         "- **effort** — `effort_level` when the run recorded one; else "
         "`na` for Haiku 4.5 (which takes no effort parameter); else, for "
-        "the legacy Opus/Sonnet 4.6 runs that predate the flag, `high` if "
-        "the cell's Claude Code version is ≥ 2.1.117 else `medium` (the "
-        "CLI's default effort flipped from `medium` to `high` at 2.1.117); "
-        "else `medium`.",
+        "ANY effort-capable model run without `--effort`, the CLI's "
+        "version-dependent default: `high` if the cell's Claude Code "
+        "version is ≥ 2.1.117 else `medium` (the CLI default effort flipped "
+        "`medium`→`high` at 2.1.117). This covers both the legacy April "
+        "2026 Opus/Sonnet 4.6 no-effort runs (→ `medium`) and the "
+        "no-`--effort` base Sonnet 5 run, which ran at the current default "
+        "`high` (so it appears as `sonnet5-1m-high`, distinct from the "
+        "explicit `sonnet5-1m-medium` run).",
         "",
         "**Pooling.** Rows aggregate by the *derived* label above, not by "
         "the raw model_short. Cells with the same derived label but "
