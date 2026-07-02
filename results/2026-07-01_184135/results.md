@@ -1,7 +1,7 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-01 11:29:12 PM ET — 27/28 runs completed, 1 remaining; total cost $114.44; total agent time 286.4 min.
-**Claude Code versions used:** v2.1.198 (27 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
+**Last updated:** 2026-07-01 11:41:28 PM ET — 28/28 runs completed, 0 remaining; total cost $119.28; total agent time 299.2 min.
+**Claude Code versions used:** v2.1.198 (28 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
 
@@ -65,7 +65,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|----------|------|-----------|-------------|
 | bash | fable5-medium | A+ (8.0min) | A+ ($3.63) | — | — |
 | default | fable5-medium | A- (8.9min) | B- ($4.05) | — | — |
-| typescript-bun | fable5-medium | B- (10.5min) | D- ($4.62) | — | — |
+| typescript-bun | fable5-medium | B- (10.8min) | D- ($4.65) | — | — |
 | powershell | fable5-medium | D- (15.0min) | D- ($4.70) | — | — |
 
 
@@ -76,7 +76,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|----------|------|-----------|-------------|
 | bash | fable5-medium | A+ (8.0min) | A+ ($3.63) | — | — |
 | default | fable5-medium | A- (8.9min) | B- ($4.05) | — | — |
-| typescript-bun | fable5-medium | B- (10.5min) | D- ($4.62) | — | — |
+| typescript-bun | fable5-medium | B- (10.8min) | D- ($4.65) | — | — |
 | powershell | fable5-medium | D- (15.0min) | D- ($4.70) | — | — |
 
 </details>
@@ -88,7 +88,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|----------|------|-----------|-------------|
 | bash | fable5-medium | A+ (8.0min) | A+ ($3.63) | — | — |
 | default | fable5-medium | A- (8.9min) | B- ($4.05) | — | — |
-| typescript-bun | fable5-medium | B- (10.5min) | D- ($4.62) | — | — |
+| typescript-bun | fable5-medium | B- (10.8min) | D- ($4.65) | — | — |
 | powershell | fable5-medium | D- (15.0min) | D- ($4.70) | — | — |
 
 </details>
@@ -100,7 +100,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|----------|------|-----------|-------------|
 | bash | fable5-medium | A+ (8.0min) | A+ ($3.63) | — | — |
 | default | fable5-medium | A- (8.9min) | B- ($4.05) | — | — |
-| typescript-bun | fable5-medium | B- (10.5min) | D- ($4.62) | — | — |
+| typescript-bun | fable5-medium | B- (10.8min) | D- ($4.65) | — | — |
 | powershell | fable5-medium | D- (15.0min) | D- ($4.70) | — | — |
 
 </details>
@@ -112,13 +112,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|----------|------|-----------|-------------|
 | bash | fable5-medium | A+ (8.0min) | A+ ($3.63) | — | — |
 | default | fable5-medium | A- (8.9min) | B- ($4.05) | — | — |
-| typescript-bun | fable5-medium | B- (10.5min) | D- ($4.62) | — | — |
+| typescript-bun | fable5-medium | B- (10.8min) | D- ($4.65) | — | — |
 | powershell | fable5-medium | D- (15.0min) | D- ($4.70) | — | — |
 
 </details>
-
-- **Estimated time remaining:** 10.6min
-- **Estimated total cost:** $118.68
 
 ## Comparison by Language/Model/Effort
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
@@ -128,7 +125,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | fable5-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | — | — |
 | default | fable5-medium | 7 | 8.9min | 7.6min | 1.1 | 40 | $4.05 | $28.38 | — | — |
 | powershell | fable5-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | — | — |
-| typescript-bun | fable5-medium | 6 | 10.5min | 8.1min | 0.5 | 44 | $4.62 | $27.74 | — | — |
+| typescript-bun | fable5-medium | 7 | 10.8min | 8.1min | 0.4 | 43 | $4.65 | $32.58 | — | — |
 
 
 <details>
@@ -138,7 +135,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | bash | fable5-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | — | — |
 | default | fable5-medium | 7 | 8.9min | 7.6min | 1.1 | 40 | $4.05 | $28.38 | — | — |
-| typescript-bun | fable5-medium | 6 | 10.5min | 8.1min | 0.5 | 44 | $4.62 | $27.74 | — | — |
+| typescript-bun | fable5-medium | 7 | 10.8min | 8.1min | 0.4 | 43 | $4.65 | $32.58 | — | — |
 | powershell | fable5-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | — | — |
 
 </details>
@@ -150,7 +147,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | bash | fable5-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | — | — |
 | default | fable5-medium | 7 | 8.9min | 7.6min | 1.1 | 40 | $4.05 | $28.38 | — | — |
-| typescript-bun | fable5-medium | 6 | 10.5min | 8.1min | 0.5 | 44 | $4.62 | $27.74 | — | — |
+| typescript-bun | fable5-medium | 7 | 10.8min | 8.1min | 0.4 | 43 | $4.65 | $32.58 | — | — |
 | powershell | fable5-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | — | — |
 
 </details>
@@ -162,7 +159,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | bash | fable5-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | — | — |
 | default | fable5-medium | 7 | 8.9min | 7.6min | 1.1 | 40 | $4.05 | $28.38 | — | — |
-| typescript-bun | fable5-medium | 6 | 10.5min | 8.1min | 0.5 | 44 | $4.62 | $27.74 | — | — |
+| typescript-bun | fable5-medium | 7 | 10.8min | 8.1min | 0.4 | 43 | $4.65 | $32.58 | — | — |
 | powershell | fable5-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | — | — |
 
 </details>
@@ -172,7 +169,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| typescript-bun | fable5-medium | 6 | 10.5min | 8.1min | 0.5 | 44 | $4.62 | $27.74 | — | — |
+| typescript-bun | fable5-medium | 7 | 10.8min | 8.1min | 0.4 | 43 | $4.65 | $32.58 | — | — |
 | default | fable5-medium | 7 | 8.9min | 7.6min | 1.1 | 40 | $4.05 | $28.38 | — | — |
 | bash | fable5-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | — | — |
 | powershell | fable5-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | — | — |
@@ -187,7 +184,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | fable5-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | — | — |
 | bash | fable5-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | — | — |
 | default | fable5-medium | 7 | 8.9min | 7.6min | 1.1 | 40 | $4.05 | $28.38 | — | — |
-| typescript-bun | fable5-medium | 6 | 10.5min | 8.1min | 0.5 | 44 | $4.62 | $27.74 | — | — |
+| typescript-bun | fable5-medium | 7 | 10.8min | 8.1min | 0.4 | 43 | $4.65 | $32.58 | — | — |
 
 </details>
 
@@ -199,7 +196,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | fable5-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | — | — |
 | default | fable5-medium | 7 | 8.9min | 7.6min | 1.1 | 40 | $4.05 | $28.38 | — | — |
 | powershell | fable5-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | — | — |
-| typescript-bun | fable5-medium | 6 | 10.5min | 8.1min | 0.5 | 44 | $4.62 | $27.74 | — | — |
+| typescript-bun | fable5-medium | 7 | 10.8min | 8.1min | 0.4 | 43 | $4.65 | $32.58 | — | — |
 
 </details>
 
@@ -211,7 +208,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | fable5-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | — | — |
 | default | fable5-medium | 7 | 8.9min | 7.6min | 1.1 | 40 | $4.05 | $28.38 | — | — |
 | powershell | fable5-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | — | — |
-| typescript-bun | fable5-medium | 6 | 10.5min | 8.1min | 0.5 | 44 | $4.62 | $27.74 | — | — |
+| typescript-bun | fable5-medium | 7 | 10.8min | 8.1min | 0.4 | 43 | $4.65 | $32.58 | — | — |
 
 </details>
 
@@ -226,10 +223,10 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| bash | fable5-medium-cli2.1.198 | 130 | 8 | 6.2% | 1.6min | 0.6% | 0.1min | 0.0% | 1.5min | 0.5% | 8.7min | 14.5% |
+| bash | fable5-medium-cli2.1.198 | 130 | 8 | 6.2% | 1.6min | 0.5% | 0.1min | 0.0% | 1.5min | 0.5% | 8.7min | 14.5% |
 | default | fable5-medium-cli2.1.198 | 140 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 8.0min | -4.5% |
-| powershell | fable5-medium-cli2.1.198 | 129 | 20 | 15.5% | 11.7min | 4.1% | 18.6min | 6.5% | -7.0min | -2.4% | 5.9min | 652.9% |
-| typescript-bun | fable5-medium-cli2.1.198 | 137 | 59 | 43.1% | 7.9min | 2.7% | 9.3min | 3.2% | -1.4min | -0.5% | 6.5min | -27.7% |
+| powershell | fable5-medium-cli2.1.198 | 129 | 20 | 15.5% | 11.7min | 3.9% | 18.6min | 6.2% | -7.0min | -2.3% | 5.9min | 652.9% |
+| typescript-bun | fable5-medium-cli2.1.198 | 159 | 68 | 42.8% | 9.1min | 3.0% | 10.6min | 3.5% | -1.5min | -0.5% | 8.4min | -22.0% |
 
 
 <details>
@@ -237,10 +234,10 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| bash | fable5-medium-cli2.1.198 | 130 | 8 | 6.2% | 1.6min | 0.6% | 0.1min | 0.0% | 1.5min | 0.5% | 8.7min | 14.5% |
+| bash | fable5-medium-cli2.1.198 | 130 | 8 | 6.2% | 1.6min | 0.5% | 0.1min | 0.0% | 1.5min | 0.5% | 8.7min | 14.5% |
 | default | fable5-medium-cli2.1.198 | 140 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 8.0min | -4.5% |
-| typescript-bun | fable5-medium-cli2.1.198 | 137 | 59 | 43.1% | 7.9min | 2.7% | 9.3min | 3.2% | -1.4min | -0.5% | 6.5min | -27.7% |
-| powershell | fable5-medium-cli2.1.198 | 129 | 20 | 15.5% | 11.7min | 4.1% | 18.6min | 6.5% | -7.0min | -2.4% | 5.9min | 652.9% |
+| typescript-bun | fable5-medium-cli2.1.198 | 159 | 68 | 42.8% | 9.1min | 3.0% | 10.6min | 3.5% | -1.5min | -0.5% | 8.4min | -22.0% |
+| powershell | fable5-medium-cli2.1.198 | 129 | 20 | 15.5% | 11.7min | 3.9% | 18.6min | 6.2% | -7.0min | -2.3% | 5.9min | 652.9% |
 
 </details>
 
@@ -249,10 +246,10 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| powershell | fable5-medium-cli2.1.198 | 129 | 20 | 15.5% | 11.7min | 4.1% | 18.6min | 6.5% | -7.0min | -2.4% | 5.9min | 652.9% |
-| bash | fable5-medium-cli2.1.198 | 130 | 8 | 6.2% | 1.6min | 0.6% | 0.1min | 0.0% | 1.5min | 0.5% | 8.7min | 14.5% |
+| powershell | fable5-medium-cli2.1.198 | 129 | 20 | 15.5% | 11.7min | 3.9% | 18.6min | 6.2% | -7.0min | -2.3% | 5.9min | 652.9% |
+| bash | fable5-medium-cli2.1.198 | 130 | 8 | 6.2% | 1.6min | 0.5% | 0.1min | 0.0% | 1.5min | 0.5% | 8.7min | 14.5% |
 | default | fable5-medium-cli2.1.198 | 140 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 8.0min | -4.5% |
-| typescript-bun | fable5-medium-cli2.1.198 | 137 | 59 | 43.1% | 7.9min | 2.7% | 9.3min | 3.2% | -1.4min | -0.5% | 6.5min | -27.7% |
+| typescript-bun | fable5-medium-cli2.1.198 | 159 | 68 | 42.8% | 9.1min | 3.0% | 10.6min | 3.5% | -1.5min | -0.5% | 8.4min | -22.0% |
 
 </details>
 
@@ -261,9 +258,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| typescript-bun | fable5-medium-cli2.1.198 | 137 | 59 | 43.1% | 7.9min | 2.7% | 9.3min | 3.2% | -1.4min | -0.5% | 6.5min | -27.7% |
-| powershell | fable5-medium-cli2.1.198 | 129 | 20 | 15.5% | 11.7min | 4.1% | 18.6min | 6.5% | -7.0min | -2.4% | 5.9min | 652.9% |
-| bash | fable5-medium-cli2.1.198 | 130 | 8 | 6.2% | 1.6min | 0.6% | 0.1min | 0.0% | 1.5min | 0.5% | 8.7min | 14.5% |
+| typescript-bun | fable5-medium-cli2.1.198 | 159 | 68 | 42.8% | 9.1min | 3.0% | 10.6min | 3.5% | -1.5min | -0.5% | 8.4min | -22.0% |
+| powershell | fable5-medium-cli2.1.198 | 129 | 20 | 15.5% | 11.7min | 3.9% | 18.6min | 6.2% | -7.0min | -2.3% | 5.9min | 652.9% |
+| bash | fable5-medium-cli2.1.198 | 130 | 8 | 6.2% | 1.6min | 0.5% | 0.1min | 0.0% | 1.5min | 0.5% | 8.7min | 14.5% |
 | default | fable5-medium-cli2.1.198 | 140 | 0 | 0.0% | 0.0min | 0.0% | 0.3min | 0.1% | -0.3min | -0.1% | 8.0min | -4.5% |
 
 </details>
@@ -272,13 +269,13 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | bash | fable5-medium-cli2.1.198 | 4 | 6.7min | 2.3% | $3.11 | 2.72% |
-| repeated-test-reruns | default | fable5-medium-cli2.1.198 | 4 | 8.3min | 2.9% | $3.61 | 3.15% |
-| repeated-test-reruns | powershell | fable5-medium-cli2.1.198 | 1 | 2.7min | 0.9% | $1.07 | 0.94% |
-| repeated-test-reruns | typescript-bun | fable5-medium-cli2.1.198 | 2 | 2.7min | 0.9% | $1.03 | 0.90% |
-| ts-type-error-fix-cycles | typescript-bun | fable5-medium-cli2.1.198 | 6 | 11.8min | 4.1% | $5.07 | 4.43% |
-| fixture-rework | bash | fable5-medium-cli2.1.198 | 1 | 0.5min | 0.2% | $0.21 | 0.18% |
-| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 0.3% | $0.35 | 0.31% |
+| repeated-test-reruns | bash | fable5-medium-cli2.1.198 | 4 | 6.7min | 2.2% | $3.11 | 2.61% |
+| repeated-test-reruns | default | fable5-medium-cli2.1.198 | 4 | 8.3min | 2.8% | $3.61 | 3.03% |
+| repeated-test-reruns | powershell | fable5-medium-cli2.1.198 | 1 | 2.7min | 0.9% | $1.07 | 0.90% |
+| repeated-test-reruns | typescript-bun | fable5-medium-cli2.1.198 | 3 | 5.3min | 1.8% | $2.04 | 1.71% |
+| ts-type-error-fix-cycles | typescript-bun | fable5-medium-cli2.1.198 | 7 | 13.6min | 4.5% | $5.75 | 4.82% |
+| fixture-rework | bash | fable5-medium-cli2.1.198 | 1 | 0.5min | 0.2% | $0.21 | 0.17% |
+| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 0.3% | $0.35 | 0.29% |
 
 
 <details>
@@ -286,13 +283,13 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | bash | fable5-medium-cli2.1.198 | 1 | 0.5min | 0.2% | $0.21 | 0.18% |
-| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 0.3% | $0.35 | 0.31% |
-| repeated-test-reruns | powershell | fable5-medium-cli2.1.198 | 1 | 2.7min | 0.9% | $1.07 | 0.94% |
-| repeated-test-reruns | typescript-bun | fable5-medium-cli2.1.198 | 2 | 2.7min | 0.9% | $1.03 | 0.90% |
-| repeated-test-reruns | bash | fable5-medium-cli2.1.198 | 4 | 6.7min | 2.3% | $3.11 | 2.72% |
-| repeated-test-reruns | default | fable5-medium-cli2.1.198 | 4 | 8.3min | 2.9% | $3.61 | 3.15% |
-| ts-type-error-fix-cycles | typescript-bun | fable5-medium-cli2.1.198 | 6 | 11.8min | 4.1% | $5.07 | 4.43% |
+| fixture-rework | bash | fable5-medium-cli2.1.198 | 1 | 0.5min | 0.2% | $0.21 | 0.17% |
+| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 0.3% | $0.35 | 0.29% |
+| repeated-test-reruns | powershell | fable5-medium-cli2.1.198 | 1 | 2.7min | 0.9% | $1.07 | 0.90% |
+| repeated-test-reruns | typescript-bun | fable5-medium-cli2.1.198 | 3 | 5.3min | 1.8% | $2.04 | 1.71% |
+| repeated-test-reruns | bash | fable5-medium-cli2.1.198 | 4 | 6.7min | 2.2% | $3.11 | 2.61% |
+| repeated-test-reruns | default | fable5-medium-cli2.1.198 | 4 | 8.3min | 2.8% | $3.61 | 3.03% |
+| ts-type-error-fix-cycles | typescript-bun | fable5-medium-cli2.1.198 | 7 | 13.6min | 4.5% | $5.75 | 4.82% |
 
 </details>
 
@@ -301,13 +298,13 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | bash | fable5-medium-cli2.1.198 | 1 | 0.5min | 0.2% | $0.21 | 0.18% |
-| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 0.3% | $0.35 | 0.31% |
-| repeated-test-reruns | typescript-bun | fable5-medium-cli2.1.198 | 2 | 2.7min | 0.9% | $1.03 | 0.90% |
-| repeated-test-reruns | powershell | fable5-medium-cli2.1.198 | 1 | 2.7min | 0.9% | $1.07 | 0.94% |
-| repeated-test-reruns | bash | fable5-medium-cli2.1.198 | 4 | 6.7min | 2.3% | $3.11 | 2.72% |
-| repeated-test-reruns | default | fable5-medium-cli2.1.198 | 4 | 8.3min | 2.9% | $3.61 | 3.15% |
-| ts-type-error-fix-cycles | typescript-bun | fable5-medium-cli2.1.198 | 6 | 11.8min | 4.1% | $5.07 | 4.43% |
+| fixture-rework | bash | fable5-medium-cli2.1.198 | 1 | 0.5min | 0.2% | $0.21 | 0.17% |
+| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 0.3% | $0.35 | 0.29% |
+| repeated-test-reruns | powershell | fable5-medium-cli2.1.198 | 1 | 2.7min | 0.9% | $1.07 | 0.90% |
+| repeated-test-reruns | typescript-bun | fable5-medium-cli2.1.198 | 3 | 5.3min | 1.8% | $2.04 | 1.71% |
+| repeated-test-reruns | bash | fable5-medium-cli2.1.198 | 4 | 6.7min | 2.2% | $3.11 | 2.61% |
+| repeated-test-reruns | default | fable5-medium-cli2.1.198 | 4 | 8.3min | 2.8% | $3.61 | 3.03% |
+| ts-type-error-fix-cycles | typescript-bun | fable5-medium-cli2.1.198 | 7 | 13.6min | 4.5% | $5.75 | 4.82% |
 
 </details>
 
@@ -316,13 +313,13 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | powershell | fable5-medium-cli2.1.198 | 1 | 2.7min | 0.9% | $1.07 | 0.94% |
-| fixture-rework | bash | fable5-medium-cli2.1.198 | 1 | 0.5min | 0.2% | $0.21 | 0.18% |
-| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 0.3% | $0.35 | 0.31% |
-| repeated-test-reruns | typescript-bun | fable5-medium-cli2.1.198 | 2 | 2.7min | 0.9% | $1.03 | 0.90% |
-| repeated-test-reruns | bash | fable5-medium-cli2.1.198 | 4 | 6.7min | 2.3% | $3.11 | 2.72% |
-| repeated-test-reruns | default | fable5-medium-cli2.1.198 | 4 | 8.3min | 2.9% | $3.61 | 3.15% |
-| ts-type-error-fix-cycles | typescript-bun | fable5-medium-cli2.1.198 | 6 | 11.8min | 4.1% | $5.07 | 4.43% |
+| repeated-test-reruns | powershell | fable5-medium-cli2.1.198 | 1 | 2.7min | 0.9% | $1.07 | 0.90% |
+| fixture-rework | bash | fable5-medium-cli2.1.198 | 1 | 0.5min | 0.2% | $0.21 | 0.17% |
+| fixture-rework | default | fable5-medium-cli2.1.198 | 1 | 0.8min | 0.3% | $0.35 | 0.29% |
+| repeated-test-reruns | typescript-bun | fable5-medium-cli2.1.198 | 3 | 5.3min | 1.8% | $2.04 | 1.71% |
+| repeated-test-reruns | bash | fable5-medium-cli2.1.198 | 4 | 6.7min | 2.2% | $3.11 | 2.61% |
+| repeated-test-reruns | default | fable5-medium-cli2.1.198 | 4 | 8.3min | 2.8% | $3.61 | 3.03% |
+| ts-type-error-fix-cycles | typescript-bun | fable5-medium-cli2.1.198 | 7 | 13.6min | 4.5% | $5.75 | 4.82% |
 
 </details>
 
@@ -345,10 +342,10 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| bash | fable5-medium-cli2.1.198 | 7 | 5 | 7.2min | 2.5% | $3.32 | 2.90% |
-| default | fable5-medium-cli2.1.198 | 7 | 5 | 9.1min | 3.2% | $3.96 | 3.46% |
-| powershell | fable5-medium-cli2.1.198 | 7 | 1 | 2.7min | 0.9% | $1.07 | 0.94% |
-| typescript-bun | fable5-medium-cli2.1.198 | 6 | 8 | 14.5min | 5.1% | $6.10 | 5.33% |
+| bash | fable5-medium-cli2.1.198 | 7 | 5 | 7.2min | 2.4% | $3.32 | 2.78% |
+| default | fable5-medium-cli2.1.198 | 7 | 5 | 9.1min | 3.0% | $3.96 | 3.32% |
+| powershell | fable5-medium-cli2.1.198 | 7 | 1 | 2.7min | 0.9% | $1.07 | 0.90% |
+| typescript-bun | fable5-medium-cli2.1.198 | 7 | 10 | 18.9min | 6.3% | $7.79 | 6.53% |
 
 
 <details>
@@ -356,10 +353,10 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| powershell | fable5-medium-cli2.1.198 | 7 | 1 | 2.7min | 0.9% | $1.07 | 0.94% |
-| bash | fable5-medium-cli2.1.198 | 7 | 5 | 7.2min | 2.5% | $3.32 | 2.90% |
-| default | fable5-medium-cli2.1.198 | 7 | 5 | 9.1min | 3.2% | $3.96 | 3.46% |
-| typescript-bun | fable5-medium-cli2.1.198 | 6 | 8 | 14.5min | 5.1% | $6.10 | 5.33% |
+| powershell | fable5-medium-cli2.1.198 | 7 | 1 | 2.7min | 0.9% | $1.07 | 0.90% |
+| bash | fable5-medium-cli2.1.198 | 7 | 5 | 7.2min | 2.4% | $3.32 | 2.78% |
+| default | fable5-medium-cli2.1.198 | 7 | 5 | 9.1min | 3.0% | $3.96 | 3.32% |
+| typescript-bun | fable5-medium-cli2.1.198 | 7 | 10 | 18.9min | 6.3% | $7.79 | 6.53% |
 
 </details>
 
@@ -368,10 +365,10 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| powershell | fable5-medium-cli2.1.198 | 7 | 1 | 2.7min | 0.9% | $1.07 | 0.94% |
-| bash | fable5-medium-cli2.1.198 | 7 | 5 | 7.2min | 2.5% | $3.32 | 2.90% |
-| default | fable5-medium-cli2.1.198 | 7 | 5 | 9.1min | 3.2% | $3.96 | 3.46% |
-| typescript-bun | fable5-medium-cli2.1.198 | 6 | 8 | 14.5min | 5.1% | $6.10 | 5.33% |
+| powershell | fable5-medium-cli2.1.198 | 7 | 1 | 2.7min | 0.9% | $1.07 | 0.90% |
+| bash | fable5-medium-cli2.1.198 | 7 | 5 | 7.2min | 2.4% | $3.32 | 2.78% |
+| default | fable5-medium-cli2.1.198 | 7 | 5 | 9.1min | 3.0% | $3.96 | 3.32% |
+| typescript-bun | fable5-medium-cli2.1.198 | 7 | 10 | 18.9min | 6.3% | $7.79 | 6.53% |
 
 </details>
 
@@ -380,7 +377,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | Status | Runs | $ Saved | % of $ |
 |--------|------|---------|--------|
 | Full hit (100%) | 0 | $0.00 | 0.00% |
-| Partial | 26 | $5.48 | 4.79% |
+| Partial | 27 | $5.69 | 4.77% |
 | Miss | 1 | $0.00 | 0.00% |
 
 ## Test Quality Evaluation
@@ -394,7 +391,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | bash | fable5-medium | 22.6 | 46.3 | 2.1 | 0.69 |
 | default | fable5-medium | 22.9 | 43.7 | 1.9 | 0.96 |
 | powershell | fable5-medium | 36.9 | 69.1 | 1.9 | 5.45 |
-| typescript-bun | fable5-medium | 33.3 | 64.0 | 1.9 | 1.26 |
+| typescript-bun | fable5-medium | 34.4 | 67.1 | 2.0 | 1.17 |
 
 
 <details>
@@ -403,7 +400,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
 | powershell | fable5-medium | 36.9 | 69.1 | 1.9 | 5.45 |
-| typescript-bun | fable5-medium | 33.3 | 64.0 | 1.9 | 1.26 |
+| typescript-bun | fable5-medium | 34.4 | 67.1 | 2.0 | 1.17 |
 | default | fable5-medium | 22.9 | 43.7 | 1.9 | 0.96 |
 | bash | fable5-medium | 22.6 | 46.3 | 2.1 | 0.69 |
 
@@ -415,7 +412,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
 | powershell | fable5-medium | 36.9 | 69.1 | 1.9 | 5.45 |
-| typescript-bun | fable5-medium | 33.3 | 64.0 | 1.9 | 1.26 |
+| typescript-bun | fable5-medium | 34.4 | 67.1 | 2.0 | 1.17 |
 | bash | fable5-medium | 22.6 | 46.3 | 2.1 | 0.69 |
 | default | fable5-medium | 22.9 | 43.7 | 1.9 | 0.96 |
 
@@ -427,7 +424,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
 | powershell | fable5-medium | 36.9 | 69.1 | 1.9 | 5.45 |
-| typescript-bun | fable5-medium | 33.3 | 64.0 | 1.9 | 1.26 |
+| typescript-bun | fable5-medium | 34.4 | 67.1 | 2.0 | 1.17 |
 | default | fable5-medium | 22.9 | 43.7 | 1.9 | 0.96 |
 | bash | fable5-medium | 22.6 | 46.3 | 2.1 | 0.69 |
 
@@ -466,6 +463,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Secret Rotation Validator | default | fable5-medium | 32 | 62 | 1.9 | 370 | 233 | 1.59 |
 | Secret Rotation Validator | powershell | fable5-medium | 39 | 79 | 2.0 | 460 | 279 | 1.65 |
 | Secret Rotation Validator | bash | fable5-medium | 22 | 59 | 2.7 | 205 | 355 | 0.58 |
+| Secret Rotation Validator | typescript-bun | fable5-medium | 41 | 86 | 2.1 | 496 | 733 | 0.68 |
 
 </details>
 
@@ -494,6 +492,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Secret Rotation Validator | bash | fable5-medium | 9.4min | 37 | 0 | $3.92 | — | bash | ok |
 | Secret Rotation Validator | default | fable5-medium | 7.3min | 32 | 0 | $3.13 | — | python | ok |
 | Secret Rotation Validator | powershell | fable5-medium | 18.0min | 30 | 5 | $5.33 | — | powershell | ok |
+| Secret Rotation Validator | typescript-bun | fable5-medium | 12.7min | 42 | 0 | $4.84 | — | typescript | ok |
 | Semantic Version Bumper | bash | fable5-medium | 8.4min | 39 | 1 | $3.99 | — | bash | ok |
 | Semantic Version Bumper | default | fable5-medium | 9.1min | 35 | 2 | $4.21 | — | javascript | ok |
 | Semantic Version Bumper | powershell | fable5-medium | 19.0min | 36 | 4 | $4.65 | — | powershell | ok |
@@ -528,6 +527,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | PR Label Assigner | typescript-bun | fable5-medium | 11.9min | 46 | 0 | $4.46 | — | typescript | ok |
 | Environment Matrix Generator | default | fable5-medium | 10.6min | 47 | 2 | $4.57 | — | python | ok |
 | Semantic Version Bumper | powershell | fable5-medium | 19.0min | 36 | 4 | $4.65 | — | powershell | ok |
+| Secret Rotation Validator | typescript-bun | fable5-medium | 12.7min | 42 | 0 | $4.84 | — | typescript | ok |
 | Test Results Aggregator | typescript-bun | fable5-medium | 10.7min | 46 | 0 | $4.98 | — | typescript | ok |
 | Environment Matrix Generator | typescript-bun | fable5-medium | 7.9min | 36 | 3 | $5.00 | — | typescript | ok |
 | Test Results Aggregator | powershell | fable5-medium | 15.2min | 40 | 5 | $5.09 | — | powershell | ok |
@@ -566,6 +566,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | PR Label Assigner | powershell | fable5-medium | 12.0min | 32 | 1 | $3.41 | — | powershell | ok |
 | Artifact Cleanup Script | default | fable5-medium | 12.1min | 52 | 0 | $5.22 | — | python | ok |
 | Environment Matrix Generator | powershell | fable5-medium | 12.6min | 34 | 6 | $4.34 | — | powershell | ok |
+| Secret Rotation Validator | typescript-bun | fable5-medium | 12.7min | 42 | 0 | $4.84 | — | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | fable5-medium | 14.5min | 51 | 0 | $5.68 | — | typescript | ok |
 | Test Results Aggregator | powershell | fable5-medium | 15.2min | 40 | 5 | $5.09 | — | powershell | ok |
 | Artifact Cleanup Script | powershell | fable5-medium | 17.1min | 46 | 1 | $6.86 | — | powershell | ok |
@@ -587,6 +588,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Artifact Cleanup Script | typescript-bun | fable5-medium | 14.5min | 51 | 0 | $5.68 | — | typescript | ok |
 | Secret Rotation Validator | default | fable5-medium | 7.3min | 32 | 0 | $3.13 | — | python | ok |
 | Secret Rotation Validator | bash | fable5-medium | 9.4min | 37 | 0 | $3.92 | — | bash | ok |
+| Secret Rotation Validator | typescript-bun | fable5-medium | 12.7min | 42 | 0 | $4.84 | — | typescript | ok |
 | Semantic Version Bumper | bash | fable5-medium | 8.4min | 39 | 1 | $3.99 | — | bash | ok |
 | PR Label Assigner | default | fable5-medium | 6.8min | 35 | 1 | $3.04 | — | python | ok |
 | PR Label Assigner | powershell | fable5-medium | 12.0min | 32 | 1 | $3.41 | — | powershell | ok |
@@ -632,6 +634,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Secret Rotation Validator | bash | fable5-medium | 9.4min | 37 | 0 | $3.92 | — | bash | ok |
 | Semantic Version Bumper | bash | fable5-medium | 8.4min | 39 | 1 | $3.99 | — | bash | ok |
 | Test Results Aggregator | powershell | fable5-medium | 15.2min | 40 | 5 | $5.09 | — | powershell | ok |
+| Secret Rotation Validator | typescript-bun | fable5-medium | 12.7min | 42 | 0 | $4.84 | — | typescript | ok |
 | PR Label Assigner | bash | fable5-medium | 8.6min | 46 | 2 | $4.15 | — | bash | ok |
 | PR Label Assigner | typescript-bun | fable5-medium | 11.9min | 46 | 0 | $4.46 | — | typescript | ok |
 | Dependency License Checker | typescript-bun | fable5-medium | 9.2min | 46 | 0 | $4.24 | — | typescript | ok |
@@ -676,6 +679,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Secret Rotation Validator | default | fable5-medium | 7.3min | 32 | 0 | $3.13 | — | python | ok |
 | Secret Rotation Validator | powershell | fable5-medium | 18.0min | 30 | 5 | $5.33 | — | powershell | ok |
 | Secret Rotation Validator | bash | fable5-medium | 9.4min | 37 | 0 | $3.92 | — | bash | ok |
+| Secret Rotation Validator | typescript-bun | fable5-medium | 12.7min | 42 | 0 | $4.84 | — | typescript | ok |
 
 </details>
 
