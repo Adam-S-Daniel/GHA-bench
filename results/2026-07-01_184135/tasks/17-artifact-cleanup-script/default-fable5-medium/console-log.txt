@@ -1,0 +1,370 @@
+[Assistant] I'll start by looking at the project context and environment.
+[Tool: Bash] cat /home/passp/repos/GHA-bench-fable5/AGENTS.md 2>/dev/null | head -50; echo ---; ls -la; echo ---; cat .actrc 2>/dev/null; echo ---; cat benchmark-instructions-v4.md 2>/dev/null | head -80
+[Result] # Agent Instructions
+
+All agent-facing instructions live in this file. `CLAUDE.md` contains only a
+reference here. If you are a Claude Code agent, you have already loaded this
+via `CLAUDE.md`. Other agents: read this file directly.
+
+## Build and test
+
+```bash
+# Run unit tests (REQUIRED before every PR)
+pip install pytest  # if not already installed
+python3 -m pytest tests/ -v
+
+# Validate imports
+python3 -c "from runner import main"
+python3 -c "from generate_results import generate_results_md"
+python3 -c "from test_quality import compute_structural_metrics"
+python3 -c "from llm_providers import get_provider"
+python3 -c "from version_docs import build_doc, main"
+python3 -c "from combine_results import combine"
+
+# Regenerate all reports
+python3 generate_results.py --all
+
+# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
+# powershell-tool. For multi-(model,effort) matrices, run sequentially via
+# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py -
+[Tool: Bash] python3 --version; python3 -m pytest --version 2>&1 | head -1; actionlint --version | head -1; act --version; docker image inspect act-ubuntu-pwsh:latest --format '{{.Id}}' >/dev/null 2>&1 && echo "image present"; docker run --rm act-ubuntu-pwsh:latest bash -c 'python3 --version; pip3 --version 2>&1 | head -1; python3 -m pytest --version 2>&1 | head -1' 2>&1 | tail -4
+[Result] Python 3.12.3
+pytest 9.0.3
+1.7.12
+act version 0.2.87
+image present
+Python 3.12.3
+pip 24.0 from /usr/lib/python3/dist-packages/pip (python 3.12)
+/usr/bin/python3: No module named pytest
+[Tool: Bash] mkdir -p tests fixtures .github/workflows
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py", "content": "\"\"\"Unit tests for the ar
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py", "old_string": "fr
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -5
+[Result] E   ModuleNotFoundError: No module named 'artifact_cleanup'
+=========================== short test summary info ============================
+ERROR tests/test_artifact_cleanup.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.34s
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py", "content": "\"\"\"Artifact retention planner.\n\nG
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -2
+[Result] .                                                                        [100%]
+1 passed in 0.03s
+[Assistant] **RED 2** — keep-latest-N per workflow run.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py", "old_string": "  
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -3
+[Result] =========================== short test summary info ============================
+FAILED tests/test_artifact_cleanup.py::TestKeepLatestNPolicy::test_keeps_only_newest_n_per_workflow_run
+1 failed, 2 passed in 0.13s
+[Assistant] **GREEN 2** — implement keep-latest-N.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py", "old_string": "    max_age_d
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py", "old_string": "def build_pla
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -2
+[Result] ...                                                                      [100%]
+3 passed in 0.29s
+[Assistant] **RED 3** — max total size budget (delete oldest retained until under budget), plus deletion reasons.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py", "old_string": "  
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py", "old_string": "  
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -4
+[Result] FAILED tests/test_artifact_cleanup.py::TestMaxTotalSizePolicy::test_oldest_artifacts_evicted_until_under_budget
+FAILED tests/test_artifact_cleanup.py::TestMaxTotalSizePolicy::test_within_budget_deletes_nothing
+FAILED tests/test_artifact_cleanup.py::TestDeletionReasons::test_each_deletion_records_the_policy_that_caused_it
+3 failed, 3 passed in 0.76s
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py", "old_string": "    max_age_d
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -2
+[Result] ......                                                                   [100%]
+6 passed in 0.25s
+[Assistant] **RED 4** — plan summary and parsing mock JSON data with error handling.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py", "old_string": "  
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -6
+[Result] FAILED tests/test_artifact_cleanup.py::TestSummary::test_summary_totals - Att...
+FAILED tests/test_artifact_cleanup.py::TestParseArtifacts::test_parses_valid_records
+FAILED tests/test_artifact_cleanup.py::TestParseArtifacts::test_missing_field_raises_meaningful_error
+FAILED tests/test_artifact_cleanup.py::TestParseArtifacts::test_bad_date_raises_meaningful_error
+FAILED tests/test_artifact_cleanup.py::TestParseArtifacts::test_negative_size_raises_meaningful_error
+5 failed, 6 passed in 0.05s
+[Assistant] **GREEN 4** — implement `summary()`, `parse_artifacts`, and `CleanupError`.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py", "old_string": "from dataclas
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py", "old_string": "    def delet
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -2
+[Result] ...........                                                              [100%]
+11 passed in 0.02s
+[Assistant] **RED 5** — the CLI: dry-run vs execute mode, machine-parseable summary output, error exit codes.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py", "old_string": "  
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py", "old_string": "  
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now the CLI tests (new file, since they exercise the command-line layer):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_cli.py", "content": "\"\"\"CLI-level tests: dry-run vs execut
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_cli.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -3
+[Result] ERROR tests/test_cli.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.15s
+[Assistant] **GREEN 5** — implement the CLI with dry-run support.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py", "old_string": "from dataclas
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/artifact_cleanup.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] tail -5 artifact_cleanup.py
+[Result]             survivors.remove(artifact)
+            total -= artifact.size_bytes
+
+    plan.retained = survivors
+    return plan
+[Tool: Bash] cat >> artifact_cleanup.py << 'EOF'
+
+
+# --------------------------------------------------------------------------
+# CLI layer
+# --------------------------------------------------------------------------
+
+def _parse_args(argv):
+    parser = argparse.ArgumentParser(
+        prog="artifact_cleanup",
+        description="Plan (and mock-execute) CI artifact deletion under retention policies.",
+    )
+    parser.add_argument("--input", required=True, help="JSON file with the artifact list")
+    parser.add_argument("--max-age-days", type=int, default=None,
+                        help="delete artifacts older than this many days")
+    parser.add_argument("--keep-latest", type=int, default=None,
+                        help="keep only the N newest artifacts per workflow run")
+    parser.add_argument("--max-total-size", type=int, default=None,
+                        help="total retained size budget in bytes")
+    parser.add_argument("--now", default=None,
+                        help="ISO 8601 reference time (defaults to current UTC time)")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="print the plan without performing deletions")
+    parser.add_argument("--output", default=None,
+                        help="also write the full plan as JSON to this file")
+    return parser.parse_args(argv)
+
+
+def _load_records(path):
+    """Read and JSON-decode the input file, with user-friendly errors."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            raw = fh.read()
+    except OSError as exc:
+        raise CleanupError(f"cannot read input file '{path}': {exc.strerror}") from None
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise CleanupError(f"input file '{path}' is not valid JSON: {exc}") from None
+
+
+def _delete_artifact(artifact):
+    """Mock deletion: the data is synthetic, so 'deleting' just reports.
+
+    In a real integration this is the single seam to swap for a call to
+    the GitHub API (DELETE /repos/{o}/{r}/actions/artifacts/{id}).
+    """
+    print(f"Deleted artifact '{artifact.name}'")
+
+
+def run_cli(argv=None):
+    """Entry point. Returns a process exit code (0 ok, 2 bad input)."""
+    args = _parse_args(argv)
+    try:
+        if args.now is not None:
+            try:
+                now = datetime.fromisoformat(args.now.replace("Z", "+00:00"))
+            except ValueError:
+                raise CleanupError(
+                    f"invalid --now value '{args.now}' (expected ISO 8601)"
+                ) from None
+        else:
+            now = datetime.now(timezone.utc)
+
+        artifacts = parse_artifacts(_load_records(args.input))
+        policy = RetentionPolicy(
+            max_age_days=args.max_age_days,
+            keep_latest_n=args.keep_latest,
+            max_total_bytes=args.max_total_size,
+        )
+        plan = build_plan(artifacts, policy, now=now)
+    except CleanupError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    mode = "DRY RUN - nothing will be deleted" if args.dry_run else "EXECUTE"
+    print(f"Artifact cleanup plan ({mode})")
+    for artifact in plan.deleted:
+        print(f"DELETE {artifact.name} ({artifact.size_bytes} bytes) "
+              f"- {plan.reasons[artifact.name]}")
+    for artifact in plan.retained:
+        print(f"KEEP   {artifact.name} ({artifact.size_bytes} bytes)")
+
+    if not args.dry_run:
+        for artifact in plan.deleted:
+            _delete_artifact(artifact)
+
+    # Machine-parseable summary block (asserted on by the CI pipeline tests).
+    summary = plan.summary()
+    print(f"RETAINED_COUNT={summary['retained_count']}")
+    print(f"DELETED_COUNT={summary['deleted_count']}")
+    print(f"SPACE_RECLAIMED_BYTES={summary['space_reclaimed_bytes']}")
+    print(f"RETAINED_BYTES={summary['retained_bytes']}")
+    print(f"DRY_RUN={'true' if args.dry_run else 'false'}")
+
+    if args.output:
+        plan_json = {
+            "dry_run": args.dry_run,
+            "summary": summary,
+            "delete": [
+                {"name": a.name, "size_bytes": a.size_bytes,
+                 "workflow_run_id": a.workflow_run_id,
+                 "reason": plan.reasons[a.name]}
+                for a in plan.deleted
+            ],
+            "retain": [
+                {"name": a.name, "size_bytes": a.size_bytes,
+                 "workflow_run_id": a.workflow_run_id}
+                for a in plan.retained
+            ],
+        }
+        with open(args.output, "w", encoding="utf-8") as fh:
+            json.dump(plan_json, fh, indent=2)
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(run_cli())
+EOF
+python3 -m pytest tests/ -q 2>&1 | tail -2
+[Result] FAILED tests/test_cli.py::TestDryRun::test_execute_mode_performs_mock_deletions
+1 failed, 16 passed in 0.08s
+[Assistant] The failing test has a wrong expectation: with budget 1500, evicting `logs-old` (500 bytes) already brings the total to exactly 1500. Adjusting the fixture budget to 1200 so two evictions are genuinely required:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_cli.py", "old_string": "               
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_cli.py has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -2
+[Result] .................                                                        [100%]
+17 passed in 0.51s
+[Tool: Bash] python3 -c "import yaml; print('pyyaml ok')" 2>&1
+[Result] pyyaml ok
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/fixtures/artifacts.json", "content": "[\n  {\"name\": \"nightly-logs-a\"
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/fixtures/artifacts.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/cleanup-config.env", "content": "# Retention policy for the CI cleanup j
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/cleanup-config.env (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/fixtures/case2-artifacts.json", "content": "[\n  {\"name\": \"cache-v1\"
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/fixtures/case2-artifacts.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/fixtures/case2-config.env", "content": "# Case 2: execute mode (no --dry
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/fixtures/case2-config.env (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/.github/workflows/artifact-cleanup-script.yml", "content": "# CI pipelin
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/.github/workflows/artifact-cleanup-script.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/artifact-cleanup-script.yml && echo "ACTIONLINT PASS"
+[Result] ACTIONLINT PASS
+[Assistant] actionlint passes. Now the workflow structure tests:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_workflow_structure.py", "content": "\"\"\"Structure tests for
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/tests/test_workflow_structure.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -3
+[Result] .........................                                                [100%]
+25 passed in 0.14s
+[Tool: Bash] python3 artifact_cleanup.py --input fixtures/artifacts.json --now 2026-07-01T00:00:00Z --max-age-days 30 --keep-latest 2 --max-total-size 2000 --dry-run; echo ===; python3 artifact_cleanup.py --input fixtures/case2-artifacts.json --now 2026-07-01T00:00:00Z --max-total-size 1000
+[Result] Artifact cleanup plan (DRY RUN - nothing will be deleted)
+DELETE nightly-logs-a (800 bytes) - exceeds max age of 30 days
+DELETE nightly-logs-b (600 bytes) - exceeds keep-latest-2 for workflow run 1
+KEEP   nightly-logs-c (500 bytes)
+KEEP   nightly-logs-d (400 bytes)
+KEEP   release-bundle (900 bytes)
+RETAINED_COUNT=3
+DELETED_COUNT=2
+SPACE_RECLAIMED_BYTES=1400
+RETAINED_BYTES=1800
+DRY_RUN=true
+===
+Artifact cleanup plan (EXECUTE)
+DELETE cache-v1 (700 bytes) - evicted to satisfy total size budget of 1000 bytes
+KEEP   cache-v2 (600 bytes)
+KEEP   dist-pkg (300 bytes)
+Deleted artifact 'cache-v1'
+RETAINED_COUNT=2
+DELETED_COUNT=1
+SPACE_RECLAIMED_BYTES=700
+RETAINED_BYTES=900
+DRY_RUN=false
+[Assistant] Both cases match the predicted exact values. Now the act test harness:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/run_pipeline_tests.py", "content": "#!/usr/bin/env python3\n\"\"\"End-to
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/run_pipeline_tests.py (file state is current in your context — no need to Read it back)
+[Tool: Bash] python3 run_pipeline_tests.py 2>&1 | tail -40
+[Result] ============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/passp/repos/GHA-bench-fable5
+configfile: pyproject.toml
+plugins: anyio-4.13.0
+collecting ... collected 8 items
+
+tests/test_workflow_structure.py::TestWorkflowStructure::test_workflow_file_exists PASSED [ 12%]
+tests/test_workflow_structure.py::TestWorkflowStructure::test_triggers PASSED [ 25%]
+tests/test_workflow_structure.py::TestWorkflowStructure::test_permissions_are_read_only PASSED [ 37%]
+tests/test_workflow_structure.py::TestWorkflowStructure::test_jobs_and_dependency PASSED [ 50%]
+tests/test_workflow_structure.py::TestWorkflowStructure::test_jobs_check_out_the_repo PASSED [ 62%]
+tests/test_workflow_structure.py::TestWorkflowStructure::test_referenced_files_exist PASSED [ 75%]
+tests/test_workflow_structure.py::TestWorkflowStructure::test_cleanup_job_runs_the_script_on_the_fixture PASS
+[Tool: Bash] grep -aiE "error|fail|❌|exitcode" act-result.txt | head -20; echo ---; tail -30 act-result.txt
+[Result] [Artifact Cleanup/unit-tests]   | tests/test_artifact_cleanup.py::TestParseArtifacts::test_missing_field_raises_meaningful_error PASSED [ 52%]
+[Artifact Cleanup/unit-tests]   | tests/test_artifact_cleanup.py::TestParseArtifacts::test_bad_date_raises_meaningful_error PASSED [ 58%]
+[Artifact Cleanup/unit-tests]   | tests/test_artifact_cleanup.py::TestParseArtifacts::test_negative_size_raises_meaningful_error PASSED [ 64%]
+[Artifact Cleanup/unit-tests]   | tests/test_cli.py::TestCliErrors::test_missing_input_file PASSED         [ 82%]
+[Artifact Cleanup/unit-tests]   | tests/test_cli.py::TestCliErrors::test_invalid_json PASSED               [ 88%]
+[Artifact Cleanup/unit-tests]   | tests/test_cli.py::TestCliErrors::test_invalid_record_surfaces_cleanup_error PASSED [ 94%]
+[Artifact Cleanup/unit-tests]   | tests/test_cli.py::TestCliErrors::test_invalid_now_value PASSED          [100%]
+[Artifact Cleanup/cleanup-plan]   ❌  Failure - Main Build artifact deletion plan [1.725439816s]
+[Artifact Cle
+[Assistant] Diagnosed: the env files have unquoted multi-word values, so `source` treats `30` as a command. Quoting fixes it:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/cleanup-config.env", "old_string": "CLEANUP_ARGS=-
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/cleanup-config.env has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/fixtures/case2-config.env", "old_string": "CLEANUP
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/fixtures/case2-config.env has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bash -c 'set -a; source cleanup-config.env; set +a; read -ra A <<< "$CLEANUP_ARGS"; python3 artifact_cleanup.py --input fixtures/artifacts.json --now "$CLEANUP_NOW" "${A[@]}" | tail -5'
+[Result] RETAINED_COUNT=3
+DELETED_COUNT=2
+SPACE_RECLAIMED_BYTES=1400
+RETAINED_BYTES=1800
+DRY_RUN=true
+[Assistant] The shell logic now works. Re-running the full harness (2 more act runs, hitting the 3-run budget exactly):
+[Tool: Bash] python3 run_pipeline_tests.py 2>&1 | tail -8
+[Result] ============================== 8 passed in 0.10s ===============================
+PASS: workflow structure tests
+=== case1-dry-run-combined-policies ===
+PASS: case1-dry-run-combined-policies (exit 0, 2/2 jobs succeeded, 8 exact-value assertions)
+=== case2-execute-size-budget ===
+PASS: case2-execute-size-budget (exit 0, 2/2 jobs succeeded, 8 exact-value assertions)
+
+All pipeline tests passed. Full act output: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/act-result.txt
+[Assistant] All green. Final verification sweep and a short README:
+[Tool: Bash] python3 -m pytest tests/ -q 2>&1 | tail -1; actionlint .github/workflows/artifact-cleanup-script.yml && echo "actionlint: PASS"; ls -la act-result.txt; grep -c "Job succeeded" act-result.txt; grep -c "Job failed" act-result.txt || true
+[Result] 25 passed in 0.13s
+actionlint: PASS
+-rw-r--r-- 1 passp passp 18641 Jul  1 22:14 act-result.txt
+4
+0
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/README.md", "content": "# Artifact Cleanup Planner\n\nApplies retention 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/default-fable5-medium/README.md (file state is current in your context — no need to Read it back)
+[Assistant] Done. The complete solution is in place and everything passes.
+
+**What was built** (Python, chosen for zero-dependency stdlib JSON/date handling plus pytest):
+
+- `artifact_cleanup.py` — a pure `build_plan()` core that applies three policies in order: max-age deletion, keep-latest-N per workflow run, then a total-size budget that evicts the oldest survivors until the retained set fits. Every deletion records which policy caused it. A CLI layer adds `--dry-run` (plan only, no mock deletions), `--now` for deterministic time, `--output` for a JSON plan, and a machine-parseable summary block (retained/deleted counts, space reclaimed). Bad input — missing file, invalid JSON, missing fields, bad dates, negative sizes — produces a `CleanupError` naming the offending record and exit code 2.
+
+**TDD process**: five red/green cycles, each verified failing before implementing (max-age → keep-latest-N → size budget + reasons, with a refactor into three policy passes → summary/parsing/errors → CLI). One test I wrote had a wrong expectation (budget 1500 needed only one eviction, not two) — I corrected the fixture to 1200 so the scenario genuinely exercises two evictions.
+
+**Test results**:
+- 25 pytest tests pass (17 unit/CLI + 8 workflow-structure tests including an actionlint exit-0 assertion).
+- `actionlint` passes cleanly on `.github/workflows/artifact-cleanup-script.yml` (push/PR/schedule/dispatch triggers, `contents: read` permissions, unit-tests job gating the cleanup-plan job).
+- All test cases ran through the pipeline via `act`: `run_pipeline_tests.py` builds a temp git repo per case (project + case fixture + policy config), runs `act push --rm`, and asserts exact values — e.g. case 1 (dry-run, combined policies): `DELETED_COUNT=2`, `SPACE_RECLAIMED_BYTES=1400`, `DRY_RUN=true`, and the exact per-artifact reason lines; case 2 (execute, size budget): `Deleted artifact 'cache-v1'`, `SPACE_RECLAIMED_BYTES=700`. Both cases: act exit 0 and 2/2 "Job succeeded", with `17 passed` unit tests running inside the container.
+- Used exactly 3 act runs: the first failed because the sourced `cleanup-config.env` had unquoted multi-word values (`line 4: 30: command not found`); after quoting and verifying the shell logic locally, both cases passed.
+- `act-result.txt` exists with all act output (4 "Job succeeded" lines, zero failures).
