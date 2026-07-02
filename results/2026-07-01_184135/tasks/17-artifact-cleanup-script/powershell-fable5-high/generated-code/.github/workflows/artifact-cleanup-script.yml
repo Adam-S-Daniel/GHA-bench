@@ -1,0 +1,53 @@
+# CI pipeline for the artifact retention/cleanup tool.
+#
+# Jobs:
+#   test          - runs the Pester unit suite for the ArtifactCleanup module
+#                   and CLI (must pass before any cleanup plan is produced).
+#   cleanup-plan  - runs the cleanup script against the fixture inventory
+#                   (FIXTURE_PATH) and prints the deletion plan + summary.
+#
+# The fixture bundles mock artifact metadata, the retention policy and a
+# fixed reference date, so output is deterministic and CI-assertable.
+name: Artifact Cleanup
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Daily at 03:17 UTC — off the top of the hour to avoid load spikes.
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+
+env:
+  # The artifact inventory + retention policy the cleanup job runs against.
+  FIXTURE_PATH: fixtures/artifacts.json
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path tests/ArtifactCleanup.Tests.ps1 -Output Detailed -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "Pester reported $($result.FailedCount) failing test(s)."
+          }
+          Write-Output "PESTER_TOTAL_PASSED=$($result.PassedCount)"
+
+  cleanup-plan:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate artifact cleanup plan
+        shell: pwsh
+        run: ./Invoke-ArtifactCleanup.ps1 -ConfigPath $env:FIXTURE_PATH

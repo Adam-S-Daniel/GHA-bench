@@ -1,0 +1,89 @@
+# Environment Matrix Generator pipeline.
+#
+# Three chained jobs:
+#   test            - runs the Pester unit suite for the generator library/CLI
+#   generate-matrix - runs Invoke-MatrixGenerator.ps1 on the CI fixture config
+#                     and publishes the strategy JSON as a job output
+#                     (echoed between MATRIX-JSON-BEGIN/END markers so the
+#                     act-based harness can assert the exact JSON)
+#   consume-matrix  - a real dynamic-matrix job: its matrix comes from
+#                     ${{ fromJSON(...) }} over the generated output, and each
+#                     leg prints its combination as a "COMBO ::" line
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The config the pipeline builds its matrix from; the test harness swaps
+  # this file per test case.
+  MATRIX_CONFIG_PATH: fixtures/ci-config.json
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests/MatrixGenerator.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  generate-matrix:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      strategy-json: ${{ steps.generate.outputs.strategy }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate build matrix
+        id: generate
+        shell: pwsh
+        run: |
+          $json = ./Invoke-MatrixGenerator.ps1 -ConfigPath $env:MATRIX_CONFIG_PATH
+          Write-Output 'MATRIX-JSON-BEGIN'
+          Write-Output $json
+          Write-Output 'MATRIX-JSON-END'
+          "strategy=$json" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Validate generated JSON is well-formed
+        shell: pwsh
+        env:
+          STRATEGY_JSON: ${{ steps.generate.outputs.strategy }}
+        run: |
+          $strategy = $env:STRATEGY_JSON | ConvertFrom-Json
+          if (-not $strategy.matrix.include) {
+            throw 'Generated strategy JSON has no matrix.include entries.'
+          }
+          Write-Output "Matrix contains $($strategy.matrix.include.Count) combination(s)."
+
+  consume-matrix:
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.strategy-json).matrix }}
+    steps:
+      - name: Report matrix combination
+        shell: pwsh
+        env:
+          MATRIX_JSON: ${{ toJSON(matrix) }}
+        run: |
+          $combo = $env:MATRIX_JSON | ConvertFrom-Json
+          $parts = $combo.PSObject.Properties |
+            Sort-Object Name |
+            ForEach-Object { "$($_.Name)=$($_.Value)" }
+          Write-Output ('COMBO :: ' + ($parts -join ' '))

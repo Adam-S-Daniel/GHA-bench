@@ -1,0 +1,66 @@
+# Dependency license compliance pipeline.
+#
+# Job 1 (test) runs the unit test suite; job 2 (license-check) depends on it
+# and generates the compliance report for the manifest in $MANIFEST_DIR,
+# using the mock license database checked into the repo (no network access).
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly re-check so newly denied licenses in the config get flagged.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  # Directory the checker scans for a supported manifest
+  # (package.json or requirements.txt).
+  MANIFEST_DIR: test-manifest
+  CONFIG_FILE: checker-config.json
+  LICENSES_FILE: mock-licenses.json
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Node.js version
+        run: node --version
+
+      - name: Run unit tests
+        run: node --test
+
+  license-check:
+    name: License compliance report
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate compliance report
+        run: |
+          node license-checker.js \
+            --manifest-dir "$MANIFEST_DIR" \
+            --config "$CONFIG_FILE" \
+            --licenses "$LICENSES_FILE" | tee license-report.txt
+
+      - name: Publish report to job summary
+        # GITHUB_STEP_SUMMARY exists in act too; guard anyway so the step
+        # never fails outside GitHub-like environments.
+        run: |
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            {
+              echo '## Dependency License Compliance'
+              echo '```'
+              cat license-report.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

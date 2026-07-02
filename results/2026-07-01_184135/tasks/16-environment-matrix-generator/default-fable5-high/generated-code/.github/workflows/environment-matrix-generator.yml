@@ -1,0 +1,108 @@
+# CI pipeline for the environment matrix generator.
+#
+# Flow: unit-tests -> generate-matrix -> consume-case1 + consume-case2.
+# generate-matrix runs the generator on two fixture configs and publishes
+# each resulting strategy document as a job output; the consume jobs then
+# fan out over those dynamically generated matrices via fromJSON — the
+# real-world "dynamic matrix" pattern this tool exists to feed. It also
+# checks the error path (an oversized matrix must be rejected).
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Path (repo-relative) of the primary matrix config (test case 1).
+  MATRIX_CONFIG: fixtures/config.json
+  # Second config exercising include/exclude rules (test case 2).
+  MATRIX_CONFIG_CASE2: fixtures/case2_include_exclude.json
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        # PyYAML is only needed by the workflow-structure tests.
+        run: python3 -m pip install --break-system-packages --quiet pyyaml
+
+      - name: Run full unit test suite
+        run: python3 -m unittest discover -s tests -v
+
+  generate-matrix:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    outputs:
+      strategy1: ${{ steps.gen1.outputs.strategy }}
+      strategy2: ${{ steps.gen2.outputs.strategy }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate build matrix (case 1, basic cross product)
+        id: gen1
+        run: |
+          STRATEGY_JSON="$(python3 matrix_generator.py "$MATRIX_CONFIG")"
+          # Delimited single-line echo so the test harness can assert the
+          # exact JSON document from the act log.
+          echo "MATRIX_RESULT_BEGIN case1 ${STRATEGY_JSON} MATRIX_RESULT_END"
+          echo "strategy=${STRATEGY_JSON}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate build matrix (case 2, include/exclude rules)
+        id: gen2
+        run: |
+          STRATEGY_JSON="$(python3 matrix_generator.py "$MATRIX_CONFIG_CASE2")"
+          echo "MATRIX_RESULT_BEGIN case2 ${STRATEGY_JSON} MATRIX_RESULT_END"
+          echo "strategy=${STRATEGY_JSON}" >> "$GITHUB_OUTPUT"
+
+      - name: Reject oversized matrix (error-path check)
+        run: |
+          if python3 matrix_generator.py fixtures/invalid_too_large.json 2>err.txt; then
+            echo "expected the generator to fail on the oversized fixture"
+            exit 1
+          fi
+          grep -q "exceeds the maximum of" err.txt
+          echo "ERROR_PATH_OK $(cat err.txt)"
+
+  consume-case1:
+    runs-on: ubuntu-latest
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.strategy1).matrix }}
+    steps:
+      - name: Report job combination
+        env:
+          CASE_ID: case1
+          COMBO: ${{ toJson(matrix) }}
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          combo = json.loads(os.environ["COMBO"])
+          compact = json.dumps(combo, sort_keys=True, separators=(",", ":"))
+          print("JOB_COMBO", os.environ["CASE_ID"], compact)
+          EOF
+
+  consume-case2:
+    runs-on: ubuntu-latest
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.strategy2).matrix }}
+    steps:
+      - name: Report job combination
+        env:
+          CASE_ID: case2
+          COMBO: ${{ toJson(matrix) }}
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          combo = json.loads(os.environ["COMBO"])
+          compact = json.dumps(combo, sort_keys=True, separators=(",", ":"))
+          print("JOB_COMBO", os.environ["CASE_ID"], compact)
+          EOF

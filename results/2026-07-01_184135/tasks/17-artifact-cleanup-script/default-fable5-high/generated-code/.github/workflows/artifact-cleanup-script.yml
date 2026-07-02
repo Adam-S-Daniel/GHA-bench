@@ -1,0 +1,66 @@
+# Artifact retention cleanup pipeline.
+#
+# Two jobs:
+#   1. unit-tests    -- runs the full TDD unit-test suite for the planner.
+#   2. cleanup-plan  -- runs only after tests pass; produces the deletion
+#                       plan for the fixture inventory (dry run first, then
+#                       the mock apply step).
+#
+# The reference time is pinned in fixtures/now.txt so the plan output is
+# deterministic and can be asserted on exactly. In a real deployment the
+# schedule trigger would run this against the live artifact API instead of
+# fixture data (and omit --now to use the current time).
+name: Artifact Cleanup
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 3 * * *'  # daily housekeeping run
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Python version
+        run: python3 --version
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -t . -v
+
+  cleanup-plan:
+    name: Cleanup plan
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    env:
+      ARTIFACTS_FILE: fixtures/artifacts.json
+      POLICY_FILE: fixtures/policy.json
+      NOW_FILE: fixtures/now.txt
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Dry-run deletion plan
+        run: |
+          python3 artifact_cleanup.py \
+            --artifacts "$ARTIFACTS_FILE" \
+            --policy "$POLICY_FILE" \
+            --now "$(cat "$NOW_FILE")"
+
+      - name: Apply deletion plan (mock deleter)
+        run: |
+          python3 artifact_cleanup.py \
+            --artifacts "$ARTIFACTS_FILE" \
+            --policy "$POLICY_FILE" \
+            --now "$(cat "$NOW_FILE")" \
+            --apply

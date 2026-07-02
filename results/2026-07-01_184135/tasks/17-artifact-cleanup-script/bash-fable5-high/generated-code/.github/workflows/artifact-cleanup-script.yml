@@ -1,0 +1,85 @@
+# CI pipeline for artifact-cleanup.sh.
+#
+# push / pull_request: full validation (lint + tests + scenario runs).
+# schedule:            nightly cadence a real cleanup job would use.
+# workflow_dispatch:   manual runs.
+#
+# Every scenario pins the clock via CLEANUP_NOW so the output is byte-exact
+# and can be asserted on by the act-based test harness (run-act-tests.sh).
+name: artifact-cleanup-script
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+
+env:
+  CLEANUP_NOW: '2026-07-02T00:00:00Z'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+
+      - name: Validate bash syntax
+        run: bash -n artifact-cleanup.sh
+
+      - name: ShellCheck
+        run: shellcheck artifact-cleanup.sh
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install bats
+        run: npm install -g bats
+
+      - name: Run unit test suite (bats)
+        run: bats test/artifact_cleanup.bats
+
+      # The scenario steps below exercise the script end-to-end on the mock
+      # inventories. Their delimited output is what run-act-tests.sh asserts
+      # exact values against.
+      - name: 'Case 1: max-age policy (dry-run)'
+        run: |
+          echo "=== CASE:max-age ==="
+          ./artifact-cleanup.sh --input test/fixtures/age.tsv \
+            --max-age-days 30 --now "$CLEANUP_NOW" --dry-run
+          echo "=== END CASE:max-age ==="
+
+      - name: 'Case 2: keep-latest per workflow (dry-run)'
+        run: |
+          echo "=== CASE:keep-latest ==="
+          ./artifact-cleanup.sh --input test/fixtures/keepn.tsv \
+            --keep-latest 2 --now "$CLEANUP_NOW" --dry-run
+          echo "=== END CASE:keep-latest ==="
+
+      - name: 'Case 3: max-total-size budget (dry-run)'
+        run: |
+          echo "=== CASE:size-budget ==="
+          ./artifact-cleanup.sh --input test/fixtures/size.tsv \
+            --max-total-size 6000 --now "$CLEANUP_NOW" --dry-run
+          echo "=== END CASE:size-budget ==="
+
+      - name: 'Case 4: combined policies (apply, mock deletion log)'
+        run: |
+          echo "=== CASE:combined ==="
+          ./artifact-cleanup.sh --input test/fixtures/combined.tsv \
+            --max-age-days 60 --keep-latest 1 --max-total-size 5000 \
+            --now "$CLEANUP_NOW" --deleted-log /tmp/deleted.log
+          echo "--- deletion log ---"
+          cat /tmp/deleted.log
+          echo "=== END CASE:combined ==="

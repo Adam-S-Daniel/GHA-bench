@@ -1,0 +1,60 @@
+# Aggregates matrix-build test results (JUnit XML + JSON) into a job summary.
+#
+# Two jobs:
+#   unit-tests  - runs the aggregator's own test suite (stdlib unittest, so it
+#                 needs no pip installs and works offline inside act).
+#   aggregate   - depends on unit-tests; runs aggregator.py over a directory of
+#                 result files and publishes the markdown to the job summary.
+#
+# Input directory selection: if the repo contains a `test-results/` directory
+# (the CI harness drops per-test-case fixture data there), it is used;
+# otherwise the bundled sample fixtures serve as a sensible default, so the
+# workflow also succeeds on a plain push to GitHub.
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run unit tests (unittest, stdlib only)
+        run: python3 -m unittest discover -s tests -t . -v
+
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Aggregate results and print machine-readable totals
+        run: |
+          if [ -d test-results ]; then
+            results_dir=test-results
+          else
+            results_dir=fixtures/case1-matrix-flaky
+          fi
+          echo "Aggregating results from: $results_dir"
+          python3 aggregator.py "$results_dir" --output summary.md
+
+      - name: Publish markdown to the job summary
+        run: |
+          cat summary.md
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            cat summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi

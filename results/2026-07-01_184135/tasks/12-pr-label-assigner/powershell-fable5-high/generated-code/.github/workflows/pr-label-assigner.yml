@@ -1,0 +1,56 @@
+# PR Label Assigner pipeline.
+#
+# Job 1 (test) runs the full Pester suite; job 2 (assign-labels) only runs
+# once tests pass and computes the label set for the fixture "PR" checked
+# into the repo (fixtures/changed-files.txt + fixtures/label-rules.json).
+# The act-based test harness swaps those fixtures per test case and asserts
+# on the "FINAL LABELS:" line this workflow prints.
+name: PR Label Assigner
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege: reading the repo is all this pipeline needs. A real
+# deployment that calls the GitHub labels API would add
+# `pull-requests: write` on the assign-labels job.
+permissions:
+  contents: read
+
+env:
+  FIXTURE_DIR: fixtures
+
+jobs:
+  test:
+    name: Pester tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester test suite
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $result = Invoke-Pester -Path ./tests -Output Detailed -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "Pester reported $($result.FailedCount) failing test(s)."
+          }
+          Write-Output "PESTER PASSED: $($result.PassedCount) tests"
+
+  assign-labels:
+    name: Assign labels
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compute label set for the changed files
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./src/Invoke-LabelAssigner.ps1 `
+            -ChangedFilesPath "$env:FIXTURE_DIR/changed-files.txt" `
+            -RulesPath "$env:FIXTURE_DIR/label-rules.json"

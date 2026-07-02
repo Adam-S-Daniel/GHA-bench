@@ -1,0 +1,93 @@
+# Dependency license compliance pipeline.
+#
+# Job 1 (test):          runs the full bats test suite for license-checker.sh
+#                        inside the CI container.
+# Job 2 (license-check): runs the checker against the manifest in ci-input/
+#                        and publishes the compliance report.
+#
+# ci-input/ holds the manifest, the allow/deny policy config, and the mock
+# license database (licenses.tsv). Test harnesses swap these files to feed
+# different scenarios through the same pipeline.
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly compliance sweep (Mondays 06:00 UTC) to catch policy drift.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  # Report-only mode by default: a denied license is reported but does not
+  # fail the job. Set to 'true' to make the pipeline a hard merge gate.
+  FAIL_ON_DENIED: 'false'
+
+jobs:
+  test:
+    name: Run bats test suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: npm install -g bats
+
+      - name: Validate script syntax
+        run: bash -n license-checker.sh
+
+      - name: Run unit tests
+        run: bats test/license_checker.bats
+
+  license-check:
+    name: Check dependency licenses
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run license compliance check
+        shell: bash
+        run: |
+          # Pick whichever supported manifest the ci-input directory holds.
+          if [ -f ci-input/package.json ]; then
+            manifest=ci-input/package.json
+          elif [ -f ci-input/requirements.txt ]; then
+            manifest=ci-input/requirements.txt
+          else
+            echo "ERROR: no supported manifest found in ci-input/" >&2
+            exit 1
+          fi
+
+          # Exit code 1 means "report generated, denied licenses present";
+          # only treat it as a job failure when FAIL_ON_DENIED is true.
+          # Exit code 2 means the checker itself errored -> always fail.
+          rc=0
+          ./license-checker.sh \
+            --manifest "$manifest" \
+            --config ci-input/config.txt \
+            --license-db ci-input/licenses.tsv | tee license-report.txt || rc=$?
+
+          if [ "$rc" -eq 2 ]; then
+            echo "ERROR: license checker failed to produce a report" >&2
+            exit 1
+          fi
+          if [ "$rc" -eq 1 ] && [ "$FAIL_ON_DENIED" = "true" ]; then
+            echo "ERROR: denied licenses found and FAIL_ON_DENIED=true" >&2
+            exit 1
+          fi
+
+      - name: Publish report to job summary
+        shell: bash
+        run: |
+          {
+            echo '## Dependency license compliance report'
+            echo '```'
+            cat license-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
