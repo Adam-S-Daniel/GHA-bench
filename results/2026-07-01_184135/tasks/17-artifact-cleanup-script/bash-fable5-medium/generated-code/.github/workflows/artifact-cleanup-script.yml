@@ -1,0 +1,54 @@
+# CI pipeline for the artifact retention/cleanup script.
+#
+# - "test" runs the full bats suite (plus shell syntax lint) so every unit
+#   test executes inside the pipeline.
+# - "cleanup-plan" (depends on "test") runs the script against the fixture
+#   data checked into ci-fixtures/, producing a deletion plan whose exact
+#   values the act test harness asserts on.
+name: Artifact Cleanup
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Weekly cleanup pass, Mondays 03:00 UTC
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  FIXTURE_DIR: ci-fixtures
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: |
+          if ! command -v bats >/dev/null 2>&1; then
+            npm install -g bats
+          fi
+          bats --version
+
+      - name: Syntax-check scripts
+        run: |
+          bash -n artifact-cleanup.sh
+          bash -n ci/run-cleanup.sh
+
+      - name: Run bats test suite
+        run: bats tests/artifact_cleanup.bats tests/workflow.bats
+
+  cleanup-plan:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate artifact deletion plan
+        run: bash ci/run-cleanup.sh
