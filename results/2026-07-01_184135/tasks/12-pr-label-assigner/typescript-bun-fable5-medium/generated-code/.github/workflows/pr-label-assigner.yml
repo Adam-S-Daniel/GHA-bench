@@ -1,0 +1,39 @@
+# PR Label Assigner pipeline.
+#
+# On a real PR this would feed the PR's changed-file list to the script and
+# apply the resulting labels via the GitHub API. Here the changed files are
+# mocked via fixture JSON (fixtures/active/*) so the workflow runs identically
+# in CI and locally under `act`. The FILES_PATH/RULES_PATH env vars are the
+# sensible defaults; a caller can repoint them at real PR data.
+name: PR Label Assigner
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  FILES_PATH: fixtures/active/changed-files.json
+  RULES_PATH: fixtures/active/rules.json
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Run unit tests
+        run: bun test tests/glob.test.ts tests/assign.test.ts tests/config.test.ts tests/cli.test.ts
+
+      - name: Assign labels from changed files
+        run: bun run src/cli.ts --files "$FILES_PATH" --rules "$RULES_PATH"
