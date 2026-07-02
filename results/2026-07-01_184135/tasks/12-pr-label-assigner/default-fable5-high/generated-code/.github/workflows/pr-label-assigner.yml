@@ -1,0 +1,55 @@
+# PR Label Assigner pipeline.
+#
+# Runs the TDD unit suite first, then computes the label set for the
+# (mocked) changed-file list in fixtures/. In a real PR context the
+# fixture file would be replaced by `git diff --name-only` or the
+# pulls.listFiles API; the labeler script itself is agnostic to where
+# the list comes from.
+name: PR Label Assigner
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Read-only checkout; pull-requests write is what a real labeling step
+# (via the GitHub API) would need.
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  RULES_FILE: fixtures/rules.json
+  CHANGED_FILES: fixtures/changed_files.txt
+
+jobs:
+  test:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run TDD unit suite
+        run: python3 -m unittest tests.test_labeler -v
+
+  label:
+    name: assign-labels
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compute label set from changed files
+        id: labeler
+        run: |
+          python3 labeler.py --config "$RULES_FILE" --files "$CHANGED_FILES" | tee labeler-output.txt
+          labels=$(sed -n 's/^LABELS: //p' labeler-output.txt)
+          echo "labels=$labels" >> "$GITHUB_OUTPUT"
+
+      - name: Report final label set
+        env:
+          LABELS: ${{ steps.labeler.outputs.labels }}
+        run: |
+          echo "FINAL LABEL SET: $LABELS"

@@ -1,0 +1,257 @@
+[Assistant] I'll start by reviewing the working directory and the benchmark instructions.
+[Tool: Bash] ls -la /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/ && cat /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/.actrc 2>/dev/null; cat /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/benchmark-instructions-v4.md 2>/dev/null | head -50
+[Result] total 44
+drwxr-xr-x 4 passp passp  4096 Jul  1 21:47 .
+drwxr-xr-x 5 passp passp  4096 Jul  1 21:47 ..
+-rw-r--r-- 1 passp passp    40 Jul  1 21:47 .actrc
+drwxr-xr-x 2 passp passp  4096 Jul  1 21:47 .claude
+drwxr-xr-x 6 passp passp  4096 Jul  1 21:47 .git
+-rw-r--r-- 1 passp passp 21843 Jul  1 16:21 benchmark-instructions-v4.md
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+# Benchmark Instructions v4 — GitHub Actions
+
+**Version**: v4
+**Date**: 2026-04-09
+**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+
+**Changes from v3**:
+- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+- GHA workflo
+[Tool: Bash] which bats jq actionlint act shellcheck; bats --version; jq --version
+[Result] /home/passp/.npm-global/bin/bats
+/home/passp/.local/bin/jq
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/home/passp/.local/bin/shellcheck
+Bats 1.13.0
+jq-1.7.1
+[Tool: Bash] grep -n -A6 -i "pitfall" benchmark-instructions-v4.md | head -80
+[Result] 8:- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+9-- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+10-- GHA workflow addendum expanded with `shell: pwsh` guidance for PowerShell mode
+11-- All other methodology, tasks, modes, and models are unchanged from v3
+12-
+13-## Methodology
+14-
+--
+119:## Common Pitfalls
+120-
+121-The following patterns were observed in v3 runs wasting significant agent time. Agents are encouraged to avoid them:
+122-
+123-### PowerShell: Use `shell: pwsh` in workflow steps
+124-
+125-When writing GitHub Actions workflow YAML for PowerShell mode, use `shell: pwsh` on your `run:` steps instead of invoking `pwsh -Command "..."` or `pwsh -File ...` from a bash shell. The `shell: pwsh` directive works correctly in act containers and avoids:
+[Tool: Bash] sed -n 128,200p benchmark-instructions-v4.md
+[Result] - Quoting/visibility problems when passing structured data (JSON) through bash to pwsh
+- `$MyInvocation.ScriptName` being empty under `pwsh -File` invocation
+
+Example -- prefer this:
+```yaml
+    - name: Run script
+      shell: pwsh
+      run: |
+        ./MyScript.ps1 -Config config.json
+```
+
+Over this:
+```yaml
+    - name: Run script
+      run: |
+        pwsh -File ./MyScript.ps1 -Config config.json
+```
+
+### Act: Limit `act push` invocations
+
+Each `act push` run takes 30-90 seconds (container startup + workflow execution). In v3, agents that ran `act push` more than twice spent 15+ minutes on repeated debugging loops. Strategy:
+1. Get the workflow right with `actionlint` first (instant validation)
+2. Run `act push` once to verify
+3. If it fails, read the error carefully and fix the root cause before re-running
+4. Avoid running `act push` more than 3 times total
+
+### Fixtures: Design test data up front
+
+Agents that wrote, broke, and rewrote test fixtures (4+ fixture-related commands) los
+[Assistant] I'll build this in TDD cycles. First, let me check what's available in the act container so I can plan the workflow's dependency installation.
+[Tool: Bash] docker images | head -5; docker run --rm act-ubuntu-pwsh:latest bash -c 'which bats jq node npm git; jq --version 2>/dev/null; bats --version 2>/dev/null' 2>&1 | tail -10
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+IMAGE                                           ID             DISK USAGE   CONTENT SIZE   EXTRA
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+alpine:latest                                   5b10f432ef3d       13.1MB         3.95MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+/usr/bin/jq
+/opt/acttoolcache/node/24.15.0/x64/bin/node
+/opt/acttoolcache/node/24.15.0/x64/bin/npm
+/usr/bin/git
+jq-1.6
+[Tool: Bash] mkdir -p test/fixtures .github/workflows
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/basic.json", "content": "{\n  \"os\": [\"ubuntu-latest\"
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/basic.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/matrix_generator.bats", "content": "#!/usr/bin/env bats\n# Tests 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/matrix_generator.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/matrix_generator.bats 2>&1 | tail -5
+[Result] 1..1
+not ok 1 basic config expands cartesian product of os x versions
+# (in test file test/matrix_generator.bats, line 21)
+#   `[ "$output" = "$(echo "$expected" | jq -c -S .)" ]' failed
+[Assistant] Red confirmed. **GREEN cycle 1** — minimum implementation:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/matrix_generator.sh", "content": "#!/usr/bin/env bash\n# matrix_genera
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/matrix_generator.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] chmod +x matrix_generator.sh && bats test/matrix_generator.bats 2>&1 | tail -3
+[Result] 1..1
+ok 1 basic config expands cartesian product of os x versions
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/full.json", "content": "{\n  \"os\": [\"ubuntu-latest\",
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/full.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/too_big.json", "content": "{\n  \"os\": [\"ubuntu-latest
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/too_big.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/invalid.json", "content": "{ this is not valid json\n"}
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/invalid.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/empty.json", "content": "{ \"fail-fast\": false }\n"}
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/empty.json (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/matrix_generator.bats", "old_string": "@tes
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/matrix_generator.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/matrix_generator.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)'
+[Result] 1..8
+ok 1 basic config expands cartesian product of os x versions
+not ok 2 full config applies features, exclude, include, fail-fast and max-parallel
+not ok 3 matrix exceeding configured max-size fails with a clear error
+not ok 4 matrix exceeding default max-size (256) fails
+not ok 5 invalid JSON config fails with a clear error
+not ok 6 missing config file fails with a clear error
+not ok 7 config with no dimensions fails with a clear error
+ok 8 missing argument prints usage
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/matrix_generator.sh", "content": "#!/usr/bin/env bash\n# matrix_genera
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/matrix_generator.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/matrix_generator.sh", "old_string": "      # Inc
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/matrix_generator.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/matrix_generator.bats 2>&1 | grep -E '^(ok|not ok|1\.\.|#)'
+[Result] 1..8
+ok 1 basic config expands cartesian product of os x versions
+ok 2 full config applies features, exclude, include, fail-fast and max-parallel
+ok 3 matrix exceeding configured max-size fails with a clear error
+ok 4 matrix exceeding default max-size (256) fails
+ok 5 invalid JSON config fails with a clear error
+ok 6 missing config file fails with a clear error
+ok 7 config with no dimensions fails with a clear error
+ok 8 missing argument prints usage
+[Tool: Bash] shellcheck matrix_generator.sh && bash -n matrix_generator.sh && echo CLEAN
+[Result] CLEAN
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/workflow_structure.bats", "content": "#!/usr/bin/env bats\n# Stru
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/workflow_structure.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/workflow_structure.bats 2>&1 | grep -cE '^not ok' 
+[Result] 8
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/ci.json", "content": "{\n  \"os\": [\"ubuntu-latest\"],\
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/fixtures/ci.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/.github/workflows/environment-matrix-generator.yml", "content": "# CI 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/.github/workflows/environment-matrix-generator.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/environment-matrix-generator.yml && echo ACTIONLINT_OK; bats test/ 2>&1 | grep -E '^(ok|not ok|1\.\.)'
+[Result] ACTIONLINT_OK
+1..16
+ok 1 basic config expands cartesian product of os x versions
+ok 2 full config applies features, exclude, include, fail-fast and max-parallel
+ok 3 matrix exceeding configured max-size fails with a clear error
+ok 4 matrix exceeding default max-size (256) fails
+ok 5 invalid JSON config fails with a clear error
+ok 6 missing config file fails with a clear error
+ok 7 config with no dimensions fails with a clear error
+ok 8 missing argument prints usage
+ok 9 workflow file exists
+ok 10 actionlint passes (valid YAML and action references)
+ok 11 workflow declares push, pull_request and workflow_dispatch triggers
+ok 12 workflow defines the expected jobs
+ok 13 workflow restricts permissions and uses checkout@v4
+ok 14 downstream jobs declare dependencies with needs
+ok 15 workflow references the generator script and the path exists
+not ok 16 every fixture path referenced by the workflow exists
+[Assistant] Test 16 fails because the workflow references fixtures via `$FIXTURES/...`. I'll make the test resolve that env var form:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/workflow_structure.bats", "old_string": "  
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/test/workflow_structure.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats test/ 2>&1 | grep -E '^(not ok|1\.\.)' ; echo "---"; bats test/ 2>&1 | grep -c '^ok'
+[Result] 1..16
+---
+16
+[Assistant] All 16 pass. Now compute the exact expected values for the act harness assertions:
+[Tool: Bash] echo "BASIC=$(./matrix_generator.sh test/fixtures/basic.json | jq -c -S .)"; echo "FULL=$(./matrix_generator.sh test/fixtures/full.json | jq -c -S .)"; echo "CI=$(./matrix_generator.sh test/fixtures/ci.json | jq -c -S .)"; ./matrix_generator.sh test/fixtures/too_big.json 2>&1 || true; ./matrix_generator.sh test/fixtures/invalid.json 2>&1 || true
+[Result] BASIC={"fail-fast":true,"matrix":{"include":[{"os":"ubuntu-latest","version":"18"},{"os":"ubuntu-latest","version":"20"},{"os":"macos-latest","version":"18"},{"os":"macos-latest","version":"20"}]}}
+FULL={"fail-fast":false,"matrix":{"include":[{"os":"ubuntu-latest","tls":true,"version":"3.11"},{"os":"ubuntu-latest","tls":false,"version":"3.11"},{"coverage":true,"os":"ubuntu-latest","tls":true,"version":"3.12"},{"coverage":true,"os":"ubuntu-latest","tls":false,"version":"3.12"},{"os":"windows-latest","tls":false,"version":"3.11"},{"os":"windows-latest","tls":false,"version":"3.12"},{"experimental":true,"os":"ubuntu-latest","tls":true,"version":"3.13"}]},"max-parallel":3}
+CI={"fail-fast":false,"matrix":{"include":[{"os":"ubuntu-latest","version":"18"},{"os":"ubuntu-latest","version":"20"}]},"max-parallel":2}
+error: matrix size 4 exceeds maximum allowed size 3
+error: config file is not valid JSON: test/fixtures/invalid.json
+[Assistant] Now the act test harness:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/run_act_tests.sh", "content": "#!/usr/bin/env bash\n# run_act_tests.sh
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/run_act_tests.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] chmod +x run_act_tests.sh && shellcheck run_act_tests.sh matrix_generator.sh && bash -n run_act_tests.sh && echo CLEAN
+[Result] CLEAN
+[Assistant] Running the act harness now (act run 1 of max 3):
+[Tool: Bash] ./run_act_tests.sh
+[Result ERROR] Exit code 1
+
+=== Assertions ===
+PASS: act exited with code 0
+PASS: job 'test' succeeded
+PASS: job 'generate-matrix' succeeded
+FAIL: job 'use-matrix (18)' did not report 'Job succeeded'
+FAIL: job 'use-matrix (20)' did not report 'Job succeeded'
+PASS: bats suite ran all 16 tests in CI
+PASS: bats include-merge test passed in CI
+PASS: bats workflow-structure tests passed in CI
+PASS: basic fixture produces exact matrix
+PASS: full fixture produces exact matrix
+PASS: ci fixture produces exact matrix
+PASS: oversized matrix rejected with exact error
+PASS: invalid JSON rejected with exact error
+PASS: matrix leg for version 18 executed
+PASS: matrix leg for version 20 executed
+
+2 ASSERTION(S) FAILED (see act-result.txt)
+[Assistant] All values matched; only my job-name pattern for the matrix legs is off. Checking how act names them:
+[Tool: Bash] grep "Job succeeded" act-result.txt; grep "MATRIX_LEG" act-result.txt
+[Result] [Environment Matrix Generator/test] 🏁  Job succeeded
+[Environment Matrix Generator/generate-matrix] 🏁  Job succeeded
+[Environment Matrix Generator/use-matrix-1   ] 🏁  Job succeeded
+[Environment Matrix Generator/use-matrix-2   ] 🏁  Job succeeded
+[Environment Matrix Generator/use-matrix-1   ]   | MATRIX_LEG os=ubuntu-latest version=18
+[Environment Matrix Generator/use-matrix-2   ]   | MATRIX_LEG os=ubuntu-latest version=20
+[Assistant] All four jobs actually succeeded — act names matrix legs `use-matrix-1`/`use-matrix-2` (with padding) instead of `use-matrix (18)`. Fixing the harness pattern:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/run_act_tests.sh", "old_string": "# Every job mu
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/16-environment-matrix-generator/bash-fable5-medium/run_act_tests.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] shellcheck run_act_tests.sh && ./run_act_tests.sh
+[Result] === Assertions ===
+PASS: act exited with code 0
+PASS: job 'test' succeeded
+PASS: job 'generate-matrix' succeeded
+PASS: job 'use-matrix-1' succeeded
+PASS: job 'use-matrix-2' succeeded
+PASS: bats suite ran all 16 tests in CI
+PASS: bats include-merge test passed in CI
+PASS: bats workflow-structure tests passed in CI
+PASS: basic fixture produces exact matrix
+PASS: full fixture produces exact matrix
+PASS: ci fixture produces exact matrix
+PASS: oversized matrix rejected with exact error
+PASS: invalid JSON rejected with exact error
+PASS: matrix leg for version 18 executed
+PASS: matrix leg for version 20 executed
+
+ALL ACT TESTS PASSED (results in act-result.txt)
+[Assistant] All 15 harness assertions pass. Final verification sweep:
+[Tool: Bash] bats test/ 2>&1 | tail -1; shellcheck matrix_generator.sh run_act_tests.sh && echo SHELLCHECK_OK; bash -n matrix_generator.sh && bash -n run_act_tests.sh && echo SYNTAX_OK; actionlint .github/workflows/environment-matrix-generator.yml && echo ACTIONLINT_OK; ls -la act-result.txt; grep -c "Job succeeded" act-result.txt
+[Result] ok 16 every fixture path referenced by the workflow exists
+SHELLCHECK_OK
+SYNTAX_OK
+ACTIONLINT_OK
+-rw-r--r-- 1 passp passp 12877 Jul  1 21:54 act-result.txt
+4
+[Assistant] Done — everything passes end-to-end. The environment matrix generator is complete, built with red/green TDD, and fully verified through `act`.
+
+**What was built**
+
+- `matrix_generator.sh` — takes a JSON config with `os`, `versions`, and `features` (feature-flag name → values), expands the full cartesian product, applies `exclude` rules (GitHub semantics: a combo is dropped when all keys of an exclude entry match), applies `include` rules (entries matching existing combos augment them with extra keys, non-matching entries are appended as standalone combos), and emits a complete strategy document: `{"fail-fast": ..., "max-parallel": ..., "matrix": {"include": [...]}}`. It validates the matrix against `max-size` (default 256, GitHub's own limit) and fails with meaningful errors for missing files, invalid JSON, empty dimension sets, and oversized matrices. Bash handles validation and exit codes; all set arithmetic lives in one jq program so JSON never round-trips through shell quoting.
+- `test/matrix_generator.bats` — 8 behavior tests written first in red/green cycles (I verified each red state before implementing): basic cartesian product, full exclude/include/features/fail-fast/max-parallel case, configured and default size limits, and four error paths. All assert exact normalized JSON, not just presence.
+- `test/workflow_structure.bats` — 8 structural tests: actionlint exits 0, triggers/jobs/needs/permissions/checkout@v4 are declared, and every script and fixture path the workflow references exists on disk.
+- `.github/workflows/environment-matrix-generator.yml` — three-job pipeline: `test` installs bats + actionlint and runs the whole suite plus per-fixture generator invocations with delimited output; `generate-matrix` publishes the generated strategy as a job output; `use-matrix` consumes it via `fromJSON()` as a real dynamic `strategy.matrix`, proving the output is valid — act actually spawned one leg per version.
+- `run_act_tests.sh` — the harness builds a pristine temp git repo, runs `act push --rm` (one run covers all cases, respecting the 3-run budget; I used 2 total), writes `act-result.txt`, and makes 15 assertions: act exit 0, all four jobs report "Job succeeded", the in-CI bats run shows all 16 tests passing, and each fixture's output matches its exact known-good value (e.g. the full fixture's 7-combo matrix string and the exact error `matrix size 4 exceeds maximum allowed size 3`).
+
+**Final state**: 16/16 bats tests pass, shellcheck and `bash -n` clean on both scripts, actionlint clean, and `act-result.txt` is in place showing 4 succeeded jobs with all exact-value assertions green.

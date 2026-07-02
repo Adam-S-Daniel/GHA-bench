@@ -1,0 +1,644 @@
+{
+  "task_id": "18-secret-rotation-validator",
+  "task_name": "Secret Rotation Validator",
+  "task_category": "GitHub Actions / Security",
+  "language_mode": "powershell",
+  "language_chosen": "powershell",
+  "language_breakdown": {
+    "powershell": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-fable-5",
+  "model_short": "fable5",
+  "variant": "fable5-medium",
+  "claude_code_version": "2.1.198",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-07-02T03:01:19.073790+00:00",
+  "timestamp_end": "2026-07-02T03:19:21.163311+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use PowerShell as your implementation language.\n\nTASK: Given a configuration of secrets with metadata (name, last-rotated date, rotation policy in days, required-by services \u2014 all mock data), identify secrets that are expired or expiring within a configurable warning window, generate a rotation report, and output notifications grouped by urgency (expired, warning, ok). Support multiple output formats (markdown table, JSON).\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use Pester as the testing framework.\n3. All tests must be runnable with `Invoke-Pester` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/secret-rotation-validator.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/secret-rotation-validator.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "89096f6e-518d-439f-b635-4f23ab39e478",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 30,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1433,
+      "outputTokens": 16,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.001513,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-fable-5": {
+      "inputTokens": 3394,
+      "outputTokens": 39577,
+      "cacheReadInputTokens": 1800835,
+      "cacheCreationInputTokens": 75576,
+      "webSearchRequests": 0,
+      "costUSD": 5.325145000000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "medium",
+  "timing": {
+    "grand_total_duration_ms": 1082089,
+    "total_api_duration_ms": 566110,
+    "total_execution_duration_ms": 514894,
+    "num_turns": 30
+  },
+  "tokens": {
+    "input_tokens": 3394,
+    "output_tokens": 39577,
+    "cache_read_tokens": 1800835,
+    "cache_creation_tokens": 75576,
+    "total_context_consumed": 1879805,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 5.326658,
+    "assumed_input_cost_per_mtok": 10.0,
+    "assumed_output_cost_per_mtok": 50.0,
+    "assumed_cache_read_cost_per_mtok": 1.0,
+    "assumed_cache_write_cost_per_mtok": 12.5
+  },
+  "code_metrics": {
+    "code_lines": 832,
+    "total_tokens_estimate": 15289,
+    "file_count": 7,
+    "files": [
+      "SecretRotationValidator.ps1",
+      "act-result.txt",
+      "fixtures/secrets-ok.json",
+      "fixtures/secrets.json",
+      ".github/workflows/secret-rotation-validator.yml",
+      "tests/SecretRotationValidator.Tests.ps1",
+      "tests/Workflow.Tests.ps1"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 5,
+    "error_details": [
+      "Exit code 28\n\u001b[95m\n\u001b[95mStarting discovery in 1 files.\u001b[0m\n\u001b[95mDiscovery found 27 tests in 552ms.\u001b[0m\n\u001b[95mRunning tests.\u001b[0m\n\u001b[91m[-] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/",
+      "Exit code 4\n\u001b[95mPester v5.7.1\u001b[0m\n\u001b[95m\n\u001b[95mStarting discovery in 1 files.\u001b[0m\n\u001b[95mDiscovery found 27 tests in 454ms.\u001b[0m\n\u001b[95mRunning tests.\u001b[0m\n\u001b[95m\n\u001b[95mRunning tests from '/home/passp/repos/GH",
+      "Exit code 3\n\u001b[95m\n\u001b[95mStarting discovery in 1 files.\u001b[0m\n\u001b[95mDiscovery found 28 tests in 381ms.\u001b[0m\n\u001b[95mRunning tests.\u001b[0m\n\u001b[91m[-] CLI entry point.emits a markdown report when -Format markdown\u001b[0m",
+      "Exit code 6\n\u001b[95mPester v5.7.1\u001b[0m\n\u001b[95m\n\u001b[95mStarting discovery in 2 files.\u001b[0m\n\u001b[95mDiscovery found 42 tests in 740ms.\u001b[0m\n\u001b[95mRunning tests.\u001b[0m\n\u001b[95m\n\u001b[95mRunning tests from '/home/passp/repos/GH",
+      "Exit code 3\n\u001b[95mPester v5.7.1\u001b[0m\n\u001b[95m\n\u001b[95mStarting discovery in 1 files.\u001b[0m\n\u001b[95mDiscovery found 14 tests in 424ms.\u001b[0m\n\u001b[95mFilter 'FullName' set to ('*execution via act*').\u001b[0m\n\u001b[95mFilters sel"
+    ],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/secret-rotation-validator.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 30002,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 29,
+    "total_tool_duration_ms": 517550,
+    "bash_tool_uses": 4,
+    "bash_total_ms": 1032,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 116931,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 95417,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 57870,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 33190,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 32082,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 19236,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15232,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15163,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15089,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15051,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "ls -la /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/powershell-fable5-medium/ && cat /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-",
+        "duration_ms": 466,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 9,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15163,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 559,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 532,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 33190,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 12892,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 8804,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 8494,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15232,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 32082,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 2564,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 4665,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15051,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 19236,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15089,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 8804,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 168,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/secret-rotation-validator.yml && echo ACTIONLINT_OK",
+        "duration_ms": 358,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15031,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 9326,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 57870,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 14375,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 95417,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 112,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 14922,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/secret-rotation-validator.yml && echo ACTIONLINT_OK",
+        "duration_ms": 122,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "PowerShell",
+        "command": "",
+        "duration_ms": 116931,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "ls -la act-result.txt && grep -c \"Job succeeded\" act-result.txt && grep -E \"CASE:|ROTATION-SUMMARY|exit code\" act-result.txt",
+        "duration_ms": 86,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 0,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 14,
+    "hook_errors_caught": 1,
+    "hook_failures": 5,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "f4b3403d-552e-4a29-9e34-c7fbf856ce24",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4501a31e-5757-40e0-9aca-2d7e5084ae4f",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f4b3403d-552e-4a29-9e34-c7fbf856ce24",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4501a31e-5757-40e0-9aca-2d7e5084ae4f",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "30e7e82c-869b-4225-8456-46f673b47292",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "30e7e82c-869b-4225-8456-46f673b47292",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "80010225-57b6-498f-922a-816fbfaecd1d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "80010225-57b6-498f-922a-816fbfaecd1d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "3e38ebd0-f79d-4e3c-9113-9da510172f27",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3e38ebd0-f79d-4e3c-9113-9da510172f27",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "53307d7e-cd11-4b22-99cf-bf7de3bc902c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "53307d7e-cd11-4b22-99cf-bf7de3bc902c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: Missing BOM encoding for non-ASCII encoded file 'SecretRotationValidator.ps1' (Line )\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2d79a6df-7234-4c79-b3aa-f102d8a53d0b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2d79a6df-7234-4c79-b3aa-f102d8a53d0b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "cc389a1f-119c-41da-9e39-f49ef4cba41b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "cc389a1f-119c-41da-9e39-f49ef4cba41b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4a3fdc59-fd76-4871-8407-f5398a737c57",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4a3fdc59-fd76-4871-8407-f5398a737c57",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "aab7aa55-a77c-4ab7-83a9-002d84797453",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "aab7aa55-a77c-4ab7-83a9-002d84797453",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a3d841ed-fccf-4d28-880c-fbb8a053e016",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a3d841ed-fccf-4d28-880c-fbb8a053e016",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7c7582c6-d8ea-4383-bdcd-1e381ee210c0",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7c7582c6-d8ea-4383-bdcd-1e381ee210c0",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ceb352d1-870b-4bfb-b564-749380fd763c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ceb352d1-870b-4bfb-b564-749380fd763c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "cb7326eb-5269-43b4-98db-437115494356",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "cb7326eb-5269-43b4-98db-437115494356",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}

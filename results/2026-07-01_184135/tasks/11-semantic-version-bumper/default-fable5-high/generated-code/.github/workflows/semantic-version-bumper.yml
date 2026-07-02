@@ -1,0 +1,87 @@
+# Semantic Version Bumper pipeline.
+#
+# Two jobs:
+#   1. unit-tests    - runs the full node:test suite (every unit test case
+#                      executes inside this pipeline).
+#   2. version-bump  - runs the bumper itself. When the repo contains
+#                      e2e/commits.log (written by the local act test
+#                      harness), commits are read from that fixture;
+#                      otherwise the bumper falls back to real `git log`.
+#
+# The bump step prints machine-checkable lines (NEW_VERSION=...,
+# VERSION_FILE_VERSION=...) that run-act-tests.sh asserts on exactly.
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Fixture path used by the e2e test harness; absent on a normal push.
+  E2E_COMMITS_FILE: e2e/commits.log
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run unit test suite (node:test)
+        # Explicit file path: `node --test <dir>` behaves differently across
+        # Node majors (fails on the image's Node 24), a file path does not.
+        run: node --test test/semver-bump.test.js
+
+  version-bump:
+    name: Version bump
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Determine and apply the next version
+        id: bump
+        run: |
+          set -euo pipefail
+          args=()
+          if [ -f "$E2E_COMMITS_FILE" ]; then
+            echo "Using commit fixture: $E2E_COMMITS_FILE"
+            args+=(--commits-file "$E2E_COMMITS_FILE")
+          fi
+          new_version="$(node src/semver-bump.js "${args[@]}")"
+          echo "NEW_VERSION=${new_version}"
+          echo "new_version=${new_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Show updated version file
+        run: |
+          set -euo pipefail
+          if [ -f package.json ]; then
+            echo "VERSION_FILE_VERSION=$(jq -r .version package.json)"
+          elif [ -f VERSION ]; then
+            echo "VERSION_FILE_VERSION=$(cat VERSION)"
+          else
+            echo "No version file found" >&2
+            exit 1
+          fi
+
+      - name: Show updated changelog
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            echo "----- CHANGELOG.md -----"
+            cat CHANGELOG.md
+            echo "------------------------"
+          else
+            echo "No changelog written (no release-worthy commits)."
+          fi
+
+      - name: Report result
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+        run: echo "Semantic version bumper produced version ${NEW_VERSION}"

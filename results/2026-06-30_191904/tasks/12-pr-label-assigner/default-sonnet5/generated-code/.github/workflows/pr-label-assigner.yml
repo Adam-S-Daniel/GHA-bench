@@ -1,0 +1,88 @@
+name: PR Label Assigner
+
+# Real usage is pull_request (label the PR that triggered the run); push and
+# workflow_dispatch are included so the label-assignment logic can also be
+# exercised/demoed on a plain push (this is also what `act push` simulates)
+# and triggered manually with a custom changed-files list.
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      changed_files_fixture:
+        description: 'Path to a JSON fixture of changed file paths to label'
+        required: false
+        default: 'fixtures/pr_mixed.json'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  RULES_FILE: label_rules.json
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pytest
+
+      - name: Run unit tests
+        # Scoped to the label-assignment behavior tests: this is the "all
+        # tests run through act" suite. Workflow-structure tests (YAML
+        # shape, actionlint) are a static host-side check -- see
+        # tests/test_workflow_structure.py and run_act_tests.py.
+        run: python3 -m pytest tests/test_label_assigner.py -v
+
+  assign-labels:
+    name: Assign PR labels
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Each scenario below is a distinct mocked PR file list, demonstrating
+      # glob matching, multiple labels per file, and priority-based conflict
+      # resolution (see label_rules.json for the rule definitions).
+      - name: Scenario - docs-only PR
+        run: python3 label_assigner.py --files fixtures/pr_docs_only.json --rules "$RULES_FILE"
+
+      - name: Scenario - api change (priority conflict resolution)
+        run: python3 label_assigner.py --files fixtures/pr_api_change.json --rules "$RULES_FILE"
+
+      - name: Scenario - mixed changes (multiple independent labels)
+        run: python3 label_assigner.py --files fixtures/pr_mixed.json --rules "$RULES_FILE"
+
+      - name: Scenario - no matching rules
+        run: python3 label_assigner.py --files fixtures/pr_no_match.json --rules "$RULES_FILE"
+
+      - name: Compute labels for this event
+        id: assign
+        run: |
+          FIXTURE="${{ github.event.inputs.changed_files_fixture || 'fixtures/pr_mixed.json' }}"
+          python3 label_assigner.py --files "$FIXTURE" --rules "$RULES_FILE"
+
+      - name: Apply labels to the pull request
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LABELS='${{ steps.assign.outputs.labels }}'
+          echo "Would apply labels to PR #${{ github.event.pull_request.number }}: $LABELS"

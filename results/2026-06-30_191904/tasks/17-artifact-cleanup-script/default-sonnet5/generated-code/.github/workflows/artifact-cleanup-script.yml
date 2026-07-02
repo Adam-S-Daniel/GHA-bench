@@ -1,0 +1,53 @@
+name: Artifact Cleanup Script
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 03:00 UTC to simulate a scheduled artifact-retention sweep.
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: read
+
+env:
+  # Path to the mock artifact/policy fixture consumed by the cleanup script.
+  ARTIFACT_CONFIG_PATH: fixtures/artifacts.json
+
+jobs:
+  test:
+    name: Run Pester test suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify PowerShell and Pester are available
+        shell: pwsh
+        run: |
+          $PSVersionTable.PSVersion
+          Get-Module -ListAvailable Pester | Select-Object -First 1 Name, Version
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./tests -Output Detailed -PassThru
+          if ($result.FailedCount -gt 0) {
+            Write-Error "Pester reported $($result.FailedCount) failing test(s)."
+            exit 1
+          }
+          Write-Host "All $($result.PassedCount) Pester tests passed."
+
+  cleanup:
+    name: Run artifact cleanup
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate artifact retention plan
+        shell: pwsh
+        run: |
+          ./src/run-cleanup.ps1 -ConfigPath $env:ARTIFACT_CONFIG_PATH

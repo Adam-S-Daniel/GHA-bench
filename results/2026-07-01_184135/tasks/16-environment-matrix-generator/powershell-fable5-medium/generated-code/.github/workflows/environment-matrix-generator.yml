@@ -1,0 +1,89 @@
+# Environment Matrix Generator pipeline.
+#
+# Jobs:
+#   unit-tests      - runs the Pester unit suite for the generator module
+#   generate-matrix - runs the script against every fixture, prints each
+#                     result with a CASE[<name>] delimiter for exact-value
+#                     assertions, verifies the size-limit error path, and
+#                     exposes the basic matrix as a job output
+#   consume-matrix  - proves the output is a real strategy.matrix by fanning
+#                     out over fromJSON(...) of the generated JSON
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FIXTURES_DIR: fixtures
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path tests/MatrixGenerator.Tests.ps1 -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "Unit tests failed: $($result.FailedCount) failing"
+          }
+          Write-Output "UNIT-TESTS-PASSED count=$($result.PassedCount)"
+
+  generate-matrix:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate matrices from fixtures
+        id: generate
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($case in @('basic', 'include-exclude')) {
+            $json = & ./src/New-EnvironmentMatrix.ps1 -ConfigPath "$env:FIXTURES_DIR/$case.json"
+            if ($LASTEXITCODE -ne 0) { throw "Generation failed for fixture '$case'" }
+            Write-Output "CASE[$case] $json"
+            if ($case -eq 'basic') {
+              # The basic fixture drives the downstream consume-matrix job.
+              $inner = ($json | ConvertFrom-Json).matrix | ConvertTo-Json -Depth 10 -Compress
+              "matrix=$inner" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            }
+          }
+
+      - name: Verify oversized matrix is rejected
+        shell: pwsh
+        run: |
+          # This fixture must FAIL generation: 8 combos against maxSize 4.
+          $out = & ./src/New-EnvironmentMatrix.ps1 -ConfigPath "$env:FIXTURES_DIR/too-large.json" 2>&1
+          if ($LASTEXITCODE -eq 0) {
+            throw 'Expected the too-large fixture to be rejected, but generation succeeded'
+          }
+          Write-Output "CASE[too-large] ERROR: $out"
+          # The rejection is the expected outcome; don't let the CLI's exit
+          # code 1 (still in $LASTEXITCODE) fail this step.
+          exit 0
+
+  consume-matrix:
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      max-parallel: 2
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Simulate a build for this matrix leg
+        shell: pwsh
+        run: |
+          Write-Output "MATRIX-JOB os=${{ matrix.os }} node=${{ matrix.node }}"

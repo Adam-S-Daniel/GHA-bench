@@ -1,0 +1,212 @@
+[Assistant] I'll build a PowerShell PR label assigner using TDD with Pester, then wire it into a GitHub Actions workflow validated by actionlint and executed through `act`. Let me first check the environment.
+[Tool: Bash] ls -la && cat .actrc && cat benchmark-instructions-v4.md 2>/dev/null | head -50
+[Result] total 44
+drwxr-xr-x 4 passp passp  4096 Jul  2 00:46 .
+drwxr-xr-x 8 passp passp  4096 Jul  2 00:46 ..
+-rw-r--r-- 1 passp passp    40 Jul  2 00:46 .actrc
+drwxr-xr-x 2 passp passp  4096 Jul  2 00:46 .claude
+drwxr-xr-x 6 passp passp  4096 Jul  2 00:46 .git
+-rw-r--r-- 1 passp passp 21843 Jul  1 16:21 benchmark-instructions-v4.md
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+# Benchmark Instructions v4 — GitHub Actions
+
+**Version**: v4
+**Date**: 2026-04-09
+**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+
+**Changes from v3**:
+- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+- GHA workflo
+[Tool: Bash] which pwsh act actionlint docker && pwsh -NoProfile -Command '$PSVersionTable.PSVersion.ToString(); (Get-Module -ListAvailable Pester | Select-Object -First 1).Version.ToString()'
+[Result] /snap/bin/pwsh
+/home/passp/.local/bin/act
+/home/passp/.local/bin/actionlint
+/usr/bin/docker
+7.6.3
+5.7.1
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1", "content": "# LabelAssigner.Tests.ps1\n#\n# P
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests -Output Detailed" 2>&1 | tail -15
+[Result] [96m Context single-star '*' matches within one path segment[0m
+[91m   [-] matches 'docs/*.md' against 'docs/readme.md'[0m[90m 467ms (410ms|57ms)[0m
+[91m    CommandNotFoundException: The term 'Test-GlobMatch' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91m    Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[91m    at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1:19[0m
+[91m   [-] does not match 'docs/*.md' against 'docs/sub/readme.md' ('*' must not cross '/')[0m[90m 381ms (378ms|3ms)[0m
+[91m    CommandNotFoundException: The term 'Test-GlobMatch' is not recognized as a name of a cmdlet, function, script file, or executable program.
+[91m    Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+[91m    at <ScriptBloc
+[Assistant] Red confirmed (module doesn't exist). Now the minimum implementation to go green:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1", "content": "# LabelAssigner.psm1\n#\n# Core logic fo
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1[0m[90m 684ms (95ms|367ms)[0m
+[97mTests completed in 710ms[0m
+[32mTests Passed: 3, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1", "old_string": "        
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -4
+[Result] [91m at Test-GlobMatch -Path 'src/core/parser.test.ps1' -Pattern '*.test.*' | Should -BeTrue, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1:62
+[91m at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1:62[0m
+[97mTests completed in 1.37s[0m
+[97mTests Passed: 9, [0m[91mFailed: 3, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Red as expected. Now implement full glob translation (`**`, `?`, basename matching):
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1", "old_string": "    # Escape ev
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1[0m[90m 3.32s (533ms|1.87s)[0m
+[97mTests completed in 3.44s[0m
+[32mTests Passed: 12, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] 12/12 green. Cycle 3 (red): tests for `Get-PRLabels` — basic mapping, multiple labels, union across rules:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1", "old_string": "        
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] [91m at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1:128[0m
+[97mTests completed in 4.02s[0m
+[97mTests Passed: 12, [0m[91mFailed: 7, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Red (7 new failures). Implementing `Get-PRLabels`:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1", "old_string": "Export-ModuleMe
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1[0m[90m 1.13s (315ms|550ms)[0m
+[97mTests completed in 1.17s[0m
+[32mTests Passed: 19, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1", "old_string": "        
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] [91m at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1:173[0m
+[97mTests completed in 3.54s[0m
+[97mTests Passed: 21, [0m[91mFailed: 2, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Red. Implementing per-file priority resolution:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1", "old_string": "    .DESCRIPTIO
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1", "old_string": "    foreach ($f
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1", "old_string": "function Get-PR
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1[0m[90m 1.16s (333ms|558ms)[0m
+[97mTests completed in 1.19s[0m
+[32mTests Passed: 23, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1", "old_string": "        
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] [91m at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1:240[0m
+[97mTests completed in 3.23s[0m
+[97mTests Passed: 23, [0m[91mFailed: 7, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Red (7 failures). Now implement validation in the module and the CLI script:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1", "old_string": "        [Parame
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/LabelAssigner.psm1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/Invoke-LabelAssigner.ps1", "content": "<#\n.SYNOPSIS\n    CLI entry point
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/src/Invoke-LabelAssigner.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] [32m[+] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/LabelAssigner.Tests.ps1[0m[90m 2.76s (989ms|1.11s)[0m
+[97mTests completed in 2.81s[0m
+[32mTests Passed: 30, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/Workflow.Tests.ps1", "content": "# Workflow.Tests.ps1\n#\n# TDD cycle 6
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/Workflow.Tests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] [91m at <ScriptBlock>, /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/Workflow.Tests.ps1:92[0m
+[97mTests completed in 2.39s[0m
+[97mTests Passed: 30, [0m[91mFailed: 14, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Assistant] Red as expected. Now the workflow and the committed default fixtures:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/.github/workflows/pr-label-assigner.yml", "content": "# PR Label Assigner pip
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/.github/workflows/pr-label-assigner.yml (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/fixtures/changed-files.txt", "content": "docs/readme.md\nsrc/api/users.ps1\ns
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/fixtures/changed-files.txt (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/fixtures/label-rules.json", "content": "[\n  { \"pattern\": \"docs/**\",    \
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/fixtures/label-rules.json (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/pr-label-assigner.yml && echo "ACTIONLINT OK" ; pwsh -NoProfile -Command "Invoke-Pester -Path ./tests" 2>&1 | tail -3
+[Result] ACTIONLINT OK
+[32m[+] /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/tests/Workflow.Tests.ps1[0m[90m 728ms (437ms|248ms)[0m
+[97mTests completed in 2.89s[0m
+[32mTests Passed: 44, [0m[90mFailed: 0, [0m[90mSkipped: 0, [0m[90mInconclusive: 0, [0m[37m[0m[90mNotRun: 0[0m
+[Tool: Bash] docker images | head -5 && act --version
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+IMAGE                                           ID             DISK USAGE   CONTENT SIZE   EXTRA
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+alpine:latest                                   5b10f432ef3d       13.1MB         3.95MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+act version 0.2.87
+[Assistant] Image is present. Writing the act test harness:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/Invoke-ActTests.ps1", "content": "<#\n.SYNOPSIS\n    End-to-end test harness:
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/Invoke-ActTests.ps1 (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -Command '
+$cases = @(
+  @{F=@("docs/readme.md","src/api/users.ps1","src/core/parser.test.ps1"); R=@(@{pattern="docs/**";labels=@("documentation");priority=10},@{pattern="src/api/**";labels=@("api");priority=10},@{pattern="*.test.*";labels=@("tests");priority=10})},
+  @{F=@("docs/api/spec.md","docs/intro.md"); R=@(@{pattern="docs/**";labels=@("documentation");priority=20},@{pattern="docs/api/**";labels=@("api-docs");priority=10})},
+  @{F=@("src/api/handler.ps1","README.md"); R=@(@{pattern="src/api/**";labels=@("api","backend");priority=10},@{pattern="docs/**";labels=@("documentation");priority=10})}
+)
+$i=1
+foreach ($c in $cases) {
+  $d = New-Item -ItemType Directory -Path (Join-Path ([IO.Path]::GetTempPath()) ("chk$i" + [guid]::NewGuid().ToString("N").Substring(0,6)))
+  $c.F | Set-Content "$d/cf.txt"
+  ConvertTo-Json @($c.R) | Set-Content "$d/r.json"
+  $out = ./src/Invoke-LabelAssigner.ps1 -ChangedFilesPath "$d/cf.txt" -RulesPath "$d/r.json"
+  Write-Output "case ${i}: $($out | Select-String "FINAL")"
+  Remove-Item $d -Recurse -Force
+  $i++
+}'
+[Result] case 1: FINAL LABELS: api,documentation,tests
+case 2: FINAL LABELS: api-docs,documentation
+case 3: FINAL LABELS: api,backend
+[Tool: Bash] pwsh -NoProfile -File ./Invoke-ActTests.ps1 2>&1 | tail -20
+[Result] Command running in background with ID: bobvoyujb. Output is being written to: /tmp/claude-1000/-home-passp-repos-GHA-bench-fable5-workspaces-2026-07-01-184135-12-pr-label-assigner-powershell-fable5-high/08d17f99-c9c3-4e57-a39e-55ebcac9b1f7/tasks/bobvoyujb.output. You will be notified when it completes. To check interim output, use Read on that file path.
+[Tool: Bash] sleep 90 && tail -5 /tmp/claude-1000/-home-passp-repos-GHA-bench-fable5-workspaces-2026-07-01-184135-12-pr-label-assigner-powershell-fable5-high/08d17f99-c9c3-4e57-a39e-55ebcac9b1f7/tasks/bobvoyujb.output && grep -c "FINAL LABELS" act-result.txt
+[Result ERROR] <tool_use_error>Blocked: sleep 90 followed by: tail -5 /tmp/claude-1000/-home-passp-repos-GHA-bench-fable5-workspaces-2026-07-01-184135-12-pr-label-assigner-powershell-fable5-high/08d17f99-c9c3-4e57-a39e-55ebcac9b1f7/tasks/bobvoyujb.output grep -c "FINAL LABELS" act-result.txt. To wait for a condition, use Monitor with an until-loop (e.g. `until <check>; do sleep 2; done`). To wait for a command you started, use run_in_background: true. Do not chain shorter sleeps to work around this block.</tool_use_error>
+[Assistant] The harness finished with exit code 0. Verifying the results:
+[Tool: Bash] cat /tmp/claude-1000/-home-passp-repos-GHA-bench-fable5-workspaces-2026-07-01-184135-12-pr-label-assigner-powershell-fable5-high/08d17f99-c9c3-4e57-a39e-55ebcac9b1f7/tasks/bobvoyujb.output
+[Result] === Case 1: basic mapping - docs/api/tests globs each hit once ===
+  exit=1  expected-line-found=False
+
+=== Case 2: priority conflict - docs/api/** (10) beats docs/** (20) per file ===
+  exit=1  expected-line-found=False
+
+=== Case 3: multiple labels per rule + unmatched file contributes nothing ===
+  exit=1  expected-line-found=False
+FAIL: Case 1: basic mapping - docs/api/tests globs each hit once: act exited with code 1 (expected 0)
+FAIL: Case 1: basic mapping - docs/api/tests globs each hit once: output did not contain exact expected line 'FINAL LABELS: api,documentation,tests'
+FAIL: Case 1: basic mapping - docs/api/tests globs each hit once: job 'Pester tests' did not report 'Job succeeded'
+FAIL: Case 1: basic mapping - docs/api/tests globs each hit once: job 'Assign labels' did not report 'Job succeeded'
+FAIL: Case 2: priority conflict - docs/api/** (10) beats docs/** (20) per file: act exited with code 1 (expected 0)
+FAIL: Case 2: priority conflict - docs/api/** (10) beats docs/**
+[Tool: Bash] grep -E "FINAL LABELS|Job succeeded|Exit code|RESULT|^Case|PESTER PASSED" act-result.txt
+[Result] Case 1: basic mapping - docs/api/tests globs each hit once
+Expected: FINAL LABELS: api,documentation,tests
+Exit code: 1
+Case 2: priority conflict - docs/api/** (10) beats docs/** (20) per file
+Expected: FINAL LABELS: api-docs,documentation
+Exit code: 1
+Case 3: multiple labels per rule + unmatched file contributes nothing
+Expected: FINAL LABELS: api,backend
+Exit code: 1
+FAIL: Case 1: basic mapping - docs/api/tests globs each hit once: output did not contain exact expected line 'FINAL LABELS: api,documentation,tests'
+FAIL: Case 1: basic mapping - docs/api/tests globs each hit once: job 'Pester tests' did not report 'Job succeeded'
+FAIL: Case 1: basic mapping - docs/api/tests globs each hit once: job 'Assign labels' did not report 'Job succeeded'
+FAIL: Case 2: priority conflict - docs/api/** (10) beats docs/** (20) per file: output did not contain exact expected line 'FINAL LABELS: api-docs,documentation'
+FAIL: Case 2: priority conflict - docs/api/** (10) beats docs/** (20) per file: job 
+[Assistant] All 3 cases failed. Let me diagnose from the captured act output:
+[Tool: Bash] sed -n '1,60p' act-result.txt
+[Result] act e2e test results - 2026-07-02T00:58:13.9785959-04:00
+
+================================================================================
+Case 1: basic mapping - docs/api/tests globs each hit once
+Expected: FINAL LABELS: api,documentation,tests
+Exit code: 1
+================================================================================
+time="2026-07-02T00:58:14-04:00" level=info msg="Using docker host 'unix:///var/run/docker.sock', and daemon socket 'unix:///var/run/docker.sock'"
+[PR Label Assigner/Pester tests] ⭐ Run Set up job
+[PR Label Assigner/Pester tests] 🚀  Start image=act-ubuntu-pwsh:latest
+[PR Label Assigner/Pester tests]   🐳  docker pull image=act-ubuntu-pwsh:latest platform= username= forcePull=true
+[PR Label Assigner/Pester tests] using DockerAuthConfig authentication for docker pull
+Error: Error response from daemon: authentication required - incorrect username or password
+[PR Label Assigner/Pester tests] Error response from daemon: authentication required - incorrect us
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/Invoke-ActTests.ps1", "old_string": "            $outpu
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/12-pr-label-assigner/powershell-fable5-high/Invoke-ActTests.ps1 has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] pwsh -NoProfile -File ./Invoke-ActTests.ps1
+[Result] Command running in background with ID: buay7efyz. Output is being written to: /tmp/claude-1000/-home-passp-repos-GHA-bench-fable5-workspaces-2026-07-01-184135-12-pr-label-assigner-powershell-fable5-high/08d17f99-c9c3-4e57-a39e-55ebcac9b1f7/tasks/buay7efyz.output. You will be notified when it completes. To check interim output, use Read on that file path.
+[Tool: ToolSearch] {"query": "select:Monitor", "max_results": 1}
+[Result] {'type': 'tool_reference', 'tool_name': 'Monitor'}
+[Assistant] The act harness is re-running in the background with the `--pull=false` fix (3 test cases, ~1-3 minutes). I'll verify the results as soon as it completes.

@@ -1,0 +1,272 @@
+[Assistant] I'll build this with TDD: bats tests first, then the bash script, then the workflow validated with actionlint and act. Let me check the available tooling first.
+[Tool: Bash] which bats jq shellcheck actionlint act docker; bats --version; jq --version; act --version 2>/dev/null | head -1
+[Result] /home/passp/.npm-global/bin/bats
+/home/passp/.local/bin/jq
+/home/passp/.local/bin/shellcheck
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/usr/bin/docker
+Bats 1.13.0
+jq-1.7.1
+act version 0.2.87
+[Tool: Bash] ls -la; cat .actrc 2>/dev/null; cat benchmark-instructions-v4.md 2>/dev/null | head -50
+[Result] total 44
+drwxr-xr-x 4 passp passp  4096 Jul  1 23:19 .
+drwxr-xr-x 5 passp passp  4096 Jul  1 23:19 ..
+-rw-r--r-- 1 passp passp    40 Jul  1 23:19 .actrc
+drwxr-xr-x 2 passp passp  4096 Jul  1 23:19 .claude
+drwxr-xr-x 6 passp passp  4096 Jul  1 23:19 .git
+-rw-r--r-- 1 passp passp 21843 Jul  1 16:21 benchmark-instructions-v4.md
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+# Benchmark Instructions v4 — GitHub Actions
+
+**Version**: v4
+**Date**: 2026-04-09
+**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+
+**Changes from v3**:
+- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+- GHA workflo
+[Tool: Bash] docker run --rm act-ubuntu-pwsh:latest bash -lc 'which bats jq git node npm 2>&1; bats --version 2>&1; jq --version 2>&1' 2>&1 | tail -10
+[Result] /usr/bin/jq
+/usr/bin/git
+/opt/acttoolcache/node/24.15.0/x64/bin/node
+/opt/acttoolcache/node/24.15.0/x64/bin/npm
+bash: line 1: bats: command not found
+jq-1.6
+[Tool: Bash] mkdir -p tests/fixtures fixtures .github/workflows
+[Result] (Bash completed with no output)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/secret_rotation_validator.bats", "content": "#!/usr/bin/env bats\n#
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/secret_rotation_validator.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats tests/secret_rotation_validator.bats 2>&1 | tail -20
+[Result] 1..2
+not ok 1 prints usage with --help and exits 0
+# (in test file tests/secret_rotation_validator.bats, line 20)
+#   `[ "$status" -eq 0 ]' failed
+not ok 2 fails with meaningful error when config file is missing
+# (in test file tests/secret_rotation_validator.bats, line 28)
+#   `[ "$status" -eq 1 ]' failed
+
+The following warnings were encountered during tests:
+BW01: `run`'s command `/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/secret-rotation-validator.sh --help` exited with code 127, indicating 'Command not found'. Use run's return code checks, e.g. `run -127`, to fix this message.
+      (from function `run' in file /home/passp/.npm-global/lib/node_modules/bats/lib/bats-core/test_functions.bash, line 420,
+       in test file tests/secret_rotation_validator.bats, line 19)
+BW01: `run`'s command `/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/secret-rotation
+[Assistant] Red confirmed. **Green 1:** minimal script — usage, arg parsing, config existence check.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/secret-rotation-validator.sh", "content": "#!/usr/bin/env bash\n#\n# secr
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/secret-rotation-validator.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] chmod +x secret-rotation-validator.sh && bats tests/secret_rotation_validator.bats 2>&1 | tail -5
+[Result] 1..2
+ok 1 prints usage with --help and exits 0
+ok 2 fails with meaningful error when config file is missing
+[Assistant] **Red 2:** validation errors and status classification with a mixed fixture.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/mixed.json", "content": "{\n  \"secrets\": [\n    {\n     
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/mixed.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/invalid.json", "content": "{ this is not json\n"}
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/invalid.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/missing-field.json", "content": "{\n  \"secrets\": [\n    
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/missing-field.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/bad-date.json", "content": "{\n  \"secrets\": [\n    {\n  
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/bad-date.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/expires-today.json", "content": "{\n  \"secrets\": [\n    
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/expires-today.json (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/secret_rotation_validator.bats", "old_string"
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/secret_rotation_validator.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats tests/secret_rotation_validator.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)' 
+[Result] 1..13
+ok 1 prints usage with --help and exits 0
+ok 2 fails with meaningful error when config file is missing
+ok 3 rejects unknown options
+not ok 4 fails with meaningful error on invalid JSON
+not ok 5 fails when a secret is missing a required field
+not ok 6 fails when last_rotated is not a valid date
+not ok 7 fails on invalid --format
+not ok 8 fails on non-numeric --warning-days
+not ok 9 fails on invalid --now date
+not ok 10 markdown report classifies expired, warning and ok secrets
+not ok 11 markdown report includes header with reference date and window
+not ok 12 secret expiring today is classified as expired
+not ok 13 warning window is configurable
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/secret-rotation-validator.sh", "old_string": "[[ -f
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/secret-rotation-validator.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats tests/secret_rotation_validator.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)|#' | head -40
+[Result] 1..13
+ok 1 prints usage with --help and exits 0
+ok 2 fails with meaningful error when config file is missing
+ok 3 rejects unknown options
+ok 4 fails with meaningful error on invalid JSON
+ok 5 fails when a secret is missing a required field
+ok 6 fails when last_rotated is not a valid date
+ok 7 fails on invalid --format
+ok 8 fails on non-numeric --warning-days
+ok 9 fails on invalid --now date
+ok 10 markdown report classifies expired, warning and ok secrets
+ok 11 markdown report includes header with reference date and window
+ok 12 secret expiring today is classified as expired
+ok 13 warning window is configurable
+[Assistant] All 13 green. **Red 3:** JSON output format and empty-secrets handling.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/empty.json", "content": "{\n  \"secrets\": []\n}\n"}
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/fixtures/empty.json (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/secret_rotation_validator.bats", "old_string"
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/secret_rotation_validator.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats tests/secret_rotation_validator.bats 2>&1 | grep -E '^(ok|not ok|1\.\.)'
+[Result] 1..16
+ok 1 prints usage with --help and exits 0
+ok 2 fails with meaningful error when config file is missing
+ok 3 rejects unknown options
+ok 4 fails with meaningful error on invalid JSON
+ok 5 fails when a secret is missing a required field
+ok 6 fails when last_rotated is not a valid date
+ok 7 fails on invalid --format
+ok 8 fails on non-numeric --warning-days
+ok 9 fails on invalid --now date
+ok 10 markdown report classifies expired, warning and ok secrets
+ok 11 markdown report includes header with reference date and window
+ok 12 secret expiring today is classified as expired
+not ok 13 json output is valid JSON with correct grouping and counts
+not ok 14 json output contains exact per-secret records
+not ok 15 empty secrets list produces an all-zero report in both formats
+ok 16 warning window is configurable
+[Assistant] **Green 3:** implement JSON rendering.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/secret-rotation-validator.sh", "old_string": "if [[
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/secret-rotation-validator.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats tests/secret_rotation_validator.bats 2>&1 | grep -cE '^ok'; bats tests/secret_rotation_validator.bats 2>&1 | grep -E '^not ok' -A3; shellcheck secret-rotation-validator.sh && bash -n secret-rotation-validator.sh && echo LINT-OK
+[Result] 16
+LINT-OK
+[Tool: Bash] grep -n 'join\|split(' secret-rotation-validator.sh | cat -A | head; ./secret-rotation-validator.sh -c tests/fixtures/mixed.json -n 2026-07-01 -f json | jq -c '.expired[0].required_by'
+[Result] 126:# Flatten secrets to TSV so bash can iterate; unit-separator-joined$
+141:  services_json="$(jq -cn --arg s "$required_by" '$s | split("^_") | map(select(. != ""))')"$
+159:  | [.name, .last_rotated, (.rotation_days | tostring), (.required_by | join("^_"))]$
+["api","worker"]
+[Tool: Bash] python3 - <<'EOF'
+import re
+p='secret-rotation-validator.sh'
+s=open(p).read()
+s=s.replace('''  services_md="${required_by//$'\\x1f'/, }"
+  services_json="$(jq -cn --arg s "$required_by" '$s | split("\x1f") | map(select(. != ""))')"''',
+'''  services_md="${required_by//"$US"/, }"
+  services_json="$(jq -cn --arg s "$required_by" --arg us "$US" \\
+    '$s | split($us) | map(select(. != ""))')"''')
+s=s.replace('''  | [.name, .last_rotated, (.rotation_days | tostring), (.required_by | join("\x1f"))]
+  | @tsv' "$CONFIG")''',
+'''  | [.name, .last_rotated, (.rotation_days | tostring), (.required_by | join($us))]
+  | @tsv' --arg us "$US" "$CONFIG")''')
+s=s.replace('''# Parallel arrays of pre-rendered rows, one bucket per urgency level.''',
+'''# ASCII unit separator: joins required_by service names inside the TSV
+# stream so names containing spaces or commas survive the round-trip.
+US=$'\\x1f'
+
+# Parallel arrays of pre-rendered rows, one bucket per urgency level.''')
+open(p,'w').write(s)
+EOF
+grep -n 'US=' secret-rotation-validator.sh; bats tests/secret_rotation_validator.bats 2>&1 | grep -cE '^ok'; shellcheck secret-rotation-validator.sh && echo SC-OK
+[Result] 124:US=$'\x1f'
+16
+SC-OK
+[Assistant] Refactor holds, all 16 green, shellcheck clean. Now the CI pieces: workflow, default fixtures, act test harness, and workflow-structure tests.
+[Tool: Bash] python3 -c "import yaml; print('pyyaml ok')" 2>&1; docker images | grep -i act | head -5
+[Result] pyyaml ok
+WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+catthehacker/ubuntu:act-22.04                   754f20d9a184       2.15GB          531MB        
+catthehacker/ubuntu:act-latest                  ee77eaa905d1       2.32GB          572MB        
+ghcr.io/catthehacker/ubuntu:act-latest          eb153df03ca8       2.04GB          297MB
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/.github/workflows/secret-rotation-validator.yml", "content": "# Secret Ro
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/.github/workflows/secret-rotation-validator.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] actionlint .github/workflows/secret-rotation-validator.yml && echo ACTIONLINT-OK
+[Result] ACTIONLINT-OK
+[Assistant] actionlint passes. Now the default fixtures and the three act test cases:
+[Tool: Bash] cp tests/fixtures/mixed.json fixtures/secrets.json
+mkdir -p act-fixtures/case-1-markdown act-fixtures/case-2-json act-fixtures/case-3-error
+cp tests/fixtures/mixed.json act-fixtures/case-1-markdown/secrets.json
+cp tests/fixtures/mixed.json act-fixtures/case-2-json/secrets.json
+cp tests/fixtures/missing-field.json act-fixtures/case-3-error/secrets.json
+printf 'NOW_DATE=2026-07-01\nWARN_DAYS=14\nFORMAT=markdown\nEXPECT_ERROR=0\n' | tee fixtures/params.env act-fixtures/case-1-markdown/params.env >/dev/null
+printf 'NOW_DATE=2026-07-01\nWARN_DAYS=14\nFORMAT=json\nEXPECT_ERROR=0\n' > act-fixtures/case-2-json/params.env
+printf 'NOW_DATE=2026-07-01\nWARN_DAYS=14\nFORMAT=markdown\nEXPECT_ERROR=1\n' > act-fixtures/case-3-error/params.env
+ls -R fixtures act-fixtures
+[Result] act-fixtures:
+case-1-markdown
+case-2-json
+case-3-error
+
+act-fixtures/case-1-markdown:
+params.env
+secrets.json
+
+act-fixtures/case-2-json:
+params.env
+secrets.json
+
+act-fixtures/case-3-error:
+params.env
+secrets.json
+
+fixtures:
+params.env
+secrets.json
+[Tool: Bash] ./secret-rotation-validator.sh --config fixtures/secrets.json --now 2026-07-01 --warning-days 14 --format json | jq -c .
+[Result] {"reference_date":"2026-07-01","warning_days":14,"summary":{"expired":1,"warning":1,"ok":1},"expired":[{"name":"db-password","last_rotated":"2026-01-01","rotation_days":90,"expires_on":"2026-04-01","days_left":-91,"required_by":["api","worker"]}],"warning":[{"name":"api-key","last_rotated":"2026-06-10","rotation_days":30,"expires_on":"2026-07-10","days_left":9,"required_by":["gateway"]}],"ok":[{"name":"tls-cert","last_rotated":"2026-06-01","rotation_days":365,"expires_on":"2027-06-01","days_left":335,"required_by":["ingress"]}]}
+[Assistant] Expected values confirmed. Now the act harness script:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/run-act-tests.sh", "content": "#!/usr/bin/env bash\n#\n# run-act-tests.sh
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/run-act-tests.sh (file state is current in your context — no need to Read it back)
+[Assistant] And the workflow-structure test suite:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/workflow_structure.bats", "content": "#!/usr/bin/env bats\n# Struct
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/tests/workflow_structure.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] chmod +x run-act-tests.sh && shellcheck secret-rotation-validator.sh run-act-tests.sh && bash -n run-act-tests.sh && echo LINT-OK; bats tests/ 2>&1 | tail -8
+[Result] LINT-OK
+ok 15 empty secrets list produces an all-zero report in both formats
+ok 16 warning window is configurable
+ok 17 workflow file exists and actionlint passes (exit 0)
+ok 18 workflow declares the expected triggers
+ok 19 workflow has test and report jobs with correct dependency
+ok 20 workflow restricts permissions to contents: read
+ok 21 workflow uses actions/checkout@v4 in every job
+ok 22 workflow references script and test files that exist on disk
+[Assistant] One fix needed in the harness — the "empty secrets" test is number 15, not 16:
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/run-act-tests.sh", "old_string": "  assert_contains
+[Result] The file /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/run-act-tests.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now running the full act harness — 3 `act push` runs, one per test case:
+[Tool: Bash] ./run-act-tests.sh 2>&1 | tail -50
+[Result] === case-1-markdown (repo: /tmp/act-case-1-markdown.WiYHcc) ===
+  assert ok: act exited 0
+  assert ok: both jobs succeeded
+  assert ok: log contains: 1..16
+  assert ok: log contains: ok 16 warning window is configurable
+  assert ok: log does not contain: not ok
+  assert ok: log contains: # Secret Rotation Report
+  assert ok: log contains: Reference date: 2026-07-01 | Warning window: 14 days
+  assert ok: log contains: ## 🔴 EXPIRED (1)
+  assert ok: log contains: ## 🟡 WARNING (1)
+  assert ok: log contains: ## 🟢 OK (1)
+  assert ok: log contains: | db-password | 2026-01-01 | 90 | 2026-04-01 | 91 | api, worker |
+  assert ok: log contains: | api-key | 2026-06-10 | 30 | 2026-07-10 | 9 | gateway |
+  assert ok: log contains: | tls-cert | 2026-06-01 | 365 | 2027-06-01 | 335 | ingress |
+  assert ok: log contains: REPORT-OK
+=== case-2-json (repo: /tmp/act-case-2-json.JnefZ1) ===
+  assert ok: act exited 0
+  assert ok: both jobs succeeded
+  assert ok: log contains: 1..16
+  assert ok: log contains: ok
+[Assistant] All three act runs passed on the first attempt — 29/29 harness assertions. Final verification sweep:
+[Tool: Bash] grep -c 'Job succeeded' act-result.txt; grep -c 'TEST CASE:' act-result.txt; ls -la act-result.txt; bats tests/ 2>&1 | grep -cE '^ok'; shellcheck secret-rotation-validator.sh run-act-tests.sh && bash -n secret-rotation-validator.sh && bash -n run-act-tests.sh && actionlint .github/workflows/secret-rotation-validator.yml && echo ALL-CHECKS-OK
+[Result] 6
+3
+-rw-r--r-- 1 passp passp 26896 Jul  1 23:28 act-result.txt
+22
+ALL-CHECKS-OK
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/README.md", "content": "# Secret Rotation Validator\n\nBash tool that rea
+[Result] File created successfully at: /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/18-secret-rotation-validator/bash-fable5-medium/README.md (file state is current in your context — no need to Read it back)
+[Assistant] Done. Everything passes: 22 bats tests, shellcheck, `bash -n`, actionlint, and all 3 `act` pipeline runs (29/29 harness assertions), with `act-result.txt` written as the required artifact.
+
+**How it was built (red/green TDD, three cycles):**
+1. **Red:** CLI contract tests (`--help`, missing config) → failed with exit 127 → **Green:** minimal script with arg parsing → **Refactor:** none needed.
+2. **Red:** 10 tests for validation errors (invalid JSON, missing fields, bad dates, bad `--format`/`--warning-days`/`--now`) and classification against fixtures pinned to `--now 2026-07-01` → **Green:** jq schema validation, GNU-date expiry math, markdown rendering → verified expired/warning/ok boundaries including "expires today = expired".
+3. **Red:** JSON-format tests asserting exact per-secret records and an empty-config edge case → **Green:** JSON renderer → **Refactor:** replaced an invisible raw 0x1F byte in the source with an explicit `US=$'\x1f'` unit-separator variable (keeps service names with spaces intact through the TSV round-trip); all tests stayed green.
+
+**The script** (`secret-rotation-validator.sh`) takes `--config`, `--warning-days`, `--format markdown|json`, and `--now` (for deterministic testing), and groups output into 🔴 EXPIRED / 🟡 WARNING / 🟢 OK sections with days-overdue/days-left and required-by services. Every failure mode dies with a named, specific error message.
+
+**The workflow** (`.github/workflows/secret-rotation-validator.yml`) triggers on push, PR, weekly schedule, and manual dispatch with `contents: read` permissions. Job `test` installs bats, syntax-checks the script, and runs the 16-test suite; job `report` (needs `test`) generates the report using parameters from `fixtures/params.env`, so the same workflow is drivable by different fixture data — including a negative-path mode that asserts the validator fails correctly on broken config.
+
+**All testing went through act:** `run-act-tests.sh` builds a temp git repo per case, runs `act push --rm` (exactly 3 runs), and asserts exact known-good values — e.g. the full compact JSON document for case 2 (`"days_left":-91` for db-password, `"days_left":9` for api-key), the exact markdown table rows for case 1, and the exact error message plus job success for case 3. Each case also verifies `1..16` bats results with zero failures and 2 "Job succeeded" lines. Six additional workflow-structure tests parse the YAML (triggers, job dependency, permissions, checkout@v4, referenced paths exist) and assert actionlint exits 0.

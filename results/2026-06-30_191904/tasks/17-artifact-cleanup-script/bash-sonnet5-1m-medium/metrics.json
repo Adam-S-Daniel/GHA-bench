@@ -1,0 +1,1127 @@
+{
+  "task_id": "17-artifact-cleanup-script",
+  "task_name": "Artifact Cleanup Script",
+  "task_category": "GitHub Actions / Maintenance",
+  "language_mode": "bash",
+  "language_chosen": "bash",
+  "language_breakdown": {
+    "bash": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-sonnet-5[1m]",
+  "model_short": "sonnet5-1m",
+  "variant": "sonnet5-1m-medium",
+  "claude_code_version": "2.1.197",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-07-01T16:52:11.359363+00:00",
+  "timestamp_end": "2026-07-01T17:09:03.944933+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use Bash as your implementation language.\n\nTASK: Given a list of artifacts with metadata (name, size, creation date, workflow run ID \u2014 provided as mock data), apply retention policies (max age, max total size, keep-latest-N per workflow), determine which artifacts to delete, and generate a deletion plan with a summary (total space reclaimed, artifacts retained vs deleted). Support dry-run mode.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use bats-core (bats) as the testing framework.\n3. All tests must be runnable with `bats` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n6. Use `#!/usr/bin/env bash` shebang. Scripts must pass `shellcheck` and `bash -n` syntax validation.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/artifact-cleanup-script.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/artifact-cleanup-script.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "2865718e-bb6d-4c09-b575-6e92c350f28d",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 30,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1450,
+      "outputTokens": 18,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.00154,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-sonnet-5[1m]": {
+      "inputTokens": 7271,
+      "outputTokens": 45236,
+      "cacheReadInputTokens": 6222647,
+      "cacheCreationInputTokens": 130159,
+      "webSearchRequests": 0,
+      "costUSD": 3.3481011,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "medium",
+  "timing": {
+    "grand_total_duration_ms": 1012585,
+    "total_api_duration_ms": 563702,
+    "total_execution_duration_ms": 447427,
+    "num_turns": 80
+  },
+  "tokens": {
+    "input_tokens": 7271,
+    "output_tokens": 45236,
+    "cache_read_tokens": 6222647,
+    "cache_creation_tokens": 130159,
+    "total_context_consumed": 6360077,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 3.3496411000000004,
+    "assumed_input_cost_per_mtok": 3.0,
+    "assumed_output_cost_per_mtok": 15.0,
+    "assumed_cache_read_cost_per_mtok": 0.3,
+    "assumed_cache_write_cost_per_mtok": 3.75
+  },
+  "code_metrics": {
+    "code_lines": 686,
+    "total_tokens_estimate": 17448,
+    "file_count": 10,
+    "files": [
+      "act-result.txt",
+      "artifact_cleanup.sh",
+      "test_act.bats",
+      "test_artifact_cleanup.bats",
+      "test_workflow_structure.bats",
+      "fixtures/artifacts.json",
+      "fixtures/policy.json",
+      "fixtures-caseB/artifacts.json",
+      "fixtures-caseB/policy.json",
+      ".github/workflows/artifact-cleanup-script.yml"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 7,
+    "error_details": [
+      "Exit code 1\n/home/passp/repos/GHA-bench-sonnet5/results/2026-06-26_103905/tasks/15-test-results-aggregator/bash-opus48-1m-high/generated-code/..\n/home/passp/repos/GHA-bench-sonnet5/results/2026-06-26_",
+      "Exit code 1\n\nIn artifact_cleanup.sh line 110:\nJQ_PROGRAM='\n           ^-- SC2016 (info): Expressions don't expand in single quotes, use double quotes for that.\n\nFor more information:\n  https://www.she",
+      "Exit code 1\nSHELLCHECK_OK\n1..10\nok 1 fails with a usage error when --input is missing\nok 2 fails with a clear error when the input file does not exist\nok 3 fails when --max-age-days is not a non-negat",
+      "Exit code 5\njq: error (at fixtures/artifacts.json:7): Cannot index array with string \"name\"",
+      "Exit code 5\njq: error (at /tmp/t.json:5): Cannot index array with string \"name\"",
+      "Exit code 1\nOK\n1..10\nok 1 fails with a usage error when --input is missing\nok 2 fails with a clear error when the input file does not exist\nok 3 fails when --max-age-days is not a non-negative integer",
+      "Exit code 1\n1..10\nok 1 fails with a usage error when --input is missing\nok 2 fails with a clear error when the input file does not exist\nok 3 fails when --max-age-days is not a non-negative integer\nok"
+    ],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/artifact-cleanup-script.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 49801,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 79,
+    "total_tool_duration_ms": 450396,
+    "bash_tool_uses": 41,
+    "bash_total_ms": 447474,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "bats test_act.bats 2>&1 | tail -60",
+        "duration_ms": 217707,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_act.bats 2>&1 | tail -80",
+        "duration_ms": 89405,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_act.bats 2>&1 | tail -200",
+        "duration_ms": 67008,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "rm -rf /tmp/tmp.1GPtKBaTrf; bats test_act.bats 2>&1 | tail -150",
+        "duration_ms": 53303,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium\nbash -n artifact_cleanup.sh && echo \"bash -n OK\"\nshellcheck artifact_cleanup.sh &&",
+        "duration_ms": 6228,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium\nwork=$(mktemp -d)\ncp -r .github \"$work/\"\nsed -i \"s#github.event.inputs.artifacts_d",
+        "duration_ms": 2251,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_act.bats 2>&1 | tail -100",
+        "duration_ms": 1263,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_artifact_cleanup.bats 2>&1 | head -40",
+        "duration_ms": 1092,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium\nbats test_workflow_structure.bats",
+        "duration_ms": 1043,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_artifact_cleanup.bats",
+        "duration_ms": 1001,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "cat /home/passp/repos/GHA-bench-sonnet5/AGENTS.md 2>/dev/null | head -100; echo \"---\"; ls -la; echo \"---\"; cat benchmark-instructions-v4.md 2>/dev/null | head -50",
+        "duration_ms": 244,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -n -A 100 \"Common Pitfalls\" /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium/benchmark-instructions-v4.md | head -150",
+        "duration_ms": 84,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "find /home/passp/repos/GHA-bench-sonnet5/results -iname \"*artifact*cleanup*bash*\" -maxdepth 4 2>/dev/null | head -20",
+        "duration_ms": 89,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "find /home/passp/repos/GHA-bench-sonnet5/results -path \"*bash*\" -iname \"*.bats\" 2>/dev/null | head -5; echo \"---\"; find /home/passp/repos/GHA-bench-sonnet5/results -iname \"act-result.txt\" -path \"*bash",
+        "duration_ms": 174,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "D=/home/passp/repos/GHA-bench-sonnet5/results/2026-06-26_103905/tasks/15-test-results-aggregator/bash-opus48-1m-high/generated-code; find \"$D\" -maxdepth 2 | sort",
+        "duration_ms": 87,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "D=/home/passp/repos/GHA-bench-sonnet5/results/2026-06-26_103905/tasks/15-test-results-aggregator/bash-opus48-1m-high/generated-code; echo \"=== workflow ===\"; cat \"$D/.github/workflows\"/*.yml; echo \"==",
+        "duration_ms": 136,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "D=/home/passp/repos/GHA-bench-sonnet5/results/2026-06-26_103905/tasks/15-test-results-aggregator/bash-opus48-1m-high/generated-code; cat \"$D/../.actrc\" 2>/dev/null; find \"$D/..\" -maxdepth 1; echo \"---",
+        "duration_ms": 223,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium/.actrc",
+        "duration_ms": 67,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "which jq shellcheck bats actionlint act; jq --version; date --version | head -1; bats --version",
+        "duration_ms": 135,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "ToolSearch",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 9,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p fixtures fixtures-caseB .github/workflows",
+        "duration_ms": 63,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 91,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 58,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 43,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 52,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 52,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_artifact_cleanup.bats 2>&1 | head -40",
+        "duration_ms": 1092,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 88,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x artifact_cleanup.sh && bash -n artifact_cleanup.sh && shellcheck artifact_cleanup.sh && bats test_artifact_cleanup.bats",
+        "duration_ms": 118,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 127,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n artifact_cleanup.sh && shellcheck artifact_cleanup.sh && echo SHELLCHECK_OK && bats test_artifact_cleanup.bats",
+        "duration_ms": 573,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "./artifact_cleanup.sh --input fixtures/artifacts.json --now \"2026-07-01T00:00:00Z\" --max-age-days 30 --max-total-size-bytes 1000000 --keep-latest-n 100; echo \"EXIT=$?\"",
+        "duration_ms": 66,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "jq '\ndef mark_age($now; $max_age):\n  map(.age_days = ((($now|fromdateiso8601) - (.created_at|fromdateiso8601)) / 86400 | floor))\n  | map(.status = (if .age_days > $max_age then \"deleted\" else \"retaine",
+        "duration_ms": 57,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "jq --arg now \"2026-07-01T00:00:00Z\" --argjson max_age 30 --argjson keep_n 100 --argjson max_total 1000000 '\ndef mark_age($now; $max_age):\n  map(.age_days = ((($now|fromdateiso8601) - (.created_at|from",
+        "duration_ms": 55,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "jq -c '.[0:2]' fixtures/artifacts.json | jq '\ngroup_by(.workflow) | .[0]\n' \necho \"---\"\njq --argjson keep_n 100 '\ngroup_by(.workflow) | map(\n  . as $group\n  | ($group | map(select(.status==\"retained\"))",
+        "duration_ms": 84,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat <<'EOF' > /tmp/t.json\n[\n {\"name\":\"a1\",\"workflow\":\"w1\",\"status\":\"retained\",\"created_at\":\"2026-01-01T00:00:00Z\"},\n {\"name\":\"a2\",\"workflow\":\"w1\",\"status\":\"retained\",\"created_at\":\"2026-01-02T00:00:00Z",
+        "duration_ms": 55,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 113,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bash -n artifact_cleanup.sh && shellcheck artifact_cleanup.sh && echo OK && bats test_artifact_cleanup.bats",
+        "duration_ms": 662,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 85,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 - <<'EOF'\nimport re\nwith open('test_artifact_cleanup.bats') as f:\n    content = f.read()\ncontent = content.replace('echo \"$output\" | jq', 'echo \"$output\" | head -n1 | jq')\nwith open('test_arti",
+        "duration_ms": 94,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_artifact_cleanup.bats",
+        "duration_ms": 965,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "./artifact_cleanup.sh --input fixtures/artifacts.json --now \"2026-07-01T00:00:00Z\" --max-age-days 100000 --max-total-size-bytes 1000000 --keep-latest-n 2 | head -n1 | jq '.artifacts[] | {name,status,r",
+        "duration_ms": 94,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 41,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 51,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_artifact_cleanup.bats",
+        "duration_ms": 1001,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "P=$(jq -r '\"--max-age-days \\(.max_age_days) --max-total-size-bytes \\(.max_total_size_bytes) --keep-latest-n \\(.keep_latest_n) --now \\(.now)\" + (if .dry_run then \" --dry-run\" else \"\" end)' fixtures-cas",
+        "duration_ms": 86,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 21,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 140,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/artifact-cleanup-script.yml; echo \"EXIT=$?\"",
+        "duration_ms": 234,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 56,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_act.bats 2>&1 | tail -100",
+        "duration_ms": 1263,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium\nwork=\"$(mktemp -d)\"\ncp artifact_cleanup.sh \"$work/\"\ncp test_artifact_cleanup.bats ",
+        "duration_ms": 576,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker images | grep act-ubuntu-pwsh",
+        "duration_ms": 236,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 40,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "rm -rf /tmp/tmp.1GPtKBaTrf; bats test_act.bats 2>&1 | tail -150",
+        "duration_ms": 53303,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium\nbash -x -c '\nREPO_ROOT=\"$(pwd)\"\nwork=\"$(mktemp -d)\"\ncp \"$REPO_ROOT/artifact_cleanu",
+        "duration_ms": 188,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 62,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_act.bats 2>&1 | tail -200",
+        "duration_ms": 67008,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "wc -l act-result.txt; grep -n \"ACT CASE\\|exit code\\|Job succeeded\\|Job failed\" act-result.txt",
+        "duration_ms": 70,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 181,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/artifact-cleanup-script.yml && echo LINT_OK",
+        "duration_ms": 216,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_act.bats 2>&1 | tail -60",
+        "duration_ms": 217707,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "awk '/ACT CASE: B-dry-run/,0' act-result.txt | tail -80",
+        "duration_ms": 755,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 57,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 489,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium\ngrep -n 'run_case \"' test_act.bats",
+        "duration_ms": 585,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 427,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 498,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium\nwork=$(mktemp -d)\ncp -r .github \"$work/\"\nsed -i \"s#github.event.inputs.artifacts_d",
+        "duration_ms": 2251,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats test_act.bats 2>&1 | tail -80",
+        "duration_ms": 89405,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 57,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 -c \"import yaml; print('ok')\"",
+        "duration_ms": 102,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium\nbats test_workflow_structure.bats",
+        "duration_ms": 1043,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/17-artifact-cleanup-script/bash-sonnet5-1m-medium\nbash -n artifact_cleanup.sh && echo \"bash -n OK\"\nshellcheck artifact_cleanup.sh &&",
+        "duration_ms": 6228,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 435704,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 22,
+    "hook_errors_caught": 0,
+    "hook_failures": 0,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "3ff5fb84-03a3-4215-b6de-c7fb941061fd",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6c401a59-5cba-408c-8765-ec164d163a88",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3ff5fb84-03a3-4215-b6de-c7fb941061fd",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6c401a59-5cba-408c-8765-ec164d163a88",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "d7203ff2-213f-4e96-83a8-464d27465466",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "d7203ff2-213f-4e96-83a8-464d27465466",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9c7eb72d-19a7-41e4-bef2-6d12ba47df75",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9c7eb72d-19a7-41e4-bef2-6d12ba47df75",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "92339a40-6c2f-4894-9bfb-0df66b622c49",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "92339a40-6c2f-4894-9bfb-0df66b622c49",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9c365194-6e30-4f08-a2dc-ae383aa84978",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9c365194-6e30-4f08-a2dc-ae383aa84978",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "991b671e-6773-448e-b132-06064cc51ea2",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "991b671e-6773-448e-b132-06064cc51ea2",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "6f134ff5-ff2d-4b1f-9721-d53c5253f007",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6f134ff5-ff2d-4b1f-9721-d53c5253f007",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "67bcb4a2-7058-46cd-a2b4-671edf5a2354",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "67bcb4a2-7058-46cd-a2b4-671edf5a2354",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "cd591657-d84a-4d76-9a27-673ad72695a7",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "cd591657-d84a-4d76-9a27-673ad72695a7",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a8c130e0-553a-4ddc-b50a-e7620fb4f440",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a8c130e0-553a-4ddc-b50a-e7620fb4f440",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "8386ea90-775f-4a0f-b5f1-0a4af7675b85",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "8386ea90-775f-4a0f-b5f1-0a4af7675b85",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f6579f72-f36d-41ef-93b6-d4e32f7e9db8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f6579f72-f36d-41ef-93b6-d4e32f7e9db8",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f5af8c6a-310d-4ee4-92de-8b8ec191ca8b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f5af8c6a-310d-4ee4-92de-8b8ec191ca8b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b313aba6-0b01-4037-835b-a85d918d4701",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b313aba6-0b01-4037-835b-a85d918d4701",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "46b0681f-7cb8-45dd-b9c1-1ea936405206",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "46b0681f-7cb8-45dd-b9c1-1ea936405206",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ca391cc8-f65d-4aa4-9c15-78597450dd4c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ca391cc8-f65d-4aa4-9c15-78597450dd4c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "156b76b7-1447-4f24-acbf-de25bdd98565",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "156b76b7-1447-4f24-acbf-de25bdd98565",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "91150321-fb33-4db3-ae2c-0c5119524495",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "91150321-fb33-4db3-ae2c-0c5119524495",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "896a73c5-1d66-4d2b-8743-9ef4dfcb6902",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "896a73c5-1d66-4d2b-8743-9ef4dfcb6902",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "df16a398-4aa6-4d99-bd59-9be87050e91b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "df16a398-4aa6-4d99-bd59-9be87050e91b",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7a0a8da4-da00-4128-9672-1e7a03213578",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7a0a8da4-da00-4128-9672-1e7a03213578",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,65 @@
+# Artifact cleanup pipeline: runs the unit test suite, then executes the
+# cleanup script against the repo's fixture data and publishes the deletion
+# plan. CLEANUP_NOW pins the clock so results are deterministic in CI.
+name: artifact-cleanup-script
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Nightly maintenance run at 03:17 UTC.
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: read
+
+env:
+  ARTIFACTS_FILE: fixtures/artifacts.json
+  POLICY_FILE: fixtures/policy.json
+  CLEANUP_NOW: "2026-07-01T00:00:00Z"
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Run unit tests
+        run: bun test tests/cleanup.test.ts tests/config.test.ts
+
+  cleanup:
+    name: Artifact cleanup plan
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Run artifact cleanup
+        run: |
+          bun run src/cli.ts \
+            --artifacts "$ARTIFACTS_FILE" \
+            --policy "$POLICY_FILE" \
+            --now "$CLEANUP_NOW" | tee cleanup-report.txt
+
+      - name: Publish job summary
+        run: |
+          {
+            echo "## Artifact cleanup report"
+            echo '```'
+            cat cleanup-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

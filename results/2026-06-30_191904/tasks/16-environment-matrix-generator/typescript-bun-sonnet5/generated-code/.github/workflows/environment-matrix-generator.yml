@@ -1,0 +1,60 @@
+name: Environment Matrix Generator
+
+# Triggers: run on every push and PR, weekly to catch config/tooling drift,
+# and on-demand from the Actions UI.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+# Least-privilege: this pipeline only reads the repository contents.
+permissions:
+  contents: read
+
+env:
+  # Config the generator reads by default. The act-driven test harness
+  # (workflow.test.ts) overwrites this exact file per test case so each run
+  # exercises a different matrix without touching the workflow itself.
+  MATRIX_CONFIG_PATH: fixtures/scenario.json
+
+jobs:
+  test:
+    name: Unit test the generator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run unit and CLI tests
+        run: bun run test
+
+  generate-matrix:
+    name: Generate build matrix
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Generate matrix JSON
+        run: |
+          echo "Using config: $MATRIX_CONFIG_PATH"
+          bun run matrix-generator.ts "$MATRIX_CONFIG_PATH" | tee matrix.json
+
+      - name: Summarize matrix for downstream consumers
+        run: bun run format-summary.ts matrix.json

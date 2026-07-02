@@ -1,0 +1,97 @@
+name: Artifact Cleanup Script
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: {}
+  schedule:
+    # Weekly, Sunday 03:00 UTC -- mirrors how a real artifact-retention job
+    # would run on a schedule independent of code changes.
+    - cron: '0 3 * * 0'
+
+permissions:
+  contents: read
+
+env:
+  # Fixed reference time so every scenario's retained/deleted counts are
+  # reproducible regardless of the actual run date.
+  FIXTURE_NOW: '2026-07-01T00:00:00Z'
+  ARTIFACTS_FIXTURE: 'fixtures/sample-artifacts.json'
+
+jobs:
+  unit-tests:
+    name: Unit tests (policy engine + CLI)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Pester is available
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [version]'5.0.0' })) {
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./tests/ArtifactCleanup.Tests.ps1, ./tests/InvokeArtifactCleanup.Tests.ps1 -PassThru
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) unit test(s) failed."
+          }
+          Write-Output "All $($result.PassedCount) unit tests passed."
+
+  cleanup:
+    name: Cleanup scenario - ${{ matrix.scenario }}
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scenario: age-policy
+            maxAgeDays: 30
+            maxTotalSizeMB: 0
+            keepLatestN: 0
+            dryRun: false
+          - scenario: size-policy
+            maxAgeDays: 0
+            maxTotalSizeMB: 900
+            keepLatestN: 0
+            dryRun: false
+          - scenario: keep-latest
+            maxAgeDays: 0
+            maxTotalSizeMB: 0
+            keepLatestN: 2
+            dryRun: false
+          - scenario: combined-dry-run
+            maxAgeDays: 30
+            maxTotalSizeMB: 1000
+            keepLatestN: 2
+            dryRun: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run artifact cleanup plan
+        shell: pwsh
+        run: |
+          $planArgs = @{
+            ArtifactsPath  = $env:ARTIFACTS_FIXTURE
+            MaxAgeDays     = [int]'${{ matrix.maxAgeDays }}'
+            MaxTotalSizeMB = [int]'${{ matrix.maxTotalSizeMB }}'
+            KeepLatestN    = [int]'${{ matrix.keepLatestN }}'
+            Now            = $env:FIXTURE_NOW
+            ScenarioName   = '${{ matrix.scenario }}'
+            PlanOutputPath = 'cleanup-plan-${{ matrix.scenario }}.json'
+          }
+          if ('${{ matrix.dryRun }}' -eq 'true') {
+            $planArgs.DryRun = $true
+          }
+          ./Invoke-ArtifactCleanup.ps1 @planArgs
+
+      - name: Show generated plan file
+        shell: pwsh
+        run: |
+          Get-Content -Raw -Path 'cleanup-plan-${{ matrix.scenario }}.json'

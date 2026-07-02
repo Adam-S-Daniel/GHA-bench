@@ -1,0 +1,39 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CHANGELOG_PATH: CHANGELOG.md
+
+jobs:
+  test-and-bump:
+    name: Run tests and bump version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./tests -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) Pester test(s) failed."
+          }
+
+      - name: Bump version from fixture commit log
+        shell: pwsh
+        run: |
+          Copy-Item -Path ./fixtures/demo-package.json -Destination ./demo-package.json -Force
+          $fixtureName = if ($env:COMMIT_FIXTURE) { $env:COMMIT_FIXTURE } else { 'commits-feat.txt' }
+          ./Invoke-VersionBump.ps1 -VersionFilePath ./demo-package.json `
+            -CommitLogPath "./fixtures/$fixtureName" `
+            -ChangelogPath $env:CHANGELOG_PATH

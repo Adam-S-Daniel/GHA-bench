@@ -1,0 +1,98 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      config_path:
+        description: "Path to the matrix config JSON fixture to use"
+        required: false
+        default: fixtures/basic-config.json
+        type: string
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  BUN_VERSION: "1.3.11"
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        run: npm install -g "bun@${BUN_VERSION}"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run tests
+        run: bun test
+
+  generate-matrix:
+    name: Generate build matrix
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      fail_fast: ${{ steps.matrix.outputs.fail_fast }}
+      max_parallel: ${{ steps.matrix.outputs.max_parallel }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        run: npm install -g "bun@${BUN_VERSION}"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate matrix
+        id: matrix
+        env:
+          CONFIG_PATH: ${{ github.event.inputs.config_path || 'fixtures/basic-config.json' }}
+        run: |
+          set -euo pipefail
+          echo "Using config: $CONFIG_PATH"
+          bun run src/cli.ts "$CONFIG_PATH"
+          COMPACT=$(bun run src/cli.ts "$CONFIG_PATH" --compact)
+          echo "Compact matrix: $COMPACT"
+          MATRIX_ONLY=$(echo "$COMPACT" | jq -c '{include: .include}')
+          FAIL_FAST=$(echo "$COMPACT" | jq -r '."fail-fast"')
+          MAX_PARALLEL=$(echo "$COMPACT" | jq -r '."max-parallel" // empty')
+          {
+            echo "matrix<<MATRIX_EOF"
+            echo "$MATRIX_ONLY"
+            echo "MATRIX_EOF"
+            echo "fail_fast=$FAIL_FAST"
+            echo "max_parallel=$MAX_PARALLEL"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.os }}, node ${{ matrix.node }})
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    # fail-fast/max-parallel are static here (act's expression evaluator can't
+    # resolve them dynamically from a needs output); the computed values are
+    # still verified from the "Generate matrix" step's output above.
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show matrix cell
+        run: |
+          echo "Simulating build for os=${{ matrix.os }} node=${{ matrix.node }}"
+          echo "Full matrix cell: ${{ toJSON(matrix) }}"

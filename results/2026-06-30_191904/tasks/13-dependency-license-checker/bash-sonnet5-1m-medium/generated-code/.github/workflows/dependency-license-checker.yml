@@ -1,0 +1,57 @@
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  LICENSE_DB_FILE: fixtures/license-db.json
+  LICENSE_CONFIG_FILE: fixtures/license-config.json
+  SCENARIO_MANIFEST: scenario/package.json
+
+jobs:
+  unit-tests:
+    name: Run bats unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install bats-core
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y bats
+
+      - name: Run bats test suite (script/library logic tests)
+        run: |
+          bats tests/test_parse_manifest.bats \
+               tests/test_license_lookup.bats \
+               tests/test_classify_license.bats \
+               tests/test_generate_report.bats \
+               tests/test_cli.bats
+
+  license-check:
+    name: Check dependency licenses
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+
+      - name: Run license compliance check on scenario package.json
+        run: |
+          ./check-licenses.sh \
+            --manifest "${SCENARIO_MANIFEST}" \
+            --db "${LICENSE_DB_FILE}" \
+            --config "${LICENSE_CONFIG_FILE}"

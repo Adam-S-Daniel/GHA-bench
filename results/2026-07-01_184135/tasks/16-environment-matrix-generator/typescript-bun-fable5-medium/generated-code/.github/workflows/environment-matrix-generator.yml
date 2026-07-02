@@ -1,0 +1,78 @@
+# CI pipeline for the environment matrix generator.
+#
+# Job flow: `test` (unit tests + actionlint) -> `generate-matrix` (runs the
+# CLI against config.json and publishes the matrix JSON as a job output,
+# ready to be consumed downstream via fromJSON()).
+#
+# The repo's config.json drives the run. If a file named EXPECT_FAILURE is
+# present (used by the error-path test fixture), the generate step asserts
+# that the CLI fails with a validation error instead of succeeding.
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CONFIG_FILE: config.json
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Run unit and workflow-structure tests
+        run: bun test
+
+      - name: Lint workflow files
+        # Download a pinned actionlint binary and lint this workflow, so the
+        # actionlint gate also runs inside CI, not just on developer machines.
+        run: |
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.7
+          ./actionlint -color
+
+  generate-matrix:
+    name: Generate build matrix
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Generate matrix from config
+        id: gen
+        run: |
+          set -euo pipefail
+          if [ -f EXPECT_FAILURE ]; then
+            # Error-path fixture: the config is intentionally invalid and the
+            # CLI must reject it with a meaningful message.
+            if output=$(bun run src/cli.ts "$CONFIG_FILE" 2>&1); then
+              echo "ERROR: expected matrix generation to fail, but it succeeded: $output"
+              exit 1
+            fi
+            echo "MATRIX_ERROR_CONFIRMED: $output"
+            echo "matrix={}" >> "$GITHUB_OUTPUT"
+          else
+            output=$(bun run src/cli.ts "$CONFIG_FILE")
+            echo "MATRIX_JSON=$output"
+            echo "matrix=$output" >> "$GITHUB_OUTPUT"
+          fi

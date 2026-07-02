@@ -29,6 +29,7 @@ from generate_results import (  # noqa: E402
     _collapsible_table, _compute_ratio_bands, _emit_sorted_variants,
     _llm_tier, _ratio_tier, _tier_num,
 )
+from version_docs import version_tuple  # noqa: E402  (CC version → int-tuple)
 
 
 def load_run_metrics(run_dir: Path) -> list[dict]:
@@ -67,11 +68,28 @@ def infer_default_effort(m: dict, inferred_default: str = "medium") -> dict:
     return m
 
 
-_DISPLAY_RENAME = {
-    "opus": "opus46-200k",
-    "sonnet": "sonnet46-200k",
-    "haiku45": "haiku45-200k",
+# Legacy short-name → name+version rename. `opus`/`sonnet` were the plain
+# CLI short names used pre-effort-flag (v1-v4), which today resolve to
+# different concrete models across providers; in THIS repo's history they
+# ran on Opus 4.6 / Sonnet 4.6. Every other short name (incl. `sonnet5`,
+# `fable5`, `opus48`, `opus47`, `haiku45`) already encodes its version and
+# passes through untouched. Context + effort are appended separately by
+# `_derived_label`, NOT baked into this map.
+_LEGACY_RENAME = {
+    "opus": "opus46",
+    "sonnet": "sonnet46",
 }
+
+# CC release at/after which the effort-capable models' CLI default flipped
+# from `medium` to `high`. Used only to derive a label for runs that never
+# recorded `effort_level`. See the Claude Code CHANGELOG.
+_EFFORT_DEFAULT_HIGH_VER = (2, 1, 117)
+
+# Base model names (post `_name_version`) whose DEFAULT context window is 1M
+# when a cell recorded no explicit `[1m]` marker/suffix and no contextWindow
+# (a no-`[1m]` request still served 1M). Used ONLY as a context fallback.
+# Opus 4.6 / Sonnet 4.6 / Haiku 4.5 default to 200K and are absent here.
+_ONE_M_DEFAULT_BASES = {"sonnet5", "opus47", "opus48", "fable5"}
 
 
 def _cli_suffix(m: dict) -> str:
@@ -85,24 +103,111 @@ def _cli_suffix(m: dict) -> str:
 
 def _path_label(m: dict) -> str:
     """On-disk subdir label — exact filesystem path component, no rename.
-    Intentionally does NOT include CLI version: existing subdirs were
-    written without it and migrating would require renaming every prior
-    run's directory on disk."""
+    Reads the RAW `model_short` + RAW effort so it matches directories
+    already on disk. Intentionally does NOT include CLI version, apply the
+    legacy rename, or derive context/effort: existing subdirs were written
+    from the raw values and migrating would rename every prior run's
+    directory on disk (breaking judge caches / resume / generated-code
+    lookup). DO NOT change."""
     eff = m.get("effort_level")
     return f"{m['model_short']}-{eff}" if eff else m["model_short"]
 
 
-def _label(m: dict) -> str:
-    """Display label used for grouping and the Model column in tables.
-    Applies _DISPLAY_RENAME so legacy `opus`/`sonnet` (pre-effort CLI,
-    resolving to 4.6 in this repo's history) read as `opus46`/`sonnet46`
-    alongside explicit `opus47-1m-*` entries. Appends the Claude Code CLI
-    version as `-cli<ver>` so different CLI releases don't get averaged
-    together silently. Matches generate_results.py."""
+def _name_version(m: dict) -> str:
+    """`name+version` component of the display label: `model_short` with a
+    trailing `-1m`/`-200k` stripped, then the legacy rename applied. So
+    `opus47-1m`→`opus47`, `opus47-200k`→`opus47`, `opus`→`opus46`,
+    `sonnet`→`sonnet46`; `sonnet5`/`sonnet5-1m`→`sonnet5`, `fable5`→`fable5`,
+    `haiku45`→`haiku45` pass through."""
+    short = m["model_short"]
+    for suffix in ("-1m", "-200k"):
+        if short.endswith(suffix):
+            short = short[: -len(suffix)]
+            break
+    return _LEGACY_RENAME.get(short, short)
+
+
+def _context(m: dict) -> str:
+    """`context` component (`1m` / `200k`), derived from the RECORDED
+    contextWindow of the exact model id under
+    `model_usage_detail[metrics["model"]]` (an exact-id match, incl. any
+    `[1m]` marker). This is authoritative; `session.context_window` is the
+    helper-Haiku 200k value and is WRONG, so it is deliberately not used.
+
+    Fallback chain when the recorded value is None/absent (~230 legacy
+    cells): a `[1m]` substring in `metrics["model"]` → `1m`; else a
+    `model_short` ending in `-1m`→`1m` / `-200k`→`200k`; else `200k`."""
+    model_id = m.get("model")
+    detail = m.get("model_usage_detail") or {}
+    cw = None
+    if model_id and isinstance(detail, dict):
+        entry = detail.get(model_id)
+        if isinstance(entry, dict):
+            cw = entry.get("contextWindow")
+    if cw == 1000000:
+        return "1m"
+    if cw == 200000:
+        return "200k"
+    if model_id and "[1m]" in model_id:
+        return "1m"
+    short = m.get("model_short", "")
+    if short.endswith("-1m"):
+        return "1m"
+    if short.endswith("-200k"):
+        return "200k"
+    # No recorded window and no explicit marker: fall back to the model's
+    # default context. Base Sonnet 5 / Opus 4.7 / Opus 4.8 / Fable 5 default
+    # to 1M (a plain no-`[1m]` request still served 1M); everything else 200K.
+    if _name_version(m) in _ONE_M_DEFAULT_BASES:
+        return "1m"
+    return "200k"
+
+
+def derive_effort(m: dict, default: str = "medium") -> str:
+    """`effort` component of the display label.
+
+    Rules (in order):
+      1. `metrics["effort_level"]` if truthy.
+      2. Haiku 4.5 (`model_short=="haiku45"` or model id startswith
+         `claude-haiku`) → `na` — it takes no effort parameter.
+      3. Any other effort-capable model with no recorded effort ran at the
+         CLI's version-dependent default effort: `high` if the cell's
+         Claude Code version is ≥ 2.1.117 else `default` (`medium`). The
+         CLI default flipped medium→high at 2.1.117, so this covers BOTH
+         the legacy April 2026 Opus/Sonnet 4.6 no-effort runs (CC < 2.1.117
+         → `medium`) AND a no-`--effort` base Sonnet 5 run (CC ≥ 2.1.117 →
+         `high`). Empty/malformed CC is treated as < 2.1.117 → `medium`.
+
+    This is also the final fallback that the removed `infer_default_effort`
+    pre-annotation used to provide."""
     eff = m.get("effort_level")
-    short = _DISPLAY_RENAME.get(m["model_short"], m["model_short"])
-    base = f"{short}-{eff}" if eff else short
-    return base + _cli_suffix(m)
+    if eff:
+        return eff
+    model_id = m.get("model") or ""
+    short = m.get("model_short", "")
+    if short == "haiku45" or model_id.startswith("claude-haiku"):
+        return "na"
+    cc = m.get("claude_code_version") or ""
+    try:
+        ver = version_tuple(cc)
+    except Exception:
+        ver = ()
+    return "high" if ver >= _EFFORT_DEFAULT_HIGH_VER else default
+
+
+def _derived_label(m: dict) -> str:
+    """CLI-less display label: `<name+version>-<context>-<effort>`, e.g.
+    `opus47-1m-medium`, `haiku45-200k-na`, `opus46-200k-high`. This is the
+    grouping/pooling key — rows aggregate by (language_mode, this)."""
+    return f"{_name_version(m)}-{_context(m)}-{derive_effort(m)}"
+
+
+def _label(m: dict) -> str:
+    """Display label with the CLI version appended as `-cli<ver>` so distinct
+    Claude Code releases don't get averaged together silently. Equals
+    `_derived_label(m) + _cli_suffix(m)`. Matches generate_results.py
+    byte-for-byte."""
+    return _derived_label(m) + _cli_suffix(m)
 
 
 def _is_successful(m: dict) -> bool:
@@ -113,12 +218,14 @@ def _is_successful(m: dict) -> bool:
 
 
 def aggregate_rows(metrics: list[dict]) -> list[dict]:
-    """Group by (language_mode, model_short, effort_level) and average
-    the per-run values across every CLI version. Earlier versions split
-    the aggregate by CLI release; that produced apparent-duplicate rows
-    in the Comparison and Tiers tables (same visible label, different
-    hidden CLI buckets). The CLI Version Legend retains the per-CLI
-    breakdown so readers can still audit which releases fed each combo.
+    """Group by (language_mode, _derived_label(m)) and average the per-run
+    values across every CLI version. The derived label folds name+version,
+    the RECORDED context window, and the derived effort into one key, so
+    e.g. `opus47-200k` cells that actually ran at 1M pool with `opus47-1m`
+    cells into a single `opus47-1m-medium` row, while `opus47-200k` cells
+    recorded at 200k form a separate `opus47-200k-medium` row. Cells that
+    share the derived label but ran on different CLI versions still pool
+    into one row (the CLI Version Legend carries the per-CLI breakdown).
 
     Failed/timed-out runs are excluded from the averages; each row
     records the excluded count under `excluded` so callers can flag
@@ -128,34 +235,37 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
     by_key: dict[tuple, list[dict]] = defaultdict(list)
     excluded_by_key: dict[tuple, int] = defaultdict(int)
     for m in metrics:
-        key = (m["language_mode"], m["model_short"], m.get("effort_level"))
+        key = (m["language_mode"], _derived_label(m))
         if _is_successful(m):
             by_key[key].append(m)
         else:
             excluded_by_key[key] += 1
     rows = []
     for key in sorted(set(by_key) | set(excluded_by_key)):
-        mode, model, effort = key
+        mode, derived = key
         mm = by_key.get(key, [])
         n = len(mm)
         if n == 0:
             continue
-        display_model = _DISPLAY_RENAME.get(model, model)
-        base = f"{display_model}-{effort}" if effort else display_model
+        # Every member of a pool shares the same derived label, so any
+        # member is a valid representative for the name+version/context/
+        # effort components.
+        rep = mm[0]
+        variant = derived
         clis = sorted({(m.get("claude_code_version") or "") for m in mm})
-        # `variant_with_cli` stays a single-valued key used for LLM-score
-        # bucket lookups; when a pool spans multiple CLIs we pick the
-        # newest one (lexicographically-last by version string) so the
-        # suffix remains a stable cache key for one representative run.
+        # `variant_with_cli` stays a single-valued key; when a pool spans
+        # multiple CLIs we pick the newest one (lexicographically-last by
+        # version string) so the suffix remains a stable representative.
         cli_for_label = clis[-1] if clis else ""
         cli_suffix = f"-cli{cli_for_label}" if cli_for_label else "-cliunk"
-        variant_with_cli = base + cli_suffix
-        variant = base
+        variant_with_cli = variant + cli_suffix
         excl = excluded_by_key.get(key, 0)
         rows.append({
             "mode": mode,
-            "model": display_model,
-            "effort": effort,
+            # `model` = name+version+context (no effort) so callers keying
+            # on (mode, model, effort) still resolve.
+            "model": f"{_name_version(rep)}-{_context(rep)}",
+            "effort": derive_effort(rep),
             "cli_versions": clis,
             "variant": variant,
             "variant_with_cli": variant_with_cli,
@@ -267,7 +377,7 @@ def _build_markdown(
         for name, ids in dropped.items():
             if ids:
                 scope_body.append(f"  - `{name}` contributed but was dropped for: {', '.join(sorted(ids))}")
-    scope_body.append(f"- **Pre-effort runs annotated as:** `{inferred_default}` (Max-subscription CLI default per Anthropic docs)")
+    scope_body.append("- **Effort labels for pre-effort runs** are derived per cell, not blanket-annotated — see [Model label conventions](#model-label-conventions).")
 
     if not common:
         lines.append("## No tasks in common")
@@ -284,13 +394,17 @@ def _build_markdown(
     deliv_by_variant: dict[tuple, list[float]] = defaultdict(list)
     for m in annotated:
         key = (m.get("source_run_dir"), m["task_id"],
-               m.get("original_subdir", f"{m['language_mode']}-{_label(m)}"))
+               m.get("original_subdir", f"{m['language_mode']}-{_path_label(m)}"))
+        # Bucket by the CLI-LESS derived label so quality-score pooling
+        # matches the duration/cost pooling in aggregate_rows exactly.
+        # (Panel JSONs are retrieved via `key` = the on-disk path, so this
+        # only affects which aggregate row a score rolls up into.)
         if key in llm_scores:
-            llm_by_variant[(m["language_mode"], _label(m))].append(llm_scores[key])
+            llm_by_variant[(m["language_mode"], _derived_label(m))].append(llm_scores[key])
         if key in deliv_scores:
-            deliv_by_variant[(m["language_mode"], _label(m))].append(deliv_scores[key])
+            deliv_by_variant[(m["language_mode"], _derived_label(m))].append(deliv_scores[key])
     for r in rows:
-        vkey = (r["mode"], r["variant_with_cli"])
+        vkey = (r["mode"], r["variant"])
         ll = llm_by_variant.get(vkey, [])
         dl = deliv_by_variant.get(vkey, [])
         r["avg_llm"] = sum(ll) / len(ll) if ll else 0.0
@@ -403,6 +517,52 @@ def _build_markdown(
     # before the tier-band / scoring / legend subsections.
     notes_sections.append(("Scope", scope_body))
 
+    # Model label conventions: how the `<name-version>-<context>-<effort>`
+    # grammar is built and why rows pool the way they do. Sits directly
+    # after Scope (order: Scope → Model label conventions → Tiers → CLI
+    # Legend); the ToC auto-indexes this `###`.
+    notes_sections.append(("Model label conventions", [
+        "Each Model cell reads `<name-version>-<context>-<effort>` "
+        "(e.g. `opus47-1m-medium`, `haiku45-200k-na`, `opus46-200k-high`). "
+        "The three components are:",
+        "",
+        "- **name-version** — the model family + version (e.g. `opus47`, "
+        "`sonnet5`, `fable5`, `haiku45`). Legacy pre-effort short names "
+        "`opus`/`sonnet` are rendered `opus46`/`sonnet46` since in this "
+        "repo's history they ran on Opus 4.6 / Sonnet 4.6.",
+        "- **context** — the context window, derived from the "
+        "**recorded** `contextWindow` for the exact model id in each "
+        "cell's `model_usage_detail` (`1000000`→`1m`, `200000`→`200k`), "
+        "NOT from the model_short suffix. So a cell requested as "
+        "`opus47-200k` that actually served a 1M window is labeled `1m`.",
+        "- **effort** — `effort_level` when the run recorded one; else "
+        "`na` for Haiku 4.5 (which takes no effort parameter); else, for "
+        "ANY effort-capable model run without `--effort`, the CLI's "
+        "version-dependent default: `high` if the cell's Claude Code "
+        "version is ≥ 2.1.117 else `medium` (the CLI default effort flipped "
+        "`medium`→`high` at 2.1.117). This covers both the legacy April "
+        "2026 Opus/Sonnet 4.6 no-effort runs (→ `medium`) and the "
+        "no-`--effort` base Sonnet 5 run, which ran at the current default "
+        "`high` (so it appears as `sonnet5-1m-high`, distinct from the "
+        "explicit `sonnet5-1m-medium` run).",
+        "",
+        "**Pooling.** Rows aggregate by the *derived* label above, not by "
+        "the raw model_short. Cells with the same derived label but "
+        "different CLI versions pool into one row (the CLI Version Legend "
+        "shows the per-CLI breakdown). In particular, the May run's "
+        "mislabeled `opus47-200k` cells — which actually ran at a 1M "
+        "context — fold into the `opus47-1m-medium` row, while genuine "
+        "200k `opus47` cells form a separate `opus47-200k-medium` row.",
+        "",
+        "*References:* effort defaults + per-model support: "
+        "<https://code.claude.com/docs/en/model-config>; the "
+        "context-window incident behind why recorded windows are trusted "
+        "over requested ids: "
+        "<https://www.anthropic.com/engineering/april-23-postmortem>; the "
+        "2.1.117 default-effort history: the Claude Code CHANGELOG "
+        "(`anthropics/claude-code` `CHANGELOG.md`).",
+    ]))
+
     # Tiers under Notes carries only the band tables; the Duration/
     # Cost "what are ratios" prose lives in the top-level Scoring
     # section (substituted into _SCORING_MARKER below).
@@ -503,9 +663,7 @@ def _build_markdown(
                 sq = compute_structural_metrics(gen_dir)
             except Exception:
                 continue
-            display_model = _DISPLAY_RENAME.get(m["model_short"], m["model_short"])
-            eff = m.get("effort_level")
-            variant = f"{display_model}-{eff}" if eff else display_model
+            variant = _derived_label(m)
             tq_per_run.append({
                 "mode": m["language_mode"],
                 "variant": variant,
@@ -584,7 +742,7 @@ def _build_markdown(
     lines.append("|------|----------|-------|--------|----------|-------|--------|------|-----------|-------------|")
     pr_rows = []
     for m in annotated:
-        key = (m.get("source_run_dir"), m["task_id"], m.get("original_subdir", f"{m['language_mode']}-{_label(m)}"))
+        key = (m.get("source_run_dir"), m["task_id"], m.get("original_subdir", f"{m['language_mode']}-{_path_label(m)}"))
         lj = llm_scores.get(key)
         dj = deliv_scores.get(key)
         pr_rows.append({
@@ -625,10 +783,7 @@ def _build_markdown(
     for m in annotated:
         if not _is_successful(m):
             continue
-        model_short = m["model_short"]
-        display_model = _DISPLAY_RENAME.get(model_short, model_short)
-        effort = m.get("effort_level")
-        variant = f"{display_model}-{effort}" if effort else display_model
+        variant = _derived_label(m)
         cli = m.get("claude_code_version") or "?"
         bucket = per_pair[(variant, cli)]
         bucket["tasks"].add(m["task_id"])
@@ -944,12 +1099,16 @@ def combine(run_dirs: list[Path], output_path: Path,
     for d, ms in zip(run_dirs, metrics_lists):
         filtered = filter_to_tasks(ms, common)
         for m in filtered:
-            # Capture the on-disk subdir name BEFORE effort annotation AND
-            # before the _label display rename so downstream LLM-cache
-            # lookups resolve to real files. v4-era metrics live at
-            # `<mode>-<model>/` (plain short name, no effort suffix)
-            # regardless of how we render them in tables.
-            a = infer_default_effort(m, inferred_default_effort)
+            # Do NOT pre-annotate effort here. The label layer derives the
+            # effort component (`derive_effort`) at grouping time, which
+            # needs the raw null `effort_level` to distinguish Haiku (`na`)
+            # and legacy Opus/Sonnet (`high`/`medium` by CC version) from a
+            # blanket `medium`. Overwriting it to `medium` up front (the
+            # old `infer_default_effort` call) blocked those derivations.
+            # `original_subdir` still reads the RAW model_short + effort via
+            # `_path_label` so downstream LLM-cache lookups resolve to the
+            # real on-disk `<mode>-<model>/` directories.
+            a = dict(m)
             a["source_run_dir"] = d.name
             a["original_subdir"] = f"{m['language_mode']}-{_path_label(m)}"
             annotated.append(a)

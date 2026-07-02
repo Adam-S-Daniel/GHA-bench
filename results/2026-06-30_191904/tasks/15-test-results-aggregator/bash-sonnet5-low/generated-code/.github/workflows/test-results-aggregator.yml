@@ -1,0 +1,42 @@
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats jq shellcheck
+
+      - name: Shellcheck all scripts
+        run: shellcheck lib/*.sh bin/*.sh
+
+      - name: Bash syntax check all scripts
+        run: |
+          for f in lib/*.sh bin/*.sh; do
+            bash -n "$f"
+          done
+
+      - name: Run bats test suite
+        run: bats test/
+
+      - name: Aggregate fixture results into job summary
+        run: |
+          bin/aggregate-results.sh \
+            fixtures/matrix/ubuntu.xml \
+            fixtures/matrix/macos.xml \
+            fixtures/matrix/windows.json

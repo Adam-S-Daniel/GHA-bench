@@ -1,0 +1,58 @@
+# CI pipeline for the artifact retention planner.
+#
+# Job 1 runs the unit test suite; job 2 (gated on job 1) applies the
+# retention policy from cleanup-config.env to fixtures/artifacts.json and
+# prints the deletion plan plus a machine-parseable summary block that the
+# act-based pipeline tests assert on.
+name: Artifact Cleanup
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # nightly cleanup planning run
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        run: python3 -m pip install --break-system-packages --quiet pytest
+
+      - name: Run unit tests
+        run: python3 -m pytest tests/test_artifact_cleanup.py tests/test_cli.py -v
+
+  cleanup-plan:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build artifact deletion plan
+        run: |
+          # Load the retention policy (CLEANUP_NOW, CLEANUP_ARGS).
+          # shellcheck disable=SC1091
+          set -a
+          source cleanup-config.env
+          set +a
+          # CLEANUP_ARGS holds space-separated flags; split intentionally.
+          read -ra EXTRA_ARGS <<< "${CLEANUP_ARGS}"
+          python3 artifact_cleanup.py \
+            --input fixtures/artifacts.json \
+            --now "${CLEANUP_NOW}" \
+            --output cleanup-plan.json \
+            "${EXTRA_ARGS[@]}"
+          echo "--- cleanup-plan.json ---"
+          cat cleanup-plan.json

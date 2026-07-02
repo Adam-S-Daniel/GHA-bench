@@ -1,0 +1,99 @@
+name: Environment Matrix Generator
+
+# Triggers: normal CI on push/PR, an ad-hoc trigger with a configurable input,
+# and a weekly schedule (so a stale matrix config would be caught even
+# without new commits).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      config_file:
+        description: "Path to a matrix config JSON file"
+        required: false
+        default: fixtures/ci-example.json
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_CONFIG: fixtures/ci-example.json
+
+jobs:
+  # Lints and unit-tests matrix-generator.sh itself (bats exercises every
+  # fixture-driven case in fixtures/, including all error paths).
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install test dependencies (bats-core, shellcheck)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bats shellcheck
+
+      - name: Shellcheck matrix-generator.sh
+        run: shellcheck matrix-generator.sh
+
+      - name: Bash syntax check
+        run: bash -n matrix-generator.sh
+
+      - name: Run bats test suite
+        run: bats tests/matrix_generator.bats
+
+  # Runs the real script against a checked-in config and exposes the
+  # resulting strategy object (matrix + fail-fast + max-parallel) as a job
+  # output, so a downstream job can consume it -- the realistic pattern for
+  # a dynamic build matrix in a CI/CD pipeline.
+  generate-matrix:
+    name: Generate Build Matrix
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    outputs:
+      strategy: ${{ steps.generate.outputs.strategy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate matrix JSON
+        id: generate
+        env:
+          CONFIG_FILE: ${{ github.event.inputs.config_file || env.DEFAULT_CONFIG }}
+        run: |
+          result=$(./matrix-generator.sh "$CONFIG_FILE")
+          echo "strategy=$result" >> "$GITHUB_OUTPUT"
+          echo "Generated strategy: $result"
+
+      - name: Write job summary
+        env:
+          STRATEGY: ${{ steps.generate.outputs.strategy }}
+        run: |
+          {
+            echo "## Generated Build Matrix"
+            echo ""
+            echo '```json'
+            echo "$STRATEGY" | jq .
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Consumes the dynamically generated matrix to run one job per resolved
+  # combination -- proves the generator's output is actually usable as a
+  # real strategy.matrix, not just well-formed JSON.
+  build:
+    name: Build (${{ matrix.os }}, node ${{ matrix.node }}, experimental=${{ matrix.experimental }})
+    needs: generate-matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: ${{ fromJSON(needs.generate-matrix.outputs.strategy)['fail-fast'] }}
+      max-parallel: ${{ fromJSON(needs.generate-matrix.outputs.strategy)['max-parallel'] }}
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.strategy).matrix }}
+    steps:
+      - name: Show matrix cell
+        run: |
+          echo "Building on ${{ matrix.os }} with node ${{ matrix.node }} (experimental=${{ matrix.experimental }})"

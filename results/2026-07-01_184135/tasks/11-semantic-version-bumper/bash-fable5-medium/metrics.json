@@ -1,0 +1,741 @@
+{
+  "task_id": "11-semantic-version-bumper",
+  "task_name": "Semantic Version Bumper",
+  "task_category": "GitHub Actions / Release Automation",
+  "language_mode": "bash",
+  "language_chosen": "bash",
+  "language_breakdown": {
+    "bash": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-fable-5",
+  "model_short": "fable5",
+  "variant": "fable5-medium",
+  "claude_code_version": "2.1.198",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-07-01T23:10:10.641601+00:00",
+  "timestamp_end": "2026-07-01T23:18:33.242786+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use Bash as your implementation language.\n\nTASK: Parse a version file (or package.json) containing a semantic version string, determine the next version based on conventional commit messages (feat -> minor, fix -> patch, breaking -> major), update the version file, generate a changelog entry from the commits, and output the new version. Create mock commit logs as test fixtures.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use bats-core (bats) as the testing framework.\n3. All tests must be runnable with `bats` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n6. Use `#!/usr/bin/env bash` shebang. Scripts must pass `shellcheck` and `bash -n` syntax validation.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/semantic-version-bumper.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/semantic-version-bumper.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "9e397283-ea4f-4726-a64d-a6b319da7b01",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 30,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1459,
+      "outputTokens": 20,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.001559,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-fable-5": {
+      "inputTokens": 7681,
+      "outputTokens": 24718,
+      "cacheReadInputTokens": 1737165,
+      "cacheCreationInputTokens": 46919,
+      "webSearchRequests": 0,
+      "costUSD": 3.9882549999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "medium",
+  "timing": {
+    "grand_total_duration_ms": 502601,
+    "total_api_duration_ms": 379078,
+    "total_execution_duration_ms": 121783,
+    "num_turns": 39
+  },
+  "tokens": {
+    "input_tokens": 7681,
+    "output_tokens": 24718,
+    "cache_read_tokens": 1737165,
+    "cache_creation_tokens": 46919,
+    "total_context_consumed": 1791765,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 3.989814,
+    "assumed_input_cost_per_mtok": 10.0,
+    "assumed_output_cost_per_mtok": 50.0,
+    "assumed_cache_read_cost_per_mtok": 1.0,
+    "assumed_cache_write_cost_per_mtok": 12.5
+  },
+  "code_metrics": {
+    "code_lines": 606,
+    "total_tokens_estimate": 11612,
+    "file_count": 13,
+    "files": [
+      "act-result.txt",
+      "bump-version.sh",
+      "run-act-tests.sh",
+      ".github/workflows/semantic-version-bumper.yml",
+      "tests/bump-version.bats",
+      "tests/workflow.bats",
+      "tests/fixtures/commits-breaking-footer.txt",
+      "tests/fixtures/commits-breaking.txt",
+      "tests/fixtures/commits-feat.txt",
+      "tests/fixtures/commits-fix.txt",
+      "tests/fixtures/commits-mixed.txt",
+      "tests/fixtures/commits-none.txt",
+      "tests/fixtures/package.json"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 1,
+    "error_details": [
+      "Exit code 1\n=== case: feat-bumps-minor (expect 1.2.0) ===\nFAIL(feat-bumps-minor): act exited with code 1\nFAIL(feat-bumps-minor): output does not contain NEW_VERSION=1.2.0\nFAIL(feat-bumps-minor): no 'J"
+    ],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/semantic-version-bumper.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 26793,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 38,
+    "total_tool_duration_ms": 121243,
+    "bash_tool_uses": 24,
+    "bash_total_ms": 119333,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "./run-act-tests.sh",
+        "duration_ms": 65337,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/ 2>&1 | grep -cE \"^ok\"; bats tests/ 2>&1 | grep -E \"^(1\\.\\.|not ok)\"",
+        "duration_ms": 9290,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "sed -i 's|run \"\\$SCRIPT\" --version-file|run --separate-stderr \"$SCRIPT\" --version-file|' tests/bump-version.bats && bats tests/bump-version.bats 2>&1 | grep -E \"^(1\\.\\.|not ok)\"; bats tests/bump-versi",
+        "duration_ms": 9189,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "./run-act-tests.sh",
+        "duration_ms": 8587,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats 2>&1 | grep -E \"^(1\\.\\.|not ok)\"; echo \"fails: $(bats tests/bump-version.bats 2>&1 | grep -c 'not ok')\"; bash -n bump-version.sh && shellcheck bump-version.sh tests/bump-v",
+        "duration_ms": 5559,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/ 2>&1 | tail -2; shellcheck tests/bump-version.bats && echo OK; ls -R --ignore=.git --ignore=.claude --ignore=benchmark-instructions-v4.md .",
+        "duration_ms": 4686,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -E \"NEW_VERSION=|Job succeeded|1\\.\\.25|TEST CASE\" act-result.txt; echo ---; bats tests/ 2>&1 | tail -3; actionlint .github/workflows/semantic-version-bumper.yml && echo ACTIONLINT-OK; shellcheck ",
+        "duration_ms": 3423,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x bump-version.sh && bats tests/bump-version.bats 2>&1 | tail -28",
+        "duration_ms": 2827,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats 2>&1 | grep -E \"^(1\\.\\.|not ok)\" | head -12",
+        "duration_ms": 2581,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/11-semantic-version-bumper/bash-fable5-medium && bats tests/bump-version.bats 2>&1 | tail -14",
+        "duration_ms": 1463,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "ls -la /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/11-semantic-version-bumper/bash-fable5-medium && cat /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/11-semantic-",
+        "duration_ms": 178,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -n -i \"task\\|workflow\\|act\\b\" /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/11-semantic-version-bumper/bash-fable5-medium/benchmark-instructions-v4.md | head -30; docker images ",
+        "duration_ms": 347,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker run --rm act-ubuntu-pwsh:latest bash -c 'which bats node npm git jq; bats --version 2>/dev/null; echo exit=$?'",
+        "duration_ms": 854,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 528,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 231,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats 2>&1 | head -20",
+        "duration_ms": 784,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 115,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats",
+        "duration_ms": 429,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/11-semantic-version-bumper/bash-fable5-medium/tests/fixtures && cat > commits-feat.txt <<'EOF'\nfeat: add user profile page\nchore: upd",
+        "duration_ms": 91,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 54,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats 2>&1 | grep -c \"not ok\"; bats tests/bump-version.bats 2>&1 | grep \"not ok\" | head -3",
+        "duration_ms": 207,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats 2>&1 | tail -15",
+        "duration_ms": 195,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/11-semantic-version-bumper/bash-fable5-medium && bats tests/bump-version.bats 2>&1 | tail -14",
+        "duration_ms": 1463,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 52,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats 2>&1 | tail -20",
+        "duration_ms": 675,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 84,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats 2>&1 | tail -18",
+        "duration_ms": 1221,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 60,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats 2>&1 | grep -E \"^(1\\.\\.|not ok)\" | head -12",
+        "duration_ms": 2581,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 175,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x bump-version.sh && bats tests/bump-version.bats 2>&1 | tail -28",
+        "duration_ms": 2827,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "sed -i 's|run \"\\$SCRIPT\" --version-file|run --separate-stderr \"$SCRIPT\" --version-file|' tests/bump-version.bats && bats tests/bump-version.bats 2>&1 | grep -E \"^(1\\.\\.|not ok)\"; bats tests/bump-versi",
+        "duration_ms": 9189,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 53,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/bump-version.bats 2>&1 | grep -E \"^(1\\.\\.|not ok)\"; echo \"fails: $(bats tests/bump-version.bats 2>&1 | grep -c 'not ok')\"; bash -n bump-version.sh && shellcheck bump-version.sh tests/bump-v",
+        "duration_ms": 5559,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 116,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 45,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/semantic-version-bumper.yml && echo ACTIONLINT-OK; bats tests/workflow.bats",
+        "duration_ms": 645,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd \"$(mktemp -d)\" && cp -r /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/11-semantic-version-bumper/bash-fable5-medium/{bump-version.sh,tests} . && mkdir fixture && echo \"1.1.0\" > fi",
+        "duration_ms": 228,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 149,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "chmod +x run-act-tests.sh && bash -n run-act-tests.sh && shellcheck run-act-tests.sh && echo LINT-OK",
+        "duration_ms": 239,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "./run-act-tests.sh",
+        "duration_ms": 8587,
+        "is_error": true,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "head -40 act-result.txt; grep -m5 -i \"error\\|fail\" act-result.txt | head -10",
+        "duration_ms": 298,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 127,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "./run-act-tests.sh",
+        "duration_ms": 65337,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -E \"NEW_VERSION=|Job succeeded|1\\.\\.25|TEST CASE\" act-result.txt; echo ---; bats tests/ 2>&1 | tail -3; actionlint .github/workflows/semantic-version-bumper.yml && echo ACTIONLINT-OK; shellcheck ",
+        "duration_ms": 3423,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/ 2>&1 | grep -cE \"^ok\"; bats tests/ 2>&1 | grep -E \"^(1\\.\\.|not ok)\"",
+        "duration_ms": 9290,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 121,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bats tests/ 2>&1 | tail -2; shellcheck tests/bump-version.bats && echo OK; ls -R --ignore=.git --ignore=.claude --ignore=benchmark-instructions-v4.md .",
+        "duration_ms": 4686,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 118191,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 16,
+    "hook_errors_caught": 1,
+    "hook_failures": 0,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "3f33f9c0-eca2-4be3-ab0a-1830fbb5dba4",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "23bda7ee-ffe3-401f-a735-85fcaff648ca",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3f33f9c0-eca2-4be3-ab0a-1830fbb5dba4",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "23bda7ee-ffe3-401f-a735-85fcaff648ca",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ba1c74d5-58a3-4990-9469-726616f7156d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ba1c74d5-58a3-4990-9469-726616f7156d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "aa085346-c49e-4e9d-85d0-3c6e26b4e3bf",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "aa085346-c49e-4e9d-85d0-3c6e26b4e3bf",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "aaef9ab4-77bd-459a-802c-4881b38946fc",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "aaef9ab4-77bd-459a-802c-4881b38946fc",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "558ae9b2-ea36-4674-a540-edde3fce5316",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "558ae9b2-ea36-4674-a540-edde3fce5316",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2706e238-253c-4dad-94cb-79f094fd6364",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2706e238-253c-4dad-94cb-79f094fd6364",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\n/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/11-semantic-version-bumper/bash-fable5-medium/bump-version.sh: line 48: syntax error in conditional expression: unexpected token `)'\\n/home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/11-semantic-version-bumper/bash-fable5-medium/bump-version.sh: line 48: syntax error near `^[a-zA-Z]+(\\\\([^)]*\\\\))?'\\n/",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "597c420b-b450-460c-b61d-6bd30cf7873d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "597c420b-b450-460c-b61d-6bd30cf7873d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "bb534294-028a-4f2c-b895-41e8b6d1d14c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "bb534294-028a-4f2c-b895-41e8b6d1d14c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "db91f4b4-215f-4e53-b527-2fd74cd0c06c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "db91f4b4-215f-4e53-b527-2fd74cd0c06c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ecf2e4cf-4f79-48b0-bab0-1d203462ef42",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ecf2e4cf-4f79-48b0-bab0-1d203462ef42",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7529ae7a-dfca-40fa-a431-fb871559face",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7529ae7a-dfca-40fa-a431-fb871559face",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "03089594-46a1-4730-a4c0-15a7be881ee4",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "03089594-46a1-4730-a4c0-15a7be881ee4",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "65fd3b06-25ee-4b41-8a34-c41a62ba31da",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "65fd3b06-25ee-4b41-8a34-c41a62ba31da",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "5fc8b7ae-ab79-49f8-868b-d3f879029b88",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "5fc8b7ae-ab79-49f8-868b-d3f879029b88",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b2bfa4f2-0833-4be4-a228-cfa265fdd8f0",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b2bfa4f2-0833-4be4-a228-cfa265fdd8f0",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      }
+    ]
+  }
+}

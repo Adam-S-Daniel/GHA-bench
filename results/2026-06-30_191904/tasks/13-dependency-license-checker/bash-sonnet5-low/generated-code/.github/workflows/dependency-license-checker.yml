@@ -1,0 +1,61 @@
+name: Dependency License Checker
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  LICENSE_CONFIG: test/fixtures/license-config.json
+  LICENSE_DB_FILE: test/fixtures/license-db.json
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install bats, jq, shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats jq shellcheck
+
+      - name: Shellcheck
+        run: shellcheck license_checker.sh lib/*.sh
+
+      - name: Bash syntax check
+        run: |
+          bash -n license_checker.sh
+          bash -n lib/manifest_parser.sh
+          bash -n lib/license_lookup.sh
+
+      - name: Run bats test suite
+        # workflow.bats is excluded here: it shells out to `act`/`actionlint`
+        # to validate this workflow from the host, which is not meaningful
+        # (and not available) from inside the CI container itself.
+        run: bats test/parse_manifest.bats test/license_lookup.bats test/license_checker.bats
+
+  license-check:
+    name: Check dependency licenses
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Run license compliance check on requirements.txt fixture
+        run: ./license_checker.sh --manifest test/fixtures/requirements.txt --config "$LICENSE_CONFIG" --license-db "$LICENSE_DB_FILE"

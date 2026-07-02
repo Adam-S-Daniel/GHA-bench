@@ -1,6 +1,6 @@
 # GHA-bench
 
-Benchmarks agent/scripting-language combinations on completing GitHub Actions scripting tasks when asked to use various languages. **[Latest results](results/2026-06-26_103905/results.md)** | [All results](#benchmark-runs)
+Benchmarks agent/scripting-language combinations on completing GitHub Actions scripting tasks when asked to use various languages. **[Latest results](results/2026-07-01_184135/results.md)** | [All results](#benchmark-runs)
 
 ## External References
 
@@ -72,7 +72,9 @@ Each benchmark version defines a set of scripting tasks, language modes, and mod
 <!-- BEGIN BENCHMARK RUNS -->
 | Run | Version | Runs | Cost | Results |
 |-----|---------|------|------|---------|
-| **2026-06-26_103905** (latest) | [v4](benchmark-instructions-v4.md) | 140/35 | $577.71 | [results.md](results/2026-06-26_103905/results.md) |
+| **2026-07-01_184135** (latest) | [v4](benchmark-instructions-v4.md) | 56/28 | $284.77 | [results.md](results/2026-07-01_184135/results.md) |
+| 2026-06-30_191904 | [v4](benchmark-instructions-v4.md) | 100/28 | $255.46 | [results.md](results/2026-06-30_191904/results.md) |
+| 2026-06-26_103905 | [v4](benchmark-instructions-v4.md) | 140/35 | $577.71 | [results.md](results/2026-06-26_103905/results.md) |
 | 2026-05-06_173435 | [v4](benchmark-instructions-v4.md) | 280/35 | $493.46 | [results.md](results/2026-05-06_173435/results.md) |
 | 2026-04-17_004319 | [v4](benchmark-instructions-v4.md) | 245/50 | $360.74 | [results.md](results/2026-04-17_004319/results.md) |
 | 2026-04-09_152435 | [v4](benchmark-instructions-v4.md) | 64/64 | $86.90 | [results.md](results/2026-04-09_152435/results.md) |

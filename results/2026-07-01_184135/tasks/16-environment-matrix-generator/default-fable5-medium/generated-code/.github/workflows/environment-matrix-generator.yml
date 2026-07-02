@@ -1,0 +1,95 @@
+# Environment matrix generator pipeline.
+#
+# Flow: unit-tests -> generate-matrix -> build (consumes the generated
+# matrix via fromJSON) -> summary. The generate job also proves graceful
+# error handling by feeding the generator an oversized config and
+# asserting it is rejected with a clear message.
+name: Environment Matrix Generator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: "1"
+  # Which fixture drives the matrix; overridable per test case.
+  MATRIX_CONFIG: fixtures/config.json
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run unit test suite
+        run: python3 -m unittest discover -s tests -t . -v
+
+  generate-matrix:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+      fail_fast: ${{ steps.gen.outputs.fail_fast }}
+      max_parallel: ${{ steps.gen.outputs.max_parallel }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate build matrix
+        id: gen
+        run: |
+          set -euo pipefail
+          python3 matrix_generator.py "$MATRIX_CONFIG" > strategy.json
+          echo "MATRIX_JSON_START"
+          cat strategy.json
+          echo "MATRIX_JSON_END"
+          # Emit compact single-line outputs for downstream fromJSON().
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          s = json.load(open("strategy.json"))
+          print("matrix=" + json.dumps(s["matrix"], separators=(",", ":")))
+          print("fail_fast=" + json.dumps(s["fail-fast"]))
+          print("max_parallel=" + json.dumps(s.get("max-parallel", 1)))
+          print("combo_count=" + str(len(s["matrix"]["include"])))
+          PY
+          # Human/harness-visible exact-value markers.
+          python3 - <<'PY'
+          import json
+          s = json.load(open("strategy.json"))
+          print("COMBO_COUNT=" + str(len(s["matrix"]["include"])))
+          print("FAIL_FAST=" + json.dumps(s["fail-fast"]))
+          print("MAX_PARALLEL=" + json.dumps(s.get("max-parallel")))
+          PY
+      - name: Reject oversized matrix with a clear error
+        run: |
+          set -euo pipefail
+          if python3 matrix_generator.py fixtures/oversized.json 2> err.txt; then
+            echo "expected the oversized config to be rejected" >&2
+            exit 1
+          fi
+          cat err.txt
+          grep -F "exceeding max_size 8" err.txt > /dev/null
+          echo "OVERSIZED_REJECTED_OK"
+
+  build:
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: ${{ fromJSON(needs.generate-matrix.outputs.fail_fast) }}
+      max-parallel: ${{ fromJSON(needs.generate-matrix.outputs.max_parallel) }}
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Build one matrix leg
+        run: |
+          echo "BUILD_OS=${{ matrix.os }} BUILD_VERSION=${{ matrix.version }}"
+          cat <<'COMBO'
+          BUILD_COMBO ${{ toJSON(matrix) }}
+          COMBO
+
+  summary:
+    needs: [generate-matrix, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report pipeline result
+        run: echo "ALL_JOBS_COMPLETE"

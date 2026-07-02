@@ -1,0 +1,120 @@
+name: Dependency License Checker
+
+# Run on every push/PR (catches new dependencies as they're added), weekly on
+# a schedule (catches an existing pin whose upstream license changed), and on
+# manual dispatch (lets someone opt into strict enforcement on demand).
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      fail_on_denied:
+        description: "Fail the workflow if a denied license is found"
+        type: boolean
+        default: false
+
+# Least privilege: this workflow only reads the checked-out repository.
+permissions:
+  contents: read
+
+env:
+  POLICY_FILE: config/license-policy.conf
+  LICENSE_DB: fixtures/license-db.txt
+  REPORT_FILE: license-report.txt
+
+jobs:
+  # Lint the script and run its bats unit tests first. The compliance check
+  # only runs once the tooling itself is verified sound.
+  lint-and-test:
+    name: Lint and unit-test the checker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install bats and shellcheck
+        run: |
+          set -euo pipefail
+          npm install -g bats
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends shellcheck
+
+      - name: Validate shell syntax (bash -n)
+        run: bash -n license-checker.sh
+
+      - name: Lint with shellcheck
+        run: shellcheck license-checker.sh
+
+      - name: Run bats unit tests
+        run: bats tests/license-checker.bats
+
+  # Parse the bundled manifest, classify every dependency, and publish the
+  # compliance report.
+  license-check:
+    name: Run dependency license compliance check
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    env:
+      FAIL_ON_DENIED: ${{ github.event.inputs.fail_on_denied || 'false' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve dependency manifest
+        id: manifest
+        run: |
+          set -euo pipefail
+          if [ -f fixtures/requirements.txt ]; then
+            manifest="fixtures/requirements.txt"
+          elif [ -f fixtures/package.json ]; then
+            manifest="fixtures/package.json"
+          else
+            echo "::error::No dependency manifest found under fixtures/"
+            exit 1
+          fi
+          echo "Resolved manifest: ${manifest}"
+          echo "manifest=${manifest}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate compliance report
+        run: |
+          set -euo pipefail
+          chmod +x license-checker.sh
+          ./license-checker.sh \
+            --manifest "${{ steps.manifest.outputs.manifest }}" \
+            --config "$POLICY_FILE" \
+            --license-db "$LICENSE_DB" \
+            | tee "$REPORT_FILE"
+
+      - name: Publish report to job summary
+        run: |
+          set -euo pipefail
+          {
+            echo "## Dependency License Compliance"
+            echo ""
+            echo '```'
+            cat "$REPORT_FILE"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce license policy
+        run: |
+          set -euo pipefail
+          denied=$(sed -nE 's/^Summary:.* ([0-9]+) denied,.*/\1/p' "$REPORT_FILE")
+          unknown=$(sed -nE 's/^Summary:.* ([0-9]+) unknown.*/\1/p' "$REPORT_FILE")
+          denied=${denied:-0}
+          unknown=${unknown:-0}
+          echo "Denied: ${denied}, Unknown: ${unknown}"
+          if [ "${denied}" -gt 0 ]; then
+            echo "::warning::${denied} dependency(ies) use a denied license"
+          fi
+          if [ "${unknown}" -gt 0 ]; then
+            echo "::warning::${unknown} dependency(ies) have an unknown license"
+          fi
+          if [ "${FAIL_ON_DENIED}" = "true" ] && [ "${denied}" -gt 0 ]; then
+            echo "::error::Policy violation: ${denied} denied dependency(ies) found"
+            exit 1
+          fi
+          echo "License policy check complete (fail-on-denied: ${FAIL_ON_DENIED})."

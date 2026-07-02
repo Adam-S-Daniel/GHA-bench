@@ -1,0 +1,63 @@
+name: Artifact Cleanup Script
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no deletions)'
+        required: false
+        default: 'true'
+        type: boolean
+  schedule:
+    - cron: '0 3 * * 0'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  MAX_AGE_DAYS: '30'
+  KEEP_LATEST_N: '2'
+
+jobs:
+  test:
+    name: Run Pester tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name Pester | Where-Object { $_.Version -ge [version]'5.0.0' })) {
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./ArtifactCleanup.Tests.ps1 -PassThru -Output Detailed
+          if ($result.FailedCount -gt 0) {
+            throw "$($result.FailedCount) test(s) failed."
+          }
+
+  cleanup:
+    name: Run artifact cleanup
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run cleanup script (dry run)
+        shell: pwsh
+        env:
+          DRY_RUN: 'true'
+        run: |
+          ./Invoke-ArtifactCleanupScript.ps1 `
+            -MaxAgeDays ([int]$env:MAX_AGE_DAYS) `
+            -KeepLatestN ([int]$env:KEEP_LATEST_N) `
+            -DryRun

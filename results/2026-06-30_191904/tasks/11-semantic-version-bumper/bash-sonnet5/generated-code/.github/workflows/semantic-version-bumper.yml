@@ -1,0 +1,52 @@
+name: Semantic Version Bumper
+
+# Real-world triggers: run on every push so the version is (re)computed as
+# soon as commits land, allow manual re-runs via workflow_dispatch, and also
+# check on a schedule in case commits landed through a path that didn't
+# trigger push (e.g. a merged queue). Only "push" is exercised by `act push`.
+on:
+  push:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  VERSION_FILE: VERSION
+  COMMITS_FILE: COMMITS.txt
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  bump-version:
+    name: Compute next version
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_type: ${{ steps.bump.outputs.bump_type }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run semantic version bumper
+        id: bump
+        run: bash ./bump_version.sh "${VERSION_FILE}" "${COMMITS_FILE}" "${CHANGELOG_FILE}"
+
+      - name: Write job summary
+        run: |
+          {
+            echo "### Semantic Version Bump"
+            echo "- Bump type: ${{ steps.bump.outputs.bump_type }}"
+            echo "- New version: ${{ steps.bump.outputs.new_version }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  report-release:
+    name: Report release candidate
+    needs: bump-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce computed version
+        run: |
+          echo "Release candidate version: ${{ needs.bump-version.outputs.new_version }}"
+          echo "Bump type was: ${{ needs.bump-version.outputs.bump_type }}"

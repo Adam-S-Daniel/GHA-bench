@@ -22,10 +22,11 @@ python3 -c "from combine_results import combine"
 # Regenerate all reports
 python3 generate_results.py --all
 
-# Run a benchmark (v4, all tasks/modes/models). Use 5 modes including
-# powershell-tool. For multi-(model,effort) matrices, run sequentially via
-# a wrapper script (see run-fresh-matrix-2026-05-06.sh).
-python3 runner.py --tasks 11,12,13,15,16,17,18 --modes default,powershell,powershell-tool,bash,typescript-bun --models opus,sonnet
+# Run a benchmark (v4, all tasks/modes/models). Standard 4-mode set
+# (powershell-tool dropped — see Repository rules). Always pass --effort
+# explicitly for effort-capable models. For multi-(model,effort) matrices,
+# run sequentially via a wrapper script (see run-fresh-matrix-2026-05-06.sh).
+python3 runner.py --tasks 11,12,13,15,16,17,18 --modes default,powershell,bash,typescript-bun --models opus48-1m --effort high
 
 # Watch a run while it is still in progress (read-only live dashboard). Reads
 # whatever metrics.json files exist so far; never touches the run. The head-to-head
@@ -83,6 +84,10 @@ execution modes; "language" is the concept readers expect.
 - **Workspaces are throwaway.** Don't commit `workspaces/` contents.
 - **`results/` is committed.** It contains archived metrics, generated code, and transcripts.
 - **`CLAUDE.md` is only a pointer.** All instructions go in `AGENTS.md`. Never put substantive content in `CLAUDE.md` — it should only reference this file.
+- **Always set effort AND context explicitly on every run.** Pass `--effort` for every effort-capable model (i.e. everything but Haiku 4.5) and select an explicit context variant (`opus47-1m` vs `opus47-200k`, etc.). Never rely on the CLI defaults: the default effort is version-dependent (it flipped `medium`→`high` at CC 2.1.117) AND is not recorded in `metrics.json`, so cells run without `--effort` cannot be labeled with certainty afterwards. `runner.py` logs a prominent WARNING (not a refusal) when `--effort` is unset for an effort-capable model.
+  - **We are NOT studying "default/no-effort" behavior as a condition.** We don't care about "what do you get when you don't specify effort." A run that omitted `--effort` is labeled purely by the effort it *actually* used (derived from the CC-version default) — e.g. the historical no-`--effort` base Sonnet 5 run is `sonnet5-1m-high` because it ran at the CC default `high`, and it is treated identically to an explicit-`high` run. Do NOT add a `default`/`no-effort` label, an inline "derived" marker, or otherwise try to keep no-effort runs distinct; and do not spin up new no-effort runs to characterize default behavior. (The derived-effort inference itself is documented in each combined report's "Model label conventions" section.)
+- **Standard language set is `default,powershell,bash,typescript-bun` (4 modes).** Drop `powershell-tool`: under WSL it is functionally identical to `powershell` (same prompt body, same pwsh), so it adds a redundant cell per task without a distinct signal.
+- **Post a live status heartbeat during runs.** Roughly every 30 minutes while a run is in flight, relay the full `python3 monitor.py --total <N>` report (run-health + structural metrics + head-to-head) so progress, pace/ETA, and any emerging failures are visible without waiting for completion.
 
 ## Architecture
 
@@ -141,10 +146,20 @@ hold — changes here have broken the generated markdown before, so
 
 - **No duplicate `(language, variant_disp)` rows in Tiers or
   Comparison.** `aggregate_rows` groups by `(language_mode,
-  model_short, effort_level)` only. CLI versions pool into one row;
-  `cli_versions` on the row retains the per-CLI breakdown for the
-  legend to consume. (Previously the aggregate split by CLI, which
-  rendered as duplicate-looking rows whose Model column matched.)
+  derived_label)` — where `derived_label` is
+  `<name-version>-<context>-<effort>` built by `_derived_label(m)`
+  (name+version from `model_short` with the `-1m`/`-200k` suffix
+  stripped and the legacy `opus`/`sonnet`→`opus46`/`sonnet46` rename;
+  context from the **recorded** `contextWindow` in
+  `model_usage_detail`, NOT the model_short suffix; effort from
+  `effort_level` or, when null, `na` for Haiku / `high`-or-`medium`-
+  by-CC-version for legacy Opus/Sonnet — see `derive_effort`). This
+  grouping is injective per language mode, so the invariant still
+  holds. CLI versions pool into one row; `cli_versions` retains the
+  per-CLI breakdown for the legend. Because context comes from the
+  recorded window, a mislabeled `opus47-200k` cell that actually ran
+  at 1M pools into `opus47-1m-medium`, while genuine-200k `opus47`
+  cells form a separate `opus47-200k-medium` row.
 - **CLI Version Legend schema.** Exactly one CLI version per row.
   Columns: `Variant label | CLI version | Tasks | Languages`. `Tasks`
   and `Languages` each hold either `All` (pair covered every task /
@@ -157,11 +172,17 @@ hold — changes here have broken the generated markdown before, so
   benefit from the panel-health verdict before they consume
   rankings.
 - **Quality-score lookup key.** The per-variant score bucket is keyed
-  by `(language_mode, _label(m))` which includes the `-cli<ver>`
-  suffix; aggregate lookups must therefore use `r["variant_with_cli"]`
-  (not `r["variant"]`). A prior regression where the lookup used the
-  CLI-less `variant` caused every aggregate Tests Quality / Workflow
-  Craft cell to render as `—` despite per-run scores being present.
+  by `(language_mode, _derived_label(m))` — the CLI-less derived label,
+  so quality-score pooling matches the duration/cost pooling in
+  `aggregate_rows` exactly. Aggregate lookups therefore use
+  `r["variant"]` (the derived label), NOT `r["variant_with_cli"]`.
+  (Panel JSONs are still retrieved by the on-disk path
+  `(source_run_dir, task_id, original_subdir)` where `original_subdir`
+  comes from `_path_label` = RAW model_short + effort — retrieval is
+  unaffected; only which aggregate row a score rolls up into changed.)
+  Watch for the failure mode where a pooled row's Avg Tests Quality /
+  Workflow Craft renders `—` or reflects only one context variant when
+  it should be the mean across the whole derived-label pool.
 
 ### Where the Conclusions prose lives
 

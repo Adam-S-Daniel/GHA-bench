@@ -1,0 +1,49 @@
+name: Dependency License Checker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  POLICY_FILE: policy.json
+  LICENSE_DB_FILE: license_db.json
+  REPORT_FILE: license-report.json
+
+jobs:
+  check-licenses:
+    name: Check dependency licenses
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run dependency license checker
+        run: |
+          python3 license_checker.py . \
+            --policy "$POLICY_FILE" \
+            --license-db "$LICENSE_DB_FILE" \
+            --output "$REPORT_FILE" \
+            --format text
+
+      - name: Show JSON report
+        run: cat "$REPORT_FILE"
+
+      - name: Write job summary
+        run: |
+          python3 license_checker.py . \
+            --policy "$POLICY_FILE" \
+            --license-db "$LICENSE_DB_FILE" \
+            --format markdown >> "$GITHUB_STEP_SUMMARY"

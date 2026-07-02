@@ -1,0 +1,60 @@
+# CI pipeline for the dependency license checker.
+#
+# Job 1 (test): runs the full bats TDD suite plus a bash syntax check.
+# Job 2 (compliance-report): depends on job 1 and generates the actual
+# compliance report. It prefers manifest/policy/db files from a `data/`
+# directory (how the act test harness injects per-case fixtures) and
+# falls back to the bundled test fixtures so a plain push still works.
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  FALLBACK_MANIFEST: test/fixtures/package.json
+  FALLBACK_POLICY: test/fixtures/policy.conf
+  FALLBACK_DB: test/fixtures/licenses.db
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: npm install -g bats
+
+      - name: Bash syntax check
+        run: bash -n license_checker.sh
+
+      - name: Run bats test suite
+        run: bats test/
+
+  compliance-report:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate compliance report
+        run: |
+          manifest=""
+          for f in data/package.json data/requirements.txt; do
+            if [ -f "$f" ]; then manifest="$f"; break; fi
+          done
+          manifest="${manifest:-$FALLBACK_MANIFEST}"
+          policy=data/policy.conf
+          [ -f "$policy" ] || policy="$FALLBACK_POLICY"
+          db=data/licenses.db
+          [ -f "$db" ] || db="$FALLBACK_DB"
+          echo "Using manifest=$manifest policy=$policy db=$db"
+          ./license_checker.sh report "$manifest" "$policy" "$db"

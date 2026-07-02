@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-06-28 07:47:27 PM ET — 140/140 runs completed, 0 remaining; total cost $577.71; total agent time 2233.1 min.
+**Last updated:** 2026-07-02 09:56:39 AM ET — 140/140 runs completed, 0 remaining; total cost $577.71; total agent time 2233.1 min.
 **Claude Code versions used:** [v2.1.193](claude-code-2.1.193.md) (23 runs), [v2.1.195](claude-code-2.1.195.md) (117 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -69,22 +69,22 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | B+ (4.0) |
+| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | A- (4.3) |
 | powershell | opus48-1m-medium | A+ (7.4min) | A+ ($1.81) | A- (4.3) | B+ (4.1) |
+| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | A- (4.3) | A- (4.3) |
 | typescript-bun | opus48-1m-medium | B (11.7min) | B+ ($2.73) | A- (4.4) | A- (4.3) |
 | powershell-tool | opus48-1m-medium | B+ (10.1min) | B+ ($2.57) | A- (4.1) | B+ (4.1) |
-| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B (3.8) |
-| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | B+ (4.0) | B+ (4.0) |
-| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | B+ (3.9) |
+| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B+ (4.1) |
+| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | A- (4.2) |
 | powershell | opus48-1m-high | C+ (13.8min) | B- ($3.24) | A (4.5) | B (3.8) |
 | default | opus48-1m-high | A- (9.4min) | B+ ($2.74) | B- (3.4) | A- (4.1) |
 | bash | opus48-1m-medium | A- (9.2min) | A- ($2.38) | B- (3.3) | B (3.7) |
-| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | B+ (3.9) |
+| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | A- (4.2) |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | A- (4.4) | B+ (3.9) |
+| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | A- (4.3) |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | A (4.5) | A- (4.2) |
 | typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | A- (4.4) | A- (4.1) |
 | powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | A- (4.2) | A- (4.3) |
-| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | B+ (4.0) |
 | bash | opus48-1m-ultracode | D+ (19.9min) | D+ ($5.39) | B+ (3.9) | A- (4.1) |
 | powershell | opus48-1m-ultracode | D- (23.2min) | D- ($6.87) | A (4.4) | B+ (4.1) |
 | typescript-bun | opus48-1m-ultracode | D- (24.0min) | D- ($7.35) | A (4.5) | B+ (3.9) |
@@ -96,24 +96,24 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | B+ (4.0) |
+| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | A- (4.3) |
 | powershell | opus48-1m-medium | A+ (7.4min) | A+ ($1.81) | A- (4.3) | B+ (4.1) |
 | default | opus48-1m-high | A- (9.4min) | B+ ($2.74) | B- (3.4) | A- (4.1) |
 | bash | opus48-1m-medium | A- (9.2min) | A- ($2.38) | B- (3.3) | B (3.7) |
+| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | A- (4.3) | A- (4.3) |
 | powershell-tool | opus48-1m-medium | B+ (10.1min) | B+ ($2.57) | A- (4.1) | B+ (4.1) |
-| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | B+ (4.0) | B+ (4.0) |
 | typescript-bun | opus48-1m-medium | B (11.7min) | B+ ($2.73) | A- (4.4) | A- (4.3) |
-| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | B+ (3.9) |
-| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B (3.8) |
+| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | A- (4.2) |
+| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B+ (4.1) |
 | powershell | opus48-1m-high | C+ (13.8min) | B- ($3.24) | A (4.5) | B (3.8) |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | A- (4.4) | B+ (3.9) |
-| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | B+ (3.9) |
+| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | A- (4.2) |
 | bash | opus48-1m-ultracode | D+ (19.9min) | D+ ($5.39) | B+ (3.9) | A- (4.1) |
 | bash | opus48-1m-xhigh | D+ (20.3min) | D+ ($5.74) | B+ (4.1) | B+ (3.9) |
 | typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | A- (4.4) | A- (4.1) |
 | powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | A- (4.2) | A- (4.3) |
+| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | A- (4.3) |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | A (4.5) | A- (4.2) |
-| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | B+ (4.0) |
 | powershell | opus48-1m-ultracode | D- (23.2min) | D- ($6.87) | A (4.4) | B+ (4.1) |
 | typescript-bun | opus48-1m-ultracode | D- (24.0min) | D- ($7.35) | A (4.5) | B+ (3.9) |
 
@@ -124,24 +124,24 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | B+ (4.0) |
+| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | A- (4.3) |
 | powershell | opus48-1m-medium | A+ (7.4min) | A+ ($1.81) | A- (4.3) | B+ (4.1) |
 | bash | opus48-1m-medium | A- (9.2min) | A- ($2.38) | B- (3.3) | B (3.7) |
+| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | A- (4.3) | A- (4.3) |
 | powershell-tool | opus48-1m-medium | B+ (10.1min) | B+ ($2.57) | A- (4.1) | B+ (4.1) |
 | typescript-bun | opus48-1m-medium | B (11.7min) | B+ ($2.73) | A- (4.4) | A- (4.3) |
-| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | B+ (4.0) | B+ (4.0) |
 | default | opus48-1m-high | A- (9.4min) | B+ ($2.74) | B- (3.4) | A- (4.1) |
-| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B (3.8) |
+| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B+ (4.1) |
 | powershell | opus48-1m-high | C+ (13.8min) | B- ($3.24) | A (4.5) | B (3.8) |
-| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | B+ (3.9) |
+| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | A- (4.2) |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | A- (4.4) | B+ (3.9) |
-| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | B+ (3.9) |
+| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | A- (4.2) |
 | bash | opus48-1m-ultracode | D+ (19.9min) | D+ ($5.39) | B+ (3.9) | A- (4.1) |
 | typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | A- (4.4) | A- (4.1) |
 | bash | opus48-1m-xhigh | D+ (20.3min) | D+ ($5.74) | B+ (4.1) | B+ (3.9) |
 | powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | A- (4.2) | A- (4.3) |
+| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | A- (4.3) |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | A (4.5) | A- (4.2) |
-| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | B+ (4.0) |
 | powershell | opus48-1m-ultracode | D- (23.2min) | D- ($6.87) | A (4.4) | B+ (4.1) |
 | typescript-bun | opus48-1m-ultracode | D- (24.0min) | D- ($7.35) | A (4.5) | B+ (3.9) |
 
@@ -152,22 +152,22 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B (3.8) |
+| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B+ (4.1) |
 | powershell | opus48-1m-high | C+ (13.8min) | B- ($3.24) | A (4.5) | B (3.8) |
-| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | B+ (3.9) |
+| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | A- (4.2) |
+| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | A- (4.3) |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | A (4.5) | A- (4.2) |
-| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | B+ (4.0) |
 | powershell | opus48-1m-ultracode | D- (23.2min) | D- ($6.87) | A (4.4) | B+ (4.1) |
 | typescript-bun | opus48-1m-ultracode | D- (24.0min) | D- ($7.35) | A (4.5) | B+ (3.9) |
-| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | B+ (4.0) |
+| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | A- (4.3) |
 | powershell | opus48-1m-medium | A+ (7.4min) | A+ ($1.81) | A- (4.3) | B+ (4.1) |
+| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | A- (4.3) | A- (4.3) |
 | powershell-tool | opus48-1m-medium | B+ (10.1min) | B+ ($2.57) | A- (4.1) | B+ (4.1) |
 | typescript-bun | opus48-1m-medium | B (11.7min) | B+ ($2.73) | A- (4.4) | A- (4.3) |
-| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | B+ (3.9) |
+| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | A- (4.2) |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | A- (4.4) | B+ (3.9) |
 | typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | A- (4.4) | A- (4.1) |
 | powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | A- (4.2) | A- (4.3) |
-| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | B+ (4.0) | B+ (4.0) |
 | bash | opus48-1m-ultracode | D+ (19.9min) | D+ ($5.39) | B+ (3.9) | A- (4.1) |
 | bash | opus48-1m-xhigh | D+ (20.3min) | D+ ($5.74) | B+ (4.1) | B+ (3.9) |
 | default | opus48-1m-high | A- (9.4min) | B+ ($2.74) | B- (3.4) | A- (4.1) |
@@ -180,25 +180,25 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
+| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | A- (4.3) |
+| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | A- (4.3) | A- (4.3) |
 | typescript-bun | opus48-1m-medium | B (11.7min) | B+ ($2.73) | A- (4.4) | A- (4.3) |
 | default | opus48-1m-high | A- (9.4min) | B+ ($2.74) | B- (3.4) | A- (4.1) |
+| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | A- (4.2) |
+| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | A- (4.2) |
 | bash | opus48-1m-ultracode | D+ (19.9min) | D+ ($5.39) | B+ (3.9) | A- (4.1) |
 | typescript-bun | opus48-1m-xhigh | D (20.4min) | D+ ($5.76) | A- (4.4) | A- (4.1) |
 | powershell | opus48-1m-xhigh* | D (21.9min) | D ($6.08) | A- (4.2) | A- (4.3) |
+| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | A- (4.3) |
 | powershell-tool | opus48-1m-xhigh* | D- (24.6min) | D ($6.51) | A (4.5) | A- (4.2) |
-| default | opus48-1m-medium | A+ (7.5min) | A+ ($1.89) | A- (4.1) | B+ (4.0) |
 | powershell | opus48-1m-medium | A+ (7.4min) | A+ ($1.81) | A- (4.3) | B+ (4.1) |
 | powershell-tool | opus48-1m-medium | B+ (10.1min) | B+ ($2.57) | A- (4.1) | B+ (4.1) |
-| bash | opus48-1m-high | B+ (10.5min) | B+ ($2.80) | B+ (4.0) | B+ (4.0) |
-| typescript-bun | opus48-1m-high | B (12.2min) | C+ ($3.68) | A- (4.3) | B+ (3.9) |
+| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B+ (4.1) |
 | default | opus48-1m-xhigh | C (15.3min) | C ($4.48) | A- (4.4) | B+ (3.9) |
-| default | opus48-1m-ultracode | C- (17.0min) | C- ($4.90) | A (4.6) | B+ (3.9) |
 | bash | opus48-1m-xhigh | D+ (20.3min) | D+ ($5.74) | B+ (4.1) | B+ (3.9) |
-| powershell-tool | opus48-1m-ultracode | D- (24.9min) | D ($6.39) | A (4.5) | B+ (4.0) |
 | powershell | opus48-1m-ultracode | D- (23.2min) | D- ($6.87) | A (4.4) | B+ (4.1) |
 | typescript-bun | opus48-1m-ultracode | D- (24.0min) | D- ($7.35) | A (4.5) | B+ (3.9) |
 | bash | opus48-1m-medium | A- (9.2min) | A- ($2.38) | B- (3.3) | B (3.7) |
-| powershell-tool | opus48-1m-high | B- (12.4min) | B ($2.89) | A (4.4) | B (3.8) |
 | powershell | opus48-1m-high | C+ (13.8min) | B- ($3.24) | A (4.5) | B (3.8) |
 
 </details>
@@ -220,23 +220,23 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.0 | 4.0 |
+| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.3 | 4.3 |
 | bash | opus48-1m-medium | 7 | 9.2min | 9.2min | 1.1 | 34 | $2.38 | $16.64 | 3.3 | 3.7 |
 | bash | opus48-1m-ultracode | 7 | 19.9min | 17.9min | 1.0 | 52 | $5.39 | $37.72 | 3.9 | 4.1 |
 | bash | opus48-1m-xhigh | 7 | 20.3min | 17.0min | 1.3 | 60 | $5.74 | $40.21 | 4.1 | 3.9 |
 | default | opus48-1m-high | 7 | 9.4min | 7.9min | 0.3 | 42 | $2.74 | $19.15 | 3.4 | 4.1 |
-| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.0 |
-| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 3.9 |
+| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.3 |
+| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 4.2 |
 | default | opus48-1m-xhigh | 7 | 15.3min | 12.4min | 0.1 | 48 | $4.48 | $31.34 | 4.4 | 3.9 |
 | powershell | opus48-1m-high | 7 | 13.8min | 10.3min | 0.9 | 49 | $3.24 | $22.70 | 4.5 | 3.8 |
 | powershell | opus48-1m-medium | 7 | 7.4min | 7.4min | 0.0 | 27 | $1.81 | $12.64 | 4.3 | 4.1 |
 | powershell | opus48-1m-ultracode | 7 | 23.2min | 19.9min | 0.4 | 49 | $6.87 | $48.06 | 4.4 | 4.1 |
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | 4.2 | 4.3 |
-| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 3.8 |
+| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 4.1 |
 | powershell-tool | opus48-1m-medium | 7 | 10.1min | 10.1min | 0.9 | 40 | $2.57 | $18.00 | 4.1 | 4.1 |
-| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.0 |
+| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.3 |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | 4.5 | 4.2 |
-| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 3.9 |
+| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 4.2 |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | 4.4 | 4.3 |
 | typescript-bun | opus48-1m-ultracode | 7 | 24.0min | 17.8min | 1.0 | 67 | $7.35 | $51.44 | 4.5 | 3.9 |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | 4.4 | 4.1 |
@@ -248,22 +248,22 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell | opus48-1m-medium | 7 | 7.4min | 7.4min | 0.0 | 27 | $1.81 | $12.64 | 4.3 | 4.1 |
-| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.0 |
+| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.3 |
 | bash | opus48-1m-medium | 7 | 9.2min | 9.2min | 1.1 | 34 | $2.38 | $16.64 | 3.3 | 3.7 |
 | powershell-tool | opus48-1m-medium | 7 | 10.1min | 10.1min | 0.9 | 40 | $2.57 | $18.00 | 4.1 | 4.1 |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | 4.4 | 4.3 |
 | default | opus48-1m-high | 7 | 9.4min | 7.9min | 0.3 | 42 | $2.74 | $19.15 | 3.4 | 4.1 |
-| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.0 | 4.0 |
-| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 3.8 |
+| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.3 | 4.3 |
+| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 4.1 |
 | powershell | opus48-1m-high | 7 | 13.8min | 10.3min | 0.9 | 49 | $3.24 | $22.70 | 4.5 | 3.8 |
-| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 3.9 |
+| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 4.2 |
 | default | opus48-1m-xhigh | 7 | 15.3min | 12.4min | 0.1 | 48 | $4.48 | $31.34 | 4.4 | 3.9 |
-| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 3.9 |
+| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 4.2 |
 | bash | opus48-1m-ultracode | 7 | 19.9min | 17.9min | 1.0 | 52 | $5.39 | $37.72 | 3.9 | 4.1 |
 | bash | opus48-1m-xhigh | 7 | 20.3min | 17.0min | 1.3 | 60 | $5.74 | $40.21 | 4.1 | 3.9 |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | 4.4 | 4.1 |
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | 4.2 | 4.3 |
-| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.0 |
+| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.3 |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | 4.5 | 4.2 |
 | powershell | opus48-1m-ultracode | 7 | 23.2min | 19.9min | 0.4 | 49 | $6.87 | $48.06 | 4.4 | 4.1 |
 | typescript-bun | opus48-1m-ultracode | 7 | 24.0min | 17.8min | 1.0 | 67 | $7.35 | $51.44 | 4.5 | 3.9 |
@@ -276,17 +276,17 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell | opus48-1m-medium | 7 | 7.4min | 7.4min | 0.0 | 27 | $1.81 | $12.64 | 4.3 | 4.1 |
-| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.0 |
+| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.3 |
 | bash | opus48-1m-medium | 7 | 9.2min | 9.2min | 1.1 | 34 | $2.38 | $16.64 | 3.3 | 3.7 |
 | default | opus48-1m-high | 7 | 9.4min | 7.9min | 0.3 | 42 | $2.74 | $19.15 | 3.4 | 4.1 |
 | powershell-tool | opus48-1m-medium | 7 | 10.1min | 10.1min | 0.9 | 40 | $2.57 | $18.00 | 4.1 | 4.1 |
-| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.0 | 4.0 |
+| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.3 | 4.3 |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | 4.4 | 4.3 |
-| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 3.9 |
-| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 3.8 |
+| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 4.2 |
+| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 4.1 |
 | powershell | opus48-1m-high | 7 | 13.8min | 10.3min | 0.9 | 49 | $3.24 | $22.70 | 4.5 | 3.8 |
 | default | opus48-1m-xhigh | 7 | 15.3min | 12.4min | 0.1 | 48 | $4.48 | $31.34 | 4.4 | 3.9 |
-| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 3.9 |
+| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 4.2 |
 | bash | opus48-1m-ultracode | 7 | 19.9min | 17.9min | 1.0 | 52 | $5.39 | $37.72 | 3.9 | 4.1 |
 | bash | opus48-1m-xhigh | 7 | 20.3min | 17.0min | 1.3 | 60 | $5.74 | $40.21 | 4.1 | 3.9 |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | 4.4 | 4.1 |
@@ -294,7 +294,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus48-1m-ultracode | 7 | 23.2min | 19.9min | 0.4 | 49 | $6.87 | $48.06 | 4.4 | 4.1 |
 | typescript-bun | opus48-1m-ultracode | 7 | 24.0min | 17.8min | 1.0 | 67 | $7.35 | $51.44 | 4.5 | 3.9 |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | 4.5 | 4.2 |
-| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.0 |
+| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.3 |
 
 </details>
 
@@ -304,17 +304,17 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell | opus48-1m-medium | 7 | 7.4min | 7.4min | 0.0 | 27 | $1.81 | $12.64 | 4.3 | 4.1 |
-| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.0 |
-| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.0 | 4.0 |
+| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.3 |
+| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.3 | 4.3 |
 | default | opus48-1m-high | 7 | 9.4min | 7.9min | 0.3 | 42 | $2.74 | $19.15 | 3.4 | 4.1 |
-| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 3.9 |
+| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 4.2 |
 | bash | opus48-1m-medium | 7 | 9.2min | 9.2min | 1.1 | 34 | $2.38 | $16.64 | 3.3 | 3.7 |
 | powershell-tool | opus48-1m-medium | 7 | 10.1min | 10.1min | 0.9 | 40 | $2.57 | $18.00 | 4.1 | 4.1 |
 | powershell | opus48-1m-high | 7 | 13.8min | 10.3min | 0.9 | 49 | $3.24 | $22.70 | 4.5 | 3.8 |
-| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 3.8 |
+| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 4.1 |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | 4.4 | 4.3 |
 | default | opus48-1m-xhigh | 7 | 15.3min | 12.4min | 0.1 | 48 | $4.48 | $31.34 | 4.4 | 3.9 |
-| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 3.9 |
+| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 4.2 |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | 4.4 | 4.1 |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | 4.5 | 4.2 |
 | bash | opus48-1m-xhigh | 7 | 20.3min | 17.0min | 1.3 | 60 | $5.74 | $40.21 | 4.1 | 3.9 |
@@ -322,7 +322,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | opus48-1m-ultracode | 7 | 19.9min | 17.9min | 1.0 | 52 | $5.39 | $37.72 | 3.9 | 4.1 |
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | 4.2 | 4.3 |
 | powershell | opus48-1m-ultracode | 7 | 23.2min | 19.9min | 0.4 | 49 | $6.87 | $48.06 | 4.4 | 4.1 |
-| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.0 |
+| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.3 |
 
 </details>
 
@@ -332,17 +332,17 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell | opus48-1m-medium | 7 | 7.4min | 7.4min | 0.0 | 27 | $1.81 | $12.64 | 4.3 | 4.1 |
-| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.0 |
-| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 3.9 |
+| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.3 |
+| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 4.2 |
 | default | opus48-1m-xhigh | 7 | 15.3min | 12.4min | 0.1 | 48 | $4.48 | $31.34 | 4.4 | 3.9 |
-| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 3.8 |
+| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 4.1 |
 | default | opus48-1m-high | 7 | 9.4min | 7.9min | 0.3 | 42 | $2.74 | $19.15 | 3.4 | 4.1 |
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | 4.2 | 4.3 |
 | powershell | opus48-1m-ultracode | 7 | 23.2min | 19.9min | 0.4 | 49 | $6.87 | $48.06 | 4.4 | 4.1 |
-| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.0 |
-| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 3.9 |
+| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.3 |
+| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 4.2 |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | 4.4 | 4.3 |
-| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.0 | 4.0 |
+| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.3 | 4.3 |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | 4.5 | 4.2 |
 | powershell | opus48-1m-high | 7 | 13.8min | 10.3min | 0.9 | 49 | $3.24 | $22.70 | 4.5 | 3.8 |
 | powershell-tool | opus48-1m-medium | 7 | 10.1min | 10.1min | 0.9 | 40 | $2.57 | $18.00 | 4.1 | 4.1 |
@@ -360,20 +360,20 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell | opus48-1m-medium | 7 | 7.4min | 7.4min | 0.0 | 27 | $1.81 | $12.64 | 4.3 | 4.1 |
-| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.0 |
+| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.3 |
 | bash | opus48-1m-medium | 7 | 9.2min | 9.2min | 1.1 | 34 | $2.38 | $16.64 | 3.3 | 3.7 |
-| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 3.8 |
-| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.0 | 4.0 |
+| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 4.1 |
+| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.3 | 4.3 |
 | powershell-tool | opus48-1m-medium | 7 | 10.1min | 10.1min | 0.9 | 40 | $2.57 | $18.00 | 4.1 | 4.1 |
 | default | opus48-1m-high | 7 | 9.4min | 7.9min | 0.3 | 42 | $2.74 | $19.15 | 3.4 | 4.1 |
 | default | opus48-1m-xhigh | 7 | 15.3min | 12.4min | 0.1 | 48 | $4.48 | $31.34 | 4.4 | 3.9 |
 | powershell | opus48-1m-high | 7 | 13.8min | 10.3min | 0.9 | 49 | $3.24 | $22.70 | 4.5 | 3.8 |
 | powershell | opus48-1m-ultracode | 7 | 23.2min | 19.9min | 0.4 | 49 | $6.87 | $48.06 | 4.4 | 4.1 |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | 4.4 | 4.3 |
-| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.0 |
+| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.3 |
 | bash | opus48-1m-ultracode | 7 | 19.9min | 17.9min | 1.0 | 52 | $5.39 | $37.72 | 3.9 | 4.1 |
-| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 3.9 |
-| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 3.9 |
+| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 4.2 |
+| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 4.2 |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | 4.4 | 4.1 |
 | bash | opus48-1m-xhigh | 7 | 20.3min | 17.0min | 1.3 | 60 | $5.74 | $40.21 | 4.1 | 3.9 |
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | 4.2 | 4.3 |
@@ -387,23 +387,23 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 3.9 |
+| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 4.2 |
 | powershell | opus48-1m-high | 7 | 13.8min | 10.3min | 0.9 | 49 | $3.24 | $22.70 | 4.5 | 3.8 |
-| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.0 |
+| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.3 |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | 4.5 | 4.2 |
 | typescript-bun | opus48-1m-ultracode | 7 | 24.0min | 17.8min | 1.0 | 67 | $7.35 | $51.44 | 4.5 | 3.9 |
 | powershell | opus48-1m-ultracode | 7 | 23.2min | 19.9min | 0.4 | 49 | $6.87 | $48.06 | 4.4 | 4.1 |
-| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 3.8 |
+| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 4.1 |
 | default | opus48-1m-xhigh | 7 | 15.3min | 12.4min | 0.1 | 48 | $4.48 | $31.34 | 4.4 | 3.9 |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | 4.4 | 4.3 |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | 4.4 | 4.1 |
+| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.3 | 4.3 |
 | powershell | opus48-1m-medium | 7 | 7.4min | 7.4min | 0.0 | 27 | $1.81 | $12.64 | 4.3 | 4.1 |
-| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 3.9 |
+| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 4.2 |
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | 4.2 | 4.3 |
-| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.0 |
+| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.3 |
 | powershell-tool | opus48-1m-medium | 7 | 10.1min | 10.1min | 0.9 | 40 | $2.57 | $18.00 | 4.1 | 4.1 |
 | bash | opus48-1m-xhigh | 7 | 20.3min | 17.0min | 1.3 | 60 | $5.74 | $40.21 | 4.1 | 3.9 |
-| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.0 | 4.0 |
 | bash | opus48-1m-ultracode | 7 | 19.9min | 17.9min | 1.0 | 52 | $5.39 | $37.72 | 3.9 | 4.1 |
 | default | opus48-1m-high | 7 | 9.4min | 7.9min | 0.3 | 42 | $2.74 | $19.15 | 3.4 | 4.1 |
 | bash | opus48-1m-medium | 7 | 9.2min | 9.2min | 1.1 | 34 | $2.38 | $16.64 | 3.3 | 3.7 |
@@ -416,24 +416,24 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell | opus48-1m-xhigh* | 6 | 21.9min | 18.3min | 0.3 | 64 | $6.08 | $36.46 | 4.2 | 4.3 |
+| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.3 | 4.3 |
+| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.3 |
+| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.3 |
 | typescript-bun | opus48-1m-medium | 7 | 11.7min | 11.7min | 0.6 | 49 | $2.73 | $19.09 | 4.4 | 4.3 |
 | powershell-tool | opus48-1m-xhigh* | 4 | 24.6min | 16.8min | 0.8 | 64 | $6.51 | $26.06 | 4.5 | 4.2 |
+| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 4.2 |
+| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 4.2 |
 | bash | opus48-1m-ultracode | 7 | 19.9min | 17.9min | 1.0 | 52 | $5.39 | $37.72 | 3.9 | 4.1 |
 | default | opus48-1m-high | 7 | 9.4min | 7.9min | 0.3 | 42 | $2.74 | $19.15 | 3.4 | 4.1 |
 | typescript-bun | opus48-1m-xhigh | 7 | 20.4min | 15.6min | 0.9 | 60 | $5.76 | $40.33 | 4.4 | 4.1 |
 | powershell | opus48-1m-medium | 7 | 7.4min | 7.4min | 0.0 | 27 | $1.81 | $12.64 | 4.3 | 4.1 |
 | powershell | opus48-1m-ultracode | 7 | 23.2min | 19.9min | 0.4 | 49 | $6.87 | $48.06 | 4.4 | 4.1 |
+| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 4.1 |
 | powershell-tool | opus48-1m-medium | 7 | 10.1min | 10.1min | 0.9 | 40 | $2.57 | $18.00 | 4.1 | 4.1 |
-| bash | opus48-1m-high | 7 | 10.5min | 7.9min | 0.7 | 39 | $2.80 | $19.59 | 4.0 | 4.0 |
-| default | opus48-1m-medium | 7 | 7.5min | 7.5min | 0.1 | 32 | $1.89 | $13.21 | 4.1 | 4.0 |
-| powershell-tool | opus48-1m-ultracode | 7 | 24.9min | 21.6min | 0.4 | 51 | $6.39 | $44.76 | 4.5 | 4.0 |
-| default | opus48-1m-ultracode | 7 | 17.0min | 14.1min | 0.1 | 53 | $4.90 | $34.32 | 4.6 | 3.9 |
 | default | opus48-1m-xhigh | 7 | 15.3min | 12.4min | 0.1 | 48 | $4.48 | $31.34 | 4.4 | 3.9 |
-| typescript-bun | opus48-1m-high | 7 | 12.2min | 8.1min | 0.4 | 56 | $3.68 | $25.77 | 4.3 | 3.9 |
 | bash | opus48-1m-xhigh | 7 | 20.3min | 17.0min | 1.3 | 60 | $5.74 | $40.21 | 4.1 | 3.9 |
 | typescript-bun | opus48-1m-ultracode | 7 | 24.0min | 17.8min | 1.0 | 67 | $7.35 | $51.44 | 4.5 | 3.9 |
 | powershell | opus48-1m-high | 7 | 13.8min | 10.3min | 0.9 | 49 | $3.24 | $22.70 | 4.5 | 3.8 |
-| powershell-tool | opus48-1m-high | 7 | 12.4min | 11.1min | 0.1 | 35 | $2.89 | $20.22 | 4.4 | 3.8 |
 | bash | opus48-1m-medium | 7 | 9.2min | 9.2min | 1.1 | 34 | $2.38 | $16.64 | 3.3 | 3.7 |
 
 </details>
@@ -1241,7 +1241,7 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 
 | Language | Model | Avg Overall | Avg Coverage | Avg Rigor | Avg Design | Judge Cost |
 |------|-------|-------------|-------------|-----------|------------|------------|
-| bash | opus48-1m-high | **4.0** | 4.2 | 4.1 | 4.0 | $0.5140 |
+| bash | opus48-1m-high | **4.3** | 4.4 | 4.3 | 4.3 | $0.4582 |
 | bash | opus48-1m-medium | **3.3** | 3.5 | 3.0 | 3.7 | $0.4194 |
 | bash | opus48-1m-ultracode | **3.9** | 4.2 | 3.7 | 4.1 | $0.3707 |
 | bash | opus48-1m-xhigh | **4.1** | 4.4 | 4.0 | 4.4 | $0.3896 |
@@ -1261,7 +1261,7 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | typescript-bun | opus48-1m-medium | **4.4** | 4.4 | 4.3 | 4.5 | $0.4315 |
 | typescript-bun | opus48-1m-ultracode | **4.5** | 4.6 | 4.5 | 4.6 | $0.5519 |
 | typescript-bun | opus48-1m-xhigh | **4.4** | 4.6 | 4.4 | 4.4 | $0.5334 |
-| **Total** | | | | | | **$9.3800** |
+| **Total** | | | | | | **$9.3242** |
 
 
 <details>
@@ -1279,13 +1279,13 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | default | opus48-1m-xhigh | **4.4** | 4.6 | 4.3 | 4.5 | $0.4501 |
 | typescript-bun | opus48-1m-medium | **4.4** | 4.4 | 4.3 | 4.5 | $0.4315 |
 | typescript-bun | opus48-1m-xhigh | **4.4** | 4.6 | 4.4 | 4.4 | $0.5334 |
+| bash | opus48-1m-high | **4.3** | 4.4 | 4.3 | 4.3 | $0.4582 |
 | powershell | opus48-1m-medium | **4.3** | 4.5 | 4.4 | 4.4 | $0.4540 |
 | powershell | opus48-1m-xhigh | **4.3** | 4.4 | 4.4 | 4.6 | $0.4882 |
 | typescript-bun | opus48-1m-high | **4.3** | 4.4 | 4.3 | 4.4 | $0.5102 |
 | default | opus48-1m-medium | **4.1** | 4.2 | 4.3 | 4.3 | $0.4131 |
 | powershell-tool | opus48-1m-medium | **4.1** | 4.2 | 4.0 | 4.3 | $0.4468 |
 | bash | opus48-1m-xhigh | **4.1** | 4.4 | 4.0 | 4.4 | $0.3896 |
-| bash | opus48-1m-high | **4.0** | 4.2 | 4.1 | 4.0 | $0.5140 |
 | bash | opus48-1m-ultracode | **3.9** | 4.2 | 3.7 | 4.1 | $0.3707 |
 | default | opus48-1m-high | **3.4** | 3.5 | 3.8 | 4.0 | $0.4080 |
 | bash | opus48-1m-medium | **3.3** | 3.5 | 3.0 | 3.7 | $0.4194 |
@@ -1307,11 +1307,11 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | typescript-bun | opus48-1m-ultracode | **4.5** | 4.6 | 4.5 | 4.6 | $0.5519 |
 | powershell | opus48-1m-high | **4.5** | 4.5 | 4.4 | 4.4 | $0.4598 |
 | powershell | opus48-1m-medium | **4.3** | 4.5 | 4.4 | 4.4 | $0.4540 |
+| bash | opus48-1m-high | **4.3** | 4.4 | 4.3 | 4.3 | $0.4582 |
 | bash | opus48-1m-xhigh | **4.1** | 4.4 | 4.0 | 4.4 | $0.3896 |
 | powershell | opus48-1m-xhigh | **4.3** | 4.4 | 4.4 | 4.6 | $0.4882 |
 | typescript-bun | opus48-1m-high | **4.3** | 4.4 | 4.3 | 4.4 | $0.5102 |
 | typescript-bun | opus48-1m-medium | **4.4** | 4.4 | 4.3 | 4.5 | $0.4315 |
-| bash | opus48-1m-high | **4.0** | 4.2 | 4.1 | 4.0 | $0.5140 |
 | bash | opus48-1m-ultracode | **3.9** | 4.2 | 3.7 | 4.1 | $0.3707 |
 | default | opus48-1m-medium | **4.1** | 4.2 | 4.3 | 4.3 | $0.4131 |
 | powershell-tool | opus48-1m-medium | **4.1** | 4.2 | 4.0 | 4.3 | $0.4468 |
@@ -1335,11 +1335,11 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | typescript-bun | opus48-1m-xhigh | **4.4** | 4.6 | 4.4 | 4.4 | $0.5334 |
 | powershell | opus48-1m-medium | **4.3** | 4.5 | 4.4 | 4.4 | $0.4540 |
 | powershell-tool | opus48-1m-xhigh | **4.5** | 4.6 | 4.4 | 4.4 | $0.5747 |
+| bash | opus48-1m-high | **4.3** | 4.4 | 4.3 | 4.3 | $0.4582 |
 | default | opus48-1m-medium | **4.1** | 4.2 | 4.3 | 4.3 | $0.4131 |
 | default | opus48-1m-xhigh | **4.4** | 4.6 | 4.3 | 4.5 | $0.4501 |
 | typescript-bun | opus48-1m-high | **4.3** | 4.4 | 4.3 | 4.4 | $0.5102 |
 | typescript-bun | opus48-1m-medium | **4.4** | 4.4 | 4.3 | 4.5 | $0.4315 |
-| bash | opus48-1m-high | **4.0** | 4.2 | 4.1 | 4.0 | $0.5140 |
 | bash | opus48-1m-xhigh | **4.1** | 4.4 | 4.0 | 4.4 | $0.3896 |
 | powershell-tool | opus48-1m-medium | **4.1** | 4.2 | 4.0 | 4.3 | $0.4468 |
 | default | opus48-1m-high | **3.4** | 3.5 | 3.8 | 4.0 | $0.4080 |
@@ -1367,10 +1367,10 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | bash | opus48-1m-xhigh | **4.1** | 4.4 | 4.0 | 4.4 | $0.3896 |
 | powershell | opus48-1m-medium | **4.3** | 4.5 | 4.4 | 4.4 | $0.4540 |
 | typescript-bun | opus48-1m-xhigh | **4.4** | 4.6 | 4.4 | 4.4 | $0.5334 |
+| bash | opus48-1m-high | **4.3** | 4.4 | 4.3 | 4.3 | $0.4582 |
 | default | opus48-1m-medium | **4.1** | 4.2 | 4.3 | 4.3 | $0.4131 |
 | powershell-tool | opus48-1m-medium | **4.1** | 4.2 | 4.0 | 4.3 | $0.4468 |
 | bash | opus48-1m-ultracode | **3.9** | 4.2 | 3.7 | 4.1 | $0.3707 |
-| bash | opus48-1m-high | **4.0** | 4.2 | 4.1 | 4.0 | $0.5140 |
 | default | opus48-1m-high | **3.4** | 3.5 | 3.8 | 4.0 | $0.4080 |
 | bash | opus48-1m-medium | **3.3** | 3.5 | 3.0 | 3.7 | $0.4194 |
 
@@ -1482,7 +1482,7 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | Environment Matrix Generator | typescript-bun | opus48-1m-medium | 4.5 | 4.5 | 4.5 | 4.5 |  |
 | Environment Matrix Generator | typescript-bun | opus48-1m-ultracode | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | Environment Matrix Generator | typescript-bun | opus48-1m-xhigh | 5.0 | 4.5 | 4.5 | 4.5 |  |
-| Artifact Cleanup Script | bash | opus48-1m-high | 3.5 | 3.5 | 3.0 | 3.0 |  |
+| Artifact Cleanup Script | bash | opus48-1m-high | 5.0 | 5.0 | 5.0 | 5.0 |  |
 | Artifact Cleanup Script | bash | opus48-1m-medium | 3.5 | 3.5 | 2.5 | 2.5 |  |
 | Artifact Cleanup Script | bash | opus48-1m-ultracode | 4.0 | 2.5 | 4.0 | 3.0 |  |
 | Artifact Cleanup Script | bash | opus48-1m-xhigh | 4.5 | 4.5 | 4.5 | 4.5 |  |
@@ -1532,9 +1532,9 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 | Structural Metric | vs Coverage | vs Rigor | vs Design | vs Overall |
 |-------------------|------------|---------|----------|-----------|
-| Test count | 0.37 | 0.5 | 0.33 | 0.44 |
-| Assertion count | 0.45 | 0.58 | 0.39 | 0.51 |
-| Test:code ratio | 0.2 | 0.23 | 0.13 | 0.18 |
+| Test count | 0.33 | 0.46 | 0.29 | 0.4 |
+| Assertion count | 0.41 | 0.55 | 0.35 | 0.47 |
+| Test:code ratio | 0.18 | 0.2 | 0.11 | 0.16 |
 
 *Based on 140 runs with both structural and LLM scores.*
 
@@ -1553,7 +1553,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
-| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 3.0 | bash | ok |
+| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 5.0 | bash | ok |
 | Artifact Cleanup Script | bash | opus48-1m-medium | 11.4min | 53 | 1 | $3.16 | 2.5 | bash | ok |
 | Artifact Cleanup Script | bash | opus48-1m-ultracode | 14.2min | 28 | 1 | $3.60 | 3.0 | bash | ok |
 | Artifact Cleanup Script | bash | opus48-1m-xhigh | 18.1min | 49 | 2 | $5.08 | 4.5 | bash | ok |
@@ -1761,7 +1761,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Test Results Aggregator | default | opus48-1m-ultracode | 13.4min | 29 | 0 | $3.22 | 4.5 | python | ok |
 | Secret Rotation Validator | powershell-tool | opus48-1m-high | 15.2min | 33 | 0 | $3.22 | 4.5 | powershell | ok |
 | Secret Rotation Validator | typescript-bun | opus48-1m-high | 11.9min | 45 | 1 | $3.29 | 4.0 | typescript | ok |
-| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 3.0 | bash | ok |
+| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 5.0 | bash | ok |
 | Semantic Version Bumper | default | opus48-1m-high | 9.8min | 52 | 0 | $3.34 | 2.0 | javascript | ok |
 | Dependency License Checker | powershell-tool | opus48-1m-medium | 12.7min | 49 | 0 | $3.35 | 3.5 | powershell | ok |
 | Test Results Aggregator | powershell-tool | opus48-1m-high | 15.2min | 47 | 0 | $3.39 | 4.5 | powershell | ok |
@@ -1897,7 +1897,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | PR Label Assigner | powershell-tool | opus48-1m-high | 11.4min | 41 | 0 | $2.78 | 4.0 | powershell | ok |
 | Semantic Version Bumper | typescript-bun | opus48-1m-high | 11.5min | 52 | 0 | $3.14 | 4.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | opus48-1m-high | 11.5min | 47 | 0 | $3.04 | 4.5 | typescript | ok |
-| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 3.0 | bash | ok |
+| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 5.0 | bash | ok |
 | Artifact Cleanup Script | powershell-tool | opus48-1m-high | 11.8min | 31 | 1 | $2.83 | 4.5 | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | opus48-1m-medium | 11.9min | 46 | 1 | $2.91 | 4.0 | powershell | ok |
 | Secret Rotation Validator | typescript-bun | opus48-1m-high | 11.9min | 45 | 1 | $3.29 | 4.0 | typescript | ok |
@@ -2062,7 +2062,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Environment Matrix Generator | typescript-bun | opus48-1m-high | 13.3min | 69 | 0 | $3.94 | 4.5 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | opus48-1m-medium | 9.1min | 40 | 0 | $2.29 | 4.5 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | opus48-1m-ultracode | 21.2min | 56 | 0 | $5.58 | 4.0 | typescript | ok |
-| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 3.0 | bash | ok |
+| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 5.0 | bash | ok |
 | Artifact Cleanup Script | default | opus48-1m-high | 10.2min | 50 | 0 | $3.16 | 4.5 | python | ok |
 | Artifact Cleanup Script | default | opus48-1m-medium | 9.9min | 43 | 0 | $2.37 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | default | opus48-1m-ultracode | 15.8min | 55 | 0 | $4.99 | 5.0 | python | ok |
@@ -2217,7 +2217,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Dependency License Checker | typescript-bun | opus48-1m-high | 11.5min | 47 | 0 | $3.04 | 4.5 | typescript | ok |
 | Test Results Aggregator | powershell-tool | opus48-1m-high | 15.2min | 47 | 0 | $3.39 | 4.5 | powershell | ok |
 | Test Results Aggregator | powershell-tool | opus48-1m-ultracode | 20.5min | 47 | 0 | $5.53 | 4.5 | powershell | ok |
-| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 3.0 | bash | ok |
+| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 5.0 | bash | ok |
 | Secret Rotation Validator | default | opus48-1m-high | 9.1min | 47 | 0 | $3.12 | 4.0 | python | ok |
 | Dependency License Checker | typescript-bun | opus48-1m-xhigh | 19.6min | 48 | 0 | $5.16 | 4.5 | typescript | ok |
 | Test Results Aggregator | powershell | opus48-1m-ultracode | 24.6min | 48 | 0 | $6.88 | 4.0 | powershell | ok |
@@ -2295,6 +2295,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Test Results Aggregator | typescript-bun | opus48-1m-ultracode | 32.3min | 79 | 0 | $10.28 | 5.0 | typescript | ok |
 | Environment Matrix Generator | default | opus48-1m-ultracode | 22.7min | 70 | 1 | $6.54 | 5.0 | python | ok |
 | Environment Matrix Generator | powershell-tool | opus48-1m-ultracode | 26.7min | 49 | 2 | $6.39 | 5.0 | powershell | ok |
+| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 5.0 | bash | ok |
 | Artifact Cleanup Script | default | opus48-1m-ultracode | 15.8min | 55 | 0 | $4.99 | 5.0 | python | ok |
 | Secret Rotation Validator | typescript-bun | opus48-1m-ultracode | 25.7min | 65 | 2 | $7.94 | 5.0 | typescript | ok |
 | Semantic Version Bumper | bash | opus48-1m-high | 9.5min | 41 | 1 | $2.70 | 4.5 | bash | ok |
@@ -2425,7 +2426,6 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Semantic Version Bumper | bash | opus48-1m-xhigh | 18.1min | 47 | 2 | $4.91 | 3.0 | bash | ok |
 | Test Results Aggregator | bash | opus48-1m-medium | 6.3min | 29 | 1 | $1.83 | 3.0 | bash | ok |
 | Test Results Aggregator | bash | opus48-1m-ultracode | 17.5min | 46 | 0 | $5.53 | 3.0 | bash | ok |
-| Artifact Cleanup Script | bash | opus48-1m-high | 11.6min | 47 | 0 | $3.32 | 3.0 | bash | ok |
 | Artifact Cleanup Script | bash | opus48-1m-ultracode | 14.2min | 28 | 1 | $3.60 | 3.0 | bash | ok |
 | Test Results Aggregator | bash | opus48-1m-high | 8.4min | 28 | 0 | $2.20 | 2.5 | bash | ok |
 | Artifact Cleanup Script | bash | opus48-1m-medium | 11.4min | 53 | 1 | $3.16 | 2.5 | bash | ok |
@@ -2456,11 +2456,11 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Judge Consistency Summary
 
-**🟡 The panel mostly agrees, but with one big asterisk:** On Tests Quality the two judges line up almost perfectly — identical model ranking and near-identical language ranking (the lone flip is a tied score, not a real disagreement). On Workflow Craft, Gemini 3.1 Pro compresses every score into a narrow 4.79–5.00 band (a ceiling effect), so its rank order on that axis can't be trusted as an independent signal. Note that this campaign contains only opus48-1m output, so neither judge has its own model family in the pool — own-model bias literally cannot be measured here.
+**🟡 The panel largely does its job, but Gemini's near-ceiling scoring on Workflow Craft flattens the signal past first place.** Both judges agree perfectly on model ordering for Tests Quality (Spearman +1.00) and on language ordering with one internal PowerShell / PowerShell-tool swap (+0.90). The Workflow Craft model "reversal" at ρ = -1.00 is really a tie: Haiku separates opus48-1m from opus48-1m-ultracode by 0.04 points, Gemini by 0.02 — noise, not disagreement. No self-preference pattern shows up in Haiku's own-family rows.
 
-- 👀 **Where to look closer:** The widest splits are 4-point gaps on a 1–5 scale (one judge scoring 1, the other 5), notably 17-artifact-cleanup-script / bash / opus48-1m-high on Tests Quality, and 16-environment-matrix-generator / bash / opus48-1m-high plus 18-secret-rotation-validator / typescript-bun / opus48-1m-high on Workflow Craft.
-- 🤓 **Surprise finding:** Gemini's Workflow Craft scores never drop below 4.79, turning that whole axis into a near-flat line; own-model bias is unmeasurable since no haiku45 output exists in this campaign.
-- ℹ️ **Recommended next step:** Re-run the cross-judge check on a campaign that includes haiku45 outputs so own-model bias can actually be measured, and tighten Gemini's Workflow Craft rubric to break the ceiling.
+- 👀 **Where to look closer:** The widest disagreement (a judge scoring 1 vs 5, a 4-point gap on a 1–5 scale) is 17-artifact-cleanup-script / bash / opus48-1m-xhigh on Workflow Craft, plus the cluster of 3-point gaps on 12-pr-label-assigner across languages — worth a human spot-check on whether Haiku is over-penalising or Gemini is under-reading.
+- 🤓 **Surprise finding:** The ρ = -1.00 Workflow Craft model reversal looks alarming but reflects Gemini's near-uniform 4.9x ceiling colliding with a Haiku spread under one-tenth of a point.
+- ℹ️ **Recommended next step:** Add a harsher Workflow Craft rubric or a third out-of-family judge with more headroom so language×model orderings past first place carry real signal.
 
 #### Provenance
 
@@ -2468,7 +2468,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 - **Inputs:** the [`judge-consistency-data.md`](judge-consistency-data.md) tables plus benchmark context (rubrics, task list, experiment setup).
 - **Script:** [`conclusions_report.py`](../../conclusions_report.py) — regenerate with `python3 generate_results.py <run_dir>`.
 - **Instruction:** [`JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT`](../../judge_consistency_report.py) in that script.
-- **Usage:** 6 input + 521 output tokens, $1.3992.
+- **Usage:** 5 input + 2076 output tokens, $0.2431.
 
 *Full breakdown with per-model / per-language / per-language×model ranking tables and disagreement hotspots in [judge-consistency-data.md](judge-consistency-data.md).*
 

@@ -392,6 +392,17 @@ def log(msg: str) -> None:
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", file=sys.stderr, flush=True)
 
 
+def effort_capable_models(selected_models: list[tuple[str, str]]) -> list[str]:
+    """Short names of the selected (short, model_id) pairs that take an
+    `--effort` parameter — i.e. everything except Haiku 4.5 (model ids
+    starting with `claude-haiku`). Used by main() to warn when `--effort`
+    is unset but an effort-capable model is selected (issue #32): the
+    CLI-default effort is version-dependent and unrecorded, so those cells
+    can't be labeled with certainty afterwards."""
+    return [short for short, model_id in selected_models
+            if not model_id.startswith("claude-haiku")]
+
+
 def _metrics_valid(path: Path) -> bool:
     """True only if `path` is a non-empty, parseable metrics.json.
 
@@ -1461,6 +1472,22 @@ def main():
     if not selected_tasks or not selected_models or not selected_modes:
         print("Error: No valid tasks, models, or modes selected.", file=sys.stderr)
         sys.exit(1)
+
+    # Issue #32 prospective guard: when --effort is unset, the CLI applies
+    # its version-dependent DEFAULT effort but does NOT record it in
+    # metrics.json, so those cells can't be labeled with certainty by the
+    # reporting layer (see combine_results.derive_effort / AGENTS.md).
+    # Warn — don't hard-refuse — for any effort-capable model (i.e. anything
+    # but Haiku 4.5, which takes no effort parameter). A warning, not a
+    # refusal, so legitimate edge cases aren't broken.
+    if args.effort is None:
+        effort_capable = effort_capable_models(selected_models)
+        if effort_capable:
+            log("WARNING: --effort not set for an effort-capable model "
+                f"({', '.join(effort_capable)}); the effective CLI-default "
+                "effort is version-dependent and is NOT recorded, so cells "
+                "cannot be labeled with certainty. Pass --effort explicitly "
+                "(see AGENTS.md).")
 
     # Create or resume run directory
     repo_root = Path(__file__).parent.resolve()

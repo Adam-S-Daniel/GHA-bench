@@ -1,0 +1,93 @@
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  unit-tests:
+    name: Run aggregator unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install pytest pyyaml
+
+      - name: Run unit tests
+        run: python3 -m pytest tests/ -v
+
+      - name: Verify CLI import
+        run: python3 -c "from aggregator import main, aggregate, parse_junit_xml, parse_json_results, render_markdown"
+
+  aggregate-matrix-results:
+    name: Aggregate matrix (${{ matrix.os-label }})
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os-label: ubuntu-latest
+            fixture: fixtures/matrix_run_ubuntu.xml
+          - os-label: macos-latest
+            fixture: fixtures/matrix_run_macos.json
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Upload this leg's test result fixture as an artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: test-results-${{ matrix.os-label }}
+          path: ${{ matrix.fixture }}
+          retention-days: 1
+
+  aggregate-summary:
+    name: Build aggregated Markdown summary
+    needs: aggregate-matrix-results
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download all matrix leg results
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          path: downloaded-results
+
+      - name: Aggregate results and write job summary
+        # This matrix intentionally includes a flaky test (fails on macos, passes on
+        # ubuntu) as a demo fixture, so aggregator.py's own exit code (1) reflects real
+        # test failures in the input, not a problem with the aggregator itself. The
+        # reporting step should still succeed so the summary gets published either way.
+        run: |
+          python3 aggregator.py \
+            downloaded-results/test-results-ubuntu-latest/matrix_run_ubuntu.xml \
+            downloaded-results/test-results-macos-latest/matrix_run_macos.json || true
+
+      - name: Aggregate a clean (all-pass) fixture set for sanity check
+        run: |
+          python3 aggregator.py fixtures/junit_all_pass.xml fixtures/results_all_pass.json

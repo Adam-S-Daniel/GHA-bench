@@ -17,8 +17,18 @@ def _mk_metric(task_id: str, mode: str = "default", model: str = "opus",
                duration_ms: int = 60_000, total_lines: int = 100,
                error_count: int = 0, num_turns: int = 10,
                task_name: str | None = None,
-               claude_code_version: str = "2.1.114") -> dict:
-    return {
+               claude_code_version: str = "2.1.114",
+               model_id: str | None = None,
+               context_window: int | None = None) -> dict:
+    """Build a synthetic metrics dict.
+
+    `model` is the CLI short name (`model_short`). Pass `model_id` (the
+    concrete `claude-*` id, e.g. `claude-opus-4-7`) and `context_window`
+    (e.g. 1000000 / 200000) to emit the recorded-contextWindow fields the
+    new label scheme reads from — `model` + `model_usage_detail[model_id]
+    = {"contextWindow": ...}`. When omitted, the metric carries no recorded
+    context (labels fall back to the model_short suffix)."""
+    m = {
         "task_id": task_id,
         "task_name": task_name or task_id.split("-", 1)[-1].replace("-", " ").title(),
         "language_mode": mode,
@@ -32,6 +42,11 @@ def _mk_metric(task_id: str, mode: str = "default", model: str = "opus",
         "run_success": True,
         "exit_code": 0,
     }
+    if model_id is not None:
+        m["model"] = model_id
+        if context_window is not None:
+            m["model_usage_detail"] = {model_id: {"contextWindow": context_window}}
+    return m
 
 
 class TestIntersectTaskIds:
@@ -196,6 +211,82 @@ class TestAggregateRows:
         assert rows[0]["excluded"] == 0
         assert rows[0]["variant_disp"] == rows[0]["variant"]
         assert "*" not in rows[0]["variant_disp"]
+
+    def test_context_from_recorded_window_drives_pooling(self):
+        # The context component comes from the RECORDED contextWindow, not
+        # the model_short suffix. So an `opus47-200k` cell that actually
+        # served a 1M window pools with a genuine `opus47-1m` cell into ONE
+        # `opus47-1m-medium` row, while an `opus47-200k` cell recorded at
+        # 200k forms a SEPARATE `opus47-200k-medium` row.
+        mm = [
+            _mk_metric("11", mode="default", model="opus47-200k",
+                       effort="medium", model_id="claude-opus-4-7",
+                       context_window=1_000_000, cost=1.0),
+            _mk_metric("12", mode="default", model="opus47-1m",
+                       effort="medium", model_id="claude-opus-4-7[1m]",
+                       context_window=1_000_000, cost=3.0),
+            _mk_metric("13", mode="default", model="opus47-200k",
+                       effort="medium", model_id="claude-opus-4-7",
+                       context_window=200_000, cost=5.0),
+        ]
+        rows = aggregate_rows(mm)
+        by_variant = {(r["mode"], r["variant"]): r for r in rows}
+        assert ("default", "opus47-1m-medium") in by_variant
+        assert ("default", "opus47-200k-medium") in by_variant
+        pooled = by_variant[("default", "opus47-1m-medium")]
+        assert pooled["n"] == 2                       # cells 11 + 12
+        assert pooled["avg_cost"] == pytest.approx(2.0)   # (1+3)/2
+        assert pooled["model"] == "opus47-1m"         # name+version+context
+        assert pooled["effort"] == "medium"
+        sep = by_variant[("default", "opus47-200k-medium")]
+        assert sep["n"] == 1                          # cell 13 only
+        assert sep["avg_cost"] == pytest.approx(5.0)
+
+    def test_effort_derivation_haiku_and_legacy_cc_version(self):
+        # Effort derivation for null effort_level:
+        #   Haiku 4.5 → `na` (takes no effort param)
+        #   legacy opus/sonnet 4.6 → `high` if CC >= 2.1.117 else `medium`
+        #   empty/malformed CC → guarded as < 2.1.117 → `medium`
+        from combine_results import derive_effort
+        assert derive_effort(_mk_metric("11", model="haiku45", effort=None,
+                                        model_id="claude-haiku-4-5")) == "na"
+        assert derive_effort(_mk_metric("11", model="opus", effort=None,
+                                        claude_code_version="2.1.132")) == "high"
+        assert derive_effort(_mk_metric("11", model="opus", effort=None,
+                                        claude_code_version="2.1.97")) == "medium"
+        assert derive_effort(_mk_metric("11", model="opus", effort=None,
+                                        claude_code_version="")) == "medium"
+
+    def test_no_effort_base_sonnet5_derives_high_at_1m(self):
+        # A no-`--effort` base Sonnet 5 run ran at the CLI default effort
+        # (`high`, CC >= 2.1.117) and at 1M context (base Sonnet 5 defaults
+        # to 1M). The derivation must NOT be restricted to legacy opus/sonnet
+        # (that bug labeled it `medium` and collapsed it into the explicit
+        # sonnet5-1m-medium row), and the context fallback must resolve `1m`
+        # even when no contextWindow was recorded.
+        from combine_results import derive_effort, _context, _derived_label
+        assert derive_effort(_mk_metric("11", model="sonnet5", effort=None,
+                                        model_id="claude-sonnet-5",
+                                        claude_code_version="2.1.197")) == "high"
+        # recorded 1M and the no-record fallback both resolve to 1m:
+        assert _context(_mk_metric("11", model="sonnet5", effort=None,
+                                   model_id="claude-sonnet-5",
+                                   context_window=1000000)) == "1m"
+        assert _context(_mk_metric("11", model="sonnet5", effort=None,
+                                   model_id="claude-sonnet-5")) == "1m"
+        # full label, and it does NOT equal the explicit-medium label:
+        no_effort = _derived_label(_mk_metric("11", model="sonnet5", effort=None,
+                                              model_id="claude-sonnet-5",
+                                              context_window=1000000,
+                                              claude_code_version="2.1.197"))
+        explicit_med = _derived_label(_mk_metric("11", model="sonnet5-1m",
+                                                 effort="medium",
+                                                 model_id="claude-sonnet-5[1m]",
+                                                 context_window=1000000,
+                                                 claude_code_version="2.1.197"))
+        assert no_effort == "sonnet5-1m-high"
+        assert explicit_med == "sonnet5-1m-medium"
+        assert no_effort != explicit_med
 
 
 class TestCombineIntegration:
@@ -422,3 +513,62 @@ class TestCombineIntegration:
         assert out.exists()
         assert summary["common_task_ids"] == set()
         assert "No tasks in common" in out.read_text()
+
+    def test_quality_score_pools_by_derived_label(self, tmp_path, monkeypatch):
+        # Two cells that derive to the SAME label (`opus47-1m-medium`) —
+        # one requested `opus47-200k` but served a 1M window, one requested
+        # `opus47-1m` — must POOL their test-quality panel scores in the
+        # combined Comparison row. The pooled Avg Tests Quality must be the
+        # mean of both (not `—`, not just one). This guards that
+        # quality-score bucketing matches duration/cost pooling now that
+        # the bucket keys on the CLI-less derived label.
+        from combine_results import _path_label
+        # Seeding panel JSONs triggers the LLM/JCS/conclusions path — stub
+        # both LLM entry points so the test stays offline.
+        def _fake_gen(cache_path, data_md, speed_cost_input, repo_root):
+            return {"conclusions": None, "judge_consistency_summary": None}
+        def _fake_qa(data_body_md, cache_dir, repo_root):
+            return None
+        monkeypatch.setattr(
+            "conclusions_report.generate_conclusions_from_inputs", _fake_gen)
+        monkeypatch.setattr(
+            "judge_consistency_report._generate_quality_analysis", _fake_qa)
+
+        cells = [
+            _mk_metric("11", mode="default", model="opus47-200k",
+                       effort="medium", model_id="claude-opus-4-7",
+                       context_window=1_000_000, cost=1.0),
+            _mk_metric("12", mode="default", model="opus47-1m",
+                       effort="medium", model_id="claude-opus-4-7[1m]",
+                       context_window=1_000_000, cost=1.0),
+        ]
+        overall = {"11": 4.0, "12": 2.0}   # panel means; combined mean = 3.0
+        run = tmp_path / "run_q"
+        for m in cells:
+            # Subdir must match the on-disk path _path_label reconstructs.
+            subdir = f"{m['language_mode']}-{_path_label(m)}"
+            d = run / "tasks" / m["task_id"] / subdir
+            d.mkdir(parents=True, exist_ok=True)
+            (d / "metrics.json").write_text(json.dumps(m))
+            s = overall[m["task_id"]]
+            (d / "test-quality-haiku45.json").write_text(json.dumps({
+                "coverage": s, "rigor": s, "design": s, "overall": s,
+                "judge_short": "haiku45",
+            }))
+        out = tmp_path / "combined.md"
+        combine([run], out)
+        text = out.read_text()
+        # Isolate the Comparison section (avoid Tiers/LLM-as-Judge tables).
+        comp = (text.split("## Comparison by Language/Model/Effort", 1)[1]
+                    .split("\n## ", 1)[0])
+        matches = [ln for ln in comp.splitlines()
+                   if ln.startswith("| default | opus47-1m-medium |")]
+        assert matches, f"no pooled opus47-1m-medium row in Comparison:\n{comp}"
+        cols = [c.strip() for c in matches[0].strip().strip("|").split("|")]
+        # Columns: Language, Model, Runs, Avg Duration, Avg Errors,
+        # Avg Turns, Avg Cost, Total Cost, Avg Tests Quality, Avg Workflow.
+        assert cols[2] == "2", f"expected 2 pooled runs; row: {matches[0]}"
+        assert cols[8] == "3.0", (
+            f"Avg Tests Quality must be the mean 3.0 of 4.0+2.0; "
+            f"row: {matches[0]}"
+        )

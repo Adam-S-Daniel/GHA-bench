@@ -1,0 +1,99 @@
+name: Environment Matrix Generator
+
+# Push/PR keep the matrix fresh on every change; workflow_dispatch lets a
+# human regenerate on demand (optionally against a different config file);
+# the weekly schedule catches drift if OS/version lists go stale.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      config_file:
+        description: "Path to the matrix config JSON to use"
+        required: false
+        default: "matrix-config.json"
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  # ubuntu-latest runners (and this workflow's act image) ship Python 3
+  # pre-installed, so no actions/setup-python step is needed -- pip
+  # installs the one extra dependency (pytest) straight into it.
+  PYTHON_VERSION: "3.12"
+  MATRIX_CONFIG: ${{ github.event.inputs.config_file || 'matrix-config.json' }}
+
+jobs:
+  # Runs the red/green TDD unit-test suite for matrix_generator.py.
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        # --break-system-packages: this image's Python is PEP 668
+        # "externally managed"; a throwaway CI container has no venv to
+        # protect, so installing straight into it is the pragmatic choice.
+        run: python3 -m pip install --break-system-packages pytest
+
+      - name: Run pytest suite
+        run: python3 -m pytest tests/test_matrix_generator.py -v
+
+  # Generates the actual build matrix JSON from the configured fixture and
+  # exposes it as a job output for downstream jobs to consume.
+  generate-matrix:
+    name: Generate build matrix
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      matrix_include: ${{ steps.generate.outputs.matrix_include }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate matrix JSON
+        id: generate
+        run: |
+          set -euo pipefail
+          python3 matrix_generator.py "${MATRIX_CONFIG}" > matrix-output.json
+          echo "----MATRIX-JSON-START----"
+          cat matrix-output.json
+          echo "----MATRIX-JSON-END----"
+          MATRIX_INCLUDE=$(python3 -c "import json; d = json.load(open('matrix-output.json')); print(json.dumps(d['strategy']['matrix']['include']))")
+          echo "matrix_include=${MATRIX_INCLUDE}" >> "$GITHUB_OUTPUT"
+
+      - name: Write job summary
+        run: |
+          {
+            echo '## Generated Build Matrix'
+            echo '```json'
+            cat matrix-output.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Demonstrates the generated matrix JSON actually being consumed
+  # downstream, proving it's valid data another job can drive off of.
+  # (A native `strategy: matrix: include: ${{ fromJson(...) }}` sourced
+  # from a needs-output is valid GitHub Actions syntax, but statically
+  # unmarshals the matrix before templating, so it is inlined here as a
+  # plain shell/Python loop instead for portability.)
+  use-matrix:
+    name: Use generated matrix
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    env:
+      MATRIX_INCLUDE: ${{ needs.generate-matrix.outputs.matrix_include }}
+    steps:
+      - name: Show each matrix entry
+        run: |
+          python3 -c "
+          import json, os
+          entries = json.loads(os.environ['MATRIX_INCLUDE'])
+          print(f'Consuming {len(entries)} matrix entries')
+          for entry in entries:
+              print('Matrix entry ->', json.dumps(entry))
+          "

@@ -1,0 +1,1697 @@
+{
+  "task_id": "15-test-results-aggregator",
+  "task_name": "Test Results Aggregator",
+  "task_category": "GitHub Actions / CI Reporting",
+  "language_mode": "powershell",
+  "language_chosen": "powershell",
+  "language_breakdown": {
+    "powershell": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-sonnet-5",
+  "model_short": "sonnet5",
+  "variant": "sonnet5",
+  "claude_code_version": "2.1.197",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-07-01T04:28:54.281083+00:00",
+  "timestamp_end": "2026-07-01T04:58:53.750296+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use PowerShell as your implementation language.\n\nTASK: Parse test result files in multiple formats (JUnit XML, and JSON), aggregate results across multiple files (simulating a matrix build), compute totals (passed, failed, skipped, duration), identify flaky tests (passed in some runs, failed in others), and generate a markdown summary suitable for a GitHub Actions job summary. Create sample test result files as fixtures.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use Pester as the testing framework.\n3. All tests must be runnable with `Invoke-Pester` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/test-results-aggregator.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/test-results-aggregator.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": -9,
+  "run_success": false,
+  "failure_reason": "timeout",
+  "session": {
+    "session_id": "",
+    "stop_reason": "",
+    "terminal_reason": "",
+    "fast_mode_state": "",
+    "service_tier": "",
+    "speed": "",
+    "inference_geo": "",
+    "context_window": null,
+    "max_output_tokens": null,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 30,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {},
+  "effort_level": null,
+  "timing": {
+    "grand_total_duration_ms": 1799469,
+    "total_api_duration_ms": 0,
+    "total_execution_duration_ms": 0,
+    "num_turns": 0
+  },
+  "tokens": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cache_read_tokens": 0,
+    "cache_creation_tokens": 0,
+    "total_context_consumed": 0,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 0.0,
+    "assumed_input_cost_per_mtok": 3.0,
+    "assumed_output_cost_per_mtok": 15.0,
+    "assumed_cache_read_cost_per_mtok": 0.3,
+    "assumed_cache_write_cost_per_mtok": 3.75
+  },
+  "code_metrics": {
+    "code_lines": 824,
+    "total_tokens_estimate": 21554,
+    "file_count": 22,
+    "files": [
+      "Aggregate-TestResults.ps1",
+      "Invoke-ActTestHarness.ps1",
+      "TestResultsAggregator.psm1",
+      "act-result.txt",
+      "fixtures/malformed.json",
+      "fixtures/malformed.xml",
+      "fixtures/unsupported.txt",
+      "fixtures/all-passing/json-macos.json",
+      "fixtures/all-passing/junit-linux.xml",
+      "fixtures/matrix-build/json-macos-node20.json",
+      "fixtures/matrix-build/json-ubuntu-node20.json",
+      "fixtures/matrix-build/junit-ubuntu-node18.xml",
+      "fixtures/matrix-build/junit-windows-node18.xml",
+      "fixtures/ci-run/json-macos-node20.json",
+      "fixtures/ci-run/json-ubuntu-node20.json",
+      "fixtures/ci-run/junit-ubuntu-node18.xml",
+      "fixtures/ci-run/junit-windows-node18.xml",
+      ".github/workflows/test-results-aggregator.yml",
+      "Tests/Aggregate-TestResults.Tests.ps1",
+      "Tests/TestResultsAggregator.Tests.ps1",
+      "Tests/Workflow.Act.Tests.ps1",
+      "Tests/Workflow.Structure.Tests.ps1"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 0,
+    "error_details": [],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/test-results-aggregator.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 40941,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 124,
+    "total_tool_duration_ms": 902145,
+    "bash_tool_uses": 58,
+    "bash_total_ms": 583351,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "rm -f /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/act-result.txt\ncd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/",
+        "duration_ms": 107431,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Get-Module -ListAvailable powershell-yaml, PSYaml 2>\\$null; (Get-Command yq -ErrorAction SilentlyContinue)\"\nwhich yq python3 2>/dev/null\npwsh -Command \"Find-Module -Name powershell-yaml",
+        "duration_ms": 62580,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "rm -f /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/act-result.txt\ncd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/",
+        "duration_ms": 46933,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tai",
+        "duration_ms": 44211,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -File ./Invoke-ActTestHarness.ps1 2>&1\necho \"---SCRIPT EXIT: $?---\"",
+        "duration_ms": 30407,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -10",
+        "duration_ms": 24546,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1 -Output Detailed\" 2>&1 | tail -40",
+        "duration_ms": 23107,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1 -Output Detailed\" 2>&1 | tail -15",
+        "duration_ms": 20807,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -10",
+        "duration_ms": 19334,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/Workflow.Act.Tests.ps1 -Output Detailed\" 2>",
+        "duration_ms": 15971,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "cat /home/passp/repos/GHA-bench-sonnet5/AGENTS.md 2>/dev/null | head -200",
+        "duration_ms": 199,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwd && ls -la && which pwsh act actionlint docker && pwsh -v",
+        "duration_ms": 2615,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 10,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/benchmark-instructions-v4.md | head -100",
+        "duration_ms": 81,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "sed -n '100,400p' /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/benchmark-instructions-v4.md",
+        "duration_ms": 77,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Get-Module -ListAvailable Pester | Select-Object Name,Version\"",
+        "duration_ms": 13833,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/{fixtures,Tests,.github/workflows}\nls -la /home/passp/repos/GHA-bench-sonnet5/wo",
+        "duration_ms": 371,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 65,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 43,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 46,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 64,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 86,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 45,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 43,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "ToolSearch",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 3,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 10,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskCreate",
+        "command": "",
+        "duration_ms": 10,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 4,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 8967,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1 -Output Detailed\" 2>&1 | tail -50",
+        "duration_ms": 9463,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15114,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1 -Output Detailed\" 2>&1 | tail -40",
+        "duration_ms": 23107,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 14917,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1 -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 6226,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 11745,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1 -Output Detailed\" 2>&1 | tail -25",
+        "duration_ms": 6764,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15052,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1 -Output Detailed\" 2>&1 | tail -15",
+        "duration_ms": 20807,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15093,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -6",
+        "duration_ms": 15245,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 14917,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -6",
+        "duration_ms": 4793,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 13778,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -8",
+        "duration_ms": 7405,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15034,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -10",
+        "duration_ms": 19334,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15270,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15043,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -20",
+        "duration_ms": 5122,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 14143,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -8",
+        "duration_ms": 8048,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15031,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -10",
+        "duration_ms": 24546,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15106,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -8",
+        "duration_ms": 10288,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 14547,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tail -10",
+        "duration_ms": 5936,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 10,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nmkdir -p fixtures/matrix-build\ngit mv fixtures/junit-ubuntu-node18.xml fixtures/matrix",
+        "duration_ms": 149,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15093,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\ngrep -n \"FixturesPath.*'\\(junit\\|json-ubuntu\\|json-macos\\)\" Tests/TestResultsAggregato",
+        "duration_ms": 692,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\ngrep -n \"Join-Path \\$FixturesPath \\$_\" Tests/TestResultsAggregator.Tests.ps1",
+        "duration_ms": 802,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\ngrep -n '\\$FixturesPath \\$_' Tests/TestResultsAggregator.Tests.ps1",
+        "duration_ms": 629,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nsed -i \\\n  -e \"s/Join-Path \\$FixturesPath 'junit-ubuntu-node18.xml'/Join-Path \\$Matrix",
+        "duration_ms": 762,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/TestResultsAggregator.Tests.ps1\" 2>&1 | tai",
+        "duration_ms": 44211,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 9621,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/Aggregate-TestResults.Tests.ps1 -Output Det",
+        "duration_ms": 4571,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 7406,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/Aggregate-TestResults.Tests.ps1 -Output Det",
+        "duration_ms": 5105,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 9739,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/Aggregate-TestResults.Tests.ps1\" 2>&1 | tai",
+        "duration_ms": 7807,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/fixtures/all-passing",
+        "duration_ms": 74,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 50,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 47,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"\nImport-Module ./TestResultsAggregator.psm1 -Force\n\\$files = Get-ChildI",
+        "duration_ms": 2238,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "ls /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/.github/workflows/",
+        "duration_ms": 56,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 131,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nactionlint .github/workflows/test-results-aggregator.yml\necho \"EXIT: $?\"",
+        "duration_ms": 223,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 24,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 17,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 12,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "pwsh -Command \"Get-Module -ListAvailable powershell-yaml, PSYaml 2>\\$null; (Get-Command yq -ErrorAction SilentlyContinue)\"\nwhich yq python3 2>/dev/null\npwsh -Command \"Find-Module -Name powershell-yaml",
+        "duration_ms": 62580,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 7916,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/Workflow.Structure.Tests.ps1 -Output Detail",
+        "duration_ms": 5728,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nmkdir -p fixtures/ci-run\ncp fixtures/matrix-build/*.xml fixtures/matrix-build/*.json f",
+        "duration_ms": 78,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 135,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nactionlint .github/workflows/test-results-aggregator.yml && echo \"actionlint OK\"\npwsh ",
+        "duration_ms": 5574,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 8601,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"\n\\$errors = \\$null\n\\$tokens = \\$null\n[System.Management.Automation.Lang",
+        "duration_ms": 3755,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "rm -f /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/act-result.txt\ndocker info >/dev/null 2>&1 && echo \"docker OK\" || echo \"docker NOT ",
+        "duration_ms": 9105,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -File ./Invoke-ActTestHarness.ps1 2>&1\necho \"---SCRIPT EXIT: $?---\"",
+        "duration_ms": 30407,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "wc -l /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/act-result.txt",
+        "duration_ms": 695,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 24,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker images | grep -i act-ubuntu-pwsh\ndocker images | grep -i pwsh",
+        "duration_ms": 882,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 5113,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "rm -f /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/act-result.txt\ncd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/",
+        "duration_ms": 46933,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nsed -n '/all-passing-clean-matrix/,$p' act-result.txt | head -100",
+        "duration_ms": 111,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nsed -n '/all-passing-clean-matrix/,$p' act-result.txt | sed -n '100,180p'",
+        "duration_ms": 115,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\ngrep -n \"TEST CASE\" act-result.txt\nwc -l act-result.txt",
+        "duration_ms": 234,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 14,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 7,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 14658,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 7874,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/Aggregate-TestResults.Tests.ps1 -Output Det",
+        "duration_ms": 6561,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 7692,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/\" 2>&1 | tail -8",
+        "duration_ms": 9178,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "rm -f /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5/act-result.txt\ncd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/",
+        "duration_ms": 107431,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\ngrep -n \"EXIT CODE\\|Job succeeded\\|Job failed\\|TEST CASE\" act-result.txt",
+        "duration_ms": 55,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\necho \"--- Case A (mixed) ---\"\nsed -n '2,281p' act-result.txt | grep -E '\\| Total \\||\\|",
+        "duration_ms": 131,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 10315,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/Workflow.Act.Tests.ps1 -Output Detailed\" 2>",
+        "duration_ms": 8795,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/Workflow.Act.Tests.ps1 -Output Detailed\" 2>",
+        "duration_ms": 15971,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\ngrep -n \"Discovery found\\|Tests Passed\" act-result.txt",
+        "duration_ms": 117,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nsed -i \"s/Tests Passed: 45,/Tests Passed: 48,/g\" Tests/Workflow.Act.Tests.ps1\ngrep -n ",
+        "duration_ms": 129,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nsed -i \"s/Ran all 45 local Pester unit tests/Ran all 48 local Pester unit tests/g\" Tes",
+        "duration_ms": 7447,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 8,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 5,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\npwsh -Command \"Invoke-Pester -Path ./Tests/ -Output Detailed\" 2>&1 | tail -20",
+        "duration_ms": 9588,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/15-test-results-aggregator/powershell-sonnet5\nactionlint .github/workflows/test-results-aggregator.yml && echo \"actionlint: PASS\"\nls",
+        "duration_ms": 172,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "TaskUpdate",
+        "command": "",
+        "duration_ms": 6,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 0,
+    "test_duration_ms": 284599,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 39,
+    "hook_errors_caught": 13,
+    "hook_failures": 9,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "92cff619-1694-4522-ad52-796327c37200",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "32271007-9ff1-43e1-8841-27a841935d41",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "92cff619-1694-4522-ad52-796327c37200",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "32271007-9ff1-43e1-8841-27a841935d41",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "dbd4f93d-3426-47f7-be7a-ca15266f29b0",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "dbd4f93d-3426-47f7-be7a-ca15266f29b0",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "c60bd959-22fa-4034-b85c-2de5c6dd1fe1",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "c60bd959-22fa-4034-b85c-2de5c6dd1fe1",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "89c8f9f7-d3a7-4d49-b4fb-f53027487f4d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "89c8f9f7-d3a7-4d49-b4fb-f53027487f4d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4224960e-7a60-4bbc-8df7-ebe616ed5467",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4224960e-7a60-4bbc-8df7-ebe616ed5467",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2f3da03b-5c53-45ba-930b-2bbd16dde83a",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2f3da03b-5c53-45ba-930b-2bbd16dde83a",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "d168eaf1-5d11-46be-a61d-5675428d5b6b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "d168eaf1-5d11-46be-a61d-5675428d5b6b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "416c247e-3fea-4a75-88c7-4255cb3cf676",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "416c247e-3fea-4a75-88c7-4255cb3cf676",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "1be2195d-5799-4587-874a-424d9d8d9700",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "1be2195d-5799-4587-874a-424d9d8d9700",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The variable 'FixturesPath' is assigned but never used. (Line 12)\\nWarning: The variable 'result' is assigned but never used. (Line 18)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "d894da3a-28e9-40c3-8897-131bf130dd26",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "d894da3a-28e9-40c3-8897-131bf130dd26",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "0fcaebe2-37ee-4044-bc9c-aeeccf046d44",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "0fcaebe2-37ee-4044-bc9c-aeeccf046d44",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The variable 'FixturesPath' is assigned but never used. (Line 12)\\nWarning: The variable 'result' is assigned but never used. (Line 18)\\nWarning: The variable 'result' is assigned but never used. (Line 72)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "0d415c7b-93bc-4ca6-9461-16c14bd8cd22",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "0d415c7b-93bc-4ca6-9461-16c14bd8cd22",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The cmdlet 'ConvertFrom-JsonTestResults' uses a plural noun. A singular noun should be used instead. (Line 83)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "03140f39-9896-4e80-87f1-491bf422d406",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "03140f39-9896-4e80-87f1-491bf422d406",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7db7f9b1-3af9-4797-b193-4fb691926984",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7db7f9b1-3af9-4797-b193-4fb691926984",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a1729c87-8cc4-4efa-ba46-c32228a2d174",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a1729c87-8cc4-4efa-ba46-c32228a2d174",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The cmdlet 'ConvertFrom-JsonTestResults' uses a plural noun. A singular noun should be used instead. (Line 83)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a6b80ec7-b8a3-4e19-a1f1-a07436c38e3e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a6b80ec7-b8a3-4e19-a1f1-a07436c38e3e",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The variable 'FixturesPath' is assigned but never used. (Line 12)\\nWarning: The variable 'result' is assigned but never used. (Line 18)\\nWarning: The variable 'result' is assigned but never used. (Line 72)\\nWarning: The variable 'aggregate' is assigned but never used. (Line 151)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "729a4fc8-7f89-45ed-ac50-51bebc8ffb27",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "729a4fc8-7f89-45ed-ac50-51bebc8ffb27",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "8f6a19ef-0ec3-41fd-bb53-21e8e848a8e2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "8f6a19ef-0ec3-41fd-bb53-21e8e848a8e2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "7d7a0d35-caa8-489f-84e3-823bdb0e48ed",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "7d7a0d35-caa8-489f-84e3-823bdb0e48ed",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "707d20ca-3ff8-4553-8c70-726d6eea51f3",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "707d20ca-3ff8-4553-8c70-726d6eea51f3",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The variable 'FixturesPath' is assigned but never used. (Line 12)\\nWarning: The variable 'result' is assigned but never used. (Line 18)\\nWarning: The variable 'result' is assigned but never used. (Line 72)\\nWarning: The variable 'aggregate' is assigned but never used. (Line 151)\\nWarning: The variable 'flaky' is assigned but never used. (Line 189)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "93611938-e572-4769-a37b-c982717a9ae6",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "93611938-e572-4769-a37b-c982717a9ae6",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "9e0389ae-a9b7-460d-a216-fc623e06946a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "9e0389ae-a9b7-460d-a216-fc623e06946a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "39487493-8a5a-46ea-b85d-0f586a20081c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "39487493-8a5a-46ea-b85d-0f586a20081c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: Function 'New-TestResultsMarkdownSummary' has verb that could change system state. Therefore, the function has to support 'ShouldProcess'. (Line 248)\\nWarning: The cmdlet 'ConvertFrom-JsonTestResults' uses a plural noun. A singular noun should be used instead. (Line 83)\\nWarning: The cmdlet 'Merge-TestResults' uses a plural noun. A singular noun should be used instead. ",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "25542c5d-e695-40af-8b86-0c202dd716bf",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "25542c5d-e695-40af-8b86-0c202dd716bf",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "685d328a-57b5-4a73-8394-f8c6903ba4cb",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "685d328a-57b5-4a73-8394-f8c6903ba4cb",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The variable 'ScriptPath' is assigned but never used. (Line 5)\\nWarning: The variable 'MatrixFixturesPath' is assigned but never used. (Line 6)\\nWarning: The variable 'exitCode' is assigned but never used. (Line 14)\\nWarning: The variable 'content' is assigned but never used. (Line 15)\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ea398297-0bf5-49dd-b10a-d2d2de1c3d61",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ea398297-0bf5-49dd-b10a-d2d2de1c3d61",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "1cfe50ed-a4db-4085-9d98-fe7e8145dd63",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "1cfe50ed-a4db-4085-9d98-fe7e8145dd63",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "4520a48d-e4f2-4fcc-9179-4632109d7c59",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "4520a48d-e4f2-4fcc-9179-4632109d7c59",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "213e8314-dafd-46f1-a922-7a84354c9893",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "213e8314-dafd-46f1-a922-7a84354c9893",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "820a0875-767f-4690-ac8e-8b13b225bba6",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "820a0875-767f-4690-ac8e-8b13b225bba6",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "2d7f5b07-95a6-45b4-bd38-1b37440828b2",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "2d7f5b07-95a6-45b4-bd38-1b37440828b2",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "90cc1914-dd24-4fd7-93e2-a8a588edd33f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "90cc1914-dd24-4fd7-93e2-a8a588edd33f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "a28d60bc-a4d8-4272-944b-0cc76d611df8",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "a28d60bc-a4d8-4272-944b-0cc76d611df8",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: File 'Invoke-ActTestHarness.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (Line 50)\\nWarning: File 'Invoke-ActTestHarness.ps1' uses Write-Host. Avoid using Write-H",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "d8060866-90ca-4ee6-a86b-84ed8a7324a1",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "d8060866-90ca-4ee6-a86b-84ed8a7324a1",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: File 'Invoke-ActTestHarness.ps1' uses Write-Host. Avoid using Write-Host because it might not work in all hosts, does not work when there is no host, and (prior to PS 5.0) cannot be suppressed, captured, or redirected. Instead, use Write-Output, Write-Verbose, or Write-Information. (Line 50)\\nWarning: File 'Invoke-ActTestHarness.ps1' uses Write-Host. Avoid using Write-H",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "48d13fdf-7222-44b6-b1aa-f686ee40e36f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "48d13fdf-7222-44b6-b1aa-f686ee40e36f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The variable 'ScriptPath' is assigned but never used. (Line 5)\\nWarning: The variable 'MatrixFixturesPath' is assigned but never used. (Line 6)\\nWarning: The variable 'AllPassingFixturesPath' is assigned but never used. (Line 7)\\nWarning: The variable 'exitCode' is assigned but never used. (Line 15)\\nWarning: The variable 'content' is assigned but never used. (Line 16)\"",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "0e534b75-9221-4ce8-a860-57f290f694a9",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "0e534b75-9221-4ce8-a860-57f290f694a9",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The variable 'ScriptPath' is assigned but never used. (Line 5)\\nWarning: The variable 'MatrixFixturesPath' is assigned but never used. (Line 6)\\nWarning: The variable 'AllPassingFixturesPath' is assigned but never used. (Line 7)\\nWarning: The variable 'exitCode' is assigned but never used. (Line 15)\\nWarning: The variable 'content' is assigned but never used. (Line 16)\\",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "cc650eee-9bbf-4938-9fd2-b0d8f055855f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "cc650eee-9bbf-4938-9fd2-b0d8f055855f",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "22b3c0c5-5236-45d8-9603-750932e5837e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "22b3c0c5-5236-45d8-9603-750932e5837e",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nWarning: The Variable 'matches' is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name. (Line 20)\\nWarning: The variable 'body' is assigned but never used. (Line 75)\\nWarning: The variable 'body' is assigned but never used. (Line 98)\"}",
+        "stderr": ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+name: PR Label Assigner
+
+# push/pull_request drive CI (and `act push` locally); workflow_dispatch
+# allows manual runs.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege: the assign job only *computes* the label set here
+# (applying labels to a real PR would need pull-requests: write).
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  # Fixture inputs mock the PR's changed-file list; the act test harness
+  # swaps these files per test case.
+  RULES_FILE: fixtures/labels.conf
+  CHANGED_FILES_FILE: fixtures/changed_files.txt
+
+jobs:
+  test:
+    name: Unit tests (bats)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install bats-core
+        run: npm install -g bats
+
+      - name: Run bats test suite
+        run: bats tests/label_assigner.bats
+
+  assign-labels:
+    name: Assign labels
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compute label set
+        id: labels
+        run: |
+          set -euo pipefail
+          labels="$(./label-assigner.sh -r "$RULES_FILE" -f "$CHANGED_FILES_FILE")"
+          # Markers let the act test harness extract the exact label set.
+          echo "FINAL_LABELS_BEGIN"
+          if [ -n "$labels" ]; then
+            echo "$labels"
+          fi
+          echo "FINAL_LABELS_END"
+          {
+            echo "labels<<LABELS_EOF"
+            echo "$labels"
+            echo "LABELS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Report label set
+        env:
+          LABELS: ${{ steps.labels.outputs.labels }}
+        # On a real PR this step would call the GitHub API
+        # (e.g. `gh pr edit --add-label`); kept as a dry-run report so the
+        # workflow needs no secrets and runs cleanly under act.
+        run: |
+          echo "Labels that would be applied to the PR:"
+          echo "${LABELS:-<none>}"

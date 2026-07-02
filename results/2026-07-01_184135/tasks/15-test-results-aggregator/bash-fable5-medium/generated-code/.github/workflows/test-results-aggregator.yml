@@ -1,0 +1,54 @@
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Directory of test result fixtures to aggregate (the "matrix build" output).
+  # Overridable via a repository variable (or `act --var RESULTS_DIR=...`).
+  RESULTS_DIR: ${{ vars.RESULTS_DIR || 'fixtures' }}
+
+jobs:
+  test:
+    name: Unit tests (bats)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install bats and actionlint
+        run: |
+          if ! command -v bats > /dev/null 2>&1; then
+            npm install -g bats
+          fi
+          bats --version
+          if ! command -v actionlint > /dev/null 2>&1; then
+            mkdir -p "$HOME/.local/bin"
+            curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash \
+              | bash -s -- latest "$HOME/.local/bin"
+            echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          fi
+
+      - name: Run bats test suite (unit + workflow structure tests)
+        run: bats test/
+
+  aggregate:
+    name: Aggregate test results
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Aggregate results and publish job summary
+        run: |
+          chmod +x ./aggregate-test-results.sh
+          ./aggregate-test-results.sh "$RESULTS_DIR" summary.md
+          # Publish to the GitHub Actions job summary (guarded for local runs)
+          cat summary.md >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          echo "AGGREGATION_OK=true"

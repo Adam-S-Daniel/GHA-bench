@@ -1,0 +1,50 @@
+name: Dependency License Checker
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: {}
+  schedule:
+    # Weekly compliance sweep, independent of code changes (e.g. licenses can
+    # change upstream even when the manifest doesn't).
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+
+env:
+  LICENSE_POLICY_PATH: config/license-policy.json
+  LICENSE_LOOKUP_PATH: config/license-lookup-mock.json
+
+jobs:
+  license-check:
+    name: Check licenses (${{ matrix.scenario.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - name: npm
+            manifest: fixtures/npm/package.json
+          - name: python
+            manifest: fixtures/python/requirements.txt
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run dependency license check
+        shell: pwsh
+        run: |
+          ./Invoke-LicenseCheck.ps1 `
+            -ManifestPath '${{ matrix.scenario.manifest }}' `
+            -ConfigPath $env:LICENSE_POLICY_PATH `
+            -LicenseLookupPath $env:LICENSE_LOOKUP_PATH
+
+  report-summary:
+    name: Compliance summary
+    needs: license-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: All scenarios checked
+        shell: pwsh
+        run: Write-Host 'All dependency license checks completed successfully.'

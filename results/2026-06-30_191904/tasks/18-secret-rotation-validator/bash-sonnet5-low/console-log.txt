@@ -1,0 +1,237 @@
+[Tool: Bash] ls -la && which bats shellcheck actionlint act docker 2>&1
+[Result] total 44
+drwxr-xr-x  4 passp passp  4096 Jul  1 18:29 .
+drwxr-xr-x 15 passp passp  4096 Jul  1 18:29 ..
+-rw-r--r--  1 passp passp    40 Jul  1 18:29 .actrc
+drwxr-xr-x  2 passp passp  4096 Jul  1 18:29 .claude
+drwxr-xr-x  6 passp passp  4096 Jul  1 18:29 .git
+-rw-r--r--  1 passp passp 21843 Jun 30 19:11 benchmark-instructions-v4.md
+/home/passp/.npm-global/bin/bats
+/home/passp/.local/bin/shellcheck
+/home/passp/.local/bin/actionlint
+/home/passp/.local/bin/act
+/usr/bin/docker
+[Tool: Bash] cat .actrc; echo ---; cat benchmark-instructions-v4.md | head -100
+[Result] -P ubuntu-latest=act-ubuntu-pwsh:latest
+---
+# Benchmark Instructions v4 — GitHub Actions
+
+**Version**: v4
+**Date**: 2026-04-09
+**Purpose**: Measure how well Claude Code agents perform GitHub Actions workflow authoring tasks across different language constraints, with trap-awareness guidance from v3 findings.
+
+**Changes from v3**:
+- Added "Common Pitfalls" section with guidance derived from v3 trap analysis (115min, 15.8% of v3 time lost to traps)
+- Act container now has pwsh and Pester pre-installed (matching real GitHub runners). Agents still need an install step for workflows that will run on vanilla act, but the benchmarking container already has them.
+- GHA workflow addendum expanded with `shell: pwsh` guidance for PowerShell mode
+- All other methodology, tasks, modes, and models are unchanged from v3
+
+## Methodology
+
+### Overview
+
+Each task is executed by a Claude Code agent under 4 different language constraints ("modes") and with 2 different models, yielding **8 runs per task**.
+[Tool: Bash] sed -n '100,260p' benchmark-instructions-v4.md
+[Result] - `.sh` files: `bash -n` for syntax errors, `shellcheck` for lint
+- `.ts` files: `bunx tsc --noEmit` for type errors
+- `.ps1` files: `Invoke-ScriptAnalyzer` for PowerShell analysis
+- `.yml` files in `.github/workflows/`: `actionlint` for workflow validation
+
+Diagnostics appear as additional context before the agent's next turn, enabling faster error correction.
+
+### Permissions
+
+All tool permissions are bypassed (`--dangerously-skip-permissions`). Agents have full access to all tools without approval prompts.
+
+### Execution
+
+- Tasks run **sequentially** (one at a time).
+- Each agent runs in an **isolated workspace directory** containing only a copy of this instructions file.
+- No conversation context or prior run data is passed to the agent.
+
+---
+
+## Common Pitfalls
+
+The following patterns were observed in v3 runs wasting significant agent time. Agents are encouraged to avoid them:
+
+### PowerShell: Use `shell: pwsh` in workflow steps
+
+When writing GitHub Actions workflow YAML for Power
+[Assistant] Now I have full context. Let me build the project structure directly.
+[Tool: Bash] mkdir -p /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/{scripts,tests,fixtures,.github/workflows}
+cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+ls
+[Result] benchmark-instructions-v4.md
+fixtures
+scripts
+tests
+[Tool: Bash] which jq date; jq --version; date --version | head -1
+[Result] /home/passp/.local/bin/jq
+/usr/bin/date
+jq-1.7.1
+date (GNU coreutils) 9.4
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/fixtures/secrets_basic.json", "content": "[\n  {\n    \"name\": \"db-passw
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/fixtures/secrets_basic.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/fixtures/invalid.json", "content": "{ this is not valid json ]\n"}
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/fixtures/invalid.json (file state is current in your context — no need to Read it back)
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/fixtures/missing_field.json", "content": "[\n  {\n    \"name\": \"incomple
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/fixtures/missing_field.json (file state is current in your context — no need to Read it back)
+[Assistant] Now write the failing test file first (red step):
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/rotation.bats", "content": "#!/usr/bin/env bats\n# Tests for scripts
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/rotation.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] bats tests/rotation.bats 2>&1 | tail -30
+[Result] BW01: `run`'s command `/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/../scripts/secret-rotation-validator.sh --config /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/../fixtures/secrets_basic.json --today 2026-07-01 --warning-days 21 --format json` exited with code 127, indicating 'Command not found'. Use run's return code checks, e.g. `run -127`, to fix this message.
+      (from function `run' in file /home/passp/.npm-global/lib/node_modules/bats/lib/bats-core/test_functions.bash, line 420,
+       in test file tests/rotation.bats, line 50)
+BW01: `run`'s command `/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/../scripts/secret-rotation-validator.sh --config /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/../fixt
+[Assistant] Confirmed red (script doesn't exist). Now write the implementation script.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/scripts/secret-rotation-validator.sh", "content": "#!/usr/bin/env bash\n# 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/scripts/secret-rotation-validator.sh (file state is current in your context — no need to Read it back)
+[Tool: Bash] chmod +x /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/scripts/secret-rotation-validator.sh
+cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+bash -n scripts/secret-rotation-validator.sh && echo SYNTAX_OK
+shellcheck scripts/secret-rotation-validator.sh
+bats tests/rotation.bats
+[Result] SYNTAX_OK
+1..16
+ok 1 script file exists and is executable
+ok 2 fails with meaningful error when config file is missing
+ok 3 fails with meaningful error on invalid JSON
+ok 4 fails with meaningful error when a secret is missing required fields
+ok 5 classifies an expired secret
+ok 6 classifies a warning secret within the warning window
+ok 7 classifies an ok secret outside the warning window
+ok 8 a smaller warning window reclassifies api-key as ok
+ok 9 json output includes correct summary counts
+ok 10 json output is valid json
+ok 11 json output preserves required_by list
+ok 12 markdown output contains a table header and rows for each urgency group
+ok 13 default output format is markdown when --format is not given
+ok 14 rejects an unsupported output format
+ok 15 rejects a non-numeric warning-days value
+ok 16 default warning-days is 14 when not specified
+[Assistant] All 16 tests pass, shellcheck clean. Now let's build the GitHub Actions workflow.
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+ls -la /home/passp/.local/bin | grep -i act
+cat .actrc
+[Result] -rwxr-xr-x 1 passp passp  21024952 Apr  8 14:10 act
+-rwxr-xr-x 1 passp passp   6074530 Mar 30 13:48 actionlint
+-P ubuntu-latest=act-ubuntu-pwsh:latest
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/.github/workflows/secret-rotation-validator.yml", "content": "name: Secret
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/.github/workflows/secret-rotation-validator.yml (file state is current in your context — no need to Read it back)
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+actionlint .github/workflows/secret-rotation-validator.yml && echo ACTIONLINT_OK
+[Result] ACTIONLINT_OK
+[Assistant] Actionlint passes. Now let's set up the act-based test harness in an isolated temp git repo, per requirements.
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+docker images | grep act-ubuntu-pwsh
+git status 2>&1 | head -5
+[Result] WARNING: This output is designed for human readability. For machine-readable output, please use --format.
+act-ubuntu-pwsh:latest                          b299e185b1bb        2.6GB          652MB        
+On branch master
+
+No commits yet
+
+Untracked files:
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/run-act-tests.sh", "content": "#!/usr/bin/env bash\n# run-act-tests.sh\n#\
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/run-act-tests.sh (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/run-act-tests.sh", "old_string": "  {\n    echo \"==
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/run-act-tests.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/run-act-tests.sh", "old_string": "run_case \"basic-s
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/run-act-tests.sh has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Bash] chmod +x /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/run-act-tests.sh
+cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+bash -n run-act-tests.sh && shellcheck run-act-tests.sh && echo OK
+[Result] OK
+[Assistant] Now run it (first act invocation, allowed up to 3).
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+timeout 180 ./run-act-tests.sh; echo "EXIT=$?"
+[Result] Wrote results to /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/act-result.txt
+EXIT=0
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+grep -c "Job succeeded" act-result.txt
+grep -n "ACT_EXIT_CODE" act-result.txt
+wc -l act-result.txt
+[Result] 1
+196:ACT_EXIT_CODE=0
+198 act-result.txt
+[Assistant] Good, act succeeded. Let's inspect the output content for expected values to write structure/assertion tests.
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+grep -n "db-password\|api-key\|tls-cert\|Expired\|Warning\|OK\|summary\|days_left" act-result.txt | head -60
+[Result] 119:[Secret Rotation Validator/Lint, test, and run the rotation validator]   | Created symlink /etc/systemd/system/sysstat.service.wants/sysstat-summary.timer → /usr/lib/systemd/system/sysstat-summary.timer.
+137:[Secret Rotation Validator/Lint, test, and run the rotation validator]   | ok 8 a smaller warning window reclassifies api-key as ok
+138:[Secret Rotation Validator/Lint, test, and run the rotation validator]   | ok 9 json output includes correct summary counts
+151:[Secret Rotation Validator/Lint, test, and run the rotation validator]   | ## Expired
+155:[Secret Rotation Validator/Lint, test, and run the rotation validator]   | | db-password | expired | -91 | api, worker |
+157:[Secret Rotation Validator/Lint, test, and run the rotation validator]   | ## Warning
+161:[Secret Rotation Validator/Lint, test, and run the rotation validator]   | ## OK
+165:[Secret Rotation Validator/Lint, test, and run the rotation validator]   | | api-key | ok | 19 | frontend |
+166:[Secret Rotation Val
+[Assistant] Matches expected default warning-days=14 (api-key falls to "ok" since 19>14). Exact known-good values confirmed. Now write bats tests that assert on this act-result.txt content and workflow structure.
+[Tool: Write] {"file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/workflow.bats", "content": "#!/usr/bin/env bats\n# Structural tests 
+[Result] File created successfully at: /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/workflow.bats (file state is current in your context — no need to Read it back)
+[Tool: Bash] which yq; yq --version 2>&1
+[Result ERROR] Exit code 127
+/bin/bash: line 1: yq: command not found
+[Tool: Bash] python3 -c "import yaml; print('ok')" 2>&1
+[Result] ok
+[Assistant] I'll replace yq usage with a python3 helper for YAML parsing.
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/workflow.bats", "old_string": "@test \"workflo
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/workflow.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/workflow.bats", "old_string": "@test \"workflo
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/workflow.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Tool: Edit] {"replace_all": false, "file_path": "/home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/workflow.bats", "old_string": "@test \"workflo
+[Result] The file /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low/tests/workflow.bats has been updated successfully. (file state is current in your context — no need to Read it back)
+[Assistant] Now run these tests.
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+bats tests/workflow.bats
+[Result] 1..13
+ok 1 workflow file exists
+ok 2 workflow is valid YAML
+ok 3 actionlint passes on the workflow
+ok 4 workflow declares push, pull_request, workflow_dispatch, and schedule triggers
+ok 5 workflow references scripts and fixtures that exist in the repo
+ok 6 workflow sets read-only top-level permissions
+ok 7 act-result.txt artifact exists
+ok 8 act-result.txt records ACT_EXIT_CODE=0 for the test case
+ok 9 act-result.txt shows the job succeeded
+ok 10 act-result.txt contains the exact expected JSON report
+ok 11 act-result.txt contains the exact expected markdown row for the expired secret
+ok 12 act-result.txt contains the exact expected markdown rows for the ok secrets
+ok 13 act-result.txt shows all 16 bats unit tests passed inside the container
+[Assistant] All pass. Now run the full test suite together and finalize with shellcheck on run-act-tests.sh (already done) and full bats run.
+[Tool: Bash] cd /home/passp/repos/GHA-bench-sonnet5/workspaces/2026-06-30_191904/18-secret-rotation-validator/bash-sonnet5-low
+bats tests/
+shellcheck scripts/secret-rotation-validator.sh run-act-tests.sh && echo SHELLCHECK_OK
+bash -n scripts/secret-rotation-validator.sh run-act-tests.sh && echo SYNTAX_OK
+[Result] 1..29
+ok 1 script file exists and is executable
+ok 2 fails with meaningful error when config file is missing
+ok 3 fails with meaningful error on invalid JSON
+ok 4 fails with meaningful error when a secret is missing required fields
+ok 5 classifies an expired secret
+ok 6 classifies a warning secret within the warning window
+ok 7 classifies an ok secret outside the warning window
+ok 8 a smaller warning window reclassifies api-key as ok
+ok 9 json output includes correct summary counts
+ok 10 json output is valid json
+ok 11 json output preserves required_by list
+ok 12 markdown output contains a table header and rows for each urgency group
+ok 13 default output format is markdown when --format is not given
+ok 14 rejects an unsupported output format
+ok 15 rejects a non-numeric warning-days value
+ok 16 default warning-days is 14 when not specified
+ok 17 workflow file exists
+ok 18 workflow is valid YAML
+ok 19 actionlint passes on the workflow
+ok 20 workflow declares push, pull_request, workflow_
+[Assistant] All 29 tests pass, shellcheck and syntax checks clean, actionlint passes, and act ran the workflow successfully once (within the 3-run limit) producing `act-result.txt` with exact expected values verified.
+
+Summary:
+- `scripts/secret-rotation-validator.sh` — bash tool classifying secrets as expired/warning/ok based on `last_rotated`+`rotation_days` vs `--today`/`--warning-days`, outputs markdown or JSON.
+- `tests/rotation.bats` (16 tests) — unit tests via bats, built TDD-first (confirmed red before implementation existed).
+- `tests/workflow.bats` (13 tests) — workflow structure checks + assertions against the real `act-result.txt` output (exact JSON/markdown values, job success, exit code 0).
+- `fixtures/` — `secrets_basic.json`, `invalid.json`, `missing_field.json`.
+- `.github/workflows/secret-rotation-validator.yml` — push/pull_request/workflow_dispatch/schedule triggers, checkout + dep install + shellcheck + bats + report generation; passes `actionlint`.
+- `run-act-tests.sh` — builds an isolated temp git repo, runs `act push --rm`, and writes results to `act-result.txt` (present in the working directory).

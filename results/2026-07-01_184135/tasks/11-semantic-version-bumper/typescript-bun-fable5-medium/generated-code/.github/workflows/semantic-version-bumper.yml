@@ -1,0 +1,104 @@
+name: Semantic Version Bumper
+
+# Runs on every push, and can be triggered manually. The version-bump job
+# exercises the bumper against mock commit-log fixtures with known expected
+# results, so CI both tests the tool and demonstrates it end-to-end.
+on:
+  push:
+  workflow_dispatch:
+
+# The workflow only reads the repo; it never pushes tags or commits.
+permissions:
+  contents: read
+
+env:
+  # Deterministic changelog dates so output can be asserted exactly.
+  RELEASE_DATE: "2026-07-01"
+
+jobs:
+  unit-tests:
+    name: Unit tests (bun test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Run test suite
+        run: bun test
+
+  version-bump:
+    name: "Bump: ${{ matrix.name }}"
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Each case: a commit-log fixture, a starting version, and the
+          # exact version the bumper must produce.
+          - name: feat
+            fixture: commits-feat.txt
+            start: "1.2.3"
+            expected: "1.3.0"
+          - name: fix
+            fixture: commits-fix.txt
+            start: "1.2.3"
+            expected: "1.2.4"
+          - name: breaking
+            fixture: commits-breaking.txt
+            start: "1.2.3"
+            expected: "2.0.0"
+          - name: none
+            fixture: commits-none.txt
+            start: "1.2.3"
+            expected: "1.2.3"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Bump version from fixture commits
+        shell: bash
+        env:
+          CASE_NAME: ${{ matrix.name }}
+          FIXTURE: ${{ matrix.fixture }}
+          START_VERSION: ${{ matrix.start }}
+          EXPECTED_VERSION: ${{ matrix.expected }}
+        run: |
+          set -euo pipefail
+
+          # Seed a scratch project with the starting version + fixture log.
+          work="$(mktemp -d)"
+          printf '{\n  "name": "demo-app",\n  "version": "%s"\n}\n' "$START_VERSION" > "$work/package.json"
+          cp "fixtures/$FIXTURE" "$work/commits.txt"
+
+          # Run the bumper.
+          bun run src/cli.ts \
+            --version-file "$work/package.json" \
+            --commits "$work/commits.txt" \
+            --changelog "$work/CHANGELOG.md" \
+            --date "$RELEASE_DATE"
+
+          # Read back the version actually written and assert exact equality.
+          actual="$(bun -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')).version)" "$work/package.json")"
+          echo "RESULT case=$CASE_NAME version=$actual"
+          if [ "$actual" != "$EXPECTED_VERSION" ]; then
+            echo "FAIL: case $CASE_NAME expected $EXPECTED_VERSION but got $actual"
+            exit 1
+          fi
+
+          # Show the generated changelog entry (bump cases only).
+          if [ -f "$work/CHANGELOG.md" ]; then
+            echo "--- CHANGELOG ($CASE_NAME) ---"
+            cat "$work/CHANGELOG.md"
+            echo "--- END CHANGELOG ($CASE_NAME) ---"
+          fi

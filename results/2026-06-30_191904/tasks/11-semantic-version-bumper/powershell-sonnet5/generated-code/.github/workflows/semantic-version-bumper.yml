@@ -1,0 +1,64 @@
+name: Semantic Version Bumper
+
+# Runs the Pester test suite and then computes the next semantic version
+# from conventional-commit messages in the repository's git history,
+# updating VERSION and CHANGELOG.md.
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  VERSION_FILE: VERSION
+  CHANGELOG_FILE: CHANGELOG.md
+
+jobs:
+  version-bump:
+    name: Determine next semantic version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure Pester module is available
+        shell: pwsh
+        run: |
+          $pester = Get-Module -ListAvailable -Name Pester |
+            Where-Object { $_.Version -ge [version]'5.0.0' } |
+            Select-Object -First 1
+          if (-not $pester) {
+            Install-Module -Name Pester -MinimumVersion 5.0.0 -Force -Scope CurrentUser -SkipPublisherCheck
+          }
+          Import-Module Pester -MinimumVersion 5.0.0
+          Write-Host "Using Pester $((Get-Module Pester).Version)"
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './VersionBumper.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+      - name: Determine next version and update changelog
+        id: bump
+        shell: pwsh
+        run: |
+          ./Invoke-VersionBump.ps1 -VersionFile $env:VERSION_FILE -ChangelogFile $env:CHANGELOG_FILE
+
+      - name: Show resulting version file
+        shell: pwsh
+        run: |
+          Write-Host "VERSION file now contains: $(Get-Content $env:VERSION_FILE)"

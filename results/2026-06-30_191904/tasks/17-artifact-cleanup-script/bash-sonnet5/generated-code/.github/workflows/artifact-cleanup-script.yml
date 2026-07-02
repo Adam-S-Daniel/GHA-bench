@@ -1,0 +1,246 @@
+---
+# Artifact Cleanup Script pipeline (Task 17).
+#
+# Runs artifact-cleanup.sh's retention-policy engine against every fixture
+# under fixtures/ inside the container and self-checks each case's exact
+# known-good result. This is the kind of scheduled maintenance job that
+# would prune stale CI artifacts in a real repo; here it runs entirely on
+# committed mock CSV data so it is hermetic (no external services, no
+# secrets, no GitHub API calls).
+#
+# Two jobs, chained with `needs`:
+#   cleanup -> report
+# `cleanup` processes every fixture case in a single job run and exposes the
+# aggregate totals as job outputs. `report` consumes those outputs and
+# publishes/validates the final aggregate line.
+name: Artifact Cleanup Script
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  schedule:
+    # Nightly, matching a realistic artifact-retention maintenance cadence.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Reference "now" pinned for deterministic, reproducible age calculations.
+  REFERENCE_NOW: '2026-07-01T00:00:00Z'
+  FIXTURES_DIR: fixtures
+
+jobs:
+  cleanup:
+    name: Compute deletion plans
+    runs-on: ubuntu-latest
+    outputs:
+      total_cases: ${{ steps.run_cases.outputs.total_cases }}
+      total_artifacts: ${{ steps.run_cases.outputs.total_artifacts }}
+      total_retained: ${{ steps.run_cases.outputs.total_retained }}
+      total_deleted: ${{ steps.run_cases.outputs.total_deleted }}
+      total_reclaimed_bytes: ${{ steps.run_cases.outputs.total_reclaimed_bytes }}
+      total_retained_bytes: ${{ steps.run_cases.outputs.total_retained_bytes }}
+      dryrun_execute_ok: ${{ steps.dryrun_execute.outputs.dryrun_execute_ok }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify runtime dependencies
+        # artifact-cleanup.sh only needs bash + coreutils, all present on
+        # ubuntu-latest. Verify rather than install.
+        run: |
+          set -euo pipefail
+          for tool in bash date sort basename mktemp; do
+            command -v "$tool" >/dev/null 2>&1 || { echo "missing required tool: $tool" >&2; exit 1; }
+          done
+          echo "All required tools present."
+
+      - name: Syntax-check the cleanup script
+        run: bash -n artifact-cleanup.sh
+
+      - name: Lint the cleanup script with shellcheck
+        run: |
+          set -euo pipefail
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck artifact-cleanup.sh
+            echo "shellcheck: clean"
+          else
+            echo "shellcheck not installed; skipping lint"
+          fi
+
+      - name: Run every fixture case and assert exact expected results
+        id: run_cases
+        env:
+          REFERENCE_NOW: ${{ env.REFERENCE_NOW }}
+          FIXTURES_DIR: ${{ env.FIXTURES_DIR }}
+        run: |
+          set -euo pipefail
+
+          # Hand-computed known-good results per fixture (see each fixture's
+          # header comment for the derivation). The job FAILS if the engine
+          # regresses, so a green "Job succeeded" is a real correctness signal.
+          declare -A policy=(
+            [case1-max-age]="--max-age-days 14"
+            [case2-keep-latest]="--keep-latest 2"
+            [case3-max-total-bytes]="--max-total-bytes 10000000"
+            [case4-combined]="--max-age-days 20 --keep-latest 1 --max-total-bytes 5000000"
+            [case5-all-retained]="--max-age-days 365 --keep-latest 5 --max-total-bytes 100000000"
+          )
+          declare -A exp_total=(   [case1-max-age]=4 [case2-keep-latest]=8 [case3-max-total-bytes]=3 [case4-combined]=4 [case5-all-retained]=2 )
+          declare -A exp_retained=([case1-max-age]=2 [case2-keep-latest]=4 [case3-max-total-bytes]=2 [case4-combined]=1 [case5-all-retained]=2 )
+          declare -A exp_deleted=( [case1-max-age]=2 [case2-keep-latest]=4 [case3-max-total-bytes]=1 [case4-combined]=3 [case5-all-retained]=0 )
+          declare -A exp_reclaimed=([case1-max-age]=5000000 [case2-keep-latest]=7000000 [case3-max-total-bytes]=6000000 [case4-combined]=7000000 [case5-all-retained]=0)
+          declare -A exp_retained_bytes=([case1-max-age]=1500000 [case2-keep-latest]=10000000 [case3-max-total-bytes]=9000000 [case4-combined]=3000000 [case5-all-retained]=3000000)
+
+          # Extract a "key=value" token from the script's RESULT line.
+          field() {
+            awk -v key="$1" 'BEGIN { FS = "[ =]" }
+              { for (i = 1; i <= NF; i++) if ($i == key) { print $(i + 1); exit } }'
+          }
+
+          {
+            echo "## Artifact Cleanup Plan"
+            echo ""
+            echo "| case | total | retained | deleted | reclaimed_bytes |"
+            echo "| --- | --- | --- | --- | --- |"
+          } >>"$GITHUB_STEP_SUMMARY"
+
+          total_cases=0 total_artifacts=0 total_retained=0 total_deleted=0 total_reclaimed=0 total_retained_bytes=0
+
+          for name in case1-max-age case2-keep-latest case3-max-total-bytes case4-combined case5-all-retained; do
+            fixture="${FIXTURES_DIR}/${name}.csv"
+            echo "===== CASE: ${name} ====="
+            # shellcheck disable=SC2086
+            out="$(bash ./artifact-cleanup.sh --input "$fixture" --now "$REFERENCE_NOW" ${policy[$name]})"
+            printf '%s\n' "$out"
+
+            result_line="$(printf '%s\n' "$out" | grep '^RESULT ')"
+            got_total="$(printf '%s' "$result_line" | field total)"
+            got_retained="$(printf '%s' "$result_line" | field retained)"
+            got_deleted="$(printf '%s' "$result_line" | field deleted)"
+            got_reclaimed="$(printf '%s' "$result_line" | field reclaimed_bytes)"
+            got_retained_bytes="$(printf '%s' "$result_line" | field retained_bytes)"
+
+            if [ "$got_total" != "${exp_total[$name]}" ] || \
+               [ "$got_retained" != "${exp_retained[$name]}" ] || \
+               [ "$got_deleted" != "${exp_deleted[$name]}" ] || \
+               [ "$got_reclaimed" != "${exp_reclaimed[$name]}" ] || \
+               [ "$got_retained_bytes" != "${exp_retained_bytes[$name]}" ]; then
+              echo "ASSERTION FAILED for ${name}: got total=${got_total} retained=${got_retained} deleted=${got_deleted}" \
+                   "reclaimed_bytes=${got_reclaimed} retained_bytes=${got_retained_bytes}" >&2
+              exit 1
+            fi
+            echo "OK: ${name} matches expected (total=${got_total} retained=${got_retained} deleted=${got_deleted} reclaimed_bytes=${got_reclaimed})"
+            echo "| ${name} | ${got_total} | ${got_retained} | ${got_deleted} | ${got_reclaimed} |" >>"$GITHUB_STEP_SUMMARY"
+
+            total_cases=$((total_cases + 1))
+            total_artifacts=$((total_artifacts + got_total))
+            total_retained=$((total_retained + got_retained))
+            total_deleted=$((total_deleted + got_deleted))
+            total_reclaimed=$((total_reclaimed + got_reclaimed))
+            total_retained_bytes=$((total_retained_bytes + got_retained_bytes))
+          done
+
+          echo "AGGREGATE total_cases=${total_cases} total_artifacts=${total_artifacts} total_retained=${total_retained} total_deleted=${total_deleted} total_reclaimed_bytes=${total_reclaimed} total_retained_bytes=${total_retained_bytes}"
+
+          {
+            echo "total_cases=${total_cases}"
+            echo "total_artifacts=${total_artifacts}"
+            echo "total_retained=${total_retained}"
+            echo "total_deleted=${total_deleted}"
+            echo "total_reclaimed_bytes=${total_reclaimed}"
+            echo "total_retained_bytes=${total_retained_bytes}"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Verify dry-run vs execute semantics (case6)
+        id: dryrun_execute
+        env:
+          REFERENCE_NOW: ${{ env.REFERENCE_NOW }}
+        run: |
+          set -euo pipefail
+
+          work="$(mktemp -d)/case6.csv"
+          cp "fixtures/case6-dry-run-vs-execute.csv" "$work"
+          before_hash="$(sha256sum "$work" | awk '{print $1}')"
+
+          dryrun_out="$(bash ./artifact-cleanup.sh --input "$work" --now "$REFERENCE_NOW" --max-age-days 1)"
+          printf '%s\n' "$dryrun_out"
+          after_hash="$(sha256sum "$work" | awk '{print $1}')"
+          if [ "$before_hash" != "$after_hash" ]; then
+            echo "ASSERTION FAILED: dry-run mutated the input file" >&2
+            exit 1
+          fi
+          if ! printf '%s' "$dryrun_out" | grep -qF "RESULT input=case6.csv total=2 retained=1 deleted=1 reclaimed_bytes=1000000 retained_bytes=2000000"; then
+            echo "ASSERTION FAILED: unexpected dry-run RESULT line" >&2
+            exit 1
+          fi
+
+          exec_out="$(bash ./artifact-cleanup.sh --input "$work" --now "$REFERENCE_NOW" --max-age-days 1 --execute)"
+          printf '%s\n' "$exec_out"
+          if ! printf '%s' "$exec_out" | grep -qF "RESULT input=case6.csv total=2 retained=1 deleted=1 reclaimed_bytes=1000000 retained_bytes=2000000"; then
+            echo "ASSERTION FAILED: unexpected execute RESULT line" >&2
+            exit 1
+          fi
+          if grep -q '^old,' "$work"; then
+            echo "ASSERTION FAILED: execute did not remove the deleted row from the state file" >&2
+            exit 1
+          fi
+          if ! grep -q '^fresh,' "$work"; then
+            echo "ASSERTION FAILED: execute removed a row that should have been retained" >&2
+            exit 1
+          fi
+
+          second_out="$(bash ./artifact-cleanup.sh --input "$work" --now "$REFERENCE_NOW" --max-age-days 1 --execute)"
+          printf '%s\n' "$second_out"
+          if ! printf '%s' "$second_out" | grep -qF "RESULT input=case6.csv total=1 retained=1 deleted=0 reclaimed_bytes=0 retained_bytes=2000000"; then
+            echo "ASSERTION FAILED: second execute run was not idempotent" >&2
+            exit 1
+          fi
+
+          echo "OK: dry-run left the file untouched; execute mutated it and was idempotent on rerun."
+          echo "dryrun_execute_ok=true" >>"$GITHUB_OUTPUT"
+
+  report:
+    name: Publish final report
+    needs: cleanup
+    runs-on: ubuntu-latest
+    env:
+      TOTAL_CASES: ${{ needs.cleanup.outputs.total_cases }}
+      TOTAL_ARTIFACTS: ${{ needs.cleanup.outputs.total_artifacts }}
+      TOTAL_RETAINED: ${{ needs.cleanup.outputs.total_retained }}
+      TOTAL_DELETED: ${{ needs.cleanup.outputs.total_deleted }}
+      TOTAL_RECLAIMED_BYTES: ${{ needs.cleanup.outputs.total_reclaimed_bytes }}
+      TOTAL_RETAINED_BYTES: ${{ needs.cleanup.outputs.total_retained_bytes }}
+      DRYRUN_EXECUTE_OK: ${{ needs.cleanup.outputs.dryrun_execute_ok }}
+    steps:
+      - name: Emit and validate aggregate report
+        run: |
+          set -euo pipefail
+
+          echo "FINAL_REPORT total_cases=${TOTAL_CASES} total_artifacts=${TOTAL_ARTIFACTS} total_retained=${TOTAL_RETAINED} total_deleted=${TOTAL_DELETED} total_reclaimed_bytes=${TOTAL_RECLAIMED_BYTES} total_retained_bytes=${TOTAL_RETAINED_BYTES}"
+
+          exp_cases=5
+          exp_artifacts=21
+          exp_retained=11
+          exp_deleted=10
+          exp_reclaimed=25000000
+          exp_retained_bytes=26500000
+
+          if [ "$TOTAL_CASES" != "$exp_cases" ] || \
+             [ "$TOTAL_ARTIFACTS" != "$exp_artifacts" ] || \
+             [ "$TOTAL_RETAINED" != "$exp_retained" ] || \
+             [ "$TOTAL_DELETED" != "$exp_deleted" ] || \
+             [ "$TOTAL_RECLAIMED_BYTES" != "$exp_reclaimed" ] || \
+             [ "$TOTAL_RETAINED_BYTES" != "$exp_retained_bytes" ]; then
+            echo "AGGREGATE ASSERTION FAILED" >&2
+            exit 1
+          fi
+          if [ "$DRYRUN_EXECUTE_OK" != "true" ]; then
+            echo "ASSERTION FAILED: dry-run/execute check did not report ok" >&2
+            exit 1
+          fi
+
+          echo "Aggregate totals match known-good values; dry-run/execute semantics verified."
