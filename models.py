@@ -14,6 +14,9 @@
 MODELS = {
     "opus": "claude-opus-4-6",
     "sonnet": "claude-sonnet-4-6",
+    "sonnet5": "claude-sonnet-5",          # Sonnet 5 (1M default context)
+    "sonnet5-1m": "claude-sonnet-5[1m]",   # Sonnet 5 with the 1M context window
+    "fable5": "claude-fable-5",            # Fable 5 (1M default context)
     "opus48": "claude-opus-4-8",
     "opus48-1m": "claude-opus-4-8[1m]",
     "opus47-200k": "claude-opus-4-7",
@@ -43,5 +46,14 @@ COST_PER_MTOK = {
     "claude-opus-4-7[1m]":   {"input": 5.0, "output": 25.0, "cache_read": 0.50, "cache_write": 6.25},
     "claude-sonnet-4-6":     {"input": 3.0, "output": 15.0, "cache_read": 0.30, "cache_write": 3.75},
     "claude-sonnet-4-6[1m]": {"input": 3.0, "output": 15.0, "cache_read": 0.30, "cache_write": 3.75},
+    # Sonnet 5 (both context variants) — standard sonnet-tier rates.
+    # NB: an introductory promo of $2/$10 per Mtok runs through 2026-08-31;
+    # these are the standard rates, and the CLI's reported cost is
+    # authoritative for any run either way (see note above).
+    "claude-sonnet-5":       {"input": 3.0, "output": 15.0, "cache_read": 0.30, "cache_write": 3.75},
+    "claude-sonnet-5[1m]":   {"input": 3.0, "output": 15.0, "cache_read": 0.30, "cache_write": 3.75},
+    # Fable 5 — 1M-token default context; cache rates derived at the usual
+    # 0.1x read / 1.25x write of base input.
+    "claude-fable-5":        {"input": 10.0, "output": 50.0, "cache_read": 1.0, "cache_write": 12.5},
     "claude-haiku-4-5":      {"input": 1.0, "output": 5.0,  "cache_read": 0.10, "cache_write": 1.25},
 }

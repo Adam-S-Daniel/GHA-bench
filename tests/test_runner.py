@@ -6,7 +6,10 @@ import sys
 import threading
 import time
 
-from runner import TASKS, PROMPT_TEMPLATES, select_tasks, _metrics_valid
+from runner import (
+    TASKS, PROMPT_TEMPLATES, select_tasks, _metrics_valid,
+    effort_capable_models,
+)
 
 
 class TestMetricsValid:
@@ -141,6 +144,26 @@ class TestPromptTemplates:
         # The two PS modes must differ only in tool setup, not in user-facing
         # prompt content — otherwise we'd be comparing two different tasks.
         assert PROMPT_TEMPLATES["powershell"] == PROMPT_TEMPLATES["powershell-tool"]
+
+
+class TestEffortCapableModels:
+    """The issue-#32 guard predicate: which selected models take --effort.
+    Haiku 4.5 (no effort param) is excluded; everything else is capable."""
+
+    def test_haiku_only_is_not_capable(self):
+        assert effort_capable_models([("haiku45", "claude-haiku-4-5")]) == []
+
+    def test_effort_models_included_and_order_preserved(self):
+        selected = [
+            ("opus", "claude-opus-4-6"),
+            ("haiku45", "claude-haiku-4-5"),
+            ("sonnet5-1m", "claude-sonnet-5[1m]"),
+            ("fable5", "claude-fable-5"),
+        ]
+        assert effort_capable_models(selected) == ["opus", "sonnet5-1m", "fable5"]
+
+    def test_empty_selection(self):
+        assert effort_capable_models([]) == []
 
 
 class TestWatchdogTimeout:

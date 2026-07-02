@@ -20,6 +20,7 @@ from datetime import datetime
 from pathlib import Path
 
 from models import COST_PER_MTOK, MODELS  # noqa: E402  (single source of truth)
+from version_docs import version_tuple  # noqa: E402  (CC version → int-tuple)
 
 INSTRUCTIONS_VERSION = "v4"
 
@@ -615,11 +616,16 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
     # concrete version was tested (Opus 4.6 / Sonnet 4.6 on this repo's
     # history) and at what context window. Filesystem subdirs keep their
     # original plain name.
-    _DISPLAY_RENAME = {
-        "opus": "opus46-200k",
-        "sonnet": "sonnet46-200k",
-        "haiku45": "haiku45-200k",
-    }
+    # Legacy short-name → name+version rename (`opus`/`sonnet` ran on
+    # 4.6 in this repo's history). Context + effort are appended by the
+    # `_label` grammar below, NOT baked into this map.
+    _LEGACY_RENAME = {"opus": "opus46", "sonnet": "sonnet46"}
+    # CC release at/after which the effort-capable CLI default flipped
+    # medium → high; used only to derive labels for pre-effort runs.
+    _EFFORT_DEFAULT_HIGH_VER = (2, 1, 117)
+    # Base model names (post `_name_version`) that default to a 1M context
+    # window; used only as a context fallback when no window was recorded.
+    _ONE_M_DEFAULT_BASES = {"sonnet5", "opus47", "opus48", "fable5"}
 
     def _cli_suffix(m):
         """Format the CLI version as a `-cli<ver>` label suffix. Different
@@ -630,22 +636,81 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
 
     def _path_label(m):
         """On-disk subdir label: exactly matches directories already on
-        the filesystem. No rename here, and no CLI version — existing
-        subdirs were written without either and migrating would rename
-        every prior run's directory on disk."""
+        the filesystem. No rename here, no derived context/effort, and no
+        CLI version — existing subdirs were written from the RAW
+        model_short + effort and migrating would rename every prior run's
+        directory on disk. DO NOT change."""
         eff = m.get("effort_level")
         return f"{m['model_short']}-{eff}" if eff else m["model_short"]
 
-    def _label(m):
-        """Internal grouping label — includes `-cli<ver>` so distinct
-        Claude Code releases bucket separately. Used as a dict key for
-        aggregation. NOT for display; use `_strip_cli(_label(m))` when
-        rendering to tables/prose — the CLI Version Legend in Notes is
-        the canonical mapping from label → CLI version."""
+    def _name_version(m):
+        """`name+version` component: model_short with a trailing
+        `-1m`/`-200k` stripped, then the legacy rename applied."""
+        short = m["model_short"]
+        for suffix in ("-1m", "-200k"):
+            if short.endswith(suffix):
+                short = short[: -len(suffix)]
+                break
+        return _LEGACY_RENAME.get(short, short)
+
+    def _context(m):
+        """`context` component (`1m`/`200k`), from the RECORDED contextWindow
+        of the exact model id under `model_usage_detail[metrics["model"]]`.
+        `session.context_window` (the helper-Haiku 200k value) is WRONG and
+        deliberately not used. Fallback when absent: `[1m]` in the model id
+        → `1m`; else model_short ending `-1m`→`1m`/`-200k`→`200k`; else
+        `200k`."""
+        model_id = m.get("model")
+        detail = m.get("model_usage_detail") or {}
+        cw = None
+        if model_id and isinstance(detail, dict):
+            entry = detail.get(model_id)
+            if isinstance(entry, dict):
+                cw = entry.get("contextWindow")
+        if cw == 1000000:
+            return "1m"
+        if cw == 200000:
+            return "200k"
+        if model_id and "[1m]" in model_id:
+            return "1m"
+        short = m.get("model_short", "")
+        if short.endswith("-1m"):
+            return "1m"
+        if short.endswith("-200k"):
+            return "200k"
+        if _name_version(m) in _ONE_M_DEFAULT_BASES:
+            return "1m"
+        return "200k"
+
+    def _effort(m):
+        """`effort` component: `effort_level` if set; else `na` for Haiku
+        4.5 (no effort param); else the version-dependent CLI default for
+        any effort-capable model with no recorded effort — `high` if the
+        cell's CC version ≥ 2.1.117 else `medium` (covers both the legacy
+        April Opus/Sonnet 4.6 no-effort runs and a no-`--effort` base
+        Sonnet 5 run)."""
         eff = m.get("effort_level")
-        short = _DISPLAY_RENAME.get(m["model_short"], m["model_short"])
-        base = f"{short}-{eff}" if eff else short
-        return base + _cli_suffix(m)
+        if eff:
+            return eff
+        model_id = m.get("model") or ""
+        short = m.get("model_short", "")
+        if short == "haiku45" or model_id.startswith("claude-haiku"):
+            return "na"
+        cc = m.get("claude_code_version") or ""
+        try:
+            ver = version_tuple(cc)
+        except Exception:
+            ver = ()
+        return "high" if ver >= _EFFORT_DEFAULT_HIGH_VER else "medium"
+
+    def _label(m):
+        """Internal grouping label — `<name-version>-<context>-<effort>`
+        plus `-cli<ver>` so distinct Claude Code releases bucket
+        separately. Used as a dict key for aggregation. NOT for display;
+        use `_strip_cli(_label(m))` when rendering — the CLI Version
+        Legend in Notes maps label → CLI version. Matches
+        combine_results.py byte-for-byte."""
+        return f"{_name_version(m)}-{_context(m)}-{_effort(m)}" + _cli_suffix(m)
 
     _CLI_SUFFIX_RE = re.compile(r"-cli[^-\s*]+$")
 
@@ -1731,10 +1796,9 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         per_pair: dict[tuple[str, str], dict[str, set[str]]] = _defaultdict(
             lambda: {"tasks": set(), "langs": set()})
         for m in successful:
-            model_short = m["model_short"]
-            display_model = _DISPLAY_RENAME.get(model_short, model_short)
-            effort = m.get("effort_level")
-            variant = f"{display_model}-{effort}" if effort else display_model
+            # Rebuild the CLI-less display label the same way the main
+            # tables do (`_strip_cli(_label(m))`) so legend labels match.
+            variant = _strip_cli(_label(m))
             cli = m.get("claude_code_version") or "?"
             bucket = per_pair[(variant, cli)]
             bucket["tasks"].add(m["task_id"])

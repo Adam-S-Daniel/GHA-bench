@@ -454,15 +454,20 @@ class TestDisplayRename:
 
     def test_combine_results_renames_legacy_sonnet(self):
         from combine_results import _label
+        # Legacy `sonnet` with null effort: the effort component is derived
+        # from the CC version. 2.1.114 < 2.1.117 so the CLI default was
+        # `medium` → `sonnet46-200k-medium`.
         m = {"model_short": "sonnet", "effort_level": None,
              "claude_code_version": self.CLI}
-        assert _label(m) == "sonnet46-200k-cli2.1.114"
+        assert _label(m) == "sonnet46-200k-medium-cli2.1.114"
 
     def test_combine_results_renames_haiku_adds_context(self):
         from combine_results import _label
+        # Haiku 4.5 takes no effort parameter, so a null effort derives to
+        # the sentinel `na` (effort-not-applicable), not a default effort.
         m = {"model_short": "haiku45", "effort_level": None,
              "claude_code_version": self.CLI}
-        assert _label(m) == "haiku45-200k-cli2.1.114"
+        assert _label(m) == "haiku45-200k-na-cli2.1.114"
 
     def test_combine_results_leaves_explicit_names_untouched(self):
         from combine_results import _label
@@ -485,11 +490,13 @@ class TestDisplayRename:
         # silent merging of "unknown-version" runs into whatever CLI
         # happens to be current.
         from combine_results import _label
+        # A missing/empty CC version can't be compared to 2.1.117, so the
+        # legacy-effort derivation guards it as < 2.1.117 → `medium`.
         assert _label({"model_short": "sonnet", "effort_level": None}) \
-            == "sonnet46-200k-cliunk"
+            == "sonnet46-200k-medium-cliunk"
         assert _label({"model_short": "sonnet", "effort_level": None,
                        "claude_code_version": ""}) \
-            == "sonnet46-200k-cliunk"
+            == "sonnet46-200k-medium-cliunk"
 
     def test_combine_results_path_label_never_renames_or_appends_cli(self):
         # Filesystem subdirs keep their original plain names AND never
