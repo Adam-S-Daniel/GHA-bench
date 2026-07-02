@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-06-28 07:45:25 PM ET — 245/245 runs completed, 0 remaining; total cost $360.74; total agent time 2265.0 min.
+**Last updated:** 2026-07-02 09:54:02 AM ET — 245/245 runs completed, 0 remaining; total cost $360.74; total agent time 2265.0 min.
 **Claude Code versions used:** [v2.1.112](claude-code-2.1.112.md) (70 runs), [v2.1.114](claude-code-2.1.114.md) (175 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -97,13 +97,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | typescript-bun | sonnet46-200k-medium | B (7.3min) | B ($0.92) | B- (3.2) | C+ (2.9) |
 | powershell-tool | sonnet46-1m-medium | B- (8.4min) | B- ($1.12) | B- (3.4) | B- (3.4) |
 | powershell-tool | opus47-1m-xhigh | C (10.6min) | D- ($3.16) | B+ (3.9) | B+ (4.0) |
-| powershell-tool | haiku45-200k | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
-| powershell | haiku45-200k | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
+| powershell-tool | haiku45-200k-na | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
+| powershell | haiku45-200k-na | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
 | bash | sonnet46-1m-medium | C- (11.9min) | C ($1.53) | B- (3.4) | B- (3.4) |
-| bash | haiku45-200k* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
-| typescript-bun | haiku45-200k | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
+| bash | haiku45-200k-na* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
+| typescript-bun | haiku45-200k-na | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
 | bash | opus47-1m-xhigh | D- (16.5min) | D ($2.87) | B (3.7) | B (3.7) |
-| default | haiku45-200k | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
+| default | haiku45-200k-na | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
 
 
 <details>
@@ -120,13 +120,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | typescript-bun | opus47-200k-medium | A (5.5min) | C+ ($1.35) | B (3.8) | B- (3.4) |
 | bash | sonnet46-200k-medium* | A- (6.3min) | B+ ($0.83) | B- (3.2) | B- (3.2) |
 | powershell | opus47-200k-medium | A- (6.4min) | C ($1.56) | B (3.7) | B (3.6) |
-| powershell | haiku45-200k | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
-| typescript-bun | haiku45-200k | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
+| powershell | haiku45-200k-na | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
+| typescript-bun | haiku45-200k-na | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
 | default | opus47-1m-high | B+ (7.1min) | C- ($1.95) | A- (4.2) | A- (4.2) |
 | bash | opus47-1m-high | B+ (6.8min) | C ($1.65) | B (3.5) | B+ (4.0) |
 | default | sonnet46-200k-medium | B+ (6.9min) | B ($1.04) | B (3.6) | C+ (3.1) |
 | default | sonnet46-1m-medium | B+ (6.8min) | B ($0.97) | B- (3.3) | C+ (3.1) |
-| powershell-tool | haiku45-200k | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
+| powershell-tool | haiku45-200k-na | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
 | default | opus47-1m-xhigh | B (7.8min) | D+ ($2.29) | B+ (4.0) | A- (4.2) |
 | typescript-bun | opus47-1m-medium | B (7.6min) | C+ ($1.29) | B (3.8) | B (3.5) |
 | typescript-bun | sonnet46-200k-medium | B (7.3min) | B ($0.92) | B- (3.2) | C+ (2.9) |
@@ -136,7 +136,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | sonnet46-1m-medium | B- (8.0min) | B ($1.06) | B (3.6) | C+ (3.1) |
 | powershell-tool | opus47-1m-medium | B- (8.0min) | C+ ($1.43) | B (3.8) | B (3.6) |
 | powershell-tool | sonnet46-1m-medium | B- (8.4min) | B- ($1.12) | B- (3.4) | B- (3.4) |
-| bash | haiku45-200k* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
+| bash | haiku45-200k-na* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
 | powershell-tool | opus47-1m-high | C+ (9.3min) | D+ ($2.51) | A- (4.1) | A- (4.2) |
 | typescript-bun | opus47-1m-high | C+ (9.0min) | D+ ($2.37) | B+ (4.1) | B+ (3.9) |
 | powershell | opus47-1m-medium | C (10.2min) | C ($1.52) | B+ (3.9) | B (3.8) |
@@ -144,7 +144,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus47-1m-xhigh | C- (11.5min) | D- ($3.21) | A- (4.1) | A- (4.2) |
 | typescript-bun | opus47-1m-xhigh | C- (12.0min) | D- ($3.54) | A (4.5) | B+ (4.0) |
 | bash | sonnet46-1m-medium | C- (11.9min) | C ($1.53) | B- (3.4) | B- (3.4) |
-| default | haiku45-200k | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
+| default | haiku45-200k-na | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
 | bash | opus47-1m-xhigh | D- (16.5min) | D ($2.87) | B (3.7) | B (3.7) |
 
 </details>
@@ -154,11 +154,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| powershell | haiku45-200k | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
-| powershell-tool | haiku45-200k | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
-| typescript-bun | haiku45-200k | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
-| bash | haiku45-200k* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
-| default | haiku45-200k | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
+| powershell | haiku45-200k-na | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
+| powershell-tool | haiku45-200k-na | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
+| typescript-bun | haiku45-200k-na | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
+| bash | haiku45-200k-na* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
+| default | haiku45-200k-na | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
 | powershell | sonnet46-200k-medium | A (5.3min) | A- ($0.71) | C+ (3.1) | B- (3.2) |
 | bash | sonnet46-200k-medium* | A- (6.3min) | B+ ($0.83) | B- (3.2) | B- (3.2) |
 | default | opus47-1m-medium | A (5.4min) | B ($1.03) | B- (3.4) | B- (3.4) |
@@ -227,11 +227,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | sonnet46-1m-medium | B- (8.4min) | B- ($1.12) | B- (3.4) | B- (3.4) |
 | bash | sonnet46-1m-medium | C- (11.9min) | C ($1.53) | B- (3.4) | B- (3.4) |
 | powershell | sonnet46-200k-medium | A (5.3min) | A- ($0.71) | C+ (3.1) | B- (3.2) |
-| powershell-tool | haiku45-200k | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
-| bash | haiku45-200k* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
-| powershell | haiku45-200k | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
-| typescript-bun | haiku45-200k | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
-| default | haiku45-200k | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
+| powershell-tool | haiku45-200k-na | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
+| bash | haiku45-200k-na* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
+| powershell | haiku45-200k-na | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
+| typescript-bun | haiku45-200k-na | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
+| default | haiku45-200k-na | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
 
 </details>
 
@@ -270,11 +270,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | sonnet46-1m-medium | B+ (6.8min) | B ($0.97) | B- (3.3) | C+ (3.1) |
 | powershell | sonnet46-1m-medium | B- (8.0min) | B ($1.06) | B (3.6) | C+ (3.1) |
 | typescript-bun | sonnet46-200k-medium | B (7.3min) | B ($0.92) | B- (3.2) | C+ (2.9) |
-| powershell | haiku45-200k | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
-| bash | haiku45-200k* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
-| default | haiku45-200k | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
-| powershell-tool | haiku45-200k | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
-| typescript-bun | haiku45-200k | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
+| powershell | haiku45-200k-na | A- (6.4min) | A+ ($0.48) | D+ (2.0) | C (2.7) |
+| bash | haiku45-200k-na* | B- (8.2min) | A+ ($0.48) | C- (2.3) | C- (2.5) |
+| default | haiku45-200k-na | C- (11.9min) | A+ ($0.45) | D+ (2.1) | C- (2.4) |
+| powershell-tool | haiku45-200k-na | B+ (7.1min) | A+ ($0.49) | C (2.6) | D+ (2.3) |
+| typescript-bun | haiku45-200k-na | A- (5.9min) | A+ ($0.49) | D+ (2.1) | D+ (2.2) |
 
 </details>
 
@@ -282,7 +282,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Task | Language | Model | Duration | Reason | Lines | actionlint | act-result.txt |
 |------|------|-------|----------|--------|-------|------------|----------------|
-| Environment Matrix Generator | bash | haiku45-200k | 322.8min | timeout | 377 | pass | yes |
+| Environment Matrix Generator | bash | haiku45-200k-na | 322.8min | timeout | 377 | pass | yes |
 | Environment Matrix Generator | bash | sonnet46-200k-medium | 4.2min | cli_error | 0 | n/a | no |
 
 *2 run(s) excluded from averages below.*
@@ -293,35 +293,35 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| bash | haiku45-200k* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
+| bash | haiku45-200k-na* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
 | bash | opus47-1m-high | 7 | 6.8min | 6.8min | 0.6 | 35 | $1.65 | $11.54 | 3.5 | 4.0 |
 | bash | opus47-1m-medium | 7 | 4.9min | 4.5min | 1.1 | 27 | $1.11 | $7.74 | 3.2 | 3.2 |
 | bash | opus47-1m-xhigh | 7 | 16.5min | 16.2min | 1.4 | 49 | $2.87 | $20.11 | 3.7 | 3.7 |
 | bash | opus47-200k-medium | 7 | 4.7min | 4.7min | 1.1 | 27 | $1.09 | $7.66 | 3.2 | 4.2 |
 | bash | sonnet46-1m-medium | 7 | 11.9min | 11.1min | 4.6 | 41 | $1.53 | $10.71 | 3.4 | 3.4 |
 | bash | sonnet46-200k-medium* | 6 | 6.3min | 5.9min | 2.3 | 34 | $0.83 | $5.01 | 3.2 | 3.2 |
-| default | haiku45-200k | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
+| default | haiku45-200k-na | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
 | default | opus47-1m-high | 7 | 7.1min | 7.1min | 0.3 | 34 | $1.95 | $13.67 | 4.2 | 4.2 |
 | default | opus47-1m-medium | 7 | 5.4min | 5.4min | 0.3 | 25 | $1.03 | $7.24 | 3.4 | 3.4 |
 | default | opus47-1m-xhigh | 7 | 7.8min | 7.4min | 0.6 | 42 | $2.29 | $16.00 | 4.0 | 4.2 |
 | default | opus47-200k-medium | 7 | 4.7min | 4.7min | 0.4 | 27 | $1.17 | $8.18 | 3.8 | 3.6 |
 | default | sonnet46-1m-medium | 7 | 6.8min | 6.8min | 3.3 | 33 | $0.97 | $6.78 | 3.3 | 3.1 |
 | default | sonnet46-200k-medium | 7 | 6.9min | 6.7min | 2.6 | 37 | $1.04 | $7.26 | 3.6 | 3.1 |
-| powershell | haiku45-200k | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
+| powershell | haiku45-200k-na | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
 | powershell | opus47-1m-high | 7 | 8.5min | 8.1min | 0.3 | 41 | $2.35 | $16.45 | 4.2 | 4.2 |
 | powershell | opus47-1m-medium | 7 | 10.2min | 9.8min | 0.0 | 32 | $1.52 | $10.61 | 3.9 | 3.8 |
 | powershell | opus47-1m-xhigh | 7 | 11.5min | 10.3min | 0.4 | 49 | $3.21 | $22.48 | 4.1 | 4.2 |
 | powershell | opus47-200k-medium | 7 | 6.4min | 6.1min | 0.3 | 33 | $1.56 | $10.94 | 3.7 | 3.6 |
 | powershell | sonnet46-1m-medium | 7 | 8.0min | 7.6min | 0.9 | 29 | $1.06 | $7.41 | 3.6 | 3.1 |
 | powershell | sonnet46-200k-medium | 7 | 5.3min | 4.7min | 0.7 | 25 | $0.71 | $4.94 | 3.1 | 3.2 |
-| powershell-tool | haiku45-200k | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
+| powershell-tool | haiku45-200k-na | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
 | powershell-tool | opus47-1m-high | 7 | 9.3min | 9.0min | 0.4 | 43 | $2.51 | $17.55 | 4.1 | 4.2 |
 | powershell-tool | opus47-1m-medium | 7 | 8.0min | 7.5min | 0.7 | 31 | $1.43 | $9.99 | 3.8 | 3.6 |
 | powershell-tool | opus47-1m-xhigh | 7 | 10.6min | 9.5min | 0.3 | 47 | $3.16 | $22.13 | 3.9 | 4.0 |
 | powershell-tool | opus47-200k-medium | 7 | 5.6min | 5.5min | 0.3 | 28 | $1.46 | $10.24 | 3.9 | 3.4 |
 | powershell-tool | sonnet46-1m-medium | 7 | 8.4min | 7.6min | 2.1 | 32 | $1.12 | $7.82 | 3.4 | 3.4 |
 | powershell-tool | sonnet46-200k-medium | 7 | 8.1min | 8.0min | 1.3 | 32 | $1.05 | $7.33 | 3.9 | 3.4 |
-| typescript-bun | haiku45-200k | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
+| typescript-bun | haiku45-200k-na | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
 | typescript-bun | opus47-1m-high | 7 | 9.0min | 5.9min | 0.1 | 51 | $2.37 | $16.61 | 4.1 | 3.9 |
 | typescript-bun | opus47-1m-medium | 7 | 7.6min | 6.4min | 0.4 | 32 | $1.29 | $9.00 | 3.8 | 3.5 |
 | typescript-bun | opus47-1m-xhigh | 7 | 12.0min | 7.9min | 0.4 | 66 | $3.54 | $24.75 | 4.5 | 4.0 |
@@ -335,11 +335,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | haiku45-200k | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
-| powershell | haiku45-200k | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
-| bash | haiku45-200k* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
-| typescript-bun | haiku45-200k | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
-| powershell-tool | haiku45-200k | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
+| default | haiku45-200k-na | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
+| powershell | haiku45-200k-na | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
+| bash | haiku45-200k-na* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
+| typescript-bun | haiku45-200k-na | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
+| powershell-tool | haiku45-200k-na | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
 | powershell | sonnet46-200k-medium | 7 | 5.3min | 4.7min | 0.7 | 25 | $0.71 | $4.94 | 3.1 | 3.2 |
 | bash | sonnet46-200k-medium* | 6 | 6.3min | 5.9min | 2.3 | 34 | $0.83 | $5.01 | 3.2 | 3.2 |
 | typescript-bun | sonnet46-200k-medium | 7 | 7.3min | 5.8min | 2.6 | 34 | $0.92 | $6.41 | 3.2 | 2.9 |
@@ -385,14 +385,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | opus47-1m-medium | 7 | 5.4min | 5.4min | 0.3 | 25 | $1.03 | $7.24 | 3.4 | 3.4 |
 | typescript-bun | opus47-200k-medium | 7 | 5.5min | 4.2min | 0.4 | 31 | $1.35 | $9.47 | 3.8 | 3.4 |
 | powershell-tool | opus47-200k-medium | 7 | 5.6min | 5.5min | 0.3 | 28 | $1.46 | $10.24 | 3.9 | 3.4 |
-| typescript-bun | haiku45-200k | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
+| typescript-bun | haiku45-200k-na | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
 | bash | sonnet46-200k-medium* | 6 | 6.3min | 5.9min | 2.3 | 34 | $0.83 | $5.01 | 3.2 | 3.2 |
 | powershell | opus47-200k-medium | 7 | 6.4min | 6.1min | 0.3 | 33 | $1.56 | $10.94 | 3.7 | 3.6 |
-| powershell | haiku45-200k | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
+| powershell | haiku45-200k-na | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
 | default | sonnet46-1m-medium | 7 | 6.8min | 6.8min | 3.3 | 33 | $0.97 | $6.78 | 3.3 | 3.1 |
 | bash | opus47-1m-high | 7 | 6.8min | 6.8min | 0.6 | 35 | $1.65 | $11.54 | 3.5 | 4.0 |
 | default | sonnet46-200k-medium | 7 | 6.9min | 6.7min | 2.6 | 37 | $1.04 | $7.26 | 3.6 | 3.1 |
-| powershell-tool | haiku45-200k | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
+| powershell-tool | haiku45-200k-na | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
 | default | opus47-1m-high | 7 | 7.1min | 7.1min | 0.3 | 34 | $1.95 | $13.67 | 4.2 | 4.2 |
 | typescript-bun | sonnet46-200k-medium | 7 | 7.3min | 5.8min | 2.6 | 34 | $0.92 | $6.41 | 3.2 | 2.9 |
 | typescript-bun | opus47-1m-medium | 7 | 7.6min | 6.4min | 0.4 | 32 | $1.29 | $9.00 | 3.8 | 3.5 |
@@ -401,7 +401,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | sonnet46-1m-medium | 7 | 8.0min | 7.6min | 0.9 | 29 | $1.06 | $7.41 | 3.6 | 3.1 |
 | typescript-bun | sonnet46-1m-medium | 7 | 8.1min | 6.4min | 2.6 | 40 | $1.06 | $7.42 | 3.6 | 3.4 |
 | powershell-tool | sonnet46-200k-medium | 7 | 8.1min | 8.0min | 1.3 | 32 | $1.05 | $7.33 | 3.9 | 3.4 |
-| bash | haiku45-200k* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
+| bash | haiku45-200k-na* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
 | powershell-tool | sonnet46-1m-medium | 7 | 8.4min | 7.6min | 2.1 | 32 | $1.12 | $7.82 | 3.4 | 3.4 |
 | powershell | opus47-1m-high | 7 | 8.5min | 8.1min | 0.3 | 41 | $2.35 | $16.45 | 4.2 | 4.2 |
 | typescript-bun | opus47-1m-high | 7 | 9.0min | 5.9min | 0.1 | 51 | $2.37 | $16.61 | 4.1 | 3.9 |
@@ -409,7 +409,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus47-1m-medium | 7 | 10.2min | 9.8min | 0.0 | 32 | $1.52 | $10.61 | 3.9 | 3.8 |
 | powershell-tool | opus47-1m-xhigh | 7 | 10.6min | 9.5min | 0.3 | 47 | $3.16 | $22.13 | 3.9 | 4.0 |
 | powershell | opus47-1m-xhigh | 7 | 11.5min | 10.3min | 0.4 | 49 | $3.21 | $22.48 | 4.1 | 4.2 |
-| default | haiku45-200k | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
+| default | haiku45-200k-na | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
 | bash | sonnet46-1m-medium | 7 | 11.9min | 11.1min | 4.6 | 41 | $1.53 | $10.71 | 3.4 | 3.4 |
 | typescript-bun | opus47-1m-xhigh | 7 | 12.0min | 7.9min | 0.4 | 66 | $3.54 | $24.75 | 4.5 | 4.0 |
 | bash | opus47-1m-xhigh | 7 | 16.5min | 16.2min | 1.4 | 49 | $2.87 | $20.11 | 3.7 | 3.7 |
@@ -421,11 +421,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| typescript-bun | haiku45-200k | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
-| bash | haiku45-200k* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
-| powershell | haiku45-200k | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
+| typescript-bun | haiku45-200k-na | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
+| bash | haiku45-200k-na* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
+| powershell | haiku45-200k-na | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
 | typescript-bun | opus47-200k-medium | 7 | 5.5min | 4.2min | 0.4 | 31 | $1.35 | $9.47 | 3.8 | 3.4 |
-| powershell-tool | haiku45-200k | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
+| powershell-tool | haiku45-200k-na | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
 | bash | opus47-1m-medium | 7 | 4.9min | 4.5min | 1.1 | 27 | $1.11 | $7.74 | 3.2 | 3.2 |
 | powershell | sonnet46-200k-medium | 7 | 5.3min | 4.7min | 0.7 | 25 | $0.71 | $4.94 | 3.1 | 3.2 |
 | default | opus47-200k-medium | 7 | 4.7min | 4.7min | 0.4 | 27 | $1.17 | $8.18 | 3.8 | 3.6 |
@@ -452,7 +452,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus47-1m-high | 7 | 9.3min | 9.0min | 0.4 | 43 | $2.51 | $17.55 | 4.1 | 4.2 |
 | powershell-tool | opus47-1m-xhigh | 7 | 10.6min | 9.5min | 0.3 | 47 | $3.16 | $22.13 | 3.9 | 4.0 |
 | powershell | opus47-1m-medium | 7 | 10.2min | 9.8min | 0.0 | 32 | $1.52 | $10.61 | 3.9 | 3.8 |
-| default | haiku45-200k | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
+| default | haiku45-200k-na | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
 | powershell | opus47-1m-xhigh | 7 | 11.5min | 10.3min | 0.4 | 49 | $3.21 | $22.48 | 4.1 | 4.2 |
 | bash | sonnet46-1m-medium | 7 | 11.9min | 11.1min | 4.6 | 41 | $1.53 | $10.71 | 3.4 | 3.4 |
 | bash | opus47-1m-xhigh | 7 | 16.5min | 16.2min | 1.4 | 49 | $2.87 | $20.11 | 3.7 | 3.7 |
@@ -490,15 +490,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | sonnet46-1m-medium | 7 | 8.4min | 7.6min | 2.1 | 32 | $1.12 | $7.82 | 3.4 | 3.4 |
 | bash | sonnet46-200k-medium* | 6 | 6.3min | 5.9min | 2.3 | 34 | $0.83 | $5.01 | 3.2 | 3.2 |
 | default | sonnet46-200k-medium | 7 | 6.9min | 6.7min | 2.6 | 37 | $1.04 | $7.26 | 3.6 | 3.1 |
-| powershell | haiku45-200k | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
+| powershell | haiku45-200k-na | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
 | typescript-bun | sonnet46-1m-medium | 7 | 8.1min | 6.4min | 2.6 | 40 | $1.06 | $7.42 | 3.6 | 3.4 |
 | typescript-bun | sonnet46-200k-medium | 7 | 7.3min | 5.8min | 2.6 | 34 | $0.92 | $6.41 | 3.2 | 2.9 |
-| bash | haiku45-200k* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
+| bash | haiku45-200k-na* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
 | default | sonnet46-1m-medium | 7 | 6.8min | 6.8min | 3.3 | 33 | $0.97 | $6.78 | 3.3 | 3.1 |
-| powershell-tool | haiku45-200k | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
+| powershell-tool | haiku45-200k-na | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
 | bash | sonnet46-1m-medium | 7 | 11.9min | 11.1min | 4.6 | 41 | $1.53 | $10.71 | 3.4 | 3.4 |
-| typescript-bun | haiku45-200k | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
-| default | haiku45-200k | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
+| typescript-bun | haiku45-200k-na | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
+| default | haiku45-200k-na | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
 
 </details>
 
@@ -535,12 +535,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell-tool | opus47-1m-xhigh | 7 | 10.6min | 9.5min | 0.3 | 47 | $3.16 | $22.13 | 3.9 | 4.0 |
 | bash | opus47-1m-xhigh | 7 | 16.5min | 16.2min | 1.4 | 49 | $2.87 | $20.11 | 3.7 | 3.7 |
 | powershell | opus47-1m-xhigh | 7 | 11.5min | 10.3min | 0.4 | 49 | $3.21 | $22.48 | 4.1 | 4.2 |
-| powershell-tool | haiku45-200k | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
+| powershell-tool | haiku45-200k-na | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
 | typescript-bun | opus47-1m-high | 7 | 9.0min | 5.9min | 0.1 | 51 | $2.37 | $16.61 | 4.1 | 3.9 |
-| default | haiku45-200k | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
-| powershell | haiku45-200k | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
-| bash | haiku45-200k* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
-| typescript-bun | haiku45-200k | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
+| default | haiku45-200k-na | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
+| powershell | haiku45-200k-na | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
+| bash | haiku45-200k-na* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
+| typescript-bun | haiku45-200k-na | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
 | typescript-bun | opus47-1m-xhigh | 7 | 12.0min | 7.9min | 0.4 | 66 | $3.54 | $24.75 | 4.5 | 4.0 |
 
 </details>
@@ -580,11 +580,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | opus47-200k-medium | 7 | 4.7min | 4.7min | 1.1 | 27 | $1.09 | $7.66 | 3.2 | 4.2 |
 | typescript-bun | sonnet46-200k-medium | 7 | 7.3min | 5.8min | 2.6 | 34 | $0.92 | $6.41 | 3.2 | 2.9 |
 | powershell | sonnet46-200k-medium | 7 | 5.3min | 4.7min | 0.7 | 25 | $0.71 | $4.94 | 3.1 | 3.2 |
-| powershell-tool | haiku45-200k | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
-| bash | haiku45-200k* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
-| typescript-bun | haiku45-200k | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
-| default | haiku45-200k | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
-| powershell | haiku45-200k | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
+| powershell-tool | haiku45-200k-na | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
+| bash | haiku45-200k-na* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
+| typescript-bun | haiku45-200k-na | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
+| default | haiku45-200k-na | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
+| powershell | haiku45-200k-na | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
 
 </details>
 
@@ -623,11 +623,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | sonnet46-200k-medium | 7 | 6.9min | 6.7min | 2.6 | 37 | $1.04 | $7.26 | 3.6 | 3.1 |
 | powershell | sonnet46-1m-medium | 7 | 8.0min | 7.6min | 0.9 | 29 | $1.06 | $7.41 | 3.6 | 3.1 |
 | typescript-bun | sonnet46-200k-medium | 7 | 7.3min | 5.8min | 2.6 | 34 | $0.92 | $6.41 | 3.2 | 2.9 |
-| powershell | haiku45-200k | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
-| bash | haiku45-200k* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
-| default | haiku45-200k | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
-| powershell-tool | haiku45-200k | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
-| typescript-bun | haiku45-200k | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
+| powershell | haiku45-200k-na | 7 | 6.4min | 3.5min | 2.6 | 53 | $0.48 | $3.33 | 2.0 | 2.7 |
+| bash | haiku45-200k-na* | 6 | 8.2min | 3.3min | 3.0 | 57 | $0.48 | $2.88 | 2.3 | 2.5 |
+| default | haiku45-200k-na | 7 | 11.9min | 10.0min | 5.4 | 51 | $0.45 | $3.17 | 2.1 | 2.4 |
+| powershell-tool | haiku45-200k-na | 7 | 7.1min | 4.4min | 3.7 | 51 | $0.49 | $3.43 | 2.6 | 2.3 |
+| typescript-bun | haiku45-200k-na | 7 | 5.9min | 1.7min | 5.0 | 57 | $0.49 | $3.42 | 2.1 | 2.2 |
 
 </details>
 
@@ -642,35 +642,35 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| bash | haiku45-200k-cli2.1.114 | 122 | 44 | 36.1% | 8.8min | 0.4% | 0.1min | 0.0% | 8.7min | 0.4% | 11.1min | 43.9% |
+| bash | haiku45-200k-na-cli2.1.114 | 122 | 44 | 36.1% | 8.8min | 0.4% | 0.1min | 0.0% | 8.7min | 0.4% | 11.1min | 43.9% |
 | bash | opus47-1m-high-cli2.1.114 | 93 | 2 | 2.2% | 0.4min | 0.0% | 0.2min | 0.0% | 0.2min | 0.0% | 13.0min | 1.3% |
 | bash | opus47-1m-medium-cli2.1.112 | 70 | 3 | 4.3% | 0.6min | 0.0% | 0.2min | 0.0% | 0.4min | 0.0% | 7.6min | 5.0% |
 | bash | opus47-1m-xhigh-cli2.1.112 | 112 | 4 | 3.6% | 0.8min | 0.0% | 0.1min | 0.0% | 0.7min | 0.0% | 28.8min | 2.4% |
 | bash | opus47-200k-medium-cli2.1.114 | 67 | 2 | 3.0% | 0.4min | 0.0% | 0.1min | 0.0% | 0.3min | 0.0% | 5.7min | 5.5% |
 | bash | sonnet46-1m-medium-cli2.1.114 | 89 | 6 | 6.7% | 1.2min | 0.1% | 0.2min | 0.0% | 1.0min | 0.0% | 7.7min | 11.2% |
 | bash | sonnet46-200k-medium-cli2.1.114 | 64 | 7 | 10.9% | 1.4min | 0.1% | 0.1min | 0.0% | 1.3min | 0.1% | 2.9min | 31.1% |
-| default | haiku45-200k-cli2.1.114 | 113 | 18 | 15.9% | 2.4min | 0.1% | 0.1min | 0.0% | 2.3min | 0.1% | 4.7min | 32.9% |
+| default | haiku45-200k-na-cli2.1.114 | 113 | 18 | 15.9% | 2.4min | 0.1% | 0.1min | 0.0% | 2.3min | 0.1% | 4.7min | 32.9% |
 | default | opus47-1m-high-cli2.1.114 | 89 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 5.9min | -1.0% |
 | default | opus47-1m-medium-cli2.1.112 | 75 | 1 | 1.3% | 0.1min | 0.0% | 0.2min | 0.0% | -0.1min | -0.0% | 13.4min | -0.7% |
 | default | opus47-1m-xhigh-cli2.1.112 | 103 | 3 | 2.9% | 0.4min | 0.0% | 0.2min | 0.0% | 0.2min | 0.0% | 7.0min | 2.3% |
 | default | opus47-200k-medium-cli2.1.114 | 75 | 1 | 1.3% | 0.1min | 0.0% | 0.2min | 0.0% | -0.0min | -0.0% | 6.8min | -0.4% |
 | default | sonnet46-1m-medium-cli2.1.114 | 80 | 1 | 1.2% | 0.1min | 0.0% | 0.1min | 0.0% | 0.0min | 0.0% | 4.4min | 0.4% |
 | default | sonnet46-200k-medium-cli2.1.114 | 63 | 1 | 1.6% | 0.1min | 0.0% | 0.1min | 0.0% | -0.0min | -0.0% | 4.1min | -0.3% |
-| powershell | haiku45-200k-cli2.1.114 | 109 | 2 | 1.8% | 1.2min | 0.1% | 0.7min | 0.0% | 0.5min | 0.0% | 3.7min | 11.6% |
+| powershell | haiku45-200k-na-cli2.1.114 | 109 | 2 | 1.8% | 1.2min | 0.1% | 0.7min | 0.0% | 0.5min | 0.0% | 3.7min | 11.6% |
 | powershell | opus47-1m-high-cli2.1.114 | 100 | 0 | 0.0% | 0.0min | 0.0% | 0.6min | 0.0% | -0.6min | -0.0% | 7.6min | -8.6% |
 | powershell | opus47-1m-medium-cli2.1.112 | 110 | 0 | 0.0% | 0.0min | 0.0% | 2.5min | 0.1% | -2.5min | -0.1% | 32.3min | -8.4% |
 | powershell | opus47-1m-xhigh-cli2.1.112 | 116 | 0 | 0.0% | 0.0min | 0.0% | 0.8min | 0.0% | -0.8min | -0.0% | 11.9min | -7.3% |
 | powershell | opus47-200k-medium-cli2.1.114 | 110 | 0 | 0.0% | 0.0min | 0.0% | 1.1min | 0.0% | -1.1min | -0.0% | 10.1min | -12.5% |
 | powershell | sonnet46-1m-medium-cli2.1.114 | 66 | 0 | 0.0% | 0.0min | 0.0% | 0.5min | 0.0% | -0.5min | -0.0% | 5.2min | -10.0% |
 | powershell | sonnet46-200k-medium-cli2.1.114 | 47 | 0 | 0.0% | 0.0min | 0.0% | 0.4min | 0.0% | -0.4min | -0.0% | 3.6min | -12.2% |
-| powershell-tool | haiku45-200k-cli2.1.114 | 119 | 11 | 9.2% | 6.4min | 0.3% | 0.6min | 0.0% | 5.8min | 0.3% | 4.1min | 58.8% |
+| powershell-tool | haiku45-200k-na-cli2.1.114 | 119 | 11 | 9.2% | 6.4min | 0.3% | 0.6min | 0.0% | 5.8min | 0.3% | 4.1min | 58.8% |
 | powershell-tool | opus47-1m-high-cli2.1.114 | 103 | 0 | 0.0% | 0.0min | 0.0% | 0.8min | 0.0% | -0.8min | -0.0% | 11.6min | -7.0% |
 | powershell-tool | opus47-1m-medium-cli2.1.112 | 85 | 0 | 0.0% | 0.0min | 0.0% | 1.5min | 0.1% | -1.5min | -0.1% | 18.9min | -8.5% |
 | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 122 | 0 | 0.0% | 0.0min | 0.0% | 0.7min | 0.0% | -0.7min | -0.0% | 8.4min | -9.8% |
 | powershell-tool | opus47-200k-medium-cli2.1.114 | 85 | 0 | 0.0% | 0.0min | 0.0% | 0.9min | 0.0% | -0.9min | -0.0% | 7.1min | -14.8% |
 | powershell-tool | sonnet46-1m-medium-cli2.1.114 | 70 | 0 | 0.0% | 0.0min | 0.0% | 0.5min | 0.0% | -0.5min | -0.0% | 2.8min | -20.9% |
 | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 59 | 0 | 0.0% | 0.0min | 0.0% | 0.5min | 0.0% | -0.5min | -0.0% | 3.8min | -14.7% |
-| typescript-bun | haiku45-200k-cli2.1.114 | 147 | 68 | 46.3% | 9.1min | 0.4% | 3.4min | 0.2% | 5.6min | 0.2% | 4.1min | 57.6% |
+| typescript-bun | haiku45-200k-na-cli2.1.114 | 147 | 68 | 46.3% | 9.1min | 0.4% | 3.4min | 0.2% | 5.6min | 0.2% | 4.1min | 57.6% |
 | typescript-bun | opus47-1m-high-cli2.1.114 | 134 | 67 | 50.0% | 8.9min | 0.4% | 5.8min | 0.3% | 3.1min | 0.1% | 10.4min | 23.0% |
 | typescript-bun | opus47-1m-medium-cli2.1.112 | 87 | 38 | 43.7% | 5.1min | 0.2% | 2.6min | 0.1% | 2.4min | 0.1% | 17.7min | 12.0% |
 | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 159 | 86 | 54.1% | 11.5min | 0.5% | 4.8min | 0.2% | 6.7min | 0.3% | 14.7min | 31.3% |
@@ -684,20 +684,20 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| bash | haiku45-200k-cli2.1.114 | 122 | 44 | 36.1% | 8.8min | 0.4% | 0.1min | 0.0% | 8.7min | 0.4% | 11.1min | 43.9% |
+| bash | haiku45-200k-na-cli2.1.114 | 122 | 44 | 36.1% | 8.8min | 0.4% | 0.1min | 0.0% | 8.7min | 0.4% | 11.1min | 43.9% |
 | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 159 | 86 | 54.1% | 11.5min | 0.5% | 4.8min | 0.2% | 6.7min | 0.3% | 14.7min | 31.3% |
-| powershell-tool | haiku45-200k-cli2.1.114 | 119 | 11 | 9.2% | 6.4min | 0.3% | 0.6min | 0.0% | 5.8min | 0.3% | 4.1min | 58.8% |
-| typescript-bun | haiku45-200k-cli2.1.114 | 147 | 68 | 46.3% | 9.1min | 0.4% | 3.4min | 0.2% | 5.6min | 0.2% | 4.1min | 57.6% |
+| powershell-tool | haiku45-200k-na-cli2.1.114 | 119 | 11 | 9.2% | 6.4min | 0.3% | 0.6min | 0.0% | 5.8min | 0.3% | 4.1min | 58.8% |
+| typescript-bun | haiku45-200k-na-cli2.1.114 | 147 | 68 | 46.3% | 9.1min | 0.4% | 3.4min | 0.2% | 5.6min | 0.2% | 4.1min | 57.6% |
 | typescript-bun | opus47-1m-high-cli2.1.114 | 134 | 67 | 50.0% | 8.9min | 0.4% | 5.8min | 0.3% | 3.1min | 0.1% | 10.4min | 23.0% |
 | typescript-bun | opus47-200k-medium-cli2.1.114 | 90 | 39 | 43.3% | 5.2min | 0.2% | 2.3min | 0.1% | 2.9min | 0.1% | 5.5min | 34.7% |
 | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 93 | 47 | 50.5% | 6.3min | 0.3% | 3.4min | 0.2% | 2.8min | 0.1% | 4.8min | 37.0% |
 | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 81 | 42 | 51.9% | 5.6min | 0.2% | 2.8min | 0.1% | 2.8min | 0.1% | 7.5min | 27.1% |
 | typescript-bun | opus47-1m-medium-cli2.1.112 | 87 | 38 | 43.7% | 5.1min | 0.2% | 2.6min | 0.1% | 2.4min | 0.1% | 17.7min | 12.0% |
-| default | haiku45-200k-cli2.1.114 | 113 | 18 | 15.9% | 2.4min | 0.1% | 0.1min | 0.0% | 2.3min | 0.1% | 4.7min | 32.9% |
+| default | haiku45-200k-na-cli2.1.114 | 113 | 18 | 15.9% | 2.4min | 0.1% | 0.1min | 0.0% | 2.3min | 0.1% | 4.7min | 32.9% |
 | bash | sonnet46-200k-medium-cli2.1.114 | 64 | 7 | 10.9% | 1.4min | 0.1% | 0.1min | 0.0% | 1.3min | 0.1% | 2.9min | 31.1% |
 | bash | sonnet46-1m-medium-cli2.1.114 | 89 | 6 | 6.7% | 1.2min | 0.1% | 0.2min | 0.0% | 1.0min | 0.0% | 7.7min | 11.2% |
 | bash | opus47-1m-xhigh-cli2.1.112 | 112 | 4 | 3.6% | 0.8min | 0.0% | 0.1min | 0.0% | 0.7min | 0.0% | 28.8min | 2.4% |
-| powershell | haiku45-200k-cli2.1.114 | 109 | 2 | 1.8% | 1.2min | 0.1% | 0.7min | 0.0% | 0.5min | 0.0% | 3.7min | 11.6% |
+| powershell | haiku45-200k-na-cli2.1.114 | 109 | 2 | 1.8% | 1.2min | 0.1% | 0.7min | 0.0% | 0.5min | 0.0% | 3.7min | 11.6% |
 | bash | opus47-1m-medium-cli2.1.112 | 70 | 3 | 4.3% | 0.6min | 0.0% | 0.2min | 0.0% | 0.4min | 0.0% | 7.6min | 5.0% |
 | bash | opus47-200k-medium-cli2.1.114 | 67 | 2 | 3.0% | 0.4min | 0.0% | 0.1min | 0.0% | 0.3min | 0.0% | 5.7min | 5.5% |
 | bash | opus47-1m-high-cli2.1.114 | 93 | 2 | 2.2% | 0.4min | 0.0% | 0.2min | 0.0% | 0.2min | 0.0% | 13.0min | 1.3% |
@@ -727,18 +727,18 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
 |------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| powershell-tool | haiku45-200k-cli2.1.114 | 119 | 11 | 9.2% | 6.4min | 0.3% | 0.6min | 0.0% | 5.8min | 0.3% | 4.1min | 58.8% |
-| typescript-bun | haiku45-200k-cli2.1.114 | 147 | 68 | 46.3% | 9.1min | 0.4% | 3.4min | 0.2% | 5.6min | 0.2% | 4.1min | 57.6% |
-| bash | haiku45-200k-cli2.1.114 | 122 | 44 | 36.1% | 8.8min | 0.4% | 0.1min | 0.0% | 8.7min | 0.4% | 11.1min | 43.9% |
+| powershell-tool | haiku45-200k-na-cli2.1.114 | 119 | 11 | 9.2% | 6.4min | 0.3% | 0.6min | 0.0% | 5.8min | 0.3% | 4.1min | 58.8% |
+| typescript-bun | haiku45-200k-na-cli2.1.114 | 147 | 68 | 46.3% | 9.1min | 0.4% | 3.4min | 0.2% | 5.6min | 0.2% | 4.1min | 57.6% |
+| bash | haiku45-200k-na-cli2.1.114 | 122 | 44 | 36.1% | 8.8min | 0.4% | 0.1min | 0.0% | 8.7min | 0.4% | 11.1min | 43.9% |
 | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 93 | 47 | 50.5% | 6.3min | 0.3% | 3.4min | 0.2% | 2.8min | 0.1% | 4.8min | 37.0% |
 | typescript-bun | opus47-200k-medium-cli2.1.114 | 90 | 39 | 43.3% | 5.2min | 0.2% | 2.3min | 0.1% | 2.9min | 0.1% | 5.5min | 34.7% |
-| default | haiku45-200k-cli2.1.114 | 113 | 18 | 15.9% | 2.4min | 0.1% | 0.1min | 0.0% | 2.3min | 0.1% | 4.7min | 32.9% |
+| default | haiku45-200k-na-cli2.1.114 | 113 | 18 | 15.9% | 2.4min | 0.1% | 0.1min | 0.0% | 2.3min | 0.1% | 4.7min | 32.9% |
 | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 159 | 86 | 54.1% | 11.5min | 0.5% | 4.8min | 0.2% | 6.7min | 0.3% | 14.7min | 31.3% |
 | bash | sonnet46-200k-medium-cli2.1.114 | 64 | 7 | 10.9% | 1.4min | 0.1% | 0.1min | 0.0% | 1.3min | 0.1% | 2.9min | 31.1% |
 | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 81 | 42 | 51.9% | 5.6min | 0.2% | 2.8min | 0.1% | 2.8min | 0.1% | 7.5min | 27.1% |
 | typescript-bun | opus47-1m-high-cli2.1.114 | 134 | 67 | 50.0% | 8.9min | 0.4% | 5.8min | 0.3% | 3.1min | 0.1% | 10.4min | 23.0% |
 | typescript-bun | opus47-1m-medium-cli2.1.112 | 87 | 38 | 43.7% | 5.1min | 0.2% | 2.6min | 0.1% | 2.4min | 0.1% | 17.7min | 12.0% |
-| powershell | haiku45-200k-cli2.1.114 | 109 | 2 | 1.8% | 1.2min | 0.1% | 0.7min | 0.0% | 0.5min | 0.0% | 3.7min | 11.6% |
+| powershell | haiku45-200k-na-cli2.1.114 | 109 | 2 | 1.8% | 1.2min | 0.1% | 0.7min | 0.0% | 0.5min | 0.0% | 3.7min | 11.6% |
 | bash | sonnet46-1m-medium-cli2.1.114 | 89 | 6 | 6.7% | 1.2min | 0.1% | 0.2min | 0.0% | 1.0min | 0.0% | 7.7min | 11.2% |
 | bash | opus47-200k-medium-cli2.1.114 | 67 | 2 | 3.0% | 0.4min | 0.0% | 0.1min | 0.0% | 0.3min | 0.0% | 5.7min | 5.5% |
 | bash | opus47-1m-medium-cli2.1.112 | 70 | 3 | 4.3% | 0.6min | 0.0% | 0.2min | 0.0% | 0.4min | 0.0% | 7.6min | 5.0% |
@@ -774,20 +774,20 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 81 | 42 | 51.9% | 5.6min | 0.2% | 2.8min | 0.1% | 2.8min | 0.1% | 7.5min | 27.1% |
 | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 93 | 47 | 50.5% | 6.3min | 0.3% | 3.4min | 0.2% | 2.8min | 0.1% | 4.8min | 37.0% |
 | typescript-bun | opus47-1m-high-cli2.1.114 | 134 | 67 | 50.0% | 8.9min | 0.4% | 5.8min | 0.3% | 3.1min | 0.1% | 10.4min | 23.0% |
-| typescript-bun | haiku45-200k-cli2.1.114 | 147 | 68 | 46.3% | 9.1min | 0.4% | 3.4min | 0.2% | 5.6min | 0.2% | 4.1min | 57.6% |
+| typescript-bun | haiku45-200k-na-cli2.1.114 | 147 | 68 | 46.3% | 9.1min | 0.4% | 3.4min | 0.2% | 5.6min | 0.2% | 4.1min | 57.6% |
 | typescript-bun | opus47-1m-medium-cli2.1.112 | 87 | 38 | 43.7% | 5.1min | 0.2% | 2.6min | 0.1% | 2.4min | 0.1% | 17.7min | 12.0% |
 | typescript-bun | opus47-200k-medium-cli2.1.114 | 90 | 39 | 43.3% | 5.2min | 0.2% | 2.3min | 0.1% | 2.9min | 0.1% | 5.5min | 34.7% |
-| bash | haiku45-200k-cli2.1.114 | 122 | 44 | 36.1% | 8.8min | 0.4% | 0.1min | 0.0% | 8.7min | 0.4% | 11.1min | 43.9% |
-| default | haiku45-200k-cli2.1.114 | 113 | 18 | 15.9% | 2.4min | 0.1% | 0.1min | 0.0% | 2.3min | 0.1% | 4.7min | 32.9% |
+| bash | haiku45-200k-na-cli2.1.114 | 122 | 44 | 36.1% | 8.8min | 0.4% | 0.1min | 0.0% | 8.7min | 0.4% | 11.1min | 43.9% |
+| default | haiku45-200k-na-cli2.1.114 | 113 | 18 | 15.9% | 2.4min | 0.1% | 0.1min | 0.0% | 2.3min | 0.1% | 4.7min | 32.9% |
 | bash | sonnet46-200k-medium-cli2.1.114 | 64 | 7 | 10.9% | 1.4min | 0.1% | 0.1min | 0.0% | 1.3min | 0.1% | 2.9min | 31.1% |
-| powershell-tool | haiku45-200k-cli2.1.114 | 119 | 11 | 9.2% | 6.4min | 0.3% | 0.6min | 0.0% | 5.8min | 0.3% | 4.1min | 58.8% |
+| powershell-tool | haiku45-200k-na-cli2.1.114 | 119 | 11 | 9.2% | 6.4min | 0.3% | 0.6min | 0.0% | 5.8min | 0.3% | 4.1min | 58.8% |
 | bash | sonnet46-1m-medium-cli2.1.114 | 89 | 6 | 6.7% | 1.2min | 0.1% | 0.2min | 0.0% | 1.0min | 0.0% | 7.7min | 11.2% |
 | bash | opus47-1m-medium-cli2.1.112 | 70 | 3 | 4.3% | 0.6min | 0.0% | 0.2min | 0.0% | 0.4min | 0.0% | 7.6min | 5.0% |
 | bash | opus47-1m-xhigh-cli2.1.112 | 112 | 4 | 3.6% | 0.8min | 0.0% | 0.1min | 0.0% | 0.7min | 0.0% | 28.8min | 2.4% |
 | bash | opus47-200k-medium-cli2.1.114 | 67 | 2 | 3.0% | 0.4min | 0.0% | 0.1min | 0.0% | 0.3min | 0.0% | 5.7min | 5.5% |
 | default | opus47-1m-xhigh-cli2.1.112 | 103 | 3 | 2.9% | 0.4min | 0.0% | 0.2min | 0.0% | 0.2min | 0.0% | 7.0min | 2.3% |
 | bash | opus47-1m-high-cli2.1.114 | 93 | 2 | 2.2% | 0.4min | 0.0% | 0.2min | 0.0% | 0.2min | 0.0% | 13.0min | 1.3% |
-| powershell | haiku45-200k-cli2.1.114 | 109 | 2 | 1.8% | 1.2min | 0.1% | 0.7min | 0.0% | 0.5min | 0.0% | 3.7min | 11.6% |
+| powershell | haiku45-200k-na-cli2.1.114 | 109 | 2 | 1.8% | 1.2min | 0.1% | 0.7min | 0.0% | 0.5min | 0.0% | 3.7min | 11.6% |
 | default | sonnet46-200k-medium-cli2.1.114 | 63 | 1 | 1.6% | 0.1min | 0.0% | 0.1min | 0.0% | -0.0min | -0.0% | 4.1min | -0.3% |
 | default | opus47-1m-medium-cli2.1.112 | 75 | 1 | 1.3% | 0.1min | 0.0% | 0.2min | 0.0% | -0.1min | -0.0% | 13.4min | -0.7% |
 | default | opus47-200k-medium-cli2.1.114 | 75 | 1 | 1.3% | 0.1min | 0.0% | 0.2min | 0.0% | -0.0min | -0.0% | 6.8min | -0.4% |
@@ -812,84 +812,84 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | bash | haiku45-200k-cli2.1.114 | 5 | 6.7min | 0.3% | $0.38 | 0.11% |
+| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.114 | 5 | 6.7min | 0.3% | $0.38 | 0.11% |
 | repeated-test-reruns | bash | opus47-1m-medium-cli2.1.112 | 1 | 1.0min | 0.0% | $0.25 | 0.07% |
 | repeated-test-reruns | bash | opus47-1m-xhigh-cli2.1.112 | 1 | 1.7min | 0.1% | $0.52 | 0.14% |
 | repeated-test-reruns | bash | sonnet46-1m-medium-cli2.1.114 | 2 | 1.3min | 0.1% | $0.16 | 0.04% |
 | repeated-test-reruns | bash | sonnet46-200k-medium-cli2.1.114 | 1 | 0.7min | 0.0% | $0.09 | 0.02% |
-| repeated-test-reruns | default | haiku45-200k-cli2.1.114 | 3 | 2.0min | 0.1% | $0.18 | 0.05% |
+| repeated-test-reruns | default | haiku45-200k-na-cli2.1.114 | 3 | 2.0min | 0.1% | $0.18 | 0.05% |
 | repeated-test-reruns | default | opus47-1m-xhigh-cli2.1.112 | 1 | 0.7min | 0.0% | $0.18 | 0.05% |
-| repeated-test-reruns | powershell | haiku45-200k-cli2.1.114 | 7 | 9.7min | 0.4% | $0.80 | 0.22% |
+| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.114 | 7 | 9.7min | 0.4% | $0.80 | 0.22% |
 | repeated-test-reruns | powershell | opus47-1m-high-cli2.1.114 | 1 | 0.7min | 0.0% | $0.16 | 0.05% |
 | repeated-test-reruns | powershell | opus47-1m-medium-cli2.1.112 | 2 | 2.7min | 0.1% | $0.57 | 0.16% |
 | repeated-test-reruns | powershell | opus47-1m-xhigh-cli2.1.112 | 4 | 3.3min | 0.1% | $0.93 | 0.26% |
 | repeated-test-reruns | powershell | opus47-200k-medium-cli2.1.114 | 3 | 2.3min | 0.1% | $0.56 | 0.16% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.114 | 1 | 1.0min | 0.0% | $0.13 | 0.04% |
-| repeated-test-reruns | powershell-tool | haiku45-200k-cli2.1.114 | 6 | 9.3min | 0.4% | $0.78 | 0.22% |
+| repeated-test-reruns | powershell-tool | haiku45-200k-na-cli2.1.114 | 6 | 9.3min | 0.4% | $0.78 | 0.22% |
 | repeated-test-reruns | powershell-tool | opus47-1m-high-cli2.1.114 | 2 | 2.3min | 0.1% | $0.59 | 0.16% |
 | repeated-test-reruns | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 1.0min | 0.0% | $0.18 | 0.05% |
 | repeated-test-reruns | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 1.7min | 0.1% | $0.60 | 0.17% |
 | repeated-test-reruns | powershell-tool | opus47-200k-medium-cli2.1.114 | 1 | 0.7min | 0.0% | $0.16 | 0.04% |
 | repeated-test-reruns | powershell-tool | sonnet46-1m-medium-cli2.1.114 | 2 | 2.7min | 0.1% | $0.39 | 0.11% |
-| repeated-test-reruns | typescript-bun | haiku45-200k-cli2.1.114 | 6 | 8.7min | 0.4% | $0.81 | 0.22% |
+| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.114 | 6 | 8.7min | 0.4% | $0.81 | 0.22% |
 | repeated-test-reruns | typescript-bun | opus47-1m-high-cli2.1.114 | 5 | 7.7min | 0.3% | $2.00 | 0.55% |
 | repeated-test-reruns | typescript-bun | opus47-1m-medium-cli2.1.112 | 1 | 0.7min | 0.0% | $0.16 | 0.04% |
 | repeated-test-reruns | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 5 | 7.7min | 0.3% | $2.28 | 0.63% |
 | repeated-test-reruns | typescript-bun | opus47-200k-medium-cli2.1.114 | 1 | 0.7min | 0.0% | $0.19 | 0.05% |
 | repeated-test-reruns | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 3 | 2.7min | 0.1% | $0.38 | 0.11% |
 | repeated-test-reruns | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 3 | 2.0min | 0.1% | $0.27 | 0.07% |
-| ts-type-error-fix-cycles | typescript-bun | haiku45-200k-cli2.1.114 | 7 | 13.6min | 0.6% | $1.15 | 0.32% |
+| ts-type-error-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.114 | 7 | 13.6min | 0.6% | $1.15 | 0.32% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-high-cli2.1.114 | 7 | 13.4min | 0.6% | $3.60 | 1.00% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-medium-cli2.1.112 | 7 | 7.6min | 0.3% | $1.31 | 0.36% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 7 | 17.2min | 0.8% | $5.12 | 1.42% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-200k-medium-cli2.1.114 | 7 | 7.8min | 0.3% | $1.94 | 0.54% |
 | ts-type-error-fix-cycles | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 7 | 9.4min | 0.4% | $1.28 | 0.35% |
 | ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 7 | 8.4min | 0.4% | $1.07 | 0.30% |
-| act-push-debug-loops | bash | haiku45-200k-cli2.1.114 | 4 | 13.8min | 0.6% | $0.32 | 0.09% |
+| act-push-debug-loops | bash | haiku45-200k-na-cli2.1.114 | 4 | 13.8min | 0.6% | $0.32 | 0.09% |
 | act-push-debug-loops | bash | sonnet46-200k-medium-cli2.1.114 | 3 | 1.8min | 0.1% | $0.23 | 0.06% |
-| act-push-debug-loops | default | haiku45-200k-cli2.1.114 | 4 | 3.0min | 0.1% | $0.12 | 0.03% |
+| act-push-debug-loops | default | haiku45-200k-na-cli2.1.114 | 4 | 3.0min | 0.1% | $0.12 | 0.03% |
 | act-push-debug-loops | default | sonnet46-1m-medium-cli2.1.114 | 1 | 0.3min | 0.0% | $0.05 | 0.01% |
 | act-push-debug-loops | default | sonnet46-200k-medium-cli2.1.114 | 1 | 0.3min | 0.0% | $0.04 | 0.01% |
-| act-push-debug-loops | powershell | haiku45-200k-cli2.1.114 | 5 | 6.3min | 0.3% | $0.42 | 0.12% |
+| act-push-debug-loops | powershell | haiku45-200k-na-cli2.1.114 | 5 | 6.3min | 0.3% | $0.42 | 0.12% |
 | act-push-debug-loops | powershell | sonnet46-1m-medium-cli2.1.114 | 1 | 0.3min | 0.0% | $0.04 | 0.01% |
 | act-push-debug-loops | powershell | sonnet46-200k-medium-cli2.1.114 | 2 | 1.8min | 0.1% | $0.24 | 0.07% |
-| act-push-debug-loops | powershell-tool | haiku45-200k-cli2.1.114 | 4 | 6.1min | 0.3% | $0.38 | 0.11% |
+| act-push-debug-loops | powershell-tool | haiku45-200k-na-cli2.1.114 | 4 | 6.1min | 0.3% | $0.38 | 0.11% |
 | act-push-debug-loops | powershell-tool | sonnet46-1m-medium-cli2.1.114 | 3 | 2.5min | 0.1% | $0.33 | 0.09% |
 | act-push-debug-loops | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 1 | 0.4min | 0.0% | $0.05 | 0.01% |
-| act-push-debug-loops | typescript-bun | haiku45-200k-cli2.1.114 | 4 | 4.0min | 0.2% | $0.32 | 0.09% |
+| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.114 | 4 | 4.0min | 0.2% | $0.32 | 0.09% |
 | act-push-debug-loops | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 1 | 0.8min | 0.0% | $0.24 | 0.07% |
-| fixture-rework | bash | haiku45-200k-cli2.1.114 | 2 | 6.2min | 0.3% | $0.53 | 0.15% |
+| fixture-rework | bash | haiku45-200k-na-cli2.1.114 | 2 | 6.2min | 0.3% | $0.53 | 0.15% |
 | fixture-rework | bash | opus47-1m-medium-cli2.1.112 | 3 | 2.2min | 0.1% | $0.55 | 0.15% |
 | fixture-rework | bash | sonnet46-1m-medium-cli2.1.114 | 2 | 3.8min | 0.2% | $0.42 | 0.12% |
-| fixture-rework | default | haiku45-200k-cli2.1.114 | 2 | 4.2min | 0.2% | $0.10 | 0.03% |
+| fixture-rework | default | haiku45-200k-na-cli2.1.114 | 2 | 4.2min | 0.2% | $0.10 | 0.03% |
 | fixture-rework | default | opus47-1m-xhigh-cli2.1.112 | 3 | 1.8min | 0.1% | $0.50 | 0.14% |
-| fixture-rework | powershell | haiku45-200k-cli2.1.114 | 1 | 1.2min | 0.1% | $0.12 | 0.03% |
+| fixture-rework | powershell | haiku45-200k-na-cli2.1.114 | 1 | 1.2min | 0.1% | $0.12 | 0.03% |
 | fixture-rework | powershell | opus47-1m-high-cli2.1.114 | 3 | 1.8min | 0.1% | $0.50 | 0.14% |
 | fixture-rework | powershell | opus47-1m-xhigh-cli2.1.112 | 3 | 3.0min | 0.1% | $0.82 | 0.23% |
-| fixture-rework | powershell-tool | haiku45-200k-cli2.1.114 | 1 | 0.5min | 0.0% | $0.04 | 0.01% |
+| fixture-rework | powershell-tool | haiku45-200k-na-cli2.1.114 | 1 | 0.5min | 0.0% | $0.04 | 0.01% |
 | fixture-rework | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 0.5min | 0.0% | $0.11 | 0.03% |
 | fixture-rework | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 1.8min | 0.1% | $0.60 | 0.17% |
 | fixture-rework | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.12 | 0.03% |
-| fixture-rework | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 1.0min | 0.0% | $0.09 | 0.02% |
+| fixture-rework | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 1.0min | 0.0% | $0.09 | 0.02% |
 | fixture-rework | typescript-bun | opus47-1m-high-cli2.1.114 | 1 | 0.5min | 0.0% | $0.13 | 0.04% |
 | fixture-rework | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 3 | 2.5min | 0.1% | $0.74 | 0.20% |
 | fixture-rework | typescript-bun | opus47-200k-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.16 | 0.05% |
-| actionlint-fix-cycles | bash | haiku45-200k-cli2.1.114 | 1 | 1.3min | 0.1% | $0.09 | 0.02% |
-| actionlint-fix-cycles | default | haiku45-200k-cli2.1.114 | 3 | 3.7min | 0.2% | $0.16 | 0.04% |
-| actionlint-fix-cycles | powershell | haiku45-200k-cli2.1.114 | 2 | 2.3min | 0.1% | $0.17 | 0.05% |
-| actionlint-fix-cycles | powershell-tool | haiku45-200k-cli2.1.114 | 1 | 0.7min | 0.0% | $0.07 | 0.02% |
-| actionlint-fix-cycles | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 0.7min | 0.0% | $0.04 | 0.01% |
+| actionlint-fix-cycles | bash | haiku45-200k-na-cli2.1.114 | 1 | 1.3min | 0.1% | $0.09 | 0.02% |
+| actionlint-fix-cycles | default | haiku45-200k-na-cli2.1.114 | 3 | 3.7min | 0.2% | $0.16 | 0.04% |
+| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.114 | 2 | 2.3min | 0.1% | $0.17 | 0.05% |
+| actionlint-fix-cycles | powershell-tool | haiku45-200k-na-cli2.1.114 | 1 | 0.7min | 0.0% | $0.07 | 0.02% |
+| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 0.7min | 0.0% | $0.04 | 0.01% |
 | mid-run-module-restructure | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 2.0min | 0.1% | $0.44 | 0.12% |
 | mid-run-module-restructure | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 4.0min | 0.2% | $1.06 | 0.29% |
-| pwsh-runtime-install-overhead | powershell | haiku45-200k-cli2.1.114 | 3 | 1.3min | 0.1% | $0.10 | 0.03% |
+| pwsh-runtime-install-overhead | powershell | haiku45-200k-na-cli2.1.114 | 3 | 1.3min | 0.1% | $0.10 | 0.03% |
 | pwsh-runtime-install-overhead | powershell | sonnet46-200k-medium-cli2.1.114 | 2 | 0.9min | 0.0% | $0.12 | 0.03% |
-| pwsh-runtime-install-overhead | powershell-tool | haiku45-200k-cli2.1.114 | 2 | 2.6min | 0.1% | $0.12 | 0.03% |
+| pwsh-runtime-install-overhead | powershell-tool | haiku45-200k-na-cli2.1.114 | 2 | 2.6min | 0.1% | $0.12 | 0.03% |
 | docker-pwsh-install | powershell | opus47-1m-xhigh-cli2.1.112 | 1 | 1.5min | 0.1% | $0.42 | 0.12% |
 | docker-pwsh-install | powershell | sonnet46-1m-medium-cli2.1.114 | 1 | 3.0min | 0.1% | $0.41 | 0.11% |
 | act-permission-path-errors | default | sonnet46-200k-medium-cli2.1.114 | 1 | 0.5min | 0.0% | $0.07 | 0.02% |
 | act-permission-path-errors | powershell | sonnet46-200k-medium-cli2.1.114 | 1 | 0.5min | 0.0% | $0.06 | 0.02% |
-| act-permission-path-errors | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 1.5min | 0.1% | $0.12 | 0.03% |
-| bats-setup-issues | bash | haiku45-200k-cli2.1.114 | 2 | 1.5min | 0.1% | $0.05 | 0.01% |
+| act-permission-path-errors | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 1.5min | 0.1% | $0.12 | 0.03% |
+| bats-setup-issues | bash | haiku45-200k-na-cli2.1.114 | 2 | 1.5min | 0.1% | $0.05 | 0.01% |
 | bats-setup-issues | bash | sonnet46-1m-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.08 | 0.02% |
 
 
@@ -902,7 +902,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | act-push-debug-loops | default | sonnet46-1m-medium-cli2.1.114 | 1 | 0.3min | 0.0% | $0.05 | 0.01% |
 | act-push-debug-loops | powershell | sonnet46-1m-medium-cli2.1.114 | 1 | 0.3min | 0.0% | $0.04 | 0.01% |
 | act-push-debug-loops | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 1 | 0.4min | 0.0% | $0.05 | 0.01% |
-| fixture-rework | powershell-tool | haiku45-200k-cli2.1.114 | 1 | 0.5min | 0.0% | $0.04 | 0.01% |
+| fixture-rework | powershell-tool | haiku45-200k-na-cli2.1.114 | 1 | 0.5min | 0.0% | $0.04 | 0.01% |
 | fixture-rework | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 0.5min | 0.0% | $0.11 | 0.03% |
 | fixture-rework | typescript-bun | opus47-1m-high-cli2.1.114 | 1 | 0.5min | 0.0% | $0.13 | 0.04% |
 | act-permission-path-errors | default | sonnet46-200k-medium-cli2.1.114 | 1 | 0.5min | 0.0% | $0.07 | 0.02% |
@@ -913,8 +913,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | powershell-tool | opus47-200k-medium-cli2.1.114 | 1 | 0.7min | 0.0% | $0.16 | 0.04% |
 | repeated-test-reruns | typescript-bun | opus47-1m-medium-cli2.1.112 | 1 | 0.7min | 0.0% | $0.16 | 0.04% |
 | repeated-test-reruns | typescript-bun | opus47-200k-medium-cli2.1.114 | 1 | 0.7min | 0.0% | $0.19 | 0.05% |
-| actionlint-fix-cycles | powershell-tool | haiku45-200k-cli2.1.114 | 1 | 0.7min | 0.0% | $0.07 | 0.02% |
-| actionlint-fix-cycles | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 0.7min | 0.0% | $0.04 | 0.01% |
+| actionlint-fix-cycles | powershell-tool | haiku45-200k-na-cli2.1.114 | 1 | 0.7min | 0.0% | $0.07 | 0.02% |
+| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 0.7min | 0.0% | $0.04 | 0.01% |
 | fixture-rework | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.12 | 0.03% |
 | fixture-rework | typescript-bun | opus47-200k-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.16 | 0.05% |
 | bats-setup-issues | bash | sonnet46-1m-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.08 | 0.02% |
@@ -923,14 +923,14 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | bash | opus47-1m-medium-cli2.1.112 | 1 | 1.0min | 0.0% | $0.25 | 0.07% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.114 | 1 | 1.0min | 0.0% | $0.13 | 0.04% |
 | repeated-test-reruns | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 1.0min | 0.0% | $0.18 | 0.05% |
-| fixture-rework | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 1.0min | 0.0% | $0.09 | 0.02% |
-| fixture-rework | powershell | haiku45-200k-cli2.1.114 | 1 | 1.2min | 0.1% | $0.12 | 0.03% |
-| pwsh-runtime-install-overhead | powershell | haiku45-200k-cli2.1.114 | 3 | 1.3min | 0.1% | $0.10 | 0.03% |
+| fixture-rework | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 1.0min | 0.0% | $0.09 | 0.02% |
+| fixture-rework | powershell | haiku45-200k-na-cli2.1.114 | 1 | 1.2min | 0.1% | $0.12 | 0.03% |
+| pwsh-runtime-install-overhead | powershell | haiku45-200k-na-cli2.1.114 | 3 | 1.3min | 0.1% | $0.10 | 0.03% |
 | repeated-test-reruns | bash | sonnet46-1m-medium-cli2.1.114 | 2 | 1.3min | 0.1% | $0.16 | 0.04% |
-| actionlint-fix-cycles | bash | haiku45-200k-cli2.1.114 | 1 | 1.3min | 0.1% | $0.09 | 0.02% |
+| actionlint-fix-cycles | bash | haiku45-200k-na-cli2.1.114 | 1 | 1.3min | 0.1% | $0.09 | 0.02% |
 | docker-pwsh-install | powershell | opus47-1m-xhigh-cli2.1.112 | 1 | 1.5min | 0.1% | $0.42 | 0.12% |
-| act-permission-path-errors | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 1.5min | 0.1% | $0.12 | 0.03% |
-| bats-setup-issues | bash | haiku45-200k-cli2.1.114 | 2 | 1.5min | 0.1% | $0.05 | 0.01% |
+| act-permission-path-errors | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 1.5min | 0.1% | $0.12 | 0.03% |
+| bats-setup-issues | bash | haiku45-200k-na-cli2.1.114 | 2 | 1.5min | 0.1% | $0.05 | 0.01% |
 | repeated-test-reruns | bash | opus47-1m-xhigh-cli2.1.112 | 1 | 1.7min | 0.1% | $0.52 | 0.14% |
 | repeated-test-reruns | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 1.7min | 0.1% | $0.60 | 0.17% |
 | fixture-rework | default | opus47-1m-xhigh-cli2.1.112 | 3 | 1.8min | 0.1% | $0.50 | 0.14% |
@@ -938,44 +938,44 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 1.8min | 0.1% | $0.60 | 0.17% |
 | act-push-debug-loops | bash | sonnet46-200k-medium-cli2.1.114 | 3 | 1.8min | 0.1% | $0.23 | 0.06% |
 | act-push-debug-loops | powershell | sonnet46-200k-medium-cli2.1.114 | 2 | 1.8min | 0.1% | $0.24 | 0.07% |
-| repeated-test-reruns | default | haiku45-200k-cli2.1.114 | 3 | 2.0min | 0.1% | $0.18 | 0.05% |
+| repeated-test-reruns | default | haiku45-200k-na-cli2.1.114 | 3 | 2.0min | 0.1% | $0.18 | 0.05% |
 | repeated-test-reruns | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 3 | 2.0min | 0.1% | $0.27 | 0.07% |
 | mid-run-module-restructure | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 2.0min | 0.1% | $0.44 | 0.12% |
 | fixture-rework | bash | opus47-1m-medium-cli2.1.112 | 3 | 2.2min | 0.1% | $0.55 | 0.15% |
 | repeated-test-reruns | powershell | opus47-200k-medium-cli2.1.114 | 3 | 2.3min | 0.1% | $0.56 | 0.16% |
 | repeated-test-reruns | powershell-tool | opus47-1m-high-cli2.1.114 | 2 | 2.3min | 0.1% | $0.59 | 0.16% |
-| actionlint-fix-cycles | powershell | haiku45-200k-cli2.1.114 | 2 | 2.3min | 0.1% | $0.17 | 0.05% |
+| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.114 | 2 | 2.3min | 0.1% | $0.17 | 0.05% |
 | fixture-rework | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 3 | 2.5min | 0.1% | $0.74 | 0.20% |
 | act-push-debug-loops | powershell-tool | sonnet46-1m-medium-cli2.1.114 | 3 | 2.5min | 0.1% | $0.33 | 0.09% |
-| pwsh-runtime-install-overhead | powershell-tool | haiku45-200k-cli2.1.114 | 2 | 2.6min | 0.1% | $0.12 | 0.03% |
+| pwsh-runtime-install-overhead | powershell-tool | haiku45-200k-na-cli2.1.114 | 2 | 2.6min | 0.1% | $0.12 | 0.03% |
 | repeated-test-reruns | powershell | opus47-1m-medium-cli2.1.112 | 2 | 2.7min | 0.1% | $0.57 | 0.16% |
 | repeated-test-reruns | powershell-tool | sonnet46-1m-medium-cli2.1.114 | 2 | 2.7min | 0.1% | $0.39 | 0.11% |
 | repeated-test-reruns | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 3 | 2.7min | 0.1% | $0.38 | 0.11% |
 | fixture-rework | powershell | opus47-1m-xhigh-cli2.1.112 | 3 | 3.0min | 0.1% | $0.82 | 0.23% |
 | docker-pwsh-install | powershell | sonnet46-1m-medium-cli2.1.114 | 1 | 3.0min | 0.1% | $0.41 | 0.11% |
-| act-push-debug-loops | default | haiku45-200k-cli2.1.114 | 4 | 3.0min | 0.1% | $0.12 | 0.03% |
+| act-push-debug-loops | default | haiku45-200k-na-cli2.1.114 | 4 | 3.0min | 0.1% | $0.12 | 0.03% |
 | repeated-test-reruns | powershell | opus47-1m-xhigh-cli2.1.112 | 4 | 3.3min | 0.1% | $0.93 | 0.26% |
-| actionlint-fix-cycles | default | haiku45-200k-cli2.1.114 | 3 | 3.7min | 0.2% | $0.16 | 0.04% |
+| actionlint-fix-cycles | default | haiku45-200k-na-cli2.1.114 | 3 | 3.7min | 0.2% | $0.16 | 0.04% |
 | fixture-rework | bash | sonnet46-1m-medium-cli2.1.114 | 2 | 3.8min | 0.2% | $0.42 | 0.12% |
 | mid-run-module-restructure | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 4.0min | 0.2% | $1.06 | 0.29% |
-| act-push-debug-loops | typescript-bun | haiku45-200k-cli2.1.114 | 4 | 4.0min | 0.2% | $0.32 | 0.09% |
-| fixture-rework | default | haiku45-200k-cli2.1.114 | 2 | 4.2min | 0.2% | $0.10 | 0.03% |
-| act-push-debug-loops | powershell-tool | haiku45-200k-cli2.1.114 | 4 | 6.1min | 0.3% | $0.38 | 0.11% |
-| fixture-rework | bash | haiku45-200k-cli2.1.114 | 2 | 6.2min | 0.3% | $0.53 | 0.15% |
-| act-push-debug-loops | powershell | haiku45-200k-cli2.1.114 | 5 | 6.3min | 0.3% | $0.42 | 0.12% |
-| repeated-test-reruns | bash | haiku45-200k-cli2.1.114 | 5 | 6.7min | 0.3% | $0.38 | 0.11% |
+| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.114 | 4 | 4.0min | 0.2% | $0.32 | 0.09% |
+| fixture-rework | default | haiku45-200k-na-cli2.1.114 | 2 | 4.2min | 0.2% | $0.10 | 0.03% |
+| act-push-debug-loops | powershell-tool | haiku45-200k-na-cli2.1.114 | 4 | 6.1min | 0.3% | $0.38 | 0.11% |
+| fixture-rework | bash | haiku45-200k-na-cli2.1.114 | 2 | 6.2min | 0.3% | $0.53 | 0.15% |
+| act-push-debug-loops | powershell | haiku45-200k-na-cli2.1.114 | 5 | 6.3min | 0.3% | $0.42 | 0.12% |
+| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.114 | 5 | 6.7min | 0.3% | $0.38 | 0.11% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-medium-cli2.1.112 | 7 | 7.6min | 0.3% | $1.31 | 0.36% |
 | repeated-test-reruns | typescript-bun | opus47-1m-high-cli2.1.114 | 5 | 7.7min | 0.3% | $2.00 | 0.55% |
 | repeated-test-reruns | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 5 | 7.7min | 0.3% | $2.28 | 0.63% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-200k-medium-cli2.1.114 | 7 | 7.8min | 0.3% | $1.94 | 0.54% |
 | ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 7 | 8.4min | 0.4% | $1.07 | 0.30% |
-| repeated-test-reruns | typescript-bun | haiku45-200k-cli2.1.114 | 6 | 8.7min | 0.4% | $0.81 | 0.22% |
-| repeated-test-reruns | powershell-tool | haiku45-200k-cli2.1.114 | 6 | 9.3min | 0.4% | $0.78 | 0.22% |
+| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.114 | 6 | 8.7min | 0.4% | $0.81 | 0.22% |
+| repeated-test-reruns | powershell-tool | haiku45-200k-na-cli2.1.114 | 6 | 9.3min | 0.4% | $0.78 | 0.22% |
 | ts-type-error-fix-cycles | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 7 | 9.4min | 0.4% | $1.28 | 0.35% |
-| repeated-test-reruns | powershell | haiku45-200k-cli2.1.114 | 7 | 9.7min | 0.4% | $0.80 | 0.22% |
+| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.114 | 7 | 9.7min | 0.4% | $0.80 | 0.22% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-high-cli2.1.114 | 7 | 13.4min | 0.6% | $3.60 | 1.00% |
-| ts-type-error-fix-cycles | typescript-bun | haiku45-200k-cli2.1.114 | 7 | 13.6min | 0.6% | $1.15 | 0.32% |
-| act-push-debug-loops | bash | haiku45-200k-cli2.1.114 | 4 | 13.8min | 0.6% | $0.32 | 0.09% |
+| ts-type-error-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.114 | 7 | 13.6min | 0.6% | $1.15 | 0.32% |
+| act-push-debug-loops | bash | haiku45-200k-na-cli2.1.114 | 4 | 13.8min | 0.6% | $0.32 | 0.09% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 7 | 17.2min | 0.8% | $5.12 | 1.42% |
 
 </details>
@@ -986,62 +986,62 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
 | act-push-debug-loops | powershell | sonnet46-1m-medium-cli2.1.114 | 1 | 0.3min | 0.0% | $0.04 | 0.01% |
-| actionlint-fix-cycles | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 0.7min | 0.0% | $0.04 | 0.01% |
+| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 0.7min | 0.0% | $0.04 | 0.01% |
 | act-push-debug-loops | default | sonnet46-200k-medium-cli2.1.114 | 1 | 0.3min | 0.0% | $0.04 | 0.01% |
-| fixture-rework | powershell-tool | haiku45-200k-cli2.1.114 | 1 | 0.5min | 0.0% | $0.04 | 0.01% |
+| fixture-rework | powershell-tool | haiku45-200k-na-cli2.1.114 | 1 | 0.5min | 0.0% | $0.04 | 0.01% |
 | act-push-debug-loops | default | sonnet46-1m-medium-cli2.1.114 | 1 | 0.3min | 0.0% | $0.05 | 0.01% |
 | act-push-debug-loops | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 1 | 0.4min | 0.0% | $0.05 | 0.01% |
-| bats-setup-issues | bash | haiku45-200k-cli2.1.114 | 2 | 1.5min | 0.1% | $0.05 | 0.01% |
+| bats-setup-issues | bash | haiku45-200k-na-cli2.1.114 | 2 | 1.5min | 0.1% | $0.05 | 0.01% |
 | act-permission-path-errors | powershell | sonnet46-200k-medium-cli2.1.114 | 1 | 0.5min | 0.0% | $0.06 | 0.02% |
 | act-permission-path-errors | default | sonnet46-200k-medium-cli2.1.114 | 1 | 0.5min | 0.0% | $0.07 | 0.02% |
-| actionlint-fix-cycles | powershell-tool | haiku45-200k-cli2.1.114 | 1 | 0.7min | 0.0% | $0.07 | 0.02% |
+| actionlint-fix-cycles | powershell-tool | haiku45-200k-na-cli2.1.114 | 1 | 0.7min | 0.0% | $0.07 | 0.02% |
 | bats-setup-issues | bash | sonnet46-1m-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.08 | 0.02% |
 | repeated-test-reruns | bash | sonnet46-200k-medium-cli2.1.114 | 1 | 0.7min | 0.0% | $0.09 | 0.02% |
-| actionlint-fix-cycles | bash | haiku45-200k-cli2.1.114 | 1 | 1.3min | 0.1% | $0.09 | 0.02% |
-| fixture-rework | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 1.0min | 0.0% | $0.09 | 0.02% |
-| fixture-rework | default | haiku45-200k-cli2.1.114 | 2 | 4.2min | 0.2% | $0.10 | 0.03% |
-| pwsh-runtime-install-overhead | powershell | haiku45-200k-cli2.1.114 | 3 | 1.3min | 0.1% | $0.10 | 0.03% |
+| actionlint-fix-cycles | bash | haiku45-200k-na-cli2.1.114 | 1 | 1.3min | 0.1% | $0.09 | 0.02% |
+| fixture-rework | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 1.0min | 0.0% | $0.09 | 0.02% |
+| fixture-rework | default | haiku45-200k-na-cli2.1.114 | 2 | 4.2min | 0.2% | $0.10 | 0.03% |
+| pwsh-runtime-install-overhead | powershell | haiku45-200k-na-cli2.1.114 | 3 | 1.3min | 0.1% | $0.10 | 0.03% |
 | fixture-rework | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 0.5min | 0.0% | $0.11 | 0.03% |
 | pwsh-runtime-install-overhead | powershell | sonnet46-200k-medium-cli2.1.114 | 2 | 0.9min | 0.0% | $0.12 | 0.03% |
-| fixture-rework | powershell | haiku45-200k-cli2.1.114 | 1 | 1.2min | 0.1% | $0.12 | 0.03% |
+| fixture-rework | powershell | haiku45-200k-na-cli2.1.114 | 1 | 1.2min | 0.1% | $0.12 | 0.03% |
 | fixture-rework | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.12 | 0.03% |
-| act-push-debug-loops | default | haiku45-200k-cli2.1.114 | 4 | 3.0min | 0.1% | $0.12 | 0.03% |
-| pwsh-runtime-install-overhead | powershell-tool | haiku45-200k-cli2.1.114 | 2 | 2.6min | 0.1% | $0.12 | 0.03% |
-| act-permission-path-errors | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 1.5min | 0.1% | $0.12 | 0.03% |
+| act-push-debug-loops | default | haiku45-200k-na-cli2.1.114 | 4 | 3.0min | 0.1% | $0.12 | 0.03% |
+| pwsh-runtime-install-overhead | powershell-tool | haiku45-200k-na-cli2.1.114 | 2 | 2.6min | 0.1% | $0.12 | 0.03% |
+| act-permission-path-errors | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 1.5min | 0.1% | $0.12 | 0.03% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.114 | 1 | 1.0min | 0.0% | $0.13 | 0.04% |
 | fixture-rework | typescript-bun | opus47-1m-high-cli2.1.114 | 1 | 0.5min | 0.0% | $0.13 | 0.04% |
 | repeated-test-reruns | typescript-bun | opus47-1m-medium-cli2.1.112 | 1 | 0.7min | 0.0% | $0.16 | 0.04% |
 | repeated-test-reruns | powershell-tool | opus47-200k-medium-cli2.1.114 | 1 | 0.7min | 0.0% | $0.16 | 0.04% |
-| actionlint-fix-cycles | default | haiku45-200k-cli2.1.114 | 3 | 3.7min | 0.2% | $0.16 | 0.04% |
+| actionlint-fix-cycles | default | haiku45-200k-na-cli2.1.114 | 3 | 3.7min | 0.2% | $0.16 | 0.04% |
 | repeated-test-reruns | bash | sonnet46-1m-medium-cli2.1.114 | 2 | 1.3min | 0.1% | $0.16 | 0.04% |
 | fixture-rework | typescript-bun | opus47-200k-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.16 | 0.05% |
 | repeated-test-reruns | powershell | opus47-1m-high-cli2.1.114 | 1 | 0.7min | 0.0% | $0.16 | 0.05% |
-| actionlint-fix-cycles | powershell | haiku45-200k-cli2.1.114 | 2 | 2.3min | 0.1% | $0.17 | 0.05% |
+| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.114 | 2 | 2.3min | 0.1% | $0.17 | 0.05% |
 | repeated-test-reruns | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 1.0min | 0.0% | $0.18 | 0.05% |
 | repeated-test-reruns | default | opus47-1m-xhigh-cli2.1.112 | 1 | 0.7min | 0.0% | $0.18 | 0.05% |
-| repeated-test-reruns | default | haiku45-200k-cli2.1.114 | 3 | 2.0min | 0.1% | $0.18 | 0.05% |
+| repeated-test-reruns | default | haiku45-200k-na-cli2.1.114 | 3 | 2.0min | 0.1% | $0.18 | 0.05% |
 | repeated-test-reruns | typescript-bun | opus47-200k-medium-cli2.1.114 | 1 | 0.7min | 0.0% | $0.19 | 0.05% |
 | act-push-debug-loops | bash | sonnet46-200k-medium-cli2.1.114 | 3 | 1.8min | 0.1% | $0.23 | 0.06% |
 | act-push-debug-loops | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 1 | 0.8min | 0.0% | $0.24 | 0.07% |
 | act-push-debug-loops | powershell | sonnet46-200k-medium-cli2.1.114 | 2 | 1.8min | 0.1% | $0.24 | 0.07% |
 | repeated-test-reruns | bash | opus47-1m-medium-cli2.1.112 | 1 | 1.0min | 0.0% | $0.25 | 0.07% |
 | repeated-test-reruns | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 3 | 2.0min | 0.1% | $0.27 | 0.07% |
-| act-push-debug-loops | bash | haiku45-200k-cli2.1.114 | 4 | 13.8min | 0.6% | $0.32 | 0.09% |
-| act-push-debug-loops | typescript-bun | haiku45-200k-cli2.1.114 | 4 | 4.0min | 0.2% | $0.32 | 0.09% |
+| act-push-debug-loops | bash | haiku45-200k-na-cli2.1.114 | 4 | 13.8min | 0.6% | $0.32 | 0.09% |
+| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.114 | 4 | 4.0min | 0.2% | $0.32 | 0.09% |
 | act-push-debug-loops | powershell-tool | sonnet46-1m-medium-cli2.1.114 | 3 | 2.5min | 0.1% | $0.33 | 0.09% |
-| act-push-debug-loops | powershell-tool | haiku45-200k-cli2.1.114 | 4 | 6.1min | 0.3% | $0.38 | 0.11% |
+| act-push-debug-loops | powershell-tool | haiku45-200k-na-cli2.1.114 | 4 | 6.1min | 0.3% | $0.38 | 0.11% |
 | repeated-test-reruns | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 3 | 2.7min | 0.1% | $0.38 | 0.11% |
-| repeated-test-reruns | bash | haiku45-200k-cli2.1.114 | 5 | 6.7min | 0.3% | $0.38 | 0.11% |
+| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.114 | 5 | 6.7min | 0.3% | $0.38 | 0.11% |
 | repeated-test-reruns | powershell-tool | sonnet46-1m-medium-cli2.1.114 | 2 | 2.7min | 0.1% | $0.39 | 0.11% |
 | docker-pwsh-install | powershell | sonnet46-1m-medium-cli2.1.114 | 1 | 3.0min | 0.1% | $0.41 | 0.11% |
 | fixture-rework | bash | sonnet46-1m-medium-cli2.1.114 | 2 | 3.8min | 0.2% | $0.42 | 0.12% |
-| act-push-debug-loops | powershell | haiku45-200k-cli2.1.114 | 5 | 6.3min | 0.3% | $0.42 | 0.12% |
+| act-push-debug-loops | powershell | haiku45-200k-na-cli2.1.114 | 5 | 6.3min | 0.3% | $0.42 | 0.12% |
 | docker-pwsh-install | powershell | opus47-1m-xhigh-cli2.1.112 | 1 | 1.5min | 0.1% | $0.42 | 0.12% |
 | mid-run-module-restructure | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 2.0min | 0.1% | $0.44 | 0.12% |
 | fixture-rework | default | opus47-1m-xhigh-cli2.1.112 | 3 | 1.8min | 0.1% | $0.50 | 0.14% |
 | fixture-rework | powershell | opus47-1m-high-cli2.1.114 | 3 | 1.8min | 0.1% | $0.50 | 0.14% |
 | repeated-test-reruns | bash | opus47-1m-xhigh-cli2.1.112 | 1 | 1.7min | 0.1% | $0.52 | 0.14% |
-| fixture-rework | bash | haiku45-200k-cli2.1.114 | 2 | 6.2min | 0.3% | $0.53 | 0.15% |
+| fixture-rework | bash | haiku45-200k-na-cli2.1.114 | 2 | 6.2min | 0.3% | $0.53 | 0.15% |
 | fixture-rework | bash | opus47-1m-medium-cli2.1.112 | 3 | 2.2min | 0.1% | $0.55 | 0.15% |
 | repeated-test-reruns | powershell | opus47-200k-medium-cli2.1.114 | 3 | 2.3min | 0.1% | $0.56 | 0.16% |
 | repeated-test-reruns | powershell | opus47-1m-medium-cli2.1.112 | 2 | 2.7min | 0.1% | $0.57 | 0.16% |
@@ -1049,14 +1049,14 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 1.8min | 0.1% | $0.60 | 0.17% |
 | repeated-test-reruns | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 1.7min | 0.1% | $0.60 | 0.17% |
 | fixture-rework | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 3 | 2.5min | 0.1% | $0.74 | 0.20% |
-| repeated-test-reruns | powershell-tool | haiku45-200k-cli2.1.114 | 6 | 9.3min | 0.4% | $0.78 | 0.22% |
-| repeated-test-reruns | powershell | haiku45-200k-cli2.1.114 | 7 | 9.7min | 0.4% | $0.80 | 0.22% |
-| repeated-test-reruns | typescript-bun | haiku45-200k-cli2.1.114 | 6 | 8.7min | 0.4% | $0.81 | 0.22% |
+| repeated-test-reruns | powershell-tool | haiku45-200k-na-cli2.1.114 | 6 | 9.3min | 0.4% | $0.78 | 0.22% |
+| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.114 | 7 | 9.7min | 0.4% | $0.80 | 0.22% |
+| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.114 | 6 | 8.7min | 0.4% | $0.81 | 0.22% |
 | fixture-rework | powershell | opus47-1m-xhigh-cli2.1.112 | 3 | 3.0min | 0.1% | $0.82 | 0.23% |
 | repeated-test-reruns | powershell | opus47-1m-xhigh-cli2.1.112 | 4 | 3.3min | 0.1% | $0.93 | 0.26% |
 | mid-run-module-restructure | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 4.0min | 0.2% | $1.06 | 0.29% |
 | ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 7 | 8.4min | 0.4% | $1.07 | 0.30% |
-| ts-type-error-fix-cycles | typescript-bun | haiku45-200k-cli2.1.114 | 7 | 13.6min | 0.6% | $1.15 | 0.32% |
+| ts-type-error-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.114 | 7 | 13.6min | 0.6% | $1.15 | 0.32% |
 | ts-type-error-fix-cycles | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 7 | 9.4min | 0.4% | $1.28 | 0.35% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-medium-cli2.1.112 | 7 | 7.6min | 0.3% | $1.31 | 0.36% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-200k-medium-cli2.1.114 | 7 | 7.8min | 0.3% | $1.94 | 0.54% |
@@ -1087,22 +1087,22 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | act-push-debug-loops | powershell | sonnet46-1m-medium-cli2.1.114 | 1 | 0.3min | 0.0% | $0.04 | 0.01% |
 | act-push-debug-loops | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 1 | 0.4min | 0.0% | $0.05 | 0.01% |
 | act-push-debug-loops | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 1 | 0.8min | 0.0% | $0.24 | 0.07% |
-| fixture-rework | powershell | haiku45-200k-cli2.1.114 | 1 | 1.2min | 0.1% | $0.12 | 0.03% |
-| fixture-rework | powershell-tool | haiku45-200k-cli2.1.114 | 1 | 0.5min | 0.0% | $0.04 | 0.01% |
+| fixture-rework | powershell | haiku45-200k-na-cli2.1.114 | 1 | 1.2min | 0.1% | $0.12 | 0.03% |
+| fixture-rework | powershell-tool | haiku45-200k-na-cli2.1.114 | 1 | 0.5min | 0.0% | $0.04 | 0.01% |
 | fixture-rework | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 0.5min | 0.0% | $0.11 | 0.03% |
 | fixture-rework | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.12 | 0.03% |
-| fixture-rework | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 1.0min | 0.0% | $0.09 | 0.02% |
+| fixture-rework | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 1.0min | 0.0% | $0.09 | 0.02% |
 | fixture-rework | typescript-bun | opus47-1m-high-cli2.1.114 | 1 | 0.5min | 0.0% | $0.13 | 0.04% |
 | fixture-rework | typescript-bun | opus47-200k-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.16 | 0.05% |
-| actionlint-fix-cycles | bash | haiku45-200k-cli2.1.114 | 1 | 1.3min | 0.1% | $0.09 | 0.02% |
-| actionlint-fix-cycles | powershell-tool | haiku45-200k-cli2.1.114 | 1 | 0.7min | 0.0% | $0.07 | 0.02% |
-| actionlint-fix-cycles | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 0.7min | 0.0% | $0.04 | 0.01% |
+| actionlint-fix-cycles | bash | haiku45-200k-na-cli2.1.114 | 1 | 1.3min | 0.1% | $0.09 | 0.02% |
+| actionlint-fix-cycles | powershell-tool | haiku45-200k-na-cli2.1.114 | 1 | 0.7min | 0.0% | $0.07 | 0.02% |
+| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 0.7min | 0.0% | $0.04 | 0.01% |
 | mid-run-module-restructure | powershell-tool | opus47-1m-medium-cli2.1.112 | 1 | 2.0min | 0.1% | $0.44 | 0.12% |
 | docker-pwsh-install | powershell | opus47-1m-xhigh-cli2.1.112 | 1 | 1.5min | 0.1% | $0.42 | 0.12% |
 | docker-pwsh-install | powershell | sonnet46-1m-medium-cli2.1.114 | 1 | 3.0min | 0.1% | $0.41 | 0.11% |
 | act-permission-path-errors | default | sonnet46-200k-medium-cli2.1.114 | 1 | 0.5min | 0.0% | $0.07 | 0.02% |
 | act-permission-path-errors | powershell | sonnet46-200k-medium-cli2.1.114 | 1 | 0.5min | 0.0% | $0.06 | 0.02% |
-| act-permission-path-errors | typescript-bun | haiku45-200k-cli2.1.114 | 1 | 1.5min | 0.1% | $0.12 | 0.03% |
+| act-permission-path-errors | typescript-bun | haiku45-200k-na-cli2.1.114 | 1 | 1.5min | 0.1% | $0.12 | 0.03% |
 | bats-setup-issues | bash | sonnet46-1m-medium-cli2.1.114 | 1 | 0.8min | 0.0% | $0.08 | 0.02% |
 | repeated-test-reruns | bash | sonnet46-1m-medium-cli2.1.114 | 2 | 1.3min | 0.1% | $0.16 | 0.04% |
 | repeated-test-reruns | powershell | opus47-1m-medium-cli2.1.112 | 2 | 2.7min | 0.1% | $0.57 | 0.16% |
@@ -1110,16 +1110,16 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 1.7min | 0.1% | $0.60 | 0.17% |
 | repeated-test-reruns | powershell-tool | sonnet46-1m-medium-cli2.1.114 | 2 | 2.7min | 0.1% | $0.39 | 0.11% |
 | act-push-debug-loops | powershell | sonnet46-200k-medium-cli2.1.114 | 2 | 1.8min | 0.1% | $0.24 | 0.07% |
-| fixture-rework | bash | haiku45-200k-cli2.1.114 | 2 | 6.2min | 0.3% | $0.53 | 0.15% |
+| fixture-rework | bash | haiku45-200k-na-cli2.1.114 | 2 | 6.2min | 0.3% | $0.53 | 0.15% |
 | fixture-rework | bash | sonnet46-1m-medium-cli2.1.114 | 2 | 3.8min | 0.2% | $0.42 | 0.12% |
-| fixture-rework | default | haiku45-200k-cli2.1.114 | 2 | 4.2min | 0.2% | $0.10 | 0.03% |
+| fixture-rework | default | haiku45-200k-na-cli2.1.114 | 2 | 4.2min | 0.2% | $0.10 | 0.03% |
 | fixture-rework | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 1.8min | 0.1% | $0.60 | 0.17% |
-| actionlint-fix-cycles | powershell | haiku45-200k-cli2.1.114 | 2 | 2.3min | 0.1% | $0.17 | 0.05% |
+| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.114 | 2 | 2.3min | 0.1% | $0.17 | 0.05% |
 | mid-run-module-restructure | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 2 | 4.0min | 0.2% | $1.06 | 0.29% |
 | pwsh-runtime-install-overhead | powershell | sonnet46-200k-medium-cli2.1.114 | 2 | 0.9min | 0.0% | $0.12 | 0.03% |
-| pwsh-runtime-install-overhead | powershell-tool | haiku45-200k-cli2.1.114 | 2 | 2.6min | 0.1% | $0.12 | 0.03% |
-| bats-setup-issues | bash | haiku45-200k-cli2.1.114 | 2 | 1.5min | 0.1% | $0.05 | 0.01% |
-| repeated-test-reruns | default | haiku45-200k-cli2.1.114 | 3 | 2.0min | 0.1% | $0.18 | 0.05% |
+| pwsh-runtime-install-overhead | powershell-tool | haiku45-200k-na-cli2.1.114 | 2 | 2.6min | 0.1% | $0.12 | 0.03% |
+| bats-setup-issues | bash | haiku45-200k-na-cli2.1.114 | 2 | 1.5min | 0.1% | $0.05 | 0.01% |
+| repeated-test-reruns | default | haiku45-200k-na-cli2.1.114 | 3 | 2.0min | 0.1% | $0.18 | 0.05% |
 | repeated-test-reruns | powershell | opus47-200k-medium-cli2.1.114 | 3 | 2.3min | 0.1% | $0.56 | 0.16% |
 | repeated-test-reruns | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 3 | 2.7min | 0.1% | $0.38 | 0.11% |
 | repeated-test-reruns | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 3 | 2.0min | 0.1% | $0.27 | 0.07% |
@@ -1130,21 +1130,21 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | powershell | opus47-1m-high-cli2.1.114 | 3 | 1.8min | 0.1% | $0.50 | 0.14% |
 | fixture-rework | powershell | opus47-1m-xhigh-cli2.1.112 | 3 | 3.0min | 0.1% | $0.82 | 0.23% |
 | fixture-rework | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 3 | 2.5min | 0.1% | $0.74 | 0.20% |
-| actionlint-fix-cycles | default | haiku45-200k-cli2.1.114 | 3 | 3.7min | 0.2% | $0.16 | 0.04% |
-| pwsh-runtime-install-overhead | powershell | haiku45-200k-cli2.1.114 | 3 | 1.3min | 0.1% | $0.10 | 0.03% |
+| actionlint-fix-cycles | default | haiku45-200k-na-cli2.1.114 | 3 | 3.7min | 0.2% | $0.16 | 0.04% |
+| pwsh-runtime-install-overhead | powershell | haiku45-200k-na-cli2.1.114 | 3 | 1.3min | 0.1% | $0.10 | 0.03% |
 | repeated-test-reruns | powershell | opus47-1m-xhigh-cli2.1.112 | 4 | 3.3min | 0.1% | $0.93 | 0.26% |
-| act-push-debug-loops | bash | haiku45-200k-cli2.1.114 | 4 | 13.8min | 0.6% | $0.32 | 0.09% |
-| act-push-debug-loops | default | haiku45-200k-cli2.1.114 | 4 | 3.0min | 0.1% | $0.12 | 0.03% |
-| act-push-debug-loops | powershell-tool | haiku45-200k-cli2.1.114 | 4 | 6.1min | 0.3% | $0.38 | 0.11% |
-| act-push-debug-loops | typescript-bun | haiku45-200k-cli2.1.114 | 4 | 4.0min | 0.2% | $0.32 | 0.09% |
-| repeated-test-reruns | bash | haiku45-200k-cli2.1.114 | 5 | 6.7min | 0.3% | $0.38 | 0.11% |
+| act-push-debug-loops | bash | haiku45-200k-na-cli2.1.114 | 4 | 13.8min | 0.6% | $0.32 | 0.09% |
+| act-push-debug-loops | default | haiku45-200k-na-cli2.1.114 | 4 | 3.0min | 0.1% | $0.12 | 0.03% |
+| act-push-debug-loops | powershell-tool | haiku45-200k-na-cli2.1.114 | 4 | 6.1min | 0.3% | $0.38 | 0.11% |
+| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.114 | 4 | 4.0min | 0.2% | $0.32 | 0.09% |
+| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.114 | 5 | 6.7min | 0.3% | $0.38 | 0.11% |
 | repeated-test-reruns | typescript-bun | opus47-1m-high-cli2.1.114 | 5 | 7.7min | 0.3% | $2.00 | 0.55% |
 | repeated-test-reruns | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 5 | 7.7min | 0.3% | $2.28 | 0.63% |
-| act-push-debug-loops | powershell | haiku45-200k-cli2.1.114 | 5 | 6.3min | 0.3% | $0.42 | 0.12% |
-| repeated-test-reruns | powershell-tool | haiku45-200k-cli2.1.114 | 6 | 9.3min | 0.4% | $0.78 | 0.22% |
-| repeated-test-reruns | typescript-bun | haiku45-200k-cli2.1.114 | 6 | 8.7min | 0.4% | $0.81 | 0.22% |
-| repeated-test-reruns | powershell | haiku45-200k-cli2.1.114 | 7 | 9.7min | 0.4% | $0.80 | 0.22% |
-| ts-type-error-fix-cycles | typescript-bun | haiku45-200k-cli2.1.114 | 7 | 13.6min | 0.6% | $1.15 | 0.32% |
+| act-push-debug-loops | powershell | haiku45-200k-na-cli2.1.114 | 5 | 6.3min | 0.3% | $0.42 | 0.12% |
+| repeated-test-reruns | powershell-tool | haiku45-200k-na-cli2.1.114 | 6 | 9.3min | 0.4% | $0.78 | 0.22% |
+| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.114 | 6 | 8.7min | 0.4% | $0.81 | 0.22% |
+| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.114 | 7 | 9.7min | 0.4% | $0.80 | 0.22% |
+| ts-type-error-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.114 | 7 | 13.6min | 0.6% | $1.15 | 0.32% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-high-cli2.1.114 | 7 | 13.4min | 0.6% | $3.60 | 1.00% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-medium-cli2.1.112 | 7 | 7.6min | 0.3% | $1.31 | 0.36% |
 | ts-type-error-fix-cycles | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 7 | 17.2min | 0.8% | $5.12 | 1.42% |
@@ -1180,35 +1180,35 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| bash | haiku45-200k-cli2.1.114 | 7 | 14 | 29.6min | 1.3% | $1.36 | 0.38% |
+| bash | haiku45-200k-na-cli2.1.114 | 7 | 14 | 29.6min | 1.3% | $1.36 | 0.38% |
 | bash | opus47-1m-high-cli2.1.114 | 7 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | bash | opus47-1m-medium-cli2.1.112 | 7 | 4 | 3.2min | 0.1% | $0.80 | 0.22% |
 | bash | opus47-1m-xhigh-cli2.1.112 | 7 | 1 | 1.7min | 0.1% | $0.52 | 0.14% |
 | bash | opus47-200k-medium-cli2.1.114 | 7 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | bash | sonnet46-1m-medium-cli2.1.114 | 7 | 5 | 5.8min | 0.3% | $0.66 | 0.18% |
 | bash | sonnet46-200k-medium-cli2.1.114 | 7 | 4 | 2.5min | 0.1% | $0.32 | 0.09% |
-| default | haiku45-200k-cli2.1.114 | 7 | 12 | 12.9min | 0.6% | $0.56 | 0.16% |
+| default | haiku45-200k-na-cli2.1.114 | 7 | 12 | 12.9min | 0.6% | $0.56 | 0.16% |
 | default | opus47-1m-high-cli2.1.114 | 7 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | default | opus47-1m-medium-cli2.1.112 | 7 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | default | opus47-1m-xhigh-cli2.1.112 | 7 | 4 | 2.4min | 0.1% | $0.68 | 0.19% |
 | default | opus47-200k-medium-cli2.1.114 | 7 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | default | sonnet46-1m-medium-cli2.1.114 | 7 | 1 | 0.3min | 0.0% | $0.05 | 0.01% |
 | default | sonnet46-200k-medium-cli2.1.114 | 7 | 2 | 0.8min | 0.0% | $0.11 | 0.03% |
-| powershell | haiku45-200k-cli2.1.114 | 7 | 18 | 20.8min | 0.9% | $1.61 | 0.45% |
+| powershell | haiku45-200k-na-cli2.1.114 | 7 | 18 | 20.8min | 0.9% | $1.61 | 0.45% |
 | powershell | opus47-1m-high-cli2.1.114 | 7 | 4 | 2.4min | 0.1% | $0.66 | 0.18% |
 | powershell | opus47-1m-medium-cli2.1.112 | 7 | 2 | 2.7min | 0.1% | $0.57 | 0.16% |
 | powershell | opus47-1m-xhigh-cli2.1.112 | 7 | 8 | 7.8min | 0.3% | $2.17 | 0.60% |
 | powershell | opus47-200k-medium-cli2.1.114 | 7 | 3 | 2.3min | 0.1% | $0.56 | 0.16% |
 | powershell | sonnet46-1m-medium-cli2.1.114 | 7 | 2 | 3.3min | 0.1% | $0.45 | 0.12% |
 | powershell | sonnet46-200k-medium-cli2.1.114 | 7 | 6 | 4.2min | 0.2% | $0.54 | 0.15% |
-| powershell-tool | haiku45-200k-cli2.1.114 | 7 | 14 | 19.2min | 0.8% | $1.39 | 0.39% |
+| powershell-tool | haiku45-200k-na-cli2.1.114 | 7 | 14 | 19.2min | 0.8% | $1.39 | 0.39% |
 | powershell-tool | opus47-1m-high-cli2.1.114 | 7 | 2 | 2.3min | 0.1% | $0.59 | 0.16% |
 | powershell-tool | opus47-1m-medium-cli2.1.112 | 7 | 3 | 3.5min | 0.2% | $0.73 | 0.20% |
 | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 7 | 6 | 7.4min | 0.3% | $2.26 | 0.63% |
 | powershell-tool | opus47-200k-medium-cli2.1.114 | 7 | 1 | 0.7min | 0.0% | $0.16 | 0.04% |
 | powershell-tool | sonnet46-1m-medium-cli2.1.114 | 7 | 5 | 5.2min | 0.2% | $0.72 | 0.20% |
 | powershell-tool | sonnet46-200k-medium-cli2.1.114 | 7 | 2 | 1.2min | 0.1% | $0.17 | 0.05% |
-| typescript-bun | haiku45-200k-cli2.1.114 | 7 | 20 | 29.5min | 1.3% | $2.54 | 0.70% |
+| typescript-bun | haiku45-200k-na-cli2.1.114 | 7 | 20 | 29.5min | 1.3% | $2.54 | 0.70% |
 | typescript-bun | opus47-1m-high-cli2.1.114 | 7 | 13 | 21.6min | 1.0% | $5.72 | 1.59% |
 | typescript-bun | opus47-1m-medium-cli2.1.112 | 7 | 8 | 8.3min | 0.4% | $1.47 | 0.41% |
 | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 7 | 16 | 28.2min | 1.2% | $8.37 | 2.32% |
@@ -1250,13 +1250,13 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | typescript-bun | opus47-200k-medium-cli2.1.114 | 7 | 9 | 9.2min | 0.4% | $2.29 | 0.64% |
 | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 7 | 10 | 10.4min | 0.5% | $1.34 | 0.37% |
 | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 7 | 10 | 12.1min | 0.5% | $1.66 | 0.46% |
-| default | haiku45-200k-cli2.1.114 | 7 | 12 | 12.9min | 0.6% | $0.56 | 0.16% |
-| powershell-tool | haiku45-200k-cli2.1.114 | 7 | 14 | 19.2min | 0.8% | $1.39 | 0.39% |
-| powershell | haiku45-200k-cli2.1.114 | 7 | 18 | 20.8min | 0.9% | $1.61 | 0.45% |
+| default | haiku45-200k-na-cli2.1.114 | 7 | 12 | 12.9min | 0.6% | $0.56 | 0.16% |
+| powershell-tool | haiku45-200k-na-cli2.1.114 | 7 | 14 | 19.2min | 0.8% | $1.39 | 0.39% |
+| powershell | haiku45-200k-na-cli2.1.114 | 7 | 18 | 20.8min | 0.9% | $1.61 | 0.45% |
 | typescript-bun | opus47-1m-high-cli2.1.114 | 7 | 13 | 21.6min | 1.0% | $5.72 | 1.59% |
 | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 7 | 16 | 28.2min | 1.2% | $8.37 | 2.32% |
-| typescript-bun | haiku45-200k-cli2.1.114 | 7 | 20 | 29.5min | 1.3% | $2.54 | 0.70% |
-| bash | haiku45-200k-cli2.1.114 | 7 | 14 | 29.6min | 1.3% | $1.36 | 0.38% |
+| typescript-bun | haiku45-200k-na-cli2.1.114 | 7 | 20 | 29.5min | 1.3% | $2.54 | 0.70% |
+| bash | haiku45-200k-na-cli2.1.114 | 7 | 14 | 29.6min | 1.3% | $1.36 | 0.38% |
 
 </details>
 
@@ -1279,7 +1279,7 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | bash | opus47-1m-xhigh-cli2.1.112 | 7 | 1 | 1.7min | 0.1% | $0.52 | 0.14% |
 | powershell | sonnet46-200k-medium-cli2.1.114 | 7 | 6 | 4.2min | 0.2% | $0.54 | 0.15% |
 | powershell | opus47-200k-medium-cli2.1.114 | 7 | 3 | 2.3min | 0.1% | $0.56 | 0.16% |
-| default | haiku45-200k-cli2.1.114 | 7 | 12 | 12.9min | 0.6% | $0.56 | 0.16% |
+| default | haiku45-200k-na-cli2.1.114 | 7 | 12 | 12.9min | 0.6% | $0.56 | 0.16% |
 | powershell | opus47-1m-medium-cli2.1.112 | 7 | 2 | 2.7min | 0.1% | $0.57 | 0.16% |
 | powershell-tool | opus47-1m-high-cli2.1.114 | 7 | 2 | 2.3min | 0.1% | $0.59 | 0.16% |
 | powershell | opus47-1m-high-cli2.1.114 | 7 | 4 | 2.4min | 0.1% | $0.66 | 0.18% |
@@ -1289,15 +1289,15 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | powershell-tool | opus47-1m-medium-cli2.1.112 | 7 | 3 | 3.5min | 0.2% | $0.73 | 0.20% |
 | bash | opus47-1m-medium-cli2.1.112 | 7 | 4 | 3.2min | 0.1% | $0.80 | 0.22% |
 | typescript-bun | sonnet46-200k-medium-cli2.1.114 | 7 | 10 | 10.4min | 0.5% | $1.34 | 0.37% |
-| bash | haiku45-200k-cli2.1.114 | 7 | 14 | 29.6min | 1.3% | $1.36 | 0.38% |
-| powershell-tool | haiku45-200k-cli2.1.114 | 7 | 14 | 19.2min | 0.8% | $1.39 | 0.39% |
+| bash | haiku45-200k-na-cli2.1.114 | 7 | 14 | 29.6min | 1.3% | $1.36 | 0.38% |
+| powershell-tool | haiku45-200k-na-cli2.1.114 | 7 | 14 | 19.2min | 0.8% | $1.39 | 0.39% |
 | typescript-bun | opus47-1m-medium-cli2.1.112 | 7 | 8 | 8.3min | 0.4% | $1.47 | 0.41% |
-| powershell | haiku45-200k-cli2.1.114 | 7 | 18 | 20.8min | 0.9% | $1.61 | 0.45% |
+| powershell | haiku45-200k-na-cli2.1.114 | 7 | 18 | 20.8min | 0.9% | $1.61 | 0.45% |
 | typescript-bun | sonnet46-1m-medium-cli2.1.114 | 7 | 10 | 12.1min | 0.5% | $1.66 | 0.46% |
 | powershell | opus47-1m-xhigh-cli2.1.112 | 7 | 8 | 7.8min | 0.3% | $2.17 | 0.60% |
 | powershell-tool | opus47-1m-xhigh-cli2.1.112 | 7 | 6 | 7.4min | 0.3% | $2.26 | 0.63% |
 | typescript-bun | opus47-200k-medium-cli2.1.114 | 7 | 9 | 9.2min | 0.4% | $2.29 | 0.64% |
-| typescript-bun | haiku45-200k-cli2.1.114 | 7 | 20 | 29.5min | 1.3% | $2.54 | 0.70% |
+| typescript-bun | haiku45-200k-na-cli2.1.114 | 7 | 20 | 29.5min | 1.3% | $2.54 | 0.70% |
 | typescript-bun | opus47-1m-high-cli2.1.114 | 7 | 13 | 21.6min | 1.0% | $5.72 | 1.59% |
 | typescript-bun | opus47-1m-xhigh-cli2.1.112 | 7 | 16 | 28.2min | 1.2% | $8.37 | 2.32% |
 
@@ -1319,35 +1319,35 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
-| bash | haiku45-200k | 14.3 | 21.4 | 1.5 | 0.85 |
+| bash | haiku45-200k-na | 14.3 | 21.4 | 1.5 | 0.85 |
 | bash | opus47-1m-high | 24.9 | 49.4 | 2.0 | 1.23 |
 | bash | opus47-1m-medium | 11.9 | 31.7 | 2.7 | 1.21 |
 | bash | opus47-1m-xhigh | 25.9 | 47.3 | 1.8 | 1.26 |
 | bash | opus47-200k-medium | 17.0 | 35.1 | 2.1 | 1.14 |
 | bash | sonnet46-1m-medium | 22.1 | 44.6 | 2.0 | 1.36 |
 | bash | sonnet46-200k-medium | 17.4 | 36.4 | 2.1 | 0.91 |
-| default | haiku45-200k | 15.9 | 32.3 | 2.0 | 1.43 |
+| default | haiku45-200k-na | 15.9 | 32.3 | 2.0 | 1.43 |
 | default | opus47-1m-high | 23.3 | 50.3 | 2.2 | 1.16 |
 | default | opus47-1m-medium | 17.0 | 33.3 | 2.0 | 1.64 |
 | default | opus47-1m-xhigh | 24.0 | 50.6 | 2.1 | 1.55 |
 | default | opus47-200k-medium | 17.4 | 42.7 | 2.5 | 1.77 |
 | default | sonnet46-1m-medium | 30.9 | 37.7 | 1.2 | 1.26 |
 | default | sonnet46-200k-medium | 30.1 | 45.4 | 1.5 | 1.81 |
-| powershell | haiku45-200k | 5.3 | 9.9 | 1.9 | 0.28 |
+| powershell | haiku45-200k-na | 5.3 | 9.9 | 1.9 | 0.28 |
 | powershell | opus47-1m-high | 25.4 | 52.6 | 2.1 | 3.06 |
 | powershell | opus47-1m-medium | 20.0 | 38.9 | 1.9 | 3.38 |
 | powershell | opus47-1m-xhigh | 28.1 | 56.7 | 2.0 | 0.99 |
 | powershell | opus47-200k-medium | 22.6 | 47.0 | 2.1 | 8.67 |
 | powershell | sonnet46-1m-medium | 32.1 | 44.3 | 1.4 | 1.91 |
 | powershell | sonnet46-200k-medium | 27.6 | 41.1 | 1.5 | 1.38 |
-| powershell-tool | haiku45-200k | 7.4 | 14.9 | 2.0 | 0.65 |
+| powershell-tool | haiku45-200k-na | 7.4 | 14.9 | 2.0 | 0.65 |
 | powershell-tool | opus47-1m-high | 27.4 | 48.0 | 1.8 | 3.17 |
 | powershell-tool | opus47-1m-medium | 18.9 | 40.6 | 2.2 | 3.47 |
 | powershell-tool | opus47-1m-xhigh | 29.3 | 53.7 | 1.8 | 3.37 |
 | powershell-tool | opus47-200k-medium | 19.7 | 37.0 | 1.9 | 2.00 |
 | powershell-tool | sonnet46-1m-medium | 31.3 | 46.1 | 1.5 | 1.39 |
 | powershell-tool | sonnet46-200k-medium | 31.7 | 42.3 | 1.3 | 0.94 |
-| typescript-bun | haiku45-200k | 17.3 | 40.4 | 2.3 | 0.77 |
+| typescript-bun | haiku45-200k-na | 17.3 | 40.4 | 2.3 | 0.77 |
 | typescript-bun | opus47-1m-high | 27.6 | 61.0 | 2.2 | 1.48 |
 | typescript-bun | opus47-1m-medium | 18.0 | 42.0 | 2.3 | 1.54 |
 | typescript-bun | opus47-1m-xhigh | 30.7 | 65.6 | 2.1 | 1.73 |
@@ -1387,15 +1387,15 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | typescript-bun | opus47-1m-medium | 18.0 | 42.0 | 2.3 | 1.54 |
 | bash | sonnet46-200k-medium | 17.4 | 36.4 | 2.1 | 0.91 |
 | default | opus47-200k-medium | 17.4 | 42.7 | 2.5 | 1.77 |
-| typescript-bun | haiku45-200k | 17.3 | 40.4 | 2.3 | 0.77 |
+| typescript-bun | haiku45-200k-na | 17.3 | 40.4 | 2.3 | 0.77 |
 | bash | opus47-200k-medium | 17.0 | 35.1 | 2.1 | 1.14 |
 | default | opus47-1m-medium | 17.0 | 33.3 | 2.0 | 1.64 |
-| default | haiku45-200k | 15.9 | 32.3 | 2.0 | 1.43 |
+| default | haiku45-200k-na | 15.9 | 32.3 | 2.0 | 1.43 |
 | typescript-bun | opus47-200k-medium | 15.0 | 37.9 | 2.5 | 0.92 |
-| bash | haiku45-200k | 14.3 | 21.4 | 1.5 | 0.85 |
+| bash | haiku45-200k-na | 14.3 | 21.4 | 1.5 | 0.85 |
 | bash | opus47-1m-medium | 11.9 | 31.7 | 2.7 | 1.21 |
-| powershell-tool | haiku45-200k | 7.4 | 14.9 | 2.0 | 0.65 |
-| powershell | haiku45-200k | 5.3 | 9.9 | 1.9 | 0.28 |
+| powershell-tool | haiku45-200k-na | 7.4 | 14.9 | 2.0 | 0.65 |
+| powershell | haiku45-200k-na | 5.3 | 9.9 | 1.9 | 0.28 |
 
 </details>
 
@@ -1426,7 +1426,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | typescript-bun | opus47-1m-medium | 18.0 | 42.0 | 2.3 | 1.54 |
 | powershell | sonnet46-200k-medium | 27.6 | 41.1 | 1.5 | 1.38 |
 | powershell-tool | opus47-1m-medium | 18.9 | 40.6 | 2.2 | 3.47 |
-| typescript-bun | haiku45-200k | 17.3 | 40.4 | 2.3 | 0.77 |
+| typescript-bun | haiku45-200k-na | 17.3 | 40.4 | 2.3 | 0.77 |
 | powershell | opus47-1m-medium | 20.0 | 38.9 | 1.9 | 3.38 |
 | typescript-bun | opus47-200k-medium | 15.0 | 37.9 | 2.5 | 0.92 |
 | default | sonnet46-1m-medium | 30.9 | 37.7 | 1.2 | 1.26 |
@@ -1434,11 +1434,11 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | bash | sonnet46-200k-medium | 17.4 | 36.4 | 2.1 | 0.91 |
 | bash | opus47-200k-medium | 17.0 | 35.1 | 2.1 | 1.14 |
 | default | opus47-1m-medium | 17.0 | 33.3 | 2.0 | 1.64 |
-| default | haiku45-200k | 15.9 | 32.3 | 2.0 | 1.43 |
+| default | haiku45-200k-na | 15.9 | 32.3 | 2.0 | 1.43 |
 | bash | opus47-1m-medium | 11.9 | 31.7 | 2.7 | 1.21 |
-| bash | haiku45-200k | 14.3 | 21.4 | 1.5 | 0.85 |
-| powershell-tool | haiku45-200k | 7.4 | 14.9 | 2.0 | 0.65 |
-| powershell | haiku45-200k | 5.3 | 9.9 | 1.9 | 0.28 |
+| bash | haiku45-200k-na | 14.3 | 21.4 | 1.5 | 0.85 |
+| powershell-tool | haiku45-200k-na | 7.4 | 14.9 | 2.0 | 0.65 |
+| powershell | haiku45-200k-na | 5.3 | 9.9 | 1.9 | 0.28 |
 
 </details>
 
@@ -1462,7 +1462,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | default | opus47-1m-xhigh | 24.0 | 50.6 | 2.1 | 1.55 |
 | typescript-bun | opus47-1m-medium | 18.0 | 42.0 | 2.3 | 1.54 |
 | typescript-bun | opus47-1m-high | 27.6 | 61.0 | 2.2 | 1.48 |
-| default | haiku45-200k | 15.9 | 32.3 | 2.0 | 1.43 |
+| default | haiku45-200k-na | 15.9 | 32.3 | 2.0 | 1.43 |
 | typescript-bun | sonnet46-200k-medium | 27.3 | 54.7 | 2.0 | 1.42 |
 | powershell-tool | sonnet46-1m-medium | 31.3 | 46.1 | 1.5 | 1.39 |
 | powershell | sonnet46-200k-medium | 27.6 | 41.1 | 1.5 | 1.38 |
@@ -1478,10 +1478,10 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | powershell-tool | sonnet46-200k-medium | 31.7 | 42.3 | 1.3 | 0.94 |
 | typescript-bun | opus47-200k-medium | 15.0 | 37.9 | 2.5 | 0.92 |
 | bash | sonnet46-200k-medium | 17.4 | 36.4 | 2.1 | 0.91 |
-| bash | haiku45-200k | 14.3 | 21.4 | 1.5 | 0.85 |
-| typescript-bun | haiku45-200k | 17.3 | 40.4 | 2.3 | 0.77 |
-| powershell-tool | haiku45-200k | 7.4 | 14.9 | 2.0 | 0.65 |
-| powershell | haiku45-200k | 5.3 | 9.9 | 1.9 | 0.28 |
+| bash | haiku45-200k-na | 14.3 | 21.4 | 1.5 | 0.85 |
+| typescript-bun | haiku45-200k-na | 17.3 | 40.4 | 2.3 | 0.77 |
+| powershell-tool | haiku45-200k-na | 7.4 | 14.9 | 2.0 | 0.65 |
+| powershell | haiku45-200k-na | 5.3 | 9.9 | 1.9 | 0.28 |
 
 </details>
 
@@ -1491,245 +1491,245 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Tests | Assertions | Assert/Test | Test Lines | Impl Lines | Test:Code |
 |------|------|-------|-------|------------|-------------|------------|------------|-----------|
-| Semantic Version Bumper | bash | haiku45-200k | 12 | 14 | 1.2 | 165 | 580 | 0.28 |
+| Semantic Version Bumper | bash | haiku45-200k-na | 12 | 14 | 1.2 | 165 | 580 | 0.28 |
 | Semantic Version Bumper | bash | opus47-1m-high | 31 | 61 | 2.0 | 397 | 240 | 1.65 |
 | Semantic Version Bumper | bash | opus47-1m-medium | 6 | 7 | 1.2 | 96 | 152 | 0.63 |
 | Semantic Version Bumper | bash | opus47-1m-xhigh | 35 | 67 | 1.9 | 374 | 298 | 1.26 |
 | Semantic Version Bumper | bash | opus47-200k-medium | 27 | 58 | 2.1 | 299 | 182 | 1.64 |
 | Semantic Version Bumper | bash | sonnet46-200k-medium | 20 | 43 | 2.1 | 275 | 142 | 1.94 |
 | Semantic Version Bumper | bash | sonnet46-1m-medium | 21 | 25 | 1.2 | 217 | 376 | 0.58 |
-| Semantic Version Bumper | default | haiku45-200k | 21 | 29 | 1.4 | 210 | 217 | 0.97 |
+| Semantic Version Bumper | default | haiku45-200k-na | 21 | 29 | 1.4 | 210 | 217 | 0.97 |
 | Semantic Version Bumper | default | opus47-1m-high | 25 | 47 | 1.9 | 231 | 421 | 0.55 |
 | Semantic Version Bumper | default | opus47-1m-medium | 22 | 39 | 1.8 | 319 | 180 | 1.77 |
 | Semantic Version Bumper | default | opus47-1m-xhigh | 30 | 70 | 2.3 | 505 | 280 | 1.80 |
 | Semantic Version Bumper | default | opus47-200k-medium | 13 | 53 | 4.1 | 245 | 170 | 1.44 |
 | Semantic Version Bumper | default | sonnet46-200k-medium | 44 | 53 | 1.2 | 399 | 175 | 2.28 |
 | Semantic Version Bumper | default | sonnet46-1m-medium | 44 | 46 | 1.0 | 359 | 320 | 1.12 |
-| Semantic Version Bumper | powershell | haiku45-200k | 0 | 0 | 0.0 | 0 | 702 | 0.00 |
+| Semantic Version Bumper | powershell | haiku45-200k-na | 0 | 0 | 0.0 | 0 | 702 | 0.00 |
 | Semantic Version Bumper | powershell | opus47-1m-high | 54 | 82 | 1.5 | 514 | 39 | 13.18 |
 | Semantic Version Bumper | powershell | opus47-1m-medium | 36 | 66 | 1.8 | 315 | 54 | 5.83 |
 | Semantic Version Bumper | powershell | opus47-1m-xhigh | 27 | 46 | 1.7 | 261 | 248 | 1.05 |
 | Semantic Version Bumper | powershell | opus47-200k-medium | 33 | 60 | 1.8 | 229 | 127 | 1.80 |
 | Semantic Version Bumper | powershell | sonnet46-200k-medium | 44 | 58 | 1.3 | 355 | 181 | 1.96 |
 | Semantic Version Bumper | powershell | sonnet46-1m-medium | 37 | 46 | 1.2 | 309 | 164 | 1.88 |
-| Semantic Version Bumper | powershell-tool | haiku45-200k | 0 | 0 | 0.0 | 0 | 711 | 0.00 |
+| Semantic Version Bumper | powershell-tool | haiku45-200k-na | 0 | 0 | 0.0 | 0 | 711 | 0.00 |
 | Semantic Version Bumper | powershell-tool | opus47-1m-high | 24 | 33 | 1.4 | 220 | 429 | 0.51 |
 | Semantic Version Bumper | powershell-tool | opus47-1m-medium | 31 | 56 | 1.8 | 243 | 22 | 11.05 |
 | Semantic Version Bumper | powershell-tool | opus47-1m-xhigh | 33 | 54 | 1.6 | 396 | 42 | 9.43 |
 | Semantic Version Bumper | powershell-tool | opus47-200k-medium | 22 | 37 | 1.7 | 180 | 369 | 0.49 |
 | Semantic Version Bumper | powershell-tool | sonnet46-200k-medium | 34 | 40 | 1.2 | 260 | 389 | 0.67 |
 | Semantic Version Bumper | powershell-tool | sonnet46-1m-medium | 46 | 54 | 1.2 | 361 | 178 | 2.03 |
-| Semantic Version Bumper | typescript-bun | haiku45-200k | 31 | 55 | 1.8 | 287 | 690 | 0.42 |
+| Semantic Version Bumper | typescript-bun | haiku45-200k-na | 31 | 55 | 1.8 | 287 | 690 | 0.42 |
 | Semantic Version Bumper | typescript-bun | opus47-1m-high | 35 | 66 | 1.9 | 397 | 487 | 0.82 |
 | Semantic Version Bumper | typescript-bun | opus47-1m-medium | 23 | 49 | 2.1 | 279 | 248 | 1.12 |
 | Semantic Version Bumper | typescript-bun | opus47-1m-xhigh | 45 | 95 | 2.1 | 805 | 504 | 1.60 |
 | Semantic Version Bumper | typescript-bun | opus47-200k-medium | 23 | 50 | 2.2 | 227 | 211 | 1.08 |
 | Semantic Version Bumper | typescript-bun | sonnet46-200k-medium | 28 | 38 | 1.4 | 196 | 221 | 0.89 |
 | Semantic Version Bumper | typescript-bun | sonnet46-1m-medium | 42 | 51 | 1.2 | 287 | 594 | 0.48 |
-| PR Label Assigner | bash | haiku45-200k | 13 | 25 | 1.9 | 241 | 381 | 0.63 |
+| PR Label Assigner | bash | haiku45-200k-na | 13 | 25 | 1.9 | 241 | 381 | 0.63 |
 | PR Label Assigner | bash | opus47-1m-high | 26 | 53 | 2.0 | 397 | 194 | 2.05 |
 | PR Label Assigner | bash | opus47-1m-medium | 16 | 31 | 1.9 | 201 | 136 | 1.48 |
 | PR Label Assigner | bash | opus47-1m-xhigh | 28 | 43 | 1.5 | 303 | 360 | 0.84 |
 | PR Label Assigner | bash | opus47-200k-medium | 21 | 33 | 1.6 | 181 | 261 | 0.69 |
 | PR Label Assigner | bash | sonnet46-200k-medium | 28 | 43 | 1.5 | 252 | 338 | 0.75 |
 | PR Label Assigner | bash | sonnet46-1m-medium | 18 | 25 | 1.4 | 188 | 164 | 1.15 |
-| PR Label Assigner | default | haiku45-200k | 21 | 28 | 1.3 | 255 | 156 | 1.63 |
+| PR Label Assigner | default | haiku45-200k-na | 21 | 28 | 1.3 | 255 | 156 | 1.63 |
 | PR Label Assigner | default | opus47-1m-high | 30 | 50 | 1.7 | 470 | 212 | 2.22 |
 | PR Label Assigner | default | opus47-1m-medium | 0 | 9 | 0.0 | 194 | 132 | 1.47 |
 | PR Label Assigner | default | opus47-1m-xhigh | 27 | 43 | 1.6 | 431 | 224 | 1.92 |
 | PR Label Assigner | default | opus47-200k-medium | 14 | 26 | 1.9 | 174 | 110 | 1.58 |
 | PR Label Assigner | default | sonnet46-200k-medium | 15 | 17 | 1.1 | 170 | 146 | 1.16 |
 | PR Label Assigner | default | sonnet46-1m-medium | 31 | 34 | 1.1 | 230 | 295 | 0.78 |
-| PR Label Assigner | powershell | haiku45-200k | 10 | 13 | 1.3 | 107 | 142 | 0.75 |
+| PR Label Assigner | powershell | haiku45-200k-na | 10 | 13 | 1.3 | 107 | 142 | 0.75 |
 | PR Label Assigner | powershell | opus47-1m-high | 23 | 44 | 1.9 | 215 | 329 | 0.65 |
 | PR Label Assigner | powershell | opus47-1m-medium | 22 | 23 | 1.0 | 153 | 229 | 0.67 |
 | PR Label Assigner | powershell | opus47-1m-xhigh | 39 | 47 | 1.2 | 319 | 386 | 0.83 |
 | PR Label Assigner | powershell | opus47-200k-medium | 27 | 37 | 1.4 | 288 | 14 | 20.57 |
 | PR Label Assigner | powershell | sonnet46-200k-medium | 20 | 41 | 2.0 | 176 | 128 | 1.38 |
 | PR Label Assigner | powershell | sonnet46-1m-medium | 47 | 53 | 1.1 | 405 | 108 | 3.75 |
-| PR Label Assigner | powershell-tool | haiku45-200k | 13 | 19 | 1.5 | 189 | 129 | 1.47 |
+| PR Label Assigner | powershell-tool | haiku45-200k-na | 13 | 19 | 1.5 | 189 | 129 | 1.47 |
 | PR Label Assigner | powershell-tool | opus47-1m-high | 24 | 35 | 1.5 | 223 | 274 | 0.81 |
 | PR Label Assigner | powershell-tool | opus47-1m-medium | 27 | 49 | 1.8 | 315 | 39 | 8.08 |
 | PR Label Assigner | powershell-tool | opus47-1m-xhigh | 31 | 62 | 2.0 | 324 | 202 | 1.60 |
 | PR Label Assigner | powershell-tool | opus47-200k-medium | 14 | 16 | 1.1 | 111 | 256 | 0.43 |
 | PR Label Assigner | powershell-tool | sonnet46-200k-medium | 28 | 55 | 2.0 | 204 | 281 | 0.73 |
 | PR Label Assigner | powershell-tool | sonnet46-1m-medium | 25 | 52 | 2.1 | 231 | 211 | 1.09 |
-| PR Label Assigner | typescript-bun | haiku45-200k | 10 | 17 | 1.7 | 120 | 384 | 0.31 |
+| PR Label Assigner | typescript-bun | haiku45-200k-na | 10 | 17 | 1.7 | 120 | 384 | 0.31 |
 | PR Label Assigner | typescript-bun | opus47-1m-high | 27 | 55 | 2.0 | 402 | 257 | 1.56 |
 | PR Label Assigner | typescript-bun | opus47-1m-medium | 16 | 35 | 2.2 | 271 | 138 | 1.96 |
 | PR Label Assigner | typescript-bun | opus47-1m-xhigh | 32 | 51 | 1.6 | 620 | 263 | 2.36 |
 | PR Label Assigner | typescript-bun | opus47-200k-medium | 13 | 29 | 2.2 | 232 | 174 | 1.33 |
 | PR Label Assigner | typescript-bun | sonnet46-200k-medium | 29 | 55 | 1.9 | 359 | 144 | 2.49 |
 | PR Label Assigner | typescript-bun | sonnet46-1m-medium | 19 | 25 | 1.3 | 157 | 255 | 0.62 |
-| Dependency License Checker | bash | haiku45-200k | 15 | 31 | 2.1 | 266 | 328 | 0.81 |
+| Dependency License Checker | bash | haiku45-200k-na | 15 | 31 | 2.1 | 266 | 328 | 0.81 |
 | Dependency License Checker | bash | opus47-1m-high | 5 | 7 | 1.4 | 127 | 212 | 0.60 |
 | Dependency License Checker | bash | opus47-1m-medium | 10 | 43 | 4.3 | 169 | 174 | 0.97 |
 | Dependency License Checker | bash | opus47-1m-xhigh | 14 | 14 | 1.0 | 152 | 171 | 0.89 |
 | Dependency License Checker | bash | opus47-200k-medium | 18 | 32 | 1.8 | 156 | 255 | 0.61 |
 | Dependency License Checker | bash | sonnet46-200k-medium | 23 | 54 | 2.3 | 262 | 205 | 1.28 |
 | Dependency License Checker | bash | sonnet46-1m-medium | 31 | 50 | 1.6 | 315 | 228 | 1.38 |
-| Dependency License Checker | default | haiku45-200k | 10 | 30 | 3.0 | 200 | 415 | 0.48 |
+| Dependency License Checker | default | haiku45-200k-na | 10 | 30 | 3.0 | 200 | 415 | 0.48 |
 | Dependency License Checker | default | opus47-1m-high | 18 | 77 | 4.3 | 570 | 354 | 1.61 |
 | Dependency License Checker | default | opus47-1m-medium | 21 | 35 | 1.7 | 400 | 166 | 2.41 |
 | Dependency License Checker | default | opus47-1m-xhigh | 24 | 36 | 1.5 | 284 | 578 | 0.49 |
 | Dependency License Checker | default | opus47-200k-medium | 23 | 43 | 1.9 | 373 | 174 | 2.14 |
 | Dependency License Checker | default | sonnet46-200k-medium | 39 | 51 | 1.3 | 587 | 257 | 2.28 |
 | Dependency License Checker | default | sonnet46-1m-medium | 36 | 46 | 1.3 | 528 | 221 | 2.39 |
-| Dependency License Checker | powershell | haiku45-200k | 9 | 23 | 2.6 | 144 | 439 | 0.33 |
+| Dependency License Checker | powershell | haiku45-200k-na | 9 | 23 | 2.6 | 144 | 439 | 0.33 |
 | Dependency License Checker | powershell | opus47-1m-high | 13 | 31 | 2.4 | 192 | 312 | 0.62 |
 | Dependency License Checker | powershell | opus47-1m-medium | 11 | 24 | 2.2 | 127 | 208 | 0.61 |
 | Dependency License Checker | powershell | opus47-1m-xhigh | 22 | 79 | 3.6 | 456 | 277 | 1.65 |
 | Dependency License Checker | powershell | opus47-200k-medium | 19 | 31 | 1.6 | 252 | 61 | 4.13 |
 | Dependency License Checker | powershell | sonnet46-200k-medium | 21 | 38 | 1.8 | 216 | 257 | 0.84 |
 | Dependency License Checker | powershell | sonnet46-1m-medium | 41 | 54 | 1.3 | 380 | 216 | 1.76 |
-| Dependency License Checker | powershell-tool | haiku45-200k | 5 | 18 | 3.6 | 188 | 172 | 1.09 |
+| Dependency License Checker | powershell-tool | haiku45-200k-na | 5 | 18 | 3.6 | 188 | 172 | 1.09 |
 | Dependency License Checker | powershell-tool | opus47-1m-high | 48 | 82 | 1.7 | 492 | 28 | 17.57 |
 | Dependency License Checker | powershell-tool | opus47-1m-medium | 11 | 23 | 2.1 | 116 | 250 | 0.46 |
 | Dependency License Checker | powershell-tool | opus47-1m-xhigh | 19 | 32 | 1.7 | 223 | 440 | 0.51 |
 | Dependency License Checker | powershell-tool | opus47-200k-medium | 18 | 56 | 3.1 | 286 | 30 | 9.53 |
 | Dependency License Checker | powershell-tool | sonnet46-200k-medium | 24 | 27 | 1.1 | 243 | 213 | 1.14 |
 | Dependency License Checker | powershell-tool | sonnet46-1m-medium | 42 | 55 | 1.3 | 360 | 181 | 1.99 |
-| Dependency License Checker | typescript-bun | haiku45-200k | 9 | 24 | 2.7 | 201 | 272 | 0.74 |
+| Dependency License Checker | typescript-bun | haiku45-200k-na | 9 | 24 | 2.7 | 201 | 272 | 0.74 |
 | Dependency License Checker | typescript-bun | opus47-1m-high | 29 | 59 | 2.0 | 605 | 279 | 2.17 |
 | Dependency License Checker | typescript-bun | opus47-1m-medium | 16 | 32 | 2.0 | 343 | 166 | 2.07 |
 | Dependency License Checker | typescript-bun | opus47-1m-xhigh | 29 | 50 | 1.7 | 402 | 559 | 0.72 |
 | Dependency License Checker | typescript-bun | opus47-200k-medium | 12 | 23 | 1.9 | 141 | 460 | 0.31 |
 | Dependency License Checker | typescript-bun | sonnet46-200k-medium | 28 | 55 | 2.0 | 345 | 221 | 1.56 |
 | Dependency License Checker | typescript-bun | sonnet46-1m-medium | 34 | 58 | 1.7 | 350 | 173 | 2.02 |
-| Test Results Aggregator | bash | haiku45-200k | 19 | 17 | 0.9 | 304 | 462 | 0.66 |
+| Test Results Aggregator | bash | haiku45-200k-na | 19 | 17 | 0.9 | 304 | 462 | 0.66 |
 | Test Results Aggregator | bash | opus47-1m-high | 26 | 52 | 2.0 | 200 | 515 | 0.39 |
 | Test Results Aggregator | bash | opus47-1m-medium | 11 | 46 | 4.2 | 237 | 189 | 1.25 |
 | Test Results Aggregator | bash | opus47-1m-xhigh | 37 | 95 | 2.6 | 385 | 101 | 3.81 |
 | Test Results Aggregator | bash | opus47-200k-medium | 22 | 45 | 2.0 | 245 | 161 | 1.52 |
 | Test Results Aggregator | bash | sonnet46-200k-medium | 16 | 47 | 2.9 | 213 | 209 | 1.02 |
 | Test Results Aggregator | bash | sonnet46-1m-medium | 18 | 40 | 2.2 | 186 | 396 | 0.47 |
-| Test Results Aggregator | default | haiku45-200k | 11 | 47 | 4.3 | 437 | 98 | 4.46 |
+| Test Results Aggregator | default | haiku45-200k-na | 11 | 47 | 4.3 | 437 | 98 | 4.46 |
 | Test Results Aggregator | default | opus47-1m-high | 27 | 62 | 2.3 | 444 | 672 | 0.66 |
 | Test Results Aggregator | default | opus47-1m-medium | 19 | 43 | 2.3 | 353 | 185 | 1.91 |
 | Test Results Aggregator | default | opus47-1m-xhigh | 30 | 70 | 2.3 | 543 | 334 | 1.63 |
 | Test Results Aggregator | default | opus47-200k-medium | 21 | 44 | 2.1 | 427 | 268 | 1.59 |
 | Test Results Aggregator | default | sonnet46-200k-medium | 50 | 55 | 1.1 | 587 | 264 | 2.22 |
 | Test Results Aggregator | default | sonnet46-1m-medium | 8 | 29 | 3.6 | 337 | 382 | 0.88 |
-| Test Results Aggregator | powershell | haiku45-200k | 6 | 9 | 1.5 | 71 | 422 | 0.17 |
+| Test Results Aggregator | powershell | haiku45-200k-na | 6 | 9 | 1.5 | 71 | 422 | 0.17 |
 | Test Results Aggregator | powershell | opus47-1m-high | 16 | 35 | 2.2 | 169 | 354 | 0.48 |
 | Test Results Aggregator | powershell | opus47-1m-medium | 17 | 46 | 2.7 | 294 | 21 | 14.00 |
 | Test Results Aggregator | powershell | opus47-1m-xhigh | 27 | 73 | 2.7 | 343 | 372 | 0.92 |
 | Test Results Aggregator | powershell | opus47-200k-medium | 22 | 59 | 2.7 | 309 | 19 | 16.26 |
 | Test Results Aggregator | powershell | sonnet46-200k-medium | 48 | 54 | 1.1 | 290 | 285 | 1.02 |
 | Test Results Aggregator | powershell | sonnet46-1m-medium | 20 | 20 | 1.0 | 154 | 211 | 0.73 |
-| Test Results Aggregator | powershell-tool | haiku45-200k | 0 | 0 | 0.0 | 0 | 359 | 0.00 |
+| Test Results Aggregator | powershell-tool | haiku45-200k-na | 0 | 0 | 0.0 | 0 | 359 | 0.00 |
 | Test Results Aggregator | powershell-tool | opus47-1m-high | 38 | 63 | 1.7 | 292 | 620 | 0.47 |
 | Test Results Aggregator | powershell-tool | opus47-1m-medium | 20 | 45 | 2.2 | 202 | 179 | 1.13 |
 | Test Results Aggregator | powershell-tool | opus47-1m-xhigh | 37 | 65 | 1.8 | 337 | 265 | 1.27 |
 | Test Results Aggregator | powershell-tool | opus47-200k-medium | 24 | 43 | 1.8 | 191 | 271 | 0.70 |
 | Test Results Aggregator | powershell-tool | sonnet46-200k-medium | 46 | 56 | 1.2 | 312 | 408 | 0.76 |
 | Test Results Aggregator | powershell-tool | sonnet46-1m-medium | 44 | 61 | 1.4 | 362 | 483 | 0.75 |
-| Test Results Aggregator | typescript-bun | haiku45-200k | 25 | 80 | 3.2 | 521 | 555 | 0.94 |
+| Test Results Aggregator | typescript-bun | haiku45-200k-na | 25 | 80 | 3.2 | 521 | 555 | 0.94 |
 | Test Results Aggregator | typescript-bun | opus47-1m-high | 26 | 72 | 2.8 | 529 | 537 | 0.99 |
 | Test Results Aggregator | typescript-bun | opus47-1m-medium | 17 | 42 | 2.5 | 379 | 244 | 1.55 |
 | Test Results Aggregator | typescript-bun | opus47-1m-xhigh | 33 | 88 | 2.7 | 658 | 481 | 1.37 |
 | Test Results Aggregator | typescript-bun | opus47-200k-medium | 14 | 43 | 3.1 | 220 | 429 | 0.51 |
 | Test Results Aggregator | typescript-bun | sonnet46-200k-medium | 36 | 102 | 2.8 | 588 | 388 | 1.52 |
 | Test Results Aggregator | typescript-bun | sonnet46-1m-medium | 36 | 53 | 1.5 | 386 | 368 | 1.05 |
-| Environment Matrix Generator | bash | haiku45-200k | 12 | 13 | 1.1 | 131 | 104 | 1.26 |
+| Environment Matrix Generator | bash | haiku45-200k-na | 12 | 13 | 1.1 | 131 | 104 | 1.26 |
 | Environment Matrix Generator | bash | opus47-1m-high | 34 | 55 | 1.6 | 341 | 186 | 1.83 |
 | Environment Matrix Generator | bash | opus47-1m-medium | 19 | 38 | 2.0 | 221 | 90 | 2.46 |
 | Environment Matrix Generator | bash | opus47-1m-xhigh | 27 | 30 | 1.1 | 186 | 304 | 0.61 |
 | Environment Matrix Generator | bash | opus47-200k-medium | 6 | 14 | 2.3 | 171 | 97 | 1.76 |
 | Environment Matrix Generator | bash | sonnet46-200k-medium | 0 | 0 | 0.0 | 0 | 0 | 0.00 |
 | Environment Matrix Generator | bash | sonnet46-1m-medium | 26 | 58 | 2.2 | 288 | 84 | 3.43 |
-| Environment Matrix Generator | default | haiku45-200k | 23 | 36 | 1.6 | 350 | 304 | 1.15 |
+| Environment Matrix Generator | default | haiku45-200k-na | 23 | 36 | 1.6 | 350 | 304 | 1.15 |
 | Environment Matrix Generator | default | opus47-1m-high | 29 | 48 | 1.7 | 451 | 226 | 2.00 |
 | Environment Matrix Generator | default | opus47-1m-medium | 20 | 27 | 1.4 | 281 | 337 | 0.83 |
 | Environment Matrix Generator | default | opus47-1m-xhigh | 23 | 35 | 1.5 | 283 | 202 | 1.40 |
 | Environment Matrix Generator | default | opus47-200k-medium | 14 | 35 | 2.5 | 241 | 129 | 1.87 |
 | Environment Matrix Generator | default | sonnet46-200k-medium | 14 | 29 | 2.1 | 250 | 134 | 1.87 |
 | Environment Matrix Generator | default | sonnet46-1m-medium | 33 | 26 | 0.8 | 303 | 130 | 2.33 |
-| Environment Matrix Generator | powershell | haiku45-200k | 0 | 0 | 0.0 | 0 | 497 | 0.00 |
+| Environment Matrix Generator | powershell | haiku45-200k-na | 0 | 0 | 0.0 | 0 | 497 | 0.00 |
 | Environment Matrix Generator | powershell | opus47-1m-high | 32 | 54 | 1.7 | 346 | 188 | 1.84 |
 | Environment Matrix Generator | powershell | opus47-1m-medium | 24 | 49 | 2.0 | 252 | 267 | 0.94 |
 | Environment Matrix Generator | powershell | opus47-1m-xhigh | 39 | 54 | 1.4 | 334 | 411 | 0.81 |
 | Environment Matrix Generator | powershell | opus47-200k-medium | 22 | 53 | 2.4 | 306 | 19 | 16.11 |
 | Environment Matrix Generator | powershell | sonnet46-200k-medium | 15 | 26 | 1.7 | 198 | 82 | 2.41 |
 | Environment Matrix Generator | powershell | sonnet46-1m-medium | 20 | 33 | 1.6 | 234 | 123 | 1.90 |
-| Environment Matrix Generator | powershell-tool | haiku45-200k | 18 | 33 | 1.8 | 270 | 297 | 0.91 |
+| Environment Matrix Generator | powershell-tool | haiku45-200k-na | 18 | 33 | 1.8 | 270 | 297 | 0.91 |
 | Environment Matrix Generator | powershell-tool | opus47-1m-high | 17 | 26 | 1.5 | 188 | 206 | 0.91 |
 | Environment Matrix Generator | powershell-tool | opus47-1m-medium | 11 | 18 | 1.6 | 129 | 150 | 0.86 |
 | Environment Matrix Generator | powershell-tool | opus47-1m-xhigh | 42 | 59 | 1.4 | 294 | 437 | 0.67 |
 | Environment Matrix Generator | powershell-tool | opus47-200k-medium | 36 | 50 | 1.4 | 322 | 211 | 1.53 |
 | Environment Matrix Generator | powershell-tool | sonnet46-200k-medium | 24 | 31 | 1.3 | 152 | 214 | 0.71 |
 | Environment Matrix Generator | powershell-tool | sonnet46-1m-medium | 23 | 36 | 1.6 | 284 | 323 | 0.88 |
-| Environment Matrix Generator | typescript-bun | haiku45-200k | 20 | 48 | 2.4 | 368 | 297 | 1.24 |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 20 | 48 | 2.4 | 368 | 297 | 1.24 |
 | Environment Matrix Generator | typescript-bun | opus47-1m-high | 29 | 57 | 2.0 | 410 | 210 | 1.95 |
 | Environment Matrix Generator | typescript-bun | opus47-1m-medium | 13 | 38 | 2.9 | 238 | 145 | 1.64 |
 | Environment Matrix Generator | typescript-bun | opus47-1m-xhigh | 31 | 59 | 1.9 | 622 | 305 | 2.04 |
 | Environment Matrix Generator | typescript-bun | opus47-200k-medium | 14 | 32 | 2.3 | 250 | 177 | 1.41 |
 | Environment Matrix Generator | typescript-bun | sonnet46-200k-medium | 35 | 60 | 1.7 | 416 | 182 | 2.29 |
 | Environment Matrix Generator | typescript-bun | sonnet46-1m-medium | 24 | 55 | 2.3 | 275 | 269 | 1.02 |
-| Artifact Cleanup Script | bash | haiku45-200k | 10 | 19 | 1.9 | 260 | 249 | 1.04 |
+| Artifact Cleanup Script | bash | haiku45-200k-na | 10 | 19 | 1.9 | 260 | 249 | 1.04 |
 | Artifact Cleanup Script | bash | opus47-1m-high | 23 | 41 | 1.8 | 225 | 461 | 0.49 |
 | Artifact Cleanup Script | bash | opus47-1m-medium | 16 | 36 | 2.2 | 223 | 199 | 1.12 |
 | Artifact Cleanup Script | bash | opus47-1m-xhigh | 15 | 63 | 4.2 | 183 | 398 | 0.46 |
 | Artifact Cleanup Script | bash | opus47-200k-medium | 11 | 48 | 4.4 | 157 | 310 | 0.51 |
 | Artifact Cleanup Script | bash | sonnet46-200k-medium | 13 | 39 | 3.0 | 191 | 221 | 0.86 |
 | Artifact Cleanup Script | bash | sonnet46-1m-medium | 17 | 61 | 3.6 | 358 | 176 | 2.03 |
-| Artifact Cleanup Script | default | haiku45-200k | 11 | 27 | 2.5 | 352 | 606 | 0.58 |
+| Artifact Cleanup Script | default | haiku45-200k-na | 11 | 27 | 2.5 | 352 | 606 | 0.58 |
 | Artifact Cleanup Script | default | opus47-1m-high | 14 | 28 | 2.0 | 223 | 491 | 0.45 |
 | Artifact Cleanup Script | default | opus47-1m-medium | 16 | 37 | 2.3 | 293 | 196 | 1.49 |
 | Artifact Cleanup Script | default | opus47-1m-xhigh | 18 | 39 | 2.2 | 525 | 321 | 1.64 |
 | Artifact Cleanup Script | default | opus47-200k-medium | 16 | 48 | 3.0 | 431 | 196 | 2.20 |
 | Artifact Cleanup Script | default | sonnet46-200k-medium | 22 | 52 | 2.4 | 308 | 487 | 0.63 |
 | Artifact Cleanup Script | default | sonnet46-1m-medium | 26 | 35 | 1.3 | 266 | 563 | 0.47 |
-| Artifact Cleanup Script | powershell | haiku45-200k | 0 | 0 | 0.0 | 0 | 335 | 0.00 |
+| Artifact Cleanup Script | powershell | haiku45-200k-na | 0 | 0 | 0.0 | 0 | 335 | 0.00 |
 | Artifact Cleanup Script | powershell | opus47-1m-high | 22 | 84 | 3.8 | 440 | 115 | 3.83 |
 | Artifact Cleanup Script | powershell | opus47-1m-medium | 9 | 18 | 2.0 | 133 | 166 | 0.80 |
 | Artifact Cleanup Script | powershell | opus47-1m-xhigh | 19 | 44 | 2.3 | 267 | 374 | 0.71 |
 | Artifact Cleanup Script | powershell | opus47-200k-medium | 16 | 47 | 2.9 | 277 | 234 | 1.18 |
 | Artifact Cleanup Script | powershell | sonnet46-200k-medium | 29 | 46 | 1.6 | 298 | 258 | 1.16 |
 | Artifact Cleanup Script | powershell | sonnet46-1m-medium | 28 | 48 | 1.7 | 373 | 214 | 1.74 |
-| Artifact Cleanup Script | powershell-tool | haiku45-200k | 8 | 18 | 2.2 | 134 | 173 | 0.77 |
+| Artifact Cleanup Script | powershell-tool | haiku45-200k-na | 8 | 18 | 2.2 | 134 | 173 | 0.77 |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-high | 22 | 51 | 2.3 | 291 | 366 | 0.80 |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-medium | 8 | 25 | 3.1 | 135 | 186 | 0.73 |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-xhigh | 17 | 35 | 2.1 | 205 | 373 | 0.55 |
 | Artifact Cleanup Script | powershell-tool | opus47-200k-medium | 12 | 28 | 2.3 | 144 | 166 | 0.87 |
 | Artifact Cleanup Script | powershell-tool | sonnet46-200k-medium | 12 | 21 | 1.8 | 158 | 185 | 0.85 |
 | Artifact Cleanup Script | powershell-tool | sonnet46-1m-medium | 13 | 33 | 2.5 | 224 | 131 | 1.71 |
-| Artifact Cleanup Script | typescript-bun | haiku45-200k | 6 | 17 | 2.8 | 172 | 262 | 0.66 |
+| Artifact Cleanup Script | typescript-bun | haiku45-200k-na | 6 | 17 | 2.8 | 172 | 262 | 0.66 |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-high | 27 | 66 | 2.4 | 570 | 384 | 1.48 |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-medium | 21 | 56 | 2.7 | 271 | 334 | 0.81 |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-xhigh | 18 | 40 | 2.2 | 459 | 271 | 1.69 |
 | Artifact Cleanup Script | typescript-bun | opus47-200k-medium | 13 | 40 | 3.1 | 307 | 207 | 1.48 |
 | Artifact Cleanup Script | typescript-bun | sonnet46-200k-medium | 14 | 25 | 1.8 | 233 | 371 | 0.63 |
 | Artifact Cleanup Script | typescript-bun | sonnet46-1m-medium | 30 | 67 | 2.2 | 395 | 400 | 0.99 |
-| Secret Rotation Validator | bash | haiku45-200k | 19 | 31 | 1.6 | 234 | 185 | 1.26 |
+| Secret Rotation Validator | bash | haiku45-200k-na | 19 | 31 | 1.6 | 234 | 185 | 1.26 |
 | Secret Rotation Validator | bash | opus47-1m-high | 29 | 77 | 2.7 | 337 | 211 | 1.60 |
 | Secret Rotation Validator | bash | opus47-1m-medium | 5 | 21 | 4.2 | 120 | 209 | 0.57 |
 | Secret Rotation Validator | bash | opus47-1m-xhigh | 25 | 19 | 0.8 | 258 | 280 | 0.92 |
 | Secret Rotation Validator | bash | opus47-200k-medium | 14 | 16 | 1.1 | 171 | 140 | 1.22 |
 | Secret Rotation Validator | bash | sonnet46-200k-medium | 22 | 29 | 1.3 | 216 | 421 | 0.51 |
 | Secret Rotation Validator | bash | sonnet46-1m-medium | 24 | 53 | 2.2 | 244 | 490 | 0.50 |
-| Secret Rotation Validator | default | haiku45-200k | 14 | 29 | 2.1 | 198 | 272 | 0.73 |
+| Secret Rotation Validator | default | haiku45-200k-na | 14 | 29 | 2.1 | 198 | 272 | 0.73 |
 | Secret Rotation Validator | default | opus47-1m-high | 20 | 40 | 2.0 | 271 | 425 | 0.64 |
 | Secret Rotation Validator | default | opus47-1m-medium | 21 | 43 | 2.0 | 397 | 244 | 1.63 |
 | Secret Rotation Validator | default | opus47-1m-xhigh | 16 | 61 | 3.8 | 645 | 330 | 1.95 |
 | Secret Rotation Validator | default | opus47-200k-medium | 21 | 50 | 2.4 | 454 | 283 | 1.60 |
 | Secret Rotation Validator | default | sonnet46-200k-medium | 27 | 61 | 2.3 | 541 | 242 | 2.24 |
 | Secret Rotation Validator | default | sonnet46-1m-medium | 38 | 48 | 1.3 | 327 | 399 | 0.82 |
-| Secret Rotation Validator | powershell | haiku45-200k | 12 | 24 | 2.0 | 151 | 215 | 0.70 |
+| Secret Rotation Validator | powershell | haiku45-200k-na | 12 | 24 | 2.0 | 151 | 215 | 0.70 |
 | Secret Rotation Validator | powershell | opus47-1m-high | 18 | 38 | 2.1 | 223 | 275 | 0.81 |
 | Secret Rotation Validator | powershell | opus47-1m-medium | 21 | 46 | 2.2 | 184 | 225 | 0.82 |
 | Secret Rotation Validator | powershell | opus47-1m-xhigh | 24 | 54 | 2.2 | 315 | 326 | 0.97 |
 | Secret Rotation Validator | powershell | opus47-200k-medium | 19 | 42 | 2.2 | 159 | 250 | 0.64 |
 | Secret Rotation Validator | powershell | sonnet46-200k-medium | 16 | 25 | 1.6 | 182 | 201 | 0.91 |
 | Secret Rotation Validator | powershell | sonnet46-1m-medium | 32 | 56 | 1.8 | 341 | 211 | 1.62 |
-| Secret Rotation Validator | powershell-tool | haiku45-200k | 8 | 16 | 2.0 | 154 | 505 | 0.30 |
+| Secret Rotation Validator | powershell-tool | haiku45-200k-na | 8 | 16 | 2.0 | 154 | 505 | 0.30 |
 | Secret Rotation Validator | powershell-tool | opus47-1m-high | 19 | 46 | 2.4 | 235 | 215 | 1.09 |
 | Secret Rotation Validator | powershell-tool | opus47-1m-medium | 24 | 68 | 2.8 | 310 | 159 | 1.95 |
 | Secret Rotation Validator | powershell-tool | opus47-1m-xhigh | 26 | 69 | 2.7 | 468 | 49 | 9.55 |
 | Secret Rotation Validator | powershell-tool | opus47-200k-medium | 12 | 29 | 2.4 | 154 | 323 | 0.48 |
 | Secret Rotation Validator | powershell-tool | sonnet46-200k-medium | 54 | 66 | 1.2 | 422 | 245 | 1.72 |
 | Secret Rotation Validator | powershell-tool | sonnet46-1m-medium | 26 | 32 | 1.2 | 255 | 198 | 1.29 |
-| Secret Rotation Validator | typescript-bun | haiku45-200k | 20 | 42 | 2.1 | 270 | 249 | 1.08 |
+| Secret Rotation Validator | typescript-bun | haiku45-200k-na | 20 | 42 | 2.1 | 270 | 249 | 1.08 |
 | Secret Rotation Validator | typescript-bun | opus47-1m-high | 20 | 52 | 2.6 | 421 | 305 | 1.38 |
 | Secret Rotation Validator | typescript-bun | opus47-1m-medium | 20 | 42 | 2.1 | 349 | 213 | 1.64 |
 | Secret Rotation Validator | typescript-bun | opus47-1m-xhigh | 27 | 76 | 2.8 | 820 | 354 | 2.32 |
@@ -1750,35 +1750,35 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 
 | Language | Model | Avg Overall | Avg Coverage | Avg Rigor | Avg Design | Judge Cost |
 |------|-------|-------------|-------------|-----------|------------|------------|
-| bash | haiku45-200k | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
+| bash | haiku45-200k-na | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
 | bash | opus47-1m-high | **3.5** | 3.8 | 3.4 | 3.9 | $0.4673 |
 | bash | opus47-1m-medium | **3.2** | 3.5 | 2.8 | 3.6 | $0.3898 |
 | bash | opus47-1m-xhigh | **3.7** | 3.9 | 3.6 | 4.1 | $0.4523 |
 | bash | opus47-200k-medium | **3.2** | 3.6 | 3.2 | 3.3 | $0.3447 |
 | bash | sonnet46-1m-medium | **3.4** | 3.9 | 3.3 | 3.9 | $0.4322 |
 | bash | sonnet46-200k-medium | **3.2** | 3.6 | 3.2 | 3.8 | $0.3385 |
-| default | haiku45-200k | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
+| default | haiku45-200k-na | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
 | default | opus47-1m-high | **4.2** | 4.4 | 4.1 | 4.4 | $0.4466 |
 | default | opus47-1m-medium | **3.4** | 3.7 | 3.2 | 3.8 | $0.4134 |
 | default | opus47-1m-xhigh | **4.0** | 4.3 | 4.1 | 4.4 | $0.5308 |
 | default | opus47-200k-medium | **3.8** | 4.1 | 3.5 | 4.1 | $0.3469 |
 | default | sonnet46-1m-medium | **3.3** | 3.5 | 3.1 | 3.9 | $0.4653 |
 | default | sonnet46-200k-medium | **3.6** | 4.1 | 3.8 | 4.1 | $0.4675 |
-| powershell | haiku45-200k | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
+| powershell | haiku45-200k-na | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
 | powershell | opus47-1m-high | **4.2** | 4.4 | 4.0 | 4.3 | $0.4553 |
 | powershell | opus47-1m-medium | **3.9** | 4.4 | 4.0 | 4.0 | $0.4040 |
 | powershell | opus47-1m-xhigh | **4.1** | 4.2 | 3.9 | 4.3 | $0.5213 |
 | powershell | opus47-200k-medium | **3.7** | 4.1 | 3.8 | 3.9 | $0.4319 |
 | powershell | sonnet46-1m-medium | **3.6** | 4.0 | 3.4 | 4.0 | $0.4444 |
 | powershell | sonnet46-200k-medium | **3.1** | 3.2 | 2.9 | 3.9 | $0.4053 |
-| powershell-tool | haiku45-200k | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
+| powershell-tool | haiku45-200k-na | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
 | powershell-tool | opus47-1m-high | **4.1** | 4.3 | 4.0 | 4.4 | $0.4411 |
 | powershell-tool | opus47-1m-medium | **3.8** | 4.2 | 3.8 | 4.1 | $0.3830 |
 | powershell-tool | opus47-1m-xhigh | **3.9** | 4.2 | 3.9 | 4.2 | $0.4853 |
 | powershell-tool | opus47-200k-medium | **3.9** | 4.3 | 3.8 | 4.2 | $0.4299 |
 | powershell-tool | sonnet46-1m-medium | **3.4** | 3.9 | 3.6 | 4.1 | $0.4292 |
 | powershell-tool | sonnet46-200k-medium | **3.9** | 4.1 | 3.7 | 4.2 | $0.4350 |
-| typescript-bun | haiku45-200k | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
+| typescript-bun | haiku45-200k-na | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
 | typescript-bun | opus47-1m-high | **4.1** | 4.2 | 3.8 | 4.3 | $0.5363 |
 | typescript-bun | opus47-1m-medium | **3.8** | 4.1 | 3.8 | 3.9 | $0.4228 |
 | typescript-bun | opus47-1m-xhigh | **4.5** | 4.6 | 4.2 | 4.5 | $0.5838 |
@@ -1823,11 +1823,11 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | bash | opus47-200k-medium | **3.2** | 3.6 | 3.2 | 3.3 | $0.3447 |
 | typescript-bun | sonnet46-200k-medium | **3.2** | 3.5 | 3.4 | 3.8 | $0.4464 |
 | powershell | sonnet46-200k-medium | **3.1** | 3.2 | 2.9 | 3.9 | $0.4053 |
-| powershell-tool | haiku45-200k | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
-| bash | haiku45-200k | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
-| typescript-bun | haiku45-200k | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
-| default | haiku45-200k | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
-| powershell | haiku45-200k | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
+| powershell-tool | haiku45-200k-na | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
+| bash | haiku45-200k-na | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
+| typescript-bun | haiku45-200k-na | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
+| default | haiku45-200k-na | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
+| powershell | haiku45-200k-na | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
 
 </details>
 
@@ -1866,11 +1866,11 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | default | sonnet46-1m-medium | **3.3** | 3.5 | 3.1 | 3.9 | $0.4653 |
 | typescript-bun | sonnet46-200k-medium | **3.2** | 3.5 | 3.4 | 3.8 | $0.4464 |
 | powershell | sonnet46-200k-medium | **3.1** | 3.2 | 2.9 | 3.9 | $0.4053 |
-| bash | haiku45-200k | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
-| powershell-tool | haiku45-200k | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
-| default | haiku45-200k | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
-| typescript-bun | haiku45-200k | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
-| powershell | haiku45-200k | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
+| bash | haiku45-200k-na | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
+| powershell-tool | haiku45-200k-na | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
+| default | haiku45-200k-na | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
+| typescript-bun | haiku45-200k-na | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
+| powershell | haiku45-200k-na | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
 
 </details>
 
@@ -1909,11 +1909,11 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | default | sonnet46-1m-medium | **3.3** | 3.5 | 3.1 | 3.9 | $0.4653 |
 | powershell | sonnet46-200k-medium | **3.1** | 3.2 | 2.9 | 3.9 | $0.4053 |
 | bash | opus47-1m-medium | **3.2** | 3.5 | 2.8 | 3.6 | $0.3898 |
-| default | haiku45-200k | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
-| powershell-tool | haiku45-200k | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
-| bash | haiku45-200k | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
-| typescript-bun | haiku45-200k | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
-| powershell | haiku45-200k | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
+| default | haiku45-200k-na | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
+| powershell-tool | haiku45-200k-na | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
+| bash | haiku45-200k-na | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
+| typescript-bun | haiku45-200k-na | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
+| powershell | haiku45-200k-na | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
 
 </details>
 
@@ -1952,11 +1952,11 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | bash | sonnet46-200k-medium | **3.2** | 3.6 | 3.2 | 3.8 | $0.3385 |
 | bash | opus47-1m-medium | **3.2** | 3.5 | 2.8 | 3.6 | $0.3898 |
 | bash | opus47-200k-medium | **3.2** | 3.6 | 3.2 | 3.3 | $0.3447 |
-| powershell-tool | haiku45-200k | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
-| default | haiku45-200k | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
-| typescript-bun | haiku45-200k | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
-| bash | haiku45-200k | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
-| powershell | haiku45-200k | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
+| powershell-tool | haiku45-200k-na | **2.6** | 3.0 | 2.3 | 3.2 | $0.2579 |
+| default | haiku45-200k-na | **2.1** | 2.8 | 2.4 | 3.2 | $0.3524 |
+| typescript-bun | haiku45-200k-na | **2.1** | 2.6 | 2.1 | 3.1 | $0.4090 |
+| bash | haiku45-200k-na | **2.3** | 3.1 | 2.3 | 2.9 | $0.4059 |
+| powershell | haiku45-200k-na | **2.0** | 2.4 | 2.0 | 2.6 | $0.1600 |
 
 </details>
 
@@ -1966,7 +1966,7 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 
 | Task | Language | Model | Cov | Rig | Des | Ovr | Summary |
 |------|------|-------|-----|-----|-----|-----|---------|
-| Semantic Version Bumper | bash | haiku45-200k | 3.0 | 2.0 | 2.5 | 2.5 |  |
+| Semantic Version Bumper | bash | haiku45-200k-na | 3.0 | 2.0 | 2.5 | 2.5 |  |
 | Semantic Version Bumper | bash | opus47-1m-high | 4.0 | 4.0 | 3.5 | 4.0 |  |
 | Semantic Version Bumper | bash | opus47-1m-medium | 2.5 | 2.0 | 3.0 | 2.5 |  |
 | Semantic Version Bumper | bash | opus47-1m-xhigh | 4.5 | 4.5 | 4.5 | 4.5 |  |
@@ -1989,98 +1989,98 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | Semantic Version Bumper | powershell-tool | opus47-200k-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Semantic Version Bumper | powershell-tool | sonnet46-200k-medium | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Semantic Version Bumper | powershell-tool | sonnet46-1m-medium | 4.5 | 4.0 | 3.5 | 3.5 |  |
-| Semantic Version Bumper | typescript-bun | haiku45-200k | 3.0 | 2.5 | 2.5 | 2.0 |  |
+| Semantic Version Bumper | typescript-bun | haiku45-200k-na | 3.0 | 2.5 | 2.5 | 2.0 |  |
 | Semantic Version Bumper | typescript-bun | opus47-1m-high | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Semantic Version Bumper | typescript-bun | opus47-1m-medium | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | Semantic Version Bumper | typescript-bun | opus47-1m-xhigh | 5.0 | 4.5 | 4.5 | 4.5 |  |
 | Semantic Version Bumper | typescript-bun | opus47-200k-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Semantic Version Bumper | typescript-bun | sonnet46-200k-medium | 2.0 | 2.5 | 3.5 | 2.0 |  |
 | Semantic Version Bumper | typescript-bun | sonnet46-1m-medium | 4.0 | 3.5 | 4.0 | 4.0 |  |
-| PR Label Assigner | bash | haiku45-200k | 2.5 | 2.0 | 2.0 | 2.0 |  |
+| PR Label Assigner | bash | haiku45-200k-na | 2.5 | 2.0 | 2.0 | 2.0 |  |
 | PR Label Assigner | bash | opus47-1m-high | 4.5 | 3.5 | 4.5 | 4.0 |  |
 | PR Label Assigner | bash | opus47-1m-medium | 4.0 | 3.0 | 4.0 | 4.0 |  |
 | PR Label Assigner | bash | opus47-1m-xhigh | 4.0 | 4.0 | 4.5 | 3.5 |  |
 | PR Label Assigner | bash | opus47-200k-medium | 3.5 | 3.0 | 2.0 | 2.0 |  |
 | PR Label Assigner | bash | sonnet46-200k-medium | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | PR Label Assigner | bash | sonnet46-1m-medium | 2.5 | 2.5 | 3.5 | 2.0 |  |
-| PR Label Assigner | default | haiku45-200k | 2.0 | 2.0 | 3.0 | 1.5 |  |
+| PR Label Assigner | default | haiku45-200k-na | 2.0 | 2.0 | 3.0 | 1.5 |  |
 | PR Label Assigner | default | opus47-1m-high | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | PR Label Assigner | default | opus47-1m-medium | 1.5 | 1.5 | 3.5 | 2.0 |  |
 | PR Label Assigner | default | opus47-1m-xhigh | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | PR Label Assigner | default | opus47-200k-medium | 2.0 | 2.0 | 3.0 | 2.0 |  |
 | PR Label Assigner | default | sonnet46-200k-medium | 3.0 | 3.5 | 4.0 | 2.5 |  |
 | PR Label Assigner | default | sonnet46-1m-medium | 3.5 | 3.0 | 4.5 | 3.0 |  |
-| PR Label Assigner | powershell | haiku45-200k | 2.0 | 2.5 | 3.0 | 2.0 |  |
+| PR Label Assigner | powershell | haiku45-200k-na | 2.0 | 2.5 | 3.0 | 2.0 |  |
 | PR Label Assigner | powershell | opus47-1m-high | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | PR Label Assigner | powershell | opus47-1m-medium | 4.5 | 4.5 | 3.5 | 4.0 |  |
 | PR Label Assigner | powershell | opus47-1m-xhigh | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | PR Label Assigner | powershell | opus47-200k-medium | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | PR Label Assigner | powershell | sonnet46-200k-medium | 2.0 | 2.5 | 3.5 | 1.5 |  |
 | PR Label Assigner | powershell | sonnet46-1m-medium | 5.0 | 4.5 | 4.5 | 4.5 |  |
-| PR Label Assigner | powershell-tool | haiku45-200k | 3.0 | 2.5 | 3.0 | 2.5 |  |
+| PR Label Assigner | powershell-tool | haiku45-200k-na | 3.0 | 2.5 | 3.0 | 2.5 |  |
 | PR Label Assigner | powershell-tool | opus47-1m-high | 4.5 | 4.5 | 4.5 | 4.5 |  |
 | PR Label Assigner | powershell-tool | opus47-1m-medium | 4.0 | 4.0 | 4.0 | 3.5 |  |
 | PR Label Assigner | powershell-tool | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | PR Label Assigner | powershell-tool | opus47-200k-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | PR Label Assigner | powershell-tool | sonnet46-200k-medium | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | PR Label Assigner | powershell-tool | sonnet46-1m-medium | 3.0 | 3.0 | 3.0 | 2.5 |  |
-| PR Label Assigner | typescript-bun | haiku45-200k | 2.5 | 1.5 | 2.5 | 2.0 |  |
+| PR Label Assigner | typescript-bun | haiku45-200k-na | 2.5 | 1.5 | 2.5 | 2.0 |  |
 | PR Label Assigner | typescript-bun | opus47-1m-high | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | PR Label Assigner | typescript-bun | opus47-1m-medium | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | PR Label Assigner | typescript-bun | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | PR Label Assigner | typescript-bun | opus47-200k-medium | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | PR Label Assigner | typescript-bun | sonnet46-200k-medium | 3.0 | 3.0 | 2.5 | 2.5 |  |
 | PR Label Assigner | typescript-bun | sonnet46-1m-medium | 3.5 | 3.5 | 4.0 | 3.0 |  |
-| Dependency License Checker | bash | haiku45-200k | 4.5 | 2.5 | 3.0 | 2.5 |  |
+| Dependency License Checker | bash | haiku45-200k-na | 4.5 | 2.5 | 3.0 | 2.5 |  |
 | Dependency License Checker | bash | opus47-1m-high | 3.0 | 2.0 | 4.0 | 2.5 |  |
 | Dependency License Checker | bash | opus47-1m-medium | 3.0 | 2.0 | 4.0 | 3.0 |  |
 | Dependency License Checker | bash | opus47-1m-xhigh | 2.5 | 2.5 | 3.5 | 2.5 |  |
 | Dependency License Checker | bash | opus47-200k-medium | 3.5 | 3.5 | 3.0 | 3.0 |  |
 | Dependency License Checker | bash | sonnet46-200k-medium | 3.5 | 3.0 | 2.5 | 2.0 |  |
 | Dependency License Checker | bash | sonnet46-1m-medium | 4.5 | 3.5 | 4.0 | 4.0 |  |
-| Dependency License Checker | default | haiku45-200k | 3.5 | 2.5 | 3.0 | 2.5 |  |
+| Dependency License Checker | default | haiku45-200k-na | 3.5 | 2.5 | 3.0 | 2.5 |  |
 | Dependency License Checker | default | opus47-1m-high | 4.0 | 4.0 | 4.5 | 4.0 |  |
 | Dependency License Checker | default | opus47-1m-medium | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | Dependency License Checker | default | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Dependency License Checker | default | opus47-200k-medium | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Dependency License Checker | default | sonnet46-200k-medium | 5.0 | 4.5 | 4.5 | 4.5 |  |
 | Dependency License Checker | default | sonnet46-1m-medium | 3.5 | 3.5 | 3.5 | 3.5 |  |
-| Dependency License Checker | powershell | haiku45-200k | 3.0 | 2.0 | 3.0 | 2.5 |  |
+| Dependency License Checker | powershell | haiku45-200k-na | 3.0 | 2.0 | 3.0 | 2.5 |  |
 | Dependency License Checker | powershell | opus47-1m-high | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | Dependency License Checker | powershell | opus47-1m-medium | 3.5 | 3.5 | 3.5 | 3.5 |  |
 | Dependency License Checker | powershell | opus47-1m-xhigh | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | Dependency License Checker | powershell | opus47-200k-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Dependency License Checker | powershell | sonnet46-200k-medium | 3.0 | 3.0 | 4.0 | 3.0 |  |
 | Dependency License Checker | powershell | sonnet46-1m-medium | 4.5 | 4.0 | 4.5 | 4.5 |  |
-| Dependency License Checker | powershell-tool | haiku45-200k | 3.0 | 2.0 | 3.5 | 2.5 |  |
+| Dependency License Checker | powershell-tool | haiku45-200k-na | 3.0 | 2.0 | 3.5 | 2.5 |  |
 | Dependency License Checker | powershell-tool | opus47-1m-high | 4.0 | 4.0 | 4.5 | 4.0 |  |
 | Dependency License Checker | powershell-tool | opus47-1m-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Dependency License Checker | powershell-tool | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Dependency License Checker | powershell-tool | opus47-200k-medium | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | Dependency License Checker | powershell-tool | sonnet46-200k-medium | 3.5 | 3.0 | 3.5 | 3.5 |  |
 | Dependency License Checker | powershell-tool | sonnet46-1m-medium | 4.5 | 4.5 | 4.0 | 4.0 |  |
-| Dependency License Checker | typescript-bun | haiku45-200k | 2.0 | 2.0 | 3.5 | 2.0 |  |
+| Dependency License Checker | typescript-bun | haiku45-200k-na | 2.0 | 2.0 | 3.5 | 2.0 |  |
 | Dependency License Checker | typescript-bun | opus47-1m-high | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Dependency License Checker | typescript-bun | opus47-1m-medium | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | Dependency License Checker | typescript-bun | opus47-1m-xhigh | 4.5 | 4.5 | 4.5 | 4.5 |  |
 | Dependency License Checker | typescript-bun | opus47-200k-medium | 4.0 | 4.0 | 4.5 | 4.0 |  |
 | Dependency License Checker | typescript-bun | sonnet46-200k-medium | 3.5 | 3.5 | 4.0 | 3.5 |  |
 | Dependency License Checker | typescript-bun | sonnet46-1m-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
-| Test Results Aggregator | bash | haiku45-200k | 3.0 | 2.5 | 3.5 | 2.5 |  |
+| Test Results Aggregator | bash | haiku45-200k-na | 3.0 | 2.5 | 3.5 | 2.5 |  |
 | Test Results Aggregator | bash | opus47-1m-high | 3.5 | 4.0 | 3.5 | 3.5 |  |
 | Test Results Aggregator | bash | opus47-1m-medium | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | Test Results Aggregator | bash | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Test Results Aggregator | bash | opus47-200k-medium | 4.5 | 3.5 | 4.0 | 4.0 |  |
 | Test Results Aggregator | bash | sonnet46-200k-medium | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | Test Results Aggregator | bash | sonnet46-1m-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
-| Test Results Aggregator | default | haiku45-200k | 3.0 | 2.0 | 3.5 | 2.5 |  |
+| Test Results Aggregator | default | haiku45-200k-na | 3.0 | 2.0 | 3.5 | 2.5 |  |
 | Test Results Aggregator | default | opus47-1m-high | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Test Results Aggregator | default | opus47-1m-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Test Results Aggregator | default | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Test Results Aggregator | default | opus47-200k-medium | 4.0 | 3.0 | 4.0 | 4.0 |  |
 | Test Results Aggregator | default | sonnet46-200k-medium | 5.0 | 4.5 | 4.5 | 4.5 |  |
 | Test Results Aggregator | default | sonnet46-1m-medium | 3.5 | 3.0 | 3.5 | 3.5 |  |
-| Test Results Aggregator | powershell | haiku45-200k | 2.5 | 1.5 | 2.0 | 1.5 |  |
+| Test Results Aggregator | powershell | haiku45-200k-na | 2.5 | 1.5 | 2.0 | 1.5 |  |
 | Test Results Aggregator | powershell | opus47-1m-high | 4.5 | 3.5 | 4.0 | 4.0 |  |
 | Test Results Aggregator | powershell | opus47-1m-medium | 5.0 | 4.0 | 4.5 | 4.0 |  |
 | Test Results Aggregator | powershell | opus47-1m-xhigh | 3.5 | 3.5 | 4.0 | 3.5 |  |
@@ -2093,20 +2093,20 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | Test Results Aggregator | powershell-tool | opus47-200k-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Test Results Aggregator | powershell-tool | sonnet46-200k-medium | 4.5 | 3.5 | 4.5 | 4.5 |  |
 | Test Results Aggregator | powershell-tool | sonnet46-1m-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
-| Test Results Aggregator | typescript-bun | haiku45-200k | 2.5 | 2.0 | 3.0 | 2.0 |  |
+| Test Results Aggregator | typescript-bun | haiku45-200k-na | 2.5 | 2.0 | 3.0 | 2.0 |  |
 | Test Results Aggregator | typescript-bun | opus47-1m-high | 4.0 | 4.0 | 4.5 | 4.0 |  |
 | Test Results Aggregator | typescript-bun | opus47-1m-medium | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | Test Results Aggregator | typescript-bun | opus47-1m-xhigh | 4.5 | 4.5 | 4.5 | 4.5 |  |
 | Test Results Aggregator | typescript-bun | opus47-200k-medium | 4.0 | 3.5 | 3.5 | 3.5 |  |
 | Test Results Aggregator | typescript-bun | sonnet46-200k-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Test Results Aggregator | typescript-bun | sonnet46-1m-medium | 4.0 | 3.0 | 4.5 | 3.5 |  |
-| Environment Matrix Generator | bash | haiku45-200k | 2.5 | 2.0 | 3.0 | 2.0 |  |
+| Environment Matrix Generator | bash | haiku45-200k-na | 2.5 | 2.0 | 3.0 | 2.0 |  |
 | Environment Matrix Generator | bash | opus47-1m-high | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | Environment Matrix Generator | bash | opus47-1m-medium | 3.5 | 3.5 | 3.5 | 3.0 |  |
 | Environment Matrix Generator | bash | opus47-1m-xhigh | 3.5 | 3.5 | 4.0 | 3.5 |  |
 | Environment Matrix Generator | bash | opus47-200k-medium | 3.5 | 3.0 | 3.5 | 3.5 |  |
 | Environment Matrix Generator | bash | sonnet46-1m-medium | 3.5 | 3.5 | 4.0 | 3.5 |  |
-| Environment Matrix Generator | default | haiku45-200k | 2.0 | 2.5 | 3.5 | 2.0 |  |
+| Environment Matrix Generator | default | haiku45-200k-na | 2.0 | 2.5 | 3.5 | 2.0 |  |
 | Environment Matrix Generator | default | opus47-1m-high | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Environment Matrix Generator | default | opus47-1m-medium | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | Environment Matrix Generator | default | opus47-1m-xhigh | 3.5 | 4.0 | 4.0 | 3.0 |  |
@@ -2119,28 +2119,28 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | Environment Matrix Generator | powershell | opus47-200k-medium | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | Environment Matrix Generator | powershell | sonnet46-200k-medium | 3.0 | 2.5 | 3.5 | 2.5 |  |
 | Environment Matrix Generator | powershell | sonnet46-1m-medium | 3.0 | 2.5 | 4.0 | 2.5 |  |
-| Environment Matrix Generator | powershell-tool | haiku45-200k | 3.5 | 3.0 | 4.0 | 3.5 |  |
+| Environment Matrix Generator | powershell-tool | haiku45-200k-na | 3.5 | 3.0 | 4.0 | 3.5 |  |
 | Environment Matrix Generator | powershell-tool | opus47-1m-high | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Environment Matrix Generator | powershell-tool | opus47-1m-medium | 4.0 | 3.5 | 3.5 | 3.5 |  |
 | Environment Matrix Generator | powershell-tool | opus47-1m-xhigh | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | Environment Matrix Generator | powershell-tool | opus47-200k-medium | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | Environment Matrix Generator | powershell-tool | sonnet46-200k-medium | 4.0 | 3.5 | 4.5 | 4.0 |  |
 | Environment Matrix Generator | powershell-tool | sonnet46-1m-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
-| Environment Matrix Generator | typescript-bun | haiku45-200k | 3.0 | 2.5 | 3.5 | 3.0 |  |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 3.0 | 2.5 | 3.5 | 3.0 |  |
 | Environment Matrix Generator | typescript-bun | opus47-1m-high | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Environment Matrix Generator | typescript-bun | opus47-1m-medium | 4.0 | 3.0 | 3.0 | 3.0 |  |
 | Environment Matrix Generator | typescript-bun | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Environment Matrix Generator | typescript-bun | opus47-200k-medium | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | Environment Matrix Generator | typescript-bun | sonnet46-200k-medium | 4.0 | 3.5 | 3.5 | 3.5 |  |
 | Environment Matrix Generator | typescript-bun | sonnet46-1m-medium | 4.0 | 3.5 | 3.5 | 3.5 |  |
-| Artifact Cleanup Script | bash | haiku45-200k | 3.0 | 3.0 | 3.5 | 2.5 |  |
+| Artifact Cleanup Script | bash | haiku45-200k-na | 3.0 | 3.0 | 3.5 | 2.5 |  |
 | Artifact Cleanup Script | bash | opus47-1m-high | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Artifact Cleanup Script | bash | opus47-1m-medium | 4.0 | 3.0 | 3.5 | 3.0 |  |
 | Artifact Cleanup Script | bash | opus47-1m-xhigh | 4.5 | 4.0 | 4.0 | 4.0 |  |
 | Artifact Cleanup Script | bash | opus47-200k-medium | 3.0 | 3.0 | 3.0 | 3.0 |  |
 | Artifact Cleanup Script | bash | sonnet46-200k-medium | 3.0 | 2.0 | 3.5 | 2.5 |  |
 | Artifact Cleanup Script | bash | sonnet46-1m-medium | 4.5 | 3.5 | 4.5 | 4.0 |  |
-| Artifact Cleanup Script | default | haiku45-200k | 4.0 | 3.0 | 3.0 | 2.5 |  |
+| Artifact Cleanup Script | default | haiku45-200k-na | 4.0 | 3.0 | 3.0 | 2.5 |  |
 | Artifact Cleanup Script | default | opus47-1m-high | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Artifact Cleanup Script | default | opus47-1m-medium | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | Artifact Cleanup Script | default | opus47-1m-xhigh | 4.5 | 4.5 | 4.5 | 4.5 |  |
@@ -2153,49 +2153,49 @@ An LLM evaluates each test suite on four dimensions (1-5 scale):
 | Artifact Cleanup Script | powershell | opus47-200k-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Artifact Cleanup Script | powershell | sonnet46-200k-medium | 4.0 | 3.0 | 4.5 | 4.0 |  |
 | Artifact Cleanup Script | powershell | sonnet46-1m-medium | 4.0 | 3.0 | 3.5 | 3.5 |  |
-| Artifact Cleanup Script | powershell-tool | haiku45-200k | 2.0 | 1.5 | 2.0 | 1.5 |  |
+| Artifact Cleanup Script | powershell-tool | haiku45-200k-na | 2.0 | 1.5 | 2.0 | 1.5 |  |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-high | 4.0 | 4.0 | 4.5 | 4.0 |  |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-medium | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Artifact Cleanup Script | powershell-tool | opus47-200k-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Artifact Cleanup Script | powershell-tool | sonnet46-200k-medium | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | Artifact Cleanup Script | powershell-tool | sonnet46-1m-medium | 3.5 | 3.0 | 4.5 | 3.0 |  |
-| Artifact Cleanup Script | typescript-bun | haiku45-200k | 2.5 | 2.0 | 3.5 | 2.0 |  |
+| Artifact Cleanup Script | typescript-bun | haiku45-200k-na | 2.5 | 2.0 | 3.5 | 2.0 |  |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-high | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Artifact Cleanup Script | typescript-bun | opus47-200k-medium | 4.0 | 3.5 | 4.0 | 4.0 |  |
 | Artifact Cleanup Script | typescript-bun | sonnet46-200k-medium | 3.5 | 3.0 | 4.0 | 3.0 |  |
 | Artifact Cleanup Script | typescript-bun | sonnet46-1m-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
-| Secret Rotation Validator | bash | haiku45-200k | 3.0 | 2.0 | 2.5 | 2.0 |  |
+| Secret Rotation Validator | bash | haiku45-200k-na | 3.0 | 2.0 | 2.5 | 2.0 |  |
 | Secret Rotation Validator | bash | opus47-1m-high | 3.5 | 3.0 | 3.5 | 3.0 |  |
 | Secret Rotation Validator | bash | opus47-1m-medium | 3.5 | 2.5 | 3.0 | 3.0 |  |
 | Secret Rotation Validator | bash | opus47-1m-xhigh | 3.5 | 3.0 | 4.0 | 3.5 |  |
 | Secret Rotation Validator | bash | opus47-200k-medium | 3.0 | 2.5 | 3.5 | 3.0 |  |
 | Secret Rotation Validator | bash | sonnet46-200k-medium | 4.0 | 4.0 | 4.5 | 4.0 |  |
 | Secret Rotation Validator | bash | sonnet46-1m-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
-| Secret Rotation Validator | default | haiku45-200k | 2.0 | 2.5 | 3.0 | 1.5 |  |
+| Secret Rotation Validator | default | haiku45-200k-na | 2.0 | 2.5 | 3.0 | 1.5 |  |
 | Secret Rotation Validator | default | opus47-1m-high | 4.5 | 4.5 | 4.5 | 4.5 |  |
 | Secret Rotation Validator | default | opus47-1m-medium | 3.0 | 2.0 | 3.0 | 2.0 |  |
 | Secret Rotation Validator | default | opus47-1m-xhigh | 4.0 | 4.0 | 4.5 | 4.0 |  |
 | Secret Rotation Validator | default | opus47-200k-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Secret Rotation Validator | default | sonnet46-200k-medium | 4.0 | 4.0 | 3.5 | 3.5 |  |
 | Secret Rotation Validator | default | sonnet46-1m-medium | 4.5 | 4.0 | 4.5 | 4.5 |  |
-| Secret Rotation Validator | powershell | haiku45-200k | 2.0 | 2.0 | 2.5 | 2.0 |  |
+| Secret Rotation Validator | powershell | haiku45-200k-na | 2.0 | 2.0 | 2.5 | 2.0 |  |
 | Secret Rotation Validator | powershell | opus47-1m-high | 4.5 | 4.5 | 4.5 | 4.5 |  |
 | Secret Rotation Validator | powershell | opus47-1m-medium | 4.0 | 4.0 | 4.0 | 4.0 |  |
 | Secret Rotation Validator | powershell | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.5 |  |
 | Secret Rotation Validator | powershell | opus47-200k-medium | 4.0 | 3.5 | 3.5 | 3.5 |  |
 | Secret Rotation Validator | powershell | sonnet46-200k-medium | 2.5 | 2.5 | 3.5 | 2.5 |  |
 | Secret Rotation Validator | powershell | sonnet46-1m-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
-| Secret Rotation Validator | powershell-tool | haiku45-200k | 3.5 | 2.5 | 3.5 | 3.0 |  |
+| Secret Rotation Validator | powershell-tool | haiku45-200k-na | 3.5 | 2.5 | 3.5 | 3.0 |  |
 | Secret Rotation Validator | powershell-tool | opus47-1m-high | 5.0 | 4.5 | 4.5 | 4.5 |  |
 | Secret Rotation Validator | powershell-tool | opus47-1m-medium | 4.5 | 4.0 | 4.5 | 4.0 |  |
 | Secret Rotation Validator | powershell-tool | opus47-1m-xhigh | 4.0 | 4.0 | 4.5 | 4.0 |  |
 | Secret Rotation Validator | powershell-tool | opus47-200k-medium | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Secret Rotation Validator | powershell-tool | sonnet46-200k-medium | 3.5 | 4.0 | 4.5 | 3.0 |  |
 | Secret Rotation Validator | powershell-tool | sonnet46-1m-medium | 3.0 | 3.0 | 4.5 | 2.5 |  |
-| Secret Rotation Validator | typescript-bun | haiku45-200k | 2.5 | 2.5 | 3.5 | 2.0 |  |
+| Secret Rotation Validator | typescript-bun | haiku45-200k-na | 2.5 | 2.5 | 3.5 | 2.0 |  |
 | Secret Rotation Validator | typescript-bun | opus47-1m-high | 4.0 | 3.5 | 4.0 | 3.5 |  |
 | Secret Rotation Validator | typescript-bun | opus47-1m-medium | 4.0 | 4.0 | 4.5 | 4.0 |  |
 | Secret Rotation Validator | typescript-bun | opus47-1m-xhigh | 4.5 | 4.0 | 4.5 | 4.5 |  |
@@ -2225,12 +2225,12 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Task | Language | Model | Tests | Asserts | Cov | Rig | Des | Ovr | Flag | Justification |
 |------|------|-------|-------|---------|-----|-----|-----|-----|------|---------------|
 | Semantic Version Bumper | typescript-bun | sonnet46-200k-medium | 28 | 38 | 2.0 | 2.5 | 3.5 | 2.0 | LLM says low coverage (2.0/5) but 28 tests detected |  |
-| PR Label Assigner | default | haiku45-200k | 21 | 28 | 2.0 | 2.0 | 3.0 | 1.5 | LLM says low coverage (2.0/5) but 21 tests detected |  |
+| PR Label Assigner | default | haiku45-200k-na | 21 | 28 | 2.0 | 2.0 | 3.0 | 1.5 | LLM says low coverage (2.0/5) but 21 tests detected |  |
 | PR Label Assigner | powershell | sonnet46-200k-medium | 20 | 41 | 2.0 | 2.5 | 3.5 | 1.5 | LLM says low coverage (2.0/5) but 20 tests detected |  |
 | Dependency License Checker | bash | opus47-1m-medium | 10 | 43 | 3.0 | 2.0 | 4.0 | 3.0 | LLM says low rigor (2.0/5) but 43 assertions detected |  |
-| Test Results Aggregator | default | haiku45-200k | 11 | 47 | 3.0 | 2.0 | 3.5 | 2.5 | LLM says low rigor (2.0/5) but 47 assertions detected |  |
-| Test Results Aggregator | typescript-bun | haiku45-200k | 25 | 80 | 2.5 | 2.0 | 3.0 | 2.0 | LLM says low rigor (2.0/5) but 80 assertions detected |  |
-| Environment Matrix Generator | default | haiku45-200k | 23 | 36 | 2.0 | 2.5 | 3.5 | 2.0 | LLM says low coverage (2.0/5) but 23 tests detected |  |
+| Test Results Aggregator | default | haiku45-200k-na | 11 | 47 | 3.0 | 2.0 | 3.5 | 2.5 | LLM says low rigor (2.0/5) but 47 assertions detected |  |
+| Test Results Aggregator | typescript-bun | haiku45-200k-na | 25 | 80 | 2.5 | 2.0 | 3.0 | 2.0 | LLM says low rigor (2.0/5) but 80 assertions detected |  |
+| Environment Matrix Generator | default | haiku45-200k-na | 23 | 36 | 2.0 | 2.5 | 3.5 | 2.0 | LLM says low coverage (2.0/5) but 23 tests detected |  |
 | Environment Matrix Generator | default | sonnet46-1m-medium | 33 | 26 | 2.0 | 2.5 | 3.5 | 2.0 | LLM says low coverage (2.0/5) but 33 tests detected |  |
 | Secret Rotation Validator | default | opus47-1m-medium | 21 | 43 | 3.0 | 2.0 | 3.0 | 2.0 | LLM says low rigor (2.0/5) but 43 assertions detected |  |
 
@@ -2240,245 +2240,245 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
-| Artifact Cleanup Script | bash | haiku45-200k | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
+| Artifact Cleanup Script | bash | haiku45-200k-na | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
 | Artifact Cleanup Script | bash | opus47-1m-high | 9.1min | 44 | 0 | $2.18 | 3.5 | bash | ok |
 | Artifact Cleanup Script | bash | opus47-1m-medium | 3.1min | 24 | 3 | $0.92 | 3.0 | bash | ok |
 | Artifact Cleanup Script | bash | opus47-1m-xhigh | 7.6min | 34 | 1 | $1.84 | 4.0 | bash | ok |
 | Artifact Cleanup Script | bash | opus47-200k-medium | 5.8min | 25 | 1 | $1.26 | 3.0 | bash | ok |
 | Artifact Cleanup Script | bash | sonnet46-1m-medium | 11.6min | 45 | 6 | $1.78 | 4.0 | bash | ok |
 | Artifact Cleanup Script | bash | sonnet46-200k-medium | 4.4min | 31 | 2 | $0.61 | 2.5 | bash | ok |
-| Artifact Cleanup Script | default | haiku45-200k | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
+| Artifact Cleanup Script | default | haiku45-200k-na | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
 | Artifact Cleanup Script | default | opus47-1m-high | 6.6min | 36 | 0 | $2.04 | 4.5 | python | ok |
 | Artifact Cleanup Script | default | opus47-1m-medium | 3.2min | 19 | 0 | $0.85 | 4.0 | python | ok |
 | Artifact Cleanup Script | default | opus47-1m-xhigh | 7.1min | 35 | 1 | $1.91 | 4.5 | python | ok |
 | Artifact Cleanup Script | default | opus47-200k-medium | 5.0min | 23 | 0 | $1.30 | 4.5 | python | ok |
 | Artifact Cleanup Script | default | sonnet46-1m-medium | 6.8min | 32 | 2 | $1.02 | 4.5 | python | ok |
 | Artifact Cleanup Script | default | sonnet46-200k-medium | 8.2min | 28 | 2 | $1.14 | 4.0 | python | ok |
-| Artifact Cleanup Script | powershell | haiku45-200k | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
+| Artifact Cleanup Script | powershell | haiku45-200k-na | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
 | Artifact Cleanup Script | powershell | opus47-1m-high | 9.4min | 39 | 0 | $2.30 | 4.5 | powershell | ok |
 | Artifact Cleanup Script | powershell | opus47-1m-medium | 4.7min | 22 | 0 | $1.08 | 3.5 | powershell | ok |
 | Artifact Cleanup Script | powershell | opus47-1m-xhigh | 10.9min | 43 | 0 | $3.19 | 4.5 | powershell | ok |
 | Artifact Cleanup Script | powershell | opus47-200k-medium | 4.0min | 23 | 0 | $1.09 | 3.5 | powershell | ok |
 | Artifact Cleanup Script | powershell | sonnet46-1m-medium | 7.8min | 28 | 0 | $1.09 | 3.5 | powershell | ok |
 | Artifact Cleanup Script | powershell | sonnet46-200k-medium | 8.4min | 31 | 2 | $1.25 | 4.0 | powershell | ok |
-| Artifact Cleanup Script | powershell-tool | haiku45-200k | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
+| Artifact Cleanup Script | powershell-tool | haiku45-200k-na | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-high | 11.7min | 54 | 1 | $3.33 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-medium | 4.1min | 20 | 0 | $0.96 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-xhigh | 12.0min | 51 | 1 | $3.21 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | opus47-200k-medium | 5.4min | 32 | 0 | $1.65 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | sonnet46-1m-medium | 3.1min | 18 | 2 | $0.46 | 3.0 | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | sonnet46-200k-medium | 6.0min | 50 | 1 | $0.94 | 4.0 | powershell | ok |
-| Artifact Cleanup Script | typescript-bun | haiku45-200k | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
+| Artifact Cleanup Script | typescript-bun | haiku45-200k-na | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-high | 9.2min | 39 | 0 | $2.07 | 4.5 | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-medium | 7.2min | 29 | 0 | $1.25 | 3.5 | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-xhigh | 8.5min | 53 | 0 | $2.41 | 4.5 | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-200k-medium | 4.4min | 22 | 0 | $0.92 | 4.0 | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet46-1m-medium | 7.9min | 49 | 4 | $1.37 | 4.0 | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet46-200k-medium | 3.6min | 26 | 3 | $0.49 | 3.0 | typescript | ok |
-| Dependency License Checker | bash | haiku45-200k | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
+| Dependency License Checker | bash | haiku45-200k-na | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
 | Dependency License Checker | bash | opus47-1m-high | 4.0min | 30 | 0 | $1.35 | 2.5 | bash | ok |
 | Dependency License Checker | bash | opus47-1m-medium | 5.5min | 30 | 1 | $1.55 | 3.0 | bash | ok |
 | Dependency License Checker | bash | opus47-1m-xhigh | 39.8min | 38 | 2 | $2.19 | 2.5 | bash | ok |
 | Dependency License Checker | bash | opus47-200k-medium | 7.5min | 26 | 1 | $0.92 | 3.0 | bash | ok |
 | Dependency License Checker | bash | sonnet46-1m-medium | 9.1min | 36 | 1 | $1.28 | 4.0 | bash | ok |
 | Dependency License Checker | bash | sonnet46-200k-medium | 6.9min | 34 | 2 | $0.97 | 2.0 | bash | ok |
-| Dependency License Checker | default | haiku45-200k | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
+| Dependency License Checker | default | haiku45-200k-na | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
 | Dependency License Checker | default | opus47-1m-high | 8.5min | 37 | 0 | $2.28 | 4.0 | python | ok |
 | Dependency License Checker | default | opus47-1m-medium | 8.2min | 34 | 2 | $1.33 | 4.0 | python | ok |
 | Dependency License Checker | default | opus47-1m-xhigh | 7.5min | 40 | 0 | $2.04 | 4.0 | python | ok |
 | Dependency License Checker | default | opus47-200k-medium | 4.1min | 24 | 0 | $0.97 | 4.5 | python | ok |
 | Dependency License Checker | default | sonnet46-1m-medium | 6.7min | 43 | 3 | $1.07 | 3.5 | python | ok |
 | Dependency License Checker | default | sonnet46-200k-medium | 11.7min | 44 | 4 | $1.68 | 4.5 | python | ok |
-| Dependency License Checker | powershell | haiku45-200k | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
+| Dependency License Checker | powershell | haiku45-200k-na | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
 | Dependency License Checker | powershell | opus47-1m-high | 7.1min | 31 | 0 | $1.93 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell | opus47-1m-medium | 6.6min | 23 | 0 | $1.00 | 3.5 | powershell | ok |
 | Dependency License Checker | powershell | opus47-1m-xhigh | 10.2min | 48 | 1 | $2.95 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell | opus47-200k-medium | 8.0min | 41 | 1 | $1.86 | 3.5 | powershell | ok |
 | Dependency License Checker | powershell | sonnet46-1m-medium | 7.1min | 43 | 1 | $1.05 | 4.5 | powershell | ok |
 | Dependency License Checker | powershell | sonnet46-200k-medium | 8.6min | 40 | 0 | $1.09 | 3.0 | powershell | ok |
-| Dependency License Checker | powershell-tool | haiku45-200k | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
+| Dependency License Checker | powershell-tool | haiku45-200k-na | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
 | Dependency License Checker | powershell-tool | opus47-1m-high | 10.1min | 42 | 0 | $2.43 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell-tool | opus47-1m-medium | 4.9min | 26 | 0 | $1.18 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell-tool | opus47-1m-xhigh | 11.2min | 48 | 0 | $2.86 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell-tool | opus47-200k-medium | 6.3min | 34 | 1 | $1.68 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell-tool | sonnet46-1m-medium | 12.0min | 45 | 1 | $1.79 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell-tool | sonnet46-200k-medium | 9.0min | 27 | 1 | $1.04 | 3.5 | powershell | ok |
-| Dependency License Checker | typescript-bun | haiku45-200k | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
+| Dependency License Checker | typescript-bun | haiku45-200k-na | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | opus47-1m-high | 10.9min | 68 | 0 | $3.08 | 4.5 | typescript | ok |
 | Dependency License Checker | typescript-bun | opus47-1m-medium | 8.2min | 32 | 1 | $1.34 | 4.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | opus47-1m-xhigh | 11.8min | 74 | 0 | $3.64 | 4.5 | typescript | ok |
 | Dependency License Checker | typescript-bun | opus47-200k-medium | 4.8min | 29 | 0 | $1.10 | 4.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | sonnet46-1m-medium | 8.4min | 50 | 3 | $1.23 | 4.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | sonnet46-200k-medium | 6.8min | 35 | 2 | $0.93 | 3.5 | typescript | ok |
-| Environment Matrix Generator | bash | haiku45-200k | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
+| Environment Matrix Generator | bash | haiku45-200k-na | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
 | Environment Matrix Generator | bash | opus47-1m-high | 6.6min | 42 | 0 | $1.69 | 4.0 | bash | ok |
 | Environment Matrix Generator | bash | opus47-1m-medium | 3.5min | 23 | 1 | $0.88 | 3.0 | bash | ok |
 | Environment Matrix Generator | bash | opus47-1m-xhigh | 8.3min | 51 | 2 | $2.49 | 3.5 | bash | ok |
 | Environment Matrix Generator | bash | opus47-200k-medium | 2.9min | 23 | 0 | $1.05 | 3.5 | bash | ok |
 | Environment Matrix Generator | bash | sonnet46-1m-medium | 29.1min | 58 | 6 | $3.25 | 3.5 | bash | ok |
 | Environment Matrix Generator | bash | sonnet46-200k-medium | 4.2min | 7 | 1 | $0.35 | — | bash | cli_error |
-| Environment Matrix Generator | default | haiku45-200k | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
+| Environment Matrix Generator | default | haiku45-200k-na | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
 | Environment Matrix Generator | default | opus47-1m-high | 5.7min | 38 | 0 | $1.87 | 4.0 | python | ok |
 | Environment Matrix Generator | default | opus47-1m-medium | 5.4min | 26 | 0 | $1.12 | 4.0 | python | ok |
 | Environment Matrix Generator | default | opus47-1m-xhigh | 6.8min | 34 | 2 | $2.01 | 3.0 | python | ok |
 | Environment Matrix Generator | default | opus47-200k-medium | 5.0min | 28 | 1 | $1.05 | 4.0 | python | ok |
 | Environment Matrix Generator | default | sonnet46-1m-medium | 3.7min | 25 | 3 | $0.56 | 2.0 | python | ok |
 | Environment Matrix Generator | default | sonnet46-200k-medium | 2.9min | 23 | 2 | $0.41 | 2.0 | python | ok |
-| Environment Matrix Generator | powershell | haiku45-200k | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
+| Environment Matrix Generator | powershell | haiku45-200k-na | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
 | Environment Matrix Generator | powershell | opus47-1m-high | 7.0min | 41 | 0 | $2.04 | 4.0 | powershell | ok |
 | Environment Matrix Generator | powershell | opus47-1m-medium | 14.0min | 59 | 0 | $3.01 | 4.0 | powershell | ok |
 | Environment Matrix Generator | powershell | opus47-1m-xhigh | 13.5min | 54 | 0 | $3.93 | 4.0 | powershell | ok |
 | Environment Matrix Generator | powershell | opus47-200k-medium | 6.1min | 30 | 0 | $1.42 | 4.0 | powershell | ok |
 | Environment Matrix Generator | powershell | sonnet46-1m-medium | 2.7min | 16 | 1 | $0.34 | 2.5 | powershell | ok |
 | Environment Matrix Generator | powershell | sonnet46-200k-medium | 2.1min | 14 | 1 | $0.28 | 2.5 | powershell | ok |
-| Environment Matrix Generator | powershell-tool | haiku45-200k | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
+| Environment Matrix Generator | powershell-tool | haiku45-200k-na | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
 | Environment Matrix Generator | powershell-tool | opus47-1m-high | 7.4min | 30 | 0 | $2.13 | 3.5 | powershell | ok |
 | Environment Matrix Generator | powershell-tool | opus47-1m-medium | 4.6min | 29 | 2 | $1.30 | 3.5 | powershell | ok |
 | Environment Matrix Generator | powershell-tool | opus47-1m-xhigh | 10.2min | 43 | 1 | $3.08 | 4.0 | powershell | ok |
 | Environment Matrix Generator | powershell-tool | opus47-200k-medium | 6.0min | 27 | 1 | $1.51 | 4.0 | powershell | ok |
 | Environment Matrix Generator | powershell-tool | sonnet46-1m-medium | 8.1min | 36 | 7 | $1.04 | 4.0 | powershell | ok |
 | Environment Matrix Generator | powershell-tool | sonnet46-200k-medium | 8.0min | 25 | 1 | $1.00 | 4.0 | powershell | ok |
-| Environment Matrix Generator | typescript-bun | haiku45-200k | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | opus47-1m-high | 6.7min | 42 | 0 | $2.13 | 3.5 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | opus47-1m-medium | 7.4min | 29 | 0 | $1.07 | 3.0 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | opus47-1m-xhigh | 9.8min | 52 | 0 | $2.60 | 4.5 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | opus47-200k-medium | 6.5min | 36 | 1 | $1.41 | 4.0 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | sonnet46-1m-medium | 12.2min | 42 | 2 | $1.34 | 3.5 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | sonnet46-200k-medium | 6.4min | 31 | 2 | $0.90 | 3.5 | typescript | ok |
-| PR Label Assigner | bash | haiku45-200k | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
+| PR Label Assigner | bash | haiku45-200k-na | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
 | PR Label Assigner | bash | opus47-1m-high | 5.9min | 31 | 2 | $1.46 | 4.0 | bash | ok |
 | PR Label Assigner | bash | opus47-1m-medium | 6.2min | 23 | 1 | $0.87 | 4.0 | bash | ok |
 | PR Label Assigner | bash | opus47-1m-xhigh | 16.7min | 61 | 2 | $3.14 | 3.5 | bash | ok |
 | PR Label Assigner | bash | opus47-200k-medium | 5.0min | 29 | 3 | $1.18 | 2.0 | bash | ok |
 | PR Label Assigner | bash | sonnet46-1m-medium | 3.1min | 28 | 4 | $0.50 | 2.0 | bash | ok |
 | PR Label Assigner | bash | sonnet46-200k-medium | 7.2min | 44 | 3 | $0.90 | 4.0 | bash | ok |
-| PR Label Assigner | default | haiku45-200k | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
+| PR Label Assigner | default | haiku45-200k-na | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
 | PR Label Assigner | default | opus47-1m-high | 7.6min | 23 | 1 | $1.32 | 4.0 | python | ok |
 | PR Label Assigner | default | opus47-1m-medium | 3.1min | 23 | 0 | $0.83 | 2.0 | python | ok |
 | PR Label Assigner | default | opus47-1m-xhigh | 7.8min | 43 | 0 | $2.25 | 4.0 | python | ok |
 | PR Label Assigner | default | opus47-200k-medium | 3.2min | 21 | 0 | $0.70 | 2.0 | python | ok |
 | PR Label Assigner | default | sonnet46-1m-medium | 9.6min | 44 | 7 | $1.38 | 3.0 | python | ok |
 | PR Label Assigner | default | sonnet46-200k-medium | 4.4min | 34 | 1 | $0.66 | 2.5 | python | ok |
-| PR Label Assigner | powershell | haiku45-200k | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
+| PR Label Assigner | powershell | haiku45-200k-na | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
 | PR Label Assigner | powershell | opus47-1m-high | 10.0min | 49 | 1 | $2.92 | 4.0 | powershell | ok |
 | PR Label Assigner | powershell | opus47-1m-medium | 5.1min | 27 | 0 | $1.11 | 4.0 | powershell | ok |
 | PR Label Assigner | powershell | opus47-1m-xhigh | 9.6min | 43 | 0 | $2.60 | 4.0 | powershell | ok |
 | PR Label Assigner | powershell | opus47-200k-medium | 8.5min | 38 | 0 | $1.93 | 4.0 | powershell | ok |
 | PR Label Assigner | powershell | sonnet46-1m-medium | 12.0min | 31 | 1 | $1.61 | 4.5 | powershell | ok |
 | PR Label Assigner | powershell | sonnet46-200k-medium | 2.9min | 19 | 0 | $0.38 | 1.5 | powershell | ok |
-| PR Label Assigner | powershell-tool | haiku45-200k | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
+| PR Label Assigner | powershell-tool | haiku45-200k-na | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
 | PR Label Assigner | powershell-tool | opus47-1m-high | 5.7min | 29 | 1 | $1.67 | 4.5 | powershell | ok |
 | PR Label Assigner | powershell-tool | opus47-1m-medium | 7.4min | 29 | 0 | $1.33 | 3.5 | powershell | ok |
 | PR Label Assigner | powershell-tool | opus47-1m-xhigh | 7.7min | 37 | 0 | $2.01 | 4.0 | powershell | ok |
 | PR Label Assigner | powershell-tool | opus47-200k-medium | 5.3min | 27 | 0 | $1.34 | 4.0 | powershell | ok |
 | PR Label Assigner | powershell-tool | sonnet46-1m-medium | 4.4min | 28 | 1 | $0.59 | 2.5 | powershell | ok |
 | PR Label Assigner | powershell-tool | sonnet46-200k-medium | 8.4min | 35 | 3 | $1.11 | 4.0 | powershell | ok |
-| PR Label Assigner | typescript-bun | haiku45-200k | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
+| PR Label Assigner | typescript-bun | haiku45-200k-na | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
 | PR Label Assigner | typescript-bun | opus47-1m-high | 7.3min | 44 | 0 | $1.86 | 4.0 | typescript | ok |
 | PR Label Assigner | typescript-bun | opus47-1m-medium | 9.0min | 30 | 0 | $1.06 | 4.0 | typescript | ok |
 | PR Label Assigner | typescript-bun | opus47-1m-xhigh | 10.4min | 57 | 0 | $3.05 | 4.5 | typescript | ok |
 | PR Label Assigner | typescript-bun | opus47-200k-medium | 4.5min | 28 | 0 | $1.00 | 4.0 | typescript | ok |
 | PR Label Assigner | typescript-bun | sonnet46-1m-medium | 4.7min | 27 | 0 | $0.67 | 3.0 | typescript | ok |
 | PR Label Assigner | typescript-bun | sonnet46-200k-medium | 6.9min | 41 | 3 | $0.87 | 2.5 | typescript | ok |
-| Secret Rotation Validator | bash | haiku45-200k | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
+| Secret Rotation Validator | bash | haiku45-200k-na | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
 | Secret Rotation Validator | bash | opus47-1m-high | 4.6min | 22 | 0 | $1.06 | 3.0 | bash | ok |
 | Secret Rotation Validator | bash | opus47-1m-medium | 5.4min | 24 | 0 | $1.09 | 3.0 | bash | ok |
 | Secret Rotation Validator | bash | opus47-1m-xhigh | 9.4min | 35 | 0 | $2.40 | 3.5 | bash | ok |
 | Secret Rotation Validator | bash | opus47-200k-medium | 3.4min | 29 | 2 | $1.10 | 3.0 | bash | ok |
 | Secret Rotation Validator | bash | sonnet46-1m-medium | 10.0min | 41 | 6 | $1.10 | 3.5 | bash | ok |
 | Secret Rotation Validator | bash | sonnet46-200k-medium | 8.6min | 39 | 5 | $1.11 | 4.0 | bash | ok |
-| Secret Rotation Validator | default | haiku45-200k | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
+| Secret Rotation Validator | default | haiku45-200k-na | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
 | Secret Rotation Validator | default | opus47-1m-high | 7.9min | 30 | 1 | $1.93 | 4.5 | python | ok |
 | Secret Rotation Validator | default | opus47-1m-medium | 7.0min | 19 | 0 | $0.88 | 2.0 | python | ok |
 | Secret Rotation Validator | default | opus47-1m-xhigh | 9.1min | 45 | 0 | $2.54 | 4.0 | python | ok |
 | Secret Rotation Validator | default | opus47-200k-medium | 5.5min | 25 | 0 | $1.27 | 4.0 | python | ok |
 | Secret Rotation Validator | default | sonnet46-1m-medium | 8.0min | 31 | 4 | $1.16 | 4.5 | python | ok |
 | Secret Rotation Validator | default | sonnet46-200k-medium | 8.5min | 42 | 2 | $1.25 | 3.5 | python | ok |
-| Secret Rotation Validator | powershell | haiku45-200k | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
+| Secret Rotation Validator | powershell | haiku45-200k-na | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
 | Secret Rotation Validator | powershell | opus47-1m-high | 6.7min | 36 | 0 | $1.89 | 4.5 | powershell | ok |
 | Secret Rotation Validator | powershell | opus47-1m-medium | 22.5min | 31 | 0 | $1.27 | 4.0 | powershell | ok |
 | Secret Rotation Validator | powershell | opus47-1m-xhigh | 11.0min | 46 | 2 | $3.07 | 4.5 | powershell | ok |
 | Secret Rotation Validator | powershell | opus47-200k-medium | 4.9min | 32 | 0 | $1.40 | 3.5 | powershell | ok |
 | Secret Rotation Validator | powershell | sonnet46-1m-medium | 9.9min | 36 | 1 | $1.35 | 3.5 | powershell | ok |
 | Secret Rotation Validator | powershell | sonnet46-200k-medium | 3.4min | 22 | 1 | $0.47 | 2.5 | powershell | ok |
-| Secret Rotation Validator | powershell-tool | haiku45-200k | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
+| Secret Rotation Validator | powershell-tool | haiku45-200k-na | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus47-1m-high | 8.2min | 41 | 0 | $2.29 | 4.5 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus47-1m-medium | 17.8min | 38 | 2 | $1.70 | 4.0 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus47-1m-xhigh | 9.9min | 38 | 0 | $2.58 | 4.0 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus47-200k-medium | 4.0min | 19 | 0 | $1.06 | 3.5 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | sonnet46-1m-medium | 7.8min | 33 | 1 | $0.94 | 2.5 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | sonnet46-200k-medium | 8.0min | 19 | 0 | $0.96 | 3.0 | powershell | ok |
-| Secret Rotation Validator | typescript-bun | haiku45-200k | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
+| Secret Rotation Validator | typescript-bun | haiku45-200k-na | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
 | Secret Rotation Validator | typescript-bun | opus47-1m-high | 9.5min | 55 | 0 | $2.95 | 3.5 | typescript | ok |
 | Secret Rotation Validator | typescript-bun | opus47-1m-medium | 7.4min | 35 | 2 | $1.46 | 4.0 | typescript | ok |
 | Secret Rotation Validator | typescript-bun | opus47-1m-xhigh | 8.2min | 46 | 1 | $2.52 | 4.5 | typescript | ok |
 | Secret Rotation Validator | typescript-bun | opus47-200k-medium | 6.9min | 36 | 0 | $1.92 | 3.5 | typescript | ok |
 | Secret Rotation Validator | typescript-bun | sonnet46-1m-medium | 6.6min | 37 | 3 | $0.78 | 3.0 | typescript | ok |
 | Secret Rotation Validator | typescript-bun | sonnet46-200k-medium | 8.9min | 30 | 1 | $1.07 | 4.0 | typescript | ok |
-| Semantic Version Bumper | bash | haiku45-200k | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
+| Semantic Version Bumper | bash | haiku45-200k-na | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
 | Semantic Version Bumper | bash | opus47-1m-high | 6.3min | 31 | 1 | $1.44 | 4.0 | bash | ok |
 | Semantic Version Bumper | bash | opus47-1m-medium | 4.2min | 30 | 2 | $1.07 | 2.5 | bash | ok |
 | Semantic Version Bumper | bash | opus47-1m-xhigh | 17.2min | 48 | 2 | $2.95 | 4.5 | bash | ok |
 | Semantic Version Bumper | bash | opus47-200k-medium | 4.1min | 25 | 0 | $1.02 | 4.0 | bash | ok |
 | Semantic Version Bumper | bash | sonnet46-1m-medium | 10.0min | 40 | 4 | $1.38 | 3.0 | bash | ok |
 | Semantic Version Bumper | bash | sonnet46-200k-medium | 4.5min | 36 | 2 | $0.64 | 3.0 | bash | ok |
-| Semantic Version Bumper | default | haiku45-200k | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
+| Semantic Version Bumper | default | haiku45-200k-na | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
 | Semantic Version Bumper | default | opus47-1m-high | 7.1min | 31 | 0 | $1.85 | — | javascript | ok |
 | Semantic Version Bumper | default | opus47-1m-medium | 4.1min | 22 | 0 | $0.93 | 4.0 | python | ok |
 | Semantic Version Bumper | default | opus47-1m-xhigh | 6.8min | 45 | 0 | $2.45 | 4.5 | python | ok |
 | Semantic Version Bumper | default | opus47-200k-medium | 4.2min | 31 | 1 | $1.21 | — | javascript | ok |
 | Semantic Version Bumper | default | sonnet46-1m-medium | 4.6min | 33 | 3 | $0.67 | 2.0 | python | ok |
 | Semantic Version Bumper | default | sonnet46-200k-medium | 5.8min | 42 | 3 | $0.94 | 4.0 | python | ok |
-| Semantic Version Bumper | powershell | haiku45-200k | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
+| Semantic Version Bumper | powershell | haiku45-200k-na | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
 | Semantic Version Bumper | powershell | opus47-1m-high | 8.0min | 40 | 0 | $2.23 | 4.5 | powershell | ok |
 | Semantic Version Bumper | powershell | opus47-1m-medium | 8.6min | 35 | 0 | $1.69 | 4.5 | powershell | ok |
 | Semantic Version Bumper | powershell | opus47-1m-xhigh | 7.7min | 38 | 0 | $2.27 | 4.5 | powershell | ok |
 | Semantic Version Bumper | powershell | opus47-200k-medium | 6.3min | 33 | 0 | $1.44 | 4.0 | powershell | ok |
 | Semantic Version Bumper | powershell | sonnet46-1m-medium | 8.3min | 27 | 1 | $0.98 | 4.0 | powershell | ok |
 | Semantic Version Bumper | powershell | sonnet46-200k-medium | 3.9min | 23 | 1 | $0.44 | 4.0 | powershell | ok |
-| Semantic Version Bumper | powershell-tool | haiku45-200k | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | haiku45-200k-na | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus47-1m-high | 6.1min | 34 | 0 | $1.78 | 4.5 | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus47-1m-medium | 8.0min | 37 | 1 | $1.75 | 4.0 | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus47-1m-xhigh | 8.0min | 49 | 0 | $2.90 | 3.5 | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus47-200k-medium | 5.3min | 27 | 0 | $1.36 | 4.0 | powershell | ok |
 | Semantic Version Bumper | powershell-tool | sonnet46-1m-medium | 11.9min | 40 | 1 | $1.69 | 3.5 | powershell | ok |
 | Semantic Version Bumper | powershell-tool | sonnet46-200k-medium | 5.9min | 33 | 2 | $0.87 | 4.5 | powershell | ok |
-| Semantic Version Bumper | typescript-bun | haiku45-200k | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
+| Semantic Version Bumper | typescript-bun | haiku45-200k-na | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | opus47-1m-high | 10.9min | 62 | 1 | $2.99 | 4.5 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | opus47-1m-medium | 5.6min | 33 | 0 | $1.31 | 4.0 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | opus47-1m-xhigh | 14.3min | 80 | 1 | $4.21 | 4.5 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | opus47-200k-medium | 5.1min | 35 | 1 | $1.58 | 3.5 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | sonnet46-1m-medium | 8.5min | 42 | 4 | $0.92 | 4.0 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | sonnet46-200k-medium | 7.4min | 33 | 4 | $0.68 | 2.0 | typescript | ok |
-| Test Results Aggregator | bash | haiku45-200k | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
+| Test Results Aggregator | bash | haiku45-200k-na | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
 | Test Results Aggregator | bash | opus47-1m-high | 11.3min | 48 | 1 | $2.37 | 3.5 | bash | ok |
 | Test Results Aggregator | bash | opus47-1m-medium | 6.7min | 35 | 0 | $1.36 | 4.0 | bash | ok |
 | Test Results Aggregator | bash | opus47-1m-xhigh | 16.5min | 79 | 1 | $5.09 | 4.5 | bash | ok |
 | Test Results Aggregator | bash | opus47-200k-medium | 4.3min | 29 | 1 | $1.12 | 4.0 | bash | ok |
 | Test Results Aggregator | bash | sonnet46-1m-medium | 10.7min | 39 | 5 | $1.42 | 3.5 | bash | ok |
 | Test Results Aggregator | bash | sonnet46-200k-medium | 6.3min | 23 | 0 | $0.78 | 4.0 | bash | ok |
-| Test Results Aggregator | default | haiku45-200k | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
+| Test Results Aggregator | default | haiku45-200k-na | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
 | Test Results Aggregator | default | opus47-1m-high | 6.5min | 44 | 0 | $2.37 | 4.0 | python | ok |
 | Test Results Aggregator | default | opus47-1m-medium | 6.9min | 31 | 0 | $1.28 | 3.5 | python | ok |
 | Test Results Aggregator | default | opus47-1m-xhigh | 9.2min | 54 | 1 | $2.81 | 4.0 | python | ok |
 | Test Results Aggregator | default | opus47-200k-medium | 6.1min | 35 | 1 | $1.68 | 4.0 | python | ok |
 | Test Results Aggregator | default | sonnet46-1m-medium | 8.4min | 25 | 1 | $0.90 | 3.5 | python | ok |
 | Test Results Aggregator | default | sonnet46-200k-medium | 6.5min | 43 | 4 | $1.17 | 4.5 | python | ok |
-| Test Results Aggregator | powershell | haiku45-200k | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
+| Test Results Aggregator | powershell | haiku45-200k-na | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
 | Test Results Aggregator | powershell | opus47-1m-high | 11.1min | 49 | 1 | $3.14 | 4.0 | powershell | ok |
 | Test Results Aggregator | powershell | opus47-1m-medium | 9.6min | 27 | 0 | $1.44 | 4.0 | powershell | ok |
 | Test Results Aggregator | powershell | opus47-1m-xhigh | 17.3min | 74 | 0 | $4.47 | 3.5 | powershell | ok |
 | Test Results Aggregator | powershell | opus47-200k-medium | 7.1min | 37 | 1 | $1.79 | 3.5 | powershell | ok |
 | Test Results Aggregator | powershell | sonnet46-1m-medium | 8.3min | 24 | 1 | $0.99 | 3.0 | powershell | ok |
 | Test Results Aggregator | powershell | sonnet46-200k-medium | 7.7min | 27 | 0 | $1.03 | 4.0 | powershell | ok |
-| Test Results Aggregator | powershell-tool | haiku45-200k | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
+| Test Results Aggregator | powershell-tool | haiku45-200k-na | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
 | Test Results Aggregator | powershell-tool | opus47-1m-high | 15.9min | 69 | 1 | $3.91 | 4.0 | powershell | ok |
 | Test Results Aggregator | powershell-tool | opus47-1m-medium | 9.4min | 37 | 0 | $1.76 | 3.5 | powershell | ok |
 | Test Results Aggregator | powershell-tool | opus47-1m-xhigh | 15.2min | 63 | 0 | $5.47 | 4.0 | powershell | ok |
 | Test Results Aggregator | powershell-tool | opus47-200k-medium | 7.0min | 31 | 0 | $1.64 | 3.5 | powershell | ok |
 | Test Results Aggregator | powershell-tool | sonnet46-1m-medium | 11.4min | 25 | 2 | $1.32 | 4.0 | powershell | ok |
 | Test Results Aggregator | powershell-tool | sonnet46-200k-medium | 11.7min | 32 | 1 | $1.40 | 4.5 | powershell | ok |
-| Test Results Aggregator | typescript-bun | haiku45-200k | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
+| Test Results Aggregator | typescript-bun | haiku45-200k-na | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
 | Test Results Aggregator | typescript-bun | opus47-1m-high | 8.6min | 44 | 0 | $1.52 | 4.0 | typescript | ok |
 | Test Results Aggregator | typescript-bun | opus47-1m-medium | 8.4min | 35 | 0 | $1.49 | 4.0 | typescript | ok |
 | Test Results Aggregator | typescript-bun | opus47-1m-xhigh | 20.8min | 103 | 1 | $6.31 | 4.5 | typescript | ok |
@@ -2492,62 +2492,62 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
-| PR Label Assigner | powershell-tool | haiku45-200k | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
-| PR Label Assigner | default | haiku45-200k | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
+| PR Label Assigner | powershell-tool | haiku45-200k-na | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
+| PR Label Assigner | default | haiku45-200k-na | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
 | Environment Matrix Generator | powershell | sonnet46-200k-medium | 2.1min | 14 | 1 | $0.28 | 2.5 | powershell | ok |
-| Artifact Cleanup Script | powershell-tool | haiku45-200k | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
-| Artifact Cleanup Script | powershell | haiku45-200k | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
-| Artifact Cleanup Script | typescript-bun | haiku45-200k | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
+| Artifact Cleanup Script | powershell-tool | haiku45-200k-na | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
+| Artifact Cleanup Script | powershell | haiku45-200k-na | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
+| Artifact Cleanup Script | typescript-bun | haiku45-200k-na | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
 | Environment Matrix Generator | powershell | sonnet46-1m-medium | 2.7min | 16 | 1 | $0.34 | 2.5 | powershell | ok |
-| Secret Rotation Validator | default | haiku45-200k | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
+| Secret Rotation Validator | default | haiku45-200k-na | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
 | Environment Matrix Generator | bash | sonnet46-200k-medium | 4.2min | 7 | 1 | $0.35 | — | bash | cli_error |
-| Dependency License Checker | bash | haiku45-200k | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
-| PR Label Assigner | typescript-bun | haiku45-200k | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
-| Environment Matrix Generator | default | haiku45-200k | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
+| Dependency License Checker | bash | haiku45-200k-na | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
+| PR Label Assigner | typescript-bun | haiku45-200k-na | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
+| Environment Matrix Generator | default | haiku45-200k-na | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
 | PR Label Assigner | powershell | sonnet46-200k-medium | 2.9min | 19 | 0 | $0.38 | 1.5 | powershell | ok |
-| PR Label Assigner | powershell | haiku45-200k | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
-| Dependency License Checker | typescript-bun | haiku45-200k | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
-| Secret Rotation Validator | powershell-tool | haiku45-200k | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
-| Environment Matrix Generator | powershell | haiku45-200k | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
-| Dependency License Checker | default | haiku45-200k | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
+| PR Label Assigner | powershell | haiku45-200k-na | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
+| Dependency License Checker | typescript-bun | haiku45-200k-na | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
+| Secret Rotation Validator | powershell-tool | haiku45-200k-na | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
+| Environment Matrix Generator | powershell | haiku45-200k-na | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
+| Dependency License Checker | default | haiku45-200k-na | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
 | Environment Matrix Generator | default | sonnet46-200k-medium | 2.9min | 23 | 2 | $0.41 | 2.0 | python | ok |
-| Dependency License Checker | powershell-tool | haiku45-200k | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
-| Secret Rotation Validator | typescript-bun | haiku45-200k | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
-| Artifact Cleanup Script | bash | haiku45-200k | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
+| Dependency License Checker | powershell-tool | haiku45-200k-na | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
+| Secret Rotation Validator | typescript-bun | haiku45-200k-na | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
+| Artifact Cleanup Script | bash | haiku45-200k-na | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
 | Semantic Version Bumper | powershell | sonnet46-200k-medium | 3.9min | 23 | 1 | $0.44 | 4.0 | powershell | ok |
-| Semantic Version Bumper | bash | haiku45-200k | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
+| Semantic Version Bumper | bash | haiku45-200k-na | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
 | Artifact Cleanup Script | powershell-tool | sonnet46-1m-medium | 3.1min | 18 | 2 | $0.46 | 3.0 | powershell | ok |
-| Artifact Cleanup Script | default | haiku45-200k | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
+| Artifact Cleanup Script | default | haiku45-200k-na | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
 | Secret Rotation Validator | powershell | sonnet46-200k-medium | 3.4min | 22 | 1 | $0.47 | 2.5 | powershell | ok |
-| Secret Rotation Validator | powershell | haiku45-200k | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
+| Secret Rotation Validator | powershell | haiku45-200k-na | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet46-200k-medium | 3.6min | 26 | 3 | $0.49 | 3.0 | typescript | ok |
-| Secret Rotation Validator | bash | haiku45-200k | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
+| Secret Rotation Validator | bash | haiku45-200k-na | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
 | PR Label Assigner | bash | sonnet46-1m-medium | 3.1min | 28 | 4 | $0.50 | 2.0 | bash | ok |
-| PR Label Assigner | bash | haiku45-200k | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
-| Test Results Aggregator | default | haiku45-200k | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
+| PR Label Assigner | bash | haiku45-200k-na | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
+| Test Results Aggregator | default | haiku45-200k-na | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
 | Environment Matrix Generator | default | sonnet46-1m-medium | 3.7min | 25 | 3 | $0.56 | 2.0 | python | ok |
-| Environment Matrix Generator | powershell-tool | haiku45-200k | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
-| Semantic Version Bumper | powershell | haiku45-200k | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
-| Dependency License Checker | powershell | haiku45-200k | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
+| Environment Matrix Generator | powershell-tool | haiku45-200k-na | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
+| Semantic Version Bumper | powershell | haiku45-200k-na | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
+| Dependency License Checker | powershell | haiku45-200k-na | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
 | PR Label Assigner | powershell-tool | sonnet46-1m-medium | 4.4min | 28 | 1 | $0.59 | 2.5 | powershell | ok |
-| Test Results Aggregator | typescript-bun | haiku45-200k | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
+| Test Results Aggregator | typescript-bun | haiku45-200k-na | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
 | Artifact Cleanup Script | bash | sonnet46-200k-medium | 4.4min | 31 | 2 | $0.61 | 2.5 | bash | ok |
-| Semantic Version Bumper | typescript-bun | haiku45-200k | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
-| Test Results Aggregator | powershell | haiku45-200k | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
-| Test Results Aggregator | powershell-tool | haiku45-200k | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
-| Test Results Aggregator | bash | haiku45-200k | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
+| Semantic Version Bumper | typescript-bun | haiku45-200k-na | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
+| Test Results Aggregator | powershell | haiku45-200k-na | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
+| Test Results Aggregator | powershell-tool | haiku45-200k-na | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
+| Test Results Aggregator | bash | haiku45-200k-na | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
 | Semantic Version Bumper | bash | sonnet46-200k-medium | 4.5min | 36 | 2 | $0.64 | 3.0 | bash | ok |
 | PR Label Assigner | default | sonnet46-200k-medium | 4.4min | 34 | 1 | $0.66 | 2.5 | python | ok |
 | Semantic Version Bumper | default | sonnet46-1m-medium | 4.6min | 33 | 3 | $0.67 | 2.0 | python | ok |
 | PR Label Assigner | typescript-bun | sonnet46-1m-medium | 4.7min | 27 | 0 | $0.67 | 3.0 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | sonnet46-200k-medium | 7.4min | 33 | 4 | $0.68 | 2.0 | typescript | ok |
-| Environment Matrix Generator | typescript-bun | haiku45-200k | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
 | PR Label Assigner | default | opus47-200k-medium | 3.2min | 21 | 0 | $0.70 | 2.0 | python | ok |
-| Environment Matrix Generator | bash | haiku45-200k | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
+| Environment Matrix Generator | bash | haiku45-200k-na | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
 | Test Results Aggregator | bash | sonnet46-200k-medium | 6.3min | 23 | 0 | $0.78 | 4.0 | bash | ok |
 | Secret Rotation Validator | typescript-bun | sonnet46-1m-medium | 6.6min | 37 | 3 | $0.78 | 3.0 | typescript | ok |
 | PR Label Assigner | default | opus47-1m-medium | 3.1min | 23 | 0 | $0.83 | 2.0 | python | ok |
-| Semantic Version Bumper | default | haiku45-200k | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
+| Semantic Version Bumper | default | haiku45-200k-na | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
 | Artifact Cleanup Script | default | opus47-1m-medium | 3.2min | 19 | 0 | $0.85 | 4.0 | python | ok |
 | PR Label Assigner | typescript-bun | sonnet46-200k-medium | 6.9min | 41 | 3 | $0.87 | 2.5 | typescript | ok |
 | Semantic Version Bumper | powershell-tool | sonnet46-200k-medium | 5.9min | 33 | 2 | $0.87 | 4.5 | powershell | ok |
@@ -2561,7 +2561,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Dependency License Checker | bash | opus47-200k-medium | 7.5min | 26 | 1 | $0.92 | 3.0 | bash | ok |
 | Artifact Cleanup Script | bash | opus47-1m-medium | 3.1min | 24 | 3 | $0.92 | 3.0 | bash | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-200k-medium | 4.4min | 22 | 0 | $0.92 | 4.0 | typescript | ok |
-| Semantic Version Bumper | powershell-tool | haiku45-200k | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | haiku45-200k-na | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
 | Dependency License Checker | typescript-bun | sonnet46-200k-medium | 6.8min | 35 | 2 | $0.93 | 3.5 | typescript | ok |
 | Semantic Version Bumper | default | opus47-1m-medium | 4.1min | 22 | 0 | $0.93 | 4.0 | python | ok |
 | Artifact Cleanup Script | powershell-tool | sonnet46-200k-medium | 6.0min | 50 | 1 | $0.94 | 4.0 | powershell | ok |
@@ -2747,30 +2747,30 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Environment Matrix Generator | powershell | sonnet46-200k-medium | 2.1min | 14 | 1 | $0.28 | 2.5 | powershell | ok |
 | Environment Matrix Generator | powershell | sonnet46-1m-medium | 2.7min | 16 | 1 | $0.34 | 2.5 | powershell | ok |
-| PR Label Assigner | default | haiku45-200k | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
+| PR Label Assigner | default | haiku45-200k-na | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
 | Environment Matrix Generator | bash | opus47-200k-medium | 2.9min | 23 | 0 | $1.05 | 3.5 | bash | ok |
 | PR Label Assigner | powershell | sonnet46-200k-medium | 2.9min | 19 | 0 | $0.38 | 1.5 | powershell | ok |
 | Environment Matrix Generator | default | sonnet46-200k-medium | 2.9min | 23 | 2 | $0.41 | 2.0 | python | ok |
-| PR Label Assigner | powershell-tool | haiku45-200k | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
+| PR Label Assigner | powershell-tool | haiku45-200k-na | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
 | PR Label Assigner | default | opus47-1m-medium | 3.1min | 23 | 0 | $0.83 | 2.0 | python | ok |
 | Artifact Cleanup Script | powershell-tool | sonnet46-1m-medium | 3.1min | 18 | 2 | $0.46 | 3.0 | powershell | ok |
 | PR Label Assigner | bash | sonnet46-1m-medium | 3.1min | 28 | 4 | $0.50 | 2.0 | bash | ok |
 | Artifact Cleanup Script | bash | opus47-1m-medium | 3.1min | 24 | 3 | $0.92 | 3.0 | bash | ok |
 | PR Label Assigner | default | opus47-200k-medium | 3.2min | 21 | 0 | $0.70 | 2.0 | python | ok |
 | Artifact Cleanup Script | default | opus47-1m-medium | 3.2min | 19 | 0 | $0.85 | 4.0 | python | ok |
-| Artifact Cleanup Script | powershell-tool | haiku45-200k | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
+| Artifact Cleanup Script | powershell-tool | haiku45-200k-na | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
 | Secret Rotation Validator | bash | opus47-200k-medium | 3.4min | 29 | 2 | $1.10 | 3.0 | bash | ok |
 | Secret Rotation Validator | powershell | sonnet46-200k-medium | 3.4min | 22 | 1 | $0.47 | 2.5 | powershell | ok |
 | Environment Matrix Generator | bash | opus47-1m-medium | 3.5min | 23 | 1 | $0.88 | 3.0 | bash | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet46-200k-medium | 3.6min | 26 | 3 | $0.49 | 3.0 | typescript | ok |
 | Environment Matrix Generator | default | sonnet46-1m-medium | 3.7min | 25 | 3 | $0.56 | 2.0 | python | ok |
-| Artifact Cleanup Script | typescript-bun | haiku45-200k | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
-| Secret Rotation Validator | typescript-bun | haiku45-200k | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
+| Artifact Cleanup Script | typescript-bun | haiku45-200k-na | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
+| Secret Rotation Validator | typescript-bun | haiku45-200k-na | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
 | Semantic Version Bumper | powershell | sonnet46-200k-medium | 3.9min | 23 | 1 | $0.44 | 4.0 | powershell | ok |
-| Dependency License Checker | powershell-tool | haiku45-200k | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
+| Dependency License Checker | powershell-tool | haiku45-200k-na | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
 | Artifact Cleanup Script | powershell | opus47-200k-medium | 4.0min | 23 | 0 | $1.09 | 3.5 | powershell | ok |
-| Dependency License Checker | default | haiku45-200k | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
-| Environment Matrix Generator | default | haiku45-200k | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
+| Dependency License Checker | default | haiku45-200k-na | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
+| Environment Matrix Generator | default | haiku45-200k-na | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
 | Dependency License Checker | bash | opus47-1m-high | 4.0min | 30 | 0 | $1.35 | 2.5 | bash | ok |
 | Secret Rotation Validator | powershell-tool | opus47-200k-medium | 4.0min | 19 | 0 | $1.06 | 3.5 | powershell | ok |
 | Dependency License Checker | default | opus47-200k-medium | 4.1min | 24 | 0 | $0.97 | 4.5 | python | ok |
@@ -2780,9 +2780,9 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Semantic Version Bumper | bash | opus47-1m-medium | 4.2min | 30 | 2 | $1.07 | 2.5 | bash | ok |
 | Environment Matrix Generator | bash | sonnet46-200k-medium | 4.2min | 7 | 1 | $0.35 | — | bash | cli_error |
 | Semantic Version Bumper | default | opus47-200k-medium | 4.2min | 31 | 1 | $1.21 | — | javascript | ok |
-| Secret Rotation Validator | default | haiku45-200k | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
-| Test Results Aggregator | default | haiku45-200k | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
-| Dependency License Checker | typescript-bun | haiku45-200k | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
+| Secret Rotation Validator | default | haiku45-200k-na | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
+| Test Results Aggregator | default | haiku45-200k-na | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
+| Dependency License Checker | typescript-bun | haiku45-200k-na | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
 | Test Results Aggregator | bash | opus47-200k-medium | 4.3min | 29 | 1 | $1.12 | 4.0 | bash | ok |
 | PR Label Assigner | default | sonnet46-200k-medium | 4.4min | 34 | 1 | $0.66 | 2.5 | python | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-200k-medium | 4.4min | 22 | 0 | $0.92 | 4.0 | typescript | ok |
@@ -2791,13 +2791,13 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Semantic Version Bumper | bash | sonnet46-200k-medium | 4.5min | 36 | 2 | $0.64 | 3.0 | bash | ok |
 | PR Label Assigner | typescript-bun | opus47-200k-medium | 4.5min | 28 | 0 | $1.00 | 4.0 | typescript | ok |
 | Environment Matrix Generator | powershell-tool | opus47-1m-medium | 4.6min | 29 | 2 | $1.30 | 3.5 | powershell | ok |
-| Environment Matrix Generator | powershell | haiku45-200k | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
+| Environment Matrix Generator | powershell | haiku45-200k-na | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
 | Secret Rotation Validator | bash | opus47-1m-high | 4.6min | 22 | 0 | $1.06 | 3.0 | bash | ok |
 | Semantic Version Bumper | default | sonnet46-1m-medium | 4.6min | 33 | 3 | $0.67 | 2.0 | python | ok |
 | Artifact Cleanup Script | powershell | opus47-1m-medium | 4.7min | 22 | 0 | $1.08 | 3.5 | powershell | ok |
 | PR Label Assigner | typescript-bun | sonnet46-1m-medium | 4.7min | 27 | 0 | $0.67 | 3.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | opus47-200k-medium | 4.8min | 29 | 0 | $1.10 | 4.0 | typescript | ok |
-| Artifact Cleanup Script | default | haiku45-200k | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
+| Artifact Cleanup Script | default | haiku45-200k-na | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
 | Dependency License Checker | powershell-tool | opus47-1m-medium | 4.9min | 26 | 0 | $1.18 | 4.0 | powershell | ok |
 | Secret Rotation Validator | powershell | opus47-200k-medium | 4.9min | 32 | 0 | $1.40 | 3.5 | powershell | ok |
 | PR Label Assigner | bash | opus47-200k-medium | 5.0min | 29 | 3 | $1.18 | 2.0 | bash | ok |
@@ -2805,7 +2805,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Artifact Cleanup Script | default | opus47-200k-medium | 5.0min | 23 | 0 | $1.30 | 4.5 | python | ok |
 | Semantic Version Bumper | typescript-bun | opus47-200k-medium | 5.1min | 35 | 1 | $1.58 | 3.5 | typescript | ok |
 | PR Label Assigner | powershell | opus47-1m-medium | 5.1min | 27 | 0 | $1.11 | 4.0 | powershell | ok |
-| PR Label Assigner | powershell | haiku45-200k | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
+| PR Label Assigner | powershell | haiku45-200k-na | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
 | PR Label Assigner | powershell-tool | opus47-200k-medium | 5.3min | 27 | 0 | $1.34 | 4.0 | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus47-200k-medium | 5.3min | 27 | 0 | $1.36 | 4.0 | powershell | ok |
 | Environment Matrix Generator | default | opus47-1m-medium | 5.4min | 26 | 0 | $1.12 | 4.0 | python | ok |
@@ -2821,9 +2821,9 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Semantic Version Bumper | powershell-tool | sonnet46-200k-medium | 5.9min | 33 | 2 | $0.87 | 4.5 | powershell | ok |
 | PR Label Assigner | bash | opus47-1m-high | 5.9min | 31 | 2 | $1.46 | 4.0 | bash | ok |
 | Artifact Cleanup Script | powershell-tool | sonnet46-200k-medium | 6.0min | 50 | 1 | $0.94 | 4.0 | powershell | ok |
-| PR Label Assigner | typescript-bun | haiku45-200k | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
+| PR Label Assigner | typescript-bun | haiku45-200k-na | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
 | Environment Matrix Generator | powershell-tool | opus47-200k-medium | 6.0min | 27 | 1 | $1.51 | 4.0 | powershell | ok |
-| Environment Matrix Generator | powershell-tool | haiku45-200k | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
+| Environment Matrix Generator | powershell-tool | haiku45-200k-na | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
 | Environment Matrix Generator | powershell | opus47-200k-medium | 6.1min | 30 | 0 | $1.42 | 4.0 | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus47-1m-high | 6.1min | 34 | 0 | $1.78 | 4.5 | powershell | ok |
 | Test Results Aggregator | default | opus47-200k-medium | 6.1min | 35 | 1 | $1.68 | 4.0 | python | ok |
@@ -2831,8 +2831,8 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Test Results Aggregator | bash | sonnet46-200k-medium | 6.3min | 23 | 0 | $0.78 | 4.0 | bash | ok |
 | Semantic Version Bumper | bash | opus47-1m-high | 6.3min | 31 | 1 | $1.44 | 4.0 | bash | ok |
 | Semantic Version Bumper | powershell | opus47-200k-medium | 6.3min | 33 | 0 | $1.44 | 4.0 | powershell | ok |
-| Semantic Version Bumper | bash | haiku45-200k | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
-| Semantic Version Bumper | powershell | haiku45-200k | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
+| Semantic Version Bumper | bash | haiku45-200k-na | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
+| Semantic Version Bumper | powershell | haiku45-200k-na | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
 | Dependency License Checker | powershell-tool | opus47-200k-medium | 6.3min | 34 | 1 | $1.68 | 4.0 | powershell | ok |
 | Test Results Aggregator | typescript-bun | opus47-200k-medium | 6.4min | 33 | 1 | $1.53 | 3.5 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | sonnet46-200k-medium | 6.4min | 31 | 2 | $0.90 | 3.5 | typescript | ok |
@@ -2843,8 +2843,8 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Dependency License Checker | powershell | opus47-1m-medium | 6.6min | 23 | 0 | $1.00 | 3.5 | powershell | ok |
 | Environment Matrix Generator | bash | opus47-1m-high | 6.6min | 42 | 0 | $1.69 | 4.0 | bash | ok |
 | Artifact Cleanup Script | default | opus47-1m-high | 6.6min | 36 | 0 | $2.04 | 4.5 | python | ok |
-| Test Results Aggregator | powershell | haiku45-200k | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
-| Artifact Cleanup Script | bash | haiku45-200k | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
+| Test Results Aggregator | powershell | haiku45-200k-na | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
+| Artifact Cleanup Script | bash | haiku45-200k-na | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
 | Environment Matrix Generator | typescript-bun | opus47-1m-high | 6.7min | 42 | 0 | $2.13 | 3.5 | typescript | ok |
 | Test Results Aggregator | bash | opus47-1m-medium | 6.7min | 35 | 0 | $1.36 | 4.0 | bash | ok |
 | Dependency License Checker | default | sonnet46-1m-medium | 6.7min | 43 | 3 | $1.07 | 3.5 | python | ok |
@@ -2852,7 +2852,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Artifact Cleanup Script | default | sonnet46-1m-medium | 6.8min | 32 | 2 | $1.02 | 4.5 | python | ok |
 | Environment Matrix Generator | default | opus47-1m-xhigh | 6.8min | 34 | 2 | $2.01 | 3.0 | python | ok |
 | Dependency License Checker | typescript-bun | sonnet46-200k-medium | 6.8min | 35 | 2 | $0.93 | 3.5 | typescript | ok |
-| Secret Rotation Validator | powershell | haiku45-200k | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
+| Secret Rotation Validator | powershell | haiku45-200k-na | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
 | Semantic Version Bumper | default | opus47-1m-xhigh | 6.8min | 45 | 0 | $2.45 | 4.5 | python | ok |
 | Secret Rotation Validator | typescript-bun | opus47-200k-medium | 6.9min | 36 | 0 | $1.92 | 3.5 | typescript | ok |
 | PR Label Assigner | typescript-bun | sonnet46-200k-medium | 6.9min | 41 | 3 | $0.87 | 2.5 | typescript | ok |
@@ -2862,12 +2862,12 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Secret Rotation Validator | default | opus47-1m-medium | 7.0min | 19 | 0 | $0.88 | 2.0 | python | ok |
 | Environment Matrix Generator | powershell | opus47-1m-high | 7.0min | 41 | 0 | $2.04 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | default | opus47-1m-xhigh | 7.1min | 35 | 1 | $1.91 | 4.5 | python | ok |
-| PR Label Assigner | bash | haiku45-200k | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
+| PR Label Assigner | bash | haiku45-200k-na | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
 | Semantic Version Bumper | default | opus47-1m-high | 7.1min | 31 | 0 | $1.85 | — | javascript | ok |
 | Test Results Aggregator | powershell | opus47-200k-medium | 7.1min | 37 | 1 | $1.79 | 3.5 | powershell | ok |
 | Dependency License Checker | powershell | sonnet46-1m-medium | 7.1min | 43 | 1 | $1.05 | 4.5 | powershell | ok |
 | Dependency License Checker | powershell | opus47-1m-high | 7.1min | 31 | 0 | $1.93 | 4.0 | powershell | ok |
-| Test Results Aggregator | powershell-tool | haiku45-200k | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
+| Test Results Aggregator | powershell-tool | haiku45-200k-na | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-medium | 7.2min | 29 | 0 | $1.25 | 3.5 | typescript | ok |
 | PR Label Assigner | bash | sonnet46-200k-medium | 7.2min | 44 | 3 | $0.90 | 4.0 | bash | ok |
 | PR Label Assigner | typescript-bun | opus47-1m-high | 7.3min | 44 | 0 | $1.86 | 4.0 | typescript | ok |
@@ -2875,23 +2875,23 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Secret Rotation Validator | typescript-bun | opus47-1m-medium | 7.4min | 35 | 2 | $1.46 | 4.0 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | sonnet46-200k-medium | 7.4min | 33 | 4 | $0.68 | 2.0 | typescript | ok |
 | Environment Matrix Generator | powershell-tool | opus47-1m-high | 7.4min | 30 | 0 | $2.13 | 3.5 | powershell | ok |
-| Test Results Aggregator | bash | haiku45-200k | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
+| Test Results Aggregator | bash | haiku45-200k-na | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
 | PR Label Assigner | powershell-tool | opus47-1m-medium | 7.4min | 29 | 0 | $1.33 | 3.5 | powershell | ok |
 | Dependency License Checker | bash | opus47-200k-medium | 7.5min | 26 | 1 | $0.92 | 3.0 | bash | ok |
 | Dependency License Checker | default | opus47-1m-xhigh | 7.5min | 40 | 0 | $2.04 | 4.0 | python | ok |
 | Artifact Cleanup Script | bash | opus47-1m-xhigh | 7.6min | 34 | 1 | $1.84 | 4.0 | bash | ok |
-| Semantic Version Bumper | typescript-bun | haiku45-200k | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
+| Semantic Version Bumper | typescript-bun | haiku45-200k-na | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
 | PR Label Assigner | default | opus47-1m-high | 7.6min | 23 | 1 | $1.32 | 4.0 | python | ok |
-| Dependency License Checker | powershell | haiku45-200k | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
+| Dependency License Checker | powershell | haiku45-200k-na | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
 | Semantic Version Bumper | powershell | opus47-1m-xhigh | 7.7min | 38 | 0 | $2.27 | 4.5 | powershell | ok |
-| Secret Rotation Validator | bash | haiku45-200k | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
+| Secret Rotation Validator | bash | haiku45-200k-na | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
 | PR Label Assigner | powershell-tool | opus47-1m-xhigh | 7.7min | 37 | 0 | $2.01 | 4.0 | powershell | ok |
 | Test Results Aggregator | powershell | sonnet46-200k-medium | 7.7min | 27 | 0 | $1.03 | 4.0 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | sonnet46-1m-medium | 7.8min | 33 | 1 | $0.94 | 2.5 | powershell | ok |
 | PR Label Assigner | default | opus47-1m-xhigh | 7.8min | 43 | 0 | $2.25 | 4.0 | python | ok |
-| Test Results Aggregator | typescript-bun | haiku45-200k | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
+| Test Results Aggregator | typescript-bun | haiku45-200k-na | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
 | Artifact Cleanup Script | powershell | sonnet46-1m-medium | 7.8min | 28 | 0 | $1.09 | 3.5 | powershell | ok |
-| Artifact Cleanup Script | powershell | haiku45-200k | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
+| Artifact Cleanup Script | powershell | haiku45-200k-na | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet46-1m-medium | 7.9min | 49 | 4 | $1.37 | 4.0 | typescript | ok |
 | Secret Rotation Validator | default | opus47-1m-high | 7.9min | 30 | 1 | $1.93 | 4.5 | python | ok |
 | Dependency License Checker | powershell | opus47-200k-medium | 8.0min | 41 | 1 | $1.86 | 3.5 | powershell | ok |
@@ -2905,7 +2905,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Secret Rotation Validator | typescript-bun | opus47-1m-xhigh | 8.2min | 46 | 1 | $2.52 | 4.5 | typescript | ok |
 | Artifact Cleanup Script | default | sonnet46-200k-medium | 8.2min | 28 | 2 | $1.14 | 4.0 | python | ok |
 | Dependency License Checker | typescript-bun | opus47-1m-medium | 8.2min | 32 | 1 | $1.34 | 4.0 | typescript | ok |
-| Environment Matrix Generator | typescript-bun | haiku45-200k | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
 | Dependency License Checker | default | opus47-1m-medium | 8.2min | 34 | 2 | $1.33 | 4.0 | python | ok |
 | Secret Rotation Validator | powershell-tool | opus47-1m-high | 8.2min | 41 | 0 | $2.29 | 4.5 | powershell | ok |
 | Environment Matrix Generator | bash | opus47-1m-xhigh | 8.3min | 51 | 2 | $2.49 | 3.5 | bash | ok |
@@ -2961,7 +2961,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Dependency License Checker | powershell-tool | opus47-1m-xhigh | 11.2min | 48 | 0 | $2.86 | 4.0 | powershell | ok |
 | Test Results Aggregator | bash | opus47-1m-high | 11.3min | 48 | 1 | $2.37 | 3.5 | bash | ok |
 | Test Results Aggregator | powershell-tool | sonnet46-1m-medium | 11.4min | 25 | 2 | $1.32 | 4.0 | powershell | ok |
-| Secret Rotation Validator | powershell-tool | haiku45-200k | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
+| Secret Rotation Validator | powershell-tool | haiku45-200k-na | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
 | Artifact Cleanup Script | bash | sonnet46-1m-medium | 11.6min | 45 | 6 | $1.78 | 4.0 | bash | ok |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-high | 11.7min | 54 | 1 | $3.33 | 4.0 | powershell | ok |
 | Test Results Aggregator | powershell-tool | sonnet46-200k-medium | 11.7min | 32 | 1 | $1.40 | 4.5 | powershell | ok |
@@ -2974,9 +2974,9 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Environment Matrix Generator | typescript-bun | sonnet46-1m-medium | 12.2min | 42 | 2 | $1.34 | 3.5 | typescript | ok |
 | Environment Matrix Generator | powershell | opus47-1m-xhigh | 13.5min | 54 | 0 | $3.93 | 4.0 | powershell | ok |
 | Environment Matrix Generator | powershell | opus47-1m-medium | 14.0min | 59 | 0 | $3.01 | 4.0 | powershell | ok |
-| Dependency License Checker | bash | haiku45-200k | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
+| Dependency License Checker | bash | haiku45-200k-na | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
 | Semantic Version Bumper | typescript-bun | opus47-1m-xhigh | 14.3min | 80 | 1 | $4.21 | 4.5 | typescript | ok |
-| Semantic Version Bumper | powershell-tool | haiku45-200k | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | haiku45-200k-na | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
 | Test Results Aggregator | powershell-tool | opus47-1m-xhigh | 15.2min | 63 | 0 | $5.47 | 4.0 | powershell | ok |
 | Test Results Aggregator | powershell-tool | opus47-1m-high | 15.9min | 69 | 1 | $3.91 | 4.0 | powershell | ok |
 | Test Results Aggregator | bash | opus47-1m-xhigh | 16.5min | 79 | 1 | $5.09 | 4.5 | bash | ok |
@@ -2988,8 +2988,8 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Secret Rotation Validator | powershell | opus47-1m-medium | 22.5min | 31 | 0 | $1.27 | 4.0 | powershell | ok |
 | Environment Matrix Generator | bash | sonnet46-1m-medium | 29.1min | 58 | 6 | $3.25 | 3.5 | bash | ok |
 | Dependency License Checker | bash | opus47-1m-xhigh | 39.8min | 38 | 2 | $2.19 | 2.5 | bash | ok |
-| Semantic Version Bumper | default | haiku45-200k | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
-| Environment Matrix Generator | bash | haiku45-200k | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
+| Semantic Version Bumper | default | haiku45-200k-na | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
+| Environment Matrix Generator | bash | haiku45-200k-na | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
 
 </details>
 
@@ -3092,7 +3092,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Secret Rotation Validator | powershell-tool | sonnet46-200k-medium | 8.0min | 19 | 0 | $0.96 | 3.0 | powershell | ok |
 | Secret Rotation Validator | typescript-bun | opus47-1m-high | 9.5min | 55 | 0 | $2.95 | 3.5 | typescript | ok |
 | Secret Rotation Validator | typescript-bun | opus47-200k-medium | 6.9min | 36 | 0 | $1.92 | 3.5 | typescript | ok |
-| Semantic Version Bumper | bash | haiku45-200k | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
+| Semantic Version Bumper | bash | haiku45-200k-na | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
 | Semantic Version Bumper | bash | opus47-1m-high | 6.3min | 31 | 1 | $1.44 | 4.0 | bash | ok |
 | Semantic Version Bumper | default | opus47-200k-medium | 4.2min | 31 | 1 | $1.21 | — | javascript | ok |
 | Semantic Version Bumper | powershell | sonnet46-200k-medium | 3.9min | 23 | 1 | $0.44 | 4.0 | powershell | ok |
@@ -3105,23 +3105,23 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | PR Label Assigner | bash | opus47-1m-medium | 6.2min | 23 | 1 | $0.87 | 4.0 | bash | ok |
 | PR Label Assigner | default | opus47-1m-high | 7.6min | 23 | 1 | $1.32 | 4.0 | python | ok |
 | PR Label Assigner | default | sonnet46-200k-medium | 4.4min | 34 | 1 | $0.66 | 2.5 | python | ok |
-| PR Label Assigner | powershell | haiku45-200k | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
+| PR Label Assigner | powershell | haiku45-200k-na | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
 | PR Label Assigner | powershell | opus47-1m-high | 10.0min | 49 | 1 | $2.92 | 4.0 | powershell | ok |
 | PR Label Assigner | powershell | sonnet46-1m-medium | 12.0min | 31 | 1 | $1.61 | 4.5 | powershell | ok |
-| PR Label Assigner | powershell-tool | haiku45-200k | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
+| PR Label Assigner | powershell-tool | haiku45-200k-na | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
 | PR Label Assigner | powershell-tool | opus47-1m-high | 5.7min | 29 | 1 | $1.67 | 4.5 | powershell | ok |
 | PR Label Assigner | powershell-tool | sonnet46-1m-medium | 4.4min | 28 | 1 | $0.59 | 2.5 | powershell | ok |
 | Dependency License Checker | bash | opus47-1m-medium | 5.5min | 30 | 1 | $1.55 | 3.0 | bash | ok |
 | Dependency License Checker | bash | opus47-200k-medium | 7.5min | 26 | 1 | $0.92 | 3.0 | bash | ok |
 | Dependency License Checker | bash | sonnet46-1m-medium | 9.1min | 36 | 1 | $1.28 | 4.0 | bash | ok |
-| Dependency License Checker | powershell | haiku45-200k | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
+| Dependency License Checker | powershell | haiku45-200k-na | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
 | Dependency License Checker | powershell | opus47-1m-xhigh | 10.2min | 48 | 1 | $2.95 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell | opus47-200k-medium | 8.0min | 41 | 1 | $1.86 | 3.5 | powershell | ok |
 | Dependency License Checker | powershell | sonnet46-1m-medium | 7.1min | 43 | 1 | $1.05 | 4.5 | powershell | ok |
 | Dependency License Checker | powershell-tool | opus47-200k-medium | 6.3min | 34 | 1 | $1.68 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell-tool | sonnet46-200k-medium | 9.0min | 27 | 1 | $1.04 | 3.5 | powershell | ok |
 | Dependency License Checker | powershell-tool | sonnet46-1m-medium | 12.0min | 45 | 1 | $1.79 | 4.0 | powershell | ok |
-| Dependency License Checker | typescript-bun | haiku45-200k | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
+| Dependency License Checker | typescript-bun | haiku45-200k-na | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | opus47-1m-medium | 8.2min | 32 | 1 | $1.34 | 4.0 | typescript | ok |
 | Test Results Aggregator | bash | opus47-1m-high | 11.3min | 48 | 1 | $2.37 | 3.5 | bash | ok |
 | Test Results Aggregator | bash | opus47-1m-xhigh | 16.5min | 79 | 1 | $5.09 | 4.5 | bash | ok |
@@ -3163,14 +3163,14 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Semantic Version Bumper | powershell-tool | sonnet46-200k-medium | 5.9min | 33 | 2 | $0.87 | 4.5 | powershell | ok |
 | PR Label Assigner | bash | opus47-1m-high | 5.9min | 31 | 2 | $1.46 | 4.0 | bash | ok |
 | PR Label Assigner | bash | opus47-1m-xhigh | 16.7min | 61 | 2 | $3.14 | 3.5 | bash | ok |
-| PR Label Assigner | typescript-bun | haiku45-200k | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
-| Dependency License Checker | bash | haiku45-200k | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
+| PR Label Assigner | typescript-bun | haiku45-200k-na | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
+| Dependency License Checker | bash | haiku45-200k-na | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
 | Dependency License Checker | bash | opus47-1m-xhigh | 39.8min | 38 | 2 | $2.19 | 2.5 | bash | ok |
 | Dependency License Checker | bash | sonnet46-200k-medium | 6.9min | 34 | 2 | $0.97 | 2.0 | bash | ok |
 | Dependency License Checker | default | opus47-1m-medium | 8.2min | 34 | 2 | $1.33 | 4.0 | python | ok |
-| Dependency License Checker | powershell-tool | haiku45-200k | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
+| Dependency License Checker | powershell-tool | haiku45-200k-na | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
 | Dependency License Checker | typescript-bun | sonnet46-200k-medium | 6.8min | 35 | 2 | $0.93 | 3.5 | typescript | ok |
-| Test Results Aggregator | powershell | haiku45-200k | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
+| Test Results Aggregator | powershell | haiku45-200k-na | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
 | Test Results Aggregator | powershell-tool | sonnet46-1m-medium | 11.4min | 25 | 2 | $1.32 | 4.0 | powershell | ok |
 | Test Results Aggregator | typescript-bun | sonnet46-1m-medium | 8.5min | 34 | 2 | $1.11 | 3.5 | typescript | ok |
 | Environment Matrix Generator | bash | opus47-1m-xhigh | 8.3min | 51 | 2 | $2.49 | 3.5 | bash | ok |
@@ -3182,9 +3182,9 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Artifact Cleanup Script | bash | sonnet46-200k-medium | 4.4min | 31 | 2 | $0.61 | 2.5 | bash | ok |
 | Artifact Cleanup Script | default | sonnet46-200k-medium | 8.2min | 28 | 2 | $1.14 | 4.0 | python | ok |
 | Artifact Cleanup Script | default | sonnet46-1m-medium | 6.8min | 32 | 2 | $1.02 | 4.5 | python | ok |
-| Artifact Cleanup Script | powershell | haiku45-200k | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
+| Artifact Cleanup Script | powershell | haiku45-200k-na | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
 | Artifact Cleanup Script | powershell | sonnet46-200k-medium | 8.4min | 31 | 2 | $1.25 | 4.0 | powershell | ok |
-| Artifact Cleanup Script | powershell-tool | haiku45-200k | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
+| Artifact Cleanup Script | powershell-tool | haiku45-200k-na | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | sonnet46-1m-medium | 3.1min | 18 | 2 | $0.46 | 3.0 | powershell | ok |
 | Secret Rotation Validator | bash | opus47-200k-medium | 3.4min | 29 | 2 | $1.10 | 3.0 | bash | ok |
 | Secret Rotation Validator | default | sonnet46-200k-medium | 8.5min | 42 | 2 | $1.25 | 3.5 | python | ok |
@@ -3195,54 +3195,54 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Semantic Version Bumper | default | sonnet46-1m-medium | 4.6min | 33 | 3 | $0.67 | 2.0 | python | ok |
 | PR Label Assigner | bash | opus47-200k-medium | 5.0min | 29 | 3 | $1.18 | 2.0 | bash | ok |
 | PR Label Assigner | bash | sonnet46-200k-medium | 7.2min | 44 | 3 | $0.90 | 4.0 | bash | ok |
-| PR Label Assigner | default | haiku45-200k | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
+| PR Label Assigner | default | haiku45-200k-na | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
 | PR Label Assigner | powershell-tool | sonnet46-200k-medium | 8.4min | 35 | 3 | $1.11 | 4.0 | powershell | ok |
 | PR Label Assigner | typescript-bun | sonnet46-200k-medium | 6.9min | 41 | 3 | $0.87 | 2.5 | typescript | ok |
 | Dependency License Checker | default | sonnet46-1m-medium | 6.7min | 43 | 3 | $1.07 | 3.5 | python | ok |
 | Dependency License Checker | typescript-bun | sonnet46-1m-medium | 8.4min | 50 | 3 | $1.23 | 4.0 | typescript | ok |
 | Test Results Aggregator | typescript-bun | sonnet46-200k-medium | 11.0min | 39 | 3 | $1.47 | 4.0 | typescript | ok |
 | Environment Matrix Generator | default | sonnet46-1m-medium | 3.7min | 25 | 3 | $0.56 | 2.0 | python | ok |
-| Environment Matrix Generator | powershell | haiku45-200k | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
-| Artifact Cleanup Script | bash | haiku45-200k | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
+| Environment Matrix Generator | powershell | haiku45-200k-na | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
+| Artifact Cleanup Script | bash | haiku45-200k-na | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
 | Artifact Cleanup Script | bash | opus47-1m-medium | 3.1min | 24 | 3 | $0.92 | 3.0 | bash | ok |
-| Artifact Cleanup Script | typescript-bun | haiku45-200k | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
+| Artifact Cleanup Script | typescript-bun | haiku45-200k-na | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet46-200k-medium | 3.6min | 26 | 3 | $0.49 | 3.0 | typescript | ok |
-| Secret Rotation Validator | bash | haiku45-200k | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
-| Secret Rotation Validator | default | haiku45-200k | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
-| Secret Rotation Validator | powershell-tool | haiku45-200k | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
+| Secret Rotation Validator | bash | haiku45-200k-na | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
+| Secret Rotation Validator | default | haiku45-200k-na | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
+| Secret Rotation Validator | powershell-tool | haiku45-200k-na | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
 | Secret Rotation Validator | typescript-bun | sonnet46-1m-medium | 6.6min | 37 | 3 | $0.78 | 3.0 | typescript | ok |
 | Semantic Version Bumper | bash | sonnet46-1m-medium | 10.0min | 40 | 4 | $1.38 | 3.0 | bash | ok |
-| Semantic Version Bumper | powershell | haiku45-200k | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
+| Semantic Version Bumper | powershell | haiku45-200k-na | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
 | Semantic Version Bumper | typescript-bun | sonnet46-200k-medium | 7.4min | 33 | 4 | $0.68 | 2.0 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | sonnet46-1m-medium | 8.5min | 42 | 4 | $0.92 | 4.0 | typescript | ok |
-| PR Label Assigner | bash | haiku45-200k | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
+| PR Label Assigner | bash | haiku45-200k-na | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
 | PR Label Assigner | bash | sonnet46-1m-medium | 3.1min | 28 | 4 | $0.50 | 2.0 | bash | ok |
 | Dependency License Checker | default | sonnet46-200k-medium | 11.7min | 44 | 4 | $1.68 | 4.5 | python | ok |
 | Test Results Aggregator | default | sonnet46-200k-medium | 6.5min | 43 | 4 | $1.17 | 4.5 | python | ok |
-| Environment Matrix Generator | default | haiku45-200k | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
-| Environment Matrix Generator | typescript-bun | haiku45-200k | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
-| Artifact Cleanup Script | default | haiku45-200k | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
+| Environment Matrix Generator | default | haiku45-200k-na | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
+| Artifact Cleanup Script | default | haiku45-200k-na | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet46-1m-medium | 7.9min | 49 | 4 | $1.37 | 4.0 | typescript | ok |
 | Secret Rotation Validator | default | sonnet46-1m-medium | 8.0min | 31 | 4 | $1.16 | 4.5 | python | ok |
-| Test Results Aggregator | bash | haiku45-200k | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
+| Test Results Aggregator | bash | haiku45-200k-na | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
 | Test Results Aggregator | bash | sonnet46-1m-medium | 10.7min | 39 | 5 | $1.42 | 3.5 | bash | ok |
-| Test Results Aggregator | default | haiku45-200k | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
-| Test Results Aggregator | powershell-tool | haiku45-200k | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
+| Test Results Aggregator | default | haiku45-200k-na | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
+| Test Results Aggregator | powershell-tool | haiku45-200k-na | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
 | Secret Rotation Validator | bash | sonnet46-200k-medium | 8.6min | 39 | 5 | $1.11 | 4.0 | bash | ok |
-| Secret Rotation Validator | powershell | haiku45-200k | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
+| Secret Rotation Validator | powershell | haiku45-200k-na | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
 | Environment Matrix Generator | bash | sonnet46-1m-medium | 29.1min | 58 | 6 | $3.25 | 3.5 | bash | ok |
-| Environment Matrix Generator | powershell-tool | haiku45-200k | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
+| Environment Matrix Generator | powershell-tool | haiku45-200k-na | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
 | Artifact Cleanup Script | bash | sonnet46-1m-medium | 11.6min | 45 | 6 | $1.78 | 4.0 | bash | ok |
 | Secret Rotation Validator | bash | sonnet46-1m-medium | 10.0min | 41 | 6 | $1.10 | 3.5 | bash | ok |
-| Secret Rotation Validator | typescript-bun | haiku45-200k | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
-| Semantic Version Bumper | powershell-tool | haiku45-200k | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
+| Secret Rotation Validator | typescript-bun | haiku45-200k-na | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
+| Semantic Version Bumper | powershell-tool | haiku45-200k-na | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
 | PR Label Assigner | default | sonnet46-1m-medium | 9.6min | 44 | 7 | $1.38 | 3.0 | python | ok |
-| Dependency License Checker | default | haiku45-200k | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
+| Dependency License Checker | default | haiku45-200k-na | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
 | Environment Matrix Generator | powershell-tool | sonnet46-1m-medium | 8.1min | 36 | 7 | $1.04 | 4.0 | powershell | ok |
-| Test Results Aggregator | typescript-bun | haiku45-200k | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
-| Semantic Version Bumper | typescript-bun | haiku45-200k | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
-| Environment Matrix Generator | bash | haiku45-200k | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
-| Semantic Version Bumper | default | haiku45-200k | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
+| Test Results Aggregator | typescript-bun | haiku45-200k-na | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
+| Semantic Version Bumper | typescript-bun | haiku45-200k-na | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
+| Environment Matrix Generator | bash | haiku45-200k-na | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
+| Semantic Version Bumper | default | haiku45-200k-na | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
 
 </details>
 
@@ -3289,14 +3289,14 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Environment Matrix Generator | powershell-tool | sonnet46-200k-medium | 8.0min | 25 | 1 | $1.00 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | bash | opus47-200k-medium | 5.8min | 25 | 1 | $1.26 | 3.0 | bash | ok |
 | Secret Rotation Validator | default | opus47-200k-medium | 5.5min | 25 | 0 | $1.27 | 4.0 | python | ok |
-| PR Label Assigner | powershell-tool | haiku45-200k | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
+| PR Label Assigner | powershell-tool | haiku45-200k-na | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
 | Dependency License Checker | bash | opus47-200k-medium | 7.5min | 26 | 1 | $0.92 | 3.0 | bash | ok |
 | Dependency License Checker | powershell-tool | opus47-1m-medium | 4.9min | 26 | 0 | $1.18 | 4.0 | powershell | ok |
 | Environment Matrix Generator | default | opus47-1m-medium | 5.4min | 26 | 0 | $1.12 | 4.0 | python | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet46-200k-medium | 3.6min | 26 | 3 | $0.49 | 3.0 | typescript | ok |
 | Semantic Version Bumper | powershell | sonnet46-1m-medium | 8.3min | 27 | 1 | $0.98 | 4.0 | powershell | ok |
 | Semantic Version Bumper | powershell-tool | opus47-200k-medium | 5.3min | 27 | 0 | $1.36 | 4.0 | powershell | ok |
-| PR Label Assigner | default | haiku45-200k | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
+| PR Label Assigner | default | haiku45-200k-na | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
 | PR Label Assigner | powershell | opus47-1m-medium | 5.1min | 27 | 0 | $1.11 | 4.0 | powershell | ok |
 | PR Label Assigner | powershell-tool | opus47-200k-medium | 5.3min | 27 | 0 | $1.34 | 4.0 | powershell | ok |
 | PR Label Assigner | typescript-bun | sonnet46-1m-medium | 4.7min | 27 | 0 | $0.67 | 3.0 | typescript | ok |
@@ -3317,7 +3317,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Test Results Aggregator | bash | opus47-200k-medium | 4.3min | 29 | 1 | $1.12 | 4.0 | bash | ok |
 | Environment Matrix Generator | powershell-tool | opus47-1m-medium | 4.6min | 29 | 2 | $1.30 | 3.5 | powershell | ok |
 | Environment Matrix Generator | typescript-bun | opus47-1m-medium | 7.4min | 29 | 0 | $1.07 | 3.0 | typescript | ok |
-| Artifact Cleanup Script | powershell-tool | haiku45-200k | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
+| Artifact Cleanup Script | powershell-tool | haiku45-200k-na | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-medium | 7.2min | 29 | 0 | $1.25 | 3.5 | typescript | ok |
 | Secret Rotation Validator | bash | opus47-200k-medium | 3.4min | 29 | 2 | $1.10 | 3.0 | bash | ok |
 | Semantic Version Bumper | bash | opus47-1m-medium | 4.2min | 30 | 2 | $1.07 | 2.5 | bash | ok |
@@ -3338,7 +3338,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Test Results Aggregator | powershell-tool | opus47-200k-medium | 7.0min | 31 | 0 | $1.64 | 3.5 | powershell | ok |
 | Environment Matrix Generator | typescript-bun | sonnet46-200k-medium | 6.4min | 31 | 2 | $0.90 | 3.5 | typescript | ok |
 | Artifact Cleanup Script | bash | sonnet46-200k-medium | 4.4min | 31 | 2 | $0.61 | 2.5 | bash | ok |
-| Artifact Cleanup Script | powershell | haiku45-200k | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
+| Artifact Cleanup Script | powershell | haiku45-200k-na | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
 | Artifact Cleanup Script | powershell | sonnet46-200k-medium | 8.4min | 31 | 2 | $1.25 | 4.0 | powershell | ok |
 | Secret Rotation Validator | default | sonnet46-1m-medium | 8.0min | 31 | 4 | $1.16 | 4.5 | python | ok |
 | Secret Rotation Validator | powershell | opus47-1m-medium | 22.5min | 31 | 0 | $1.27 | 4.0 | powershell | ok |
@@ -3390,13 +3390,13 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | PR Label Assigner | powershell | opus47-200k-medium | 8.5min | 38 | 0 | $1.93 | 4.0 | powershell | ok |
 | Dependency License Checker | bash | opus47-1m-xhigh | 39.8min | 38 | 2 | $2.19 | 2.5 | bash | ok |
 | Environment Matrix Generator | default | opus47-1m-high | 5.7min | 38 | 0 | $1.87 | 4.0 | python | ok |
-| Secret Rotation Validator | default | haiku45-200k | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
+| Secret Rotation Validator | default | haiku45-200k-na | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
 | Secret Rotation Validator | powershell-tool | opus47-1m-medium | 17.8min | 38 | 2 | $1.70 | 4.0 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | opus47-1m-xhigh | 9.9min | 38 | 0 | $2.58 | 4.0 | powershell | ok |
 | Test Results Aggregator | bash | sonnet46-1m-medium | 10.7min | 39 | 5 | $1.42 | 3.5 | bash | ok |
 | Test Results Aggregator | typescript-bun | sonnet46-200k-medium | 11.0min | 39 | 3 | $1.47 | 4.0 | typescript | ok |
 | Artifact Cleanup Script | powershell | opus47-1m-high | 9.4min | 39 | 0 | $2.30 | 4.5 | powershell | ok |
-| Artifact Cleanup Script | typescript-bun | haiku45-200k | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
+| Artifact Cleanup Script | typescript-bun | haiku45-200k-na | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-high | 9.2min | 39 | 0 | $2.07 | 4.5 | typescript | ok |
 | Secret Rotation Validator | bash | sonnet46-200k-medium | 8.6min | 39 | 5 | $1.11 | 4.0 | bash | ok |
 | Semantic Version Bumper | bash | sonnet46-1m-medium | 10.0min | 40 | 4 | $1.38 | 3.0 | bash | ok |
@@ -3404,7 +3404,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Semantic Version Bumper | powershell-tool | sonnet46-1m-medium | 11.9min | 40 | 1 | $1.69 | 3.5 | powershell | ok |
 | Dependency License Checker | default | opus47-1m-xhigh | 7.5min | 40 | 0 | $2.04 | 4.0 | python | ok |
 | Dependency License Checker | powershell | sonnet46-200k-medium | 8.6min | 40 | 0 | $1.09 | 3.0 | powershell | ok |
-| Secret Rotation Validator | powershell-tool | haiku45-200k | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
+| Secret Rotation Validator | powershell-tool | haiku45-200k-na | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
 | PR Label Assigner | typescript-bun | sonnet46-200k-medium | 6.9min | 41 | 3 | $0.87 | 2.5 | typescript | ok |
 | Dependency License Checker | powershell | opus47-200k-medium | 8.0min | 41 | 1 | $1.86 | 3.5 | powershell | ok |
 | Environment Matrix Generator | powershell | opus47-1m-high | 7.0min | 41 | 0 | $2.04 | 4.0 | powershell | ok |
@@ -3414,22 +3414,22 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Semantic Version Bumper | typescript-bun | sonnet46-1m-medium | 8.5min | 42 | 4 | $0.92 | 4.0 | typescript | ok |
 | Dependency License Checker | powershell-tool | opus47-1m-high | 10.1min | 42 | 0 | $2.43 | 4.0 | powershell | ok |
 | Environment Matrix Generator | bash | opus47-1m-high | 6.6min | 42 | 0 | $1.69 | 4.0 | bash | ok |
-| Environment Matrix Generator | default | haiku45-200k | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
+| Environment Matrix Generator | default | haiku45-200k-na | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
 | Environment Matrix Generator | typescript-bun | opus47-1m-high | 6.7min | 42 | 0 | $2.13 | 3.5 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | sonnet46-1m-medium | 12.2min | 42 | 2 | $1.34 | 3.5 | typescript | ok |
 | Secret Rotation Validator | default | sonnet46-200k-medium | 8.5min | 42 | 2 | $1.25 | 3.5 | python | ok |
 | PR Label Assigner | default | opus47-1m-xhigh | 7.8min | 43 | 0 | $2.25 | 4.0 | python | ok |
 | PR Label Assigner | powershell | opus47-1m-xhigh | 9.6min | 43 | 0 | $2.60 | 4.0 | powershell | ok |
-| PR Label Assigner | typescript-bun | haiku45-200k | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
+| PR Label Assigner | typescript-bun | haiku45-200k-na | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
 | Dependency License Checker | default | sonnet46-1m-medium | 6.7min | 43 | 3 | $1.07 | 3.5 | python | ok |
 | Dependency License Checker | powershell | sonnet46-1m-medium | 7.1min | 43 | 1 | $1.05 | 4.5 | powershell | ok |
 | Test Results Aggregator | default | sonnet46-200k-medium | 6.5min | 43 | 4 | $1.17 | 4.5 | python | ok |
-| Environment Matrix Generator | powershell | haiku45-200k | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
+| Environment Matrix Generator | powershell | haiku45-200k-na | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
 | Environment Matrix Generator | powershell-tool | opus47-1m-xhigh | 10.2min | 43 | 1 | $3.08 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | powershell | opus47-1m-xhigh | 10.9min | 43 | 0 | $3.19 | 4.5 | powershell | ok |
 | PR Label Assigner | bash | sonnet46-200k-medium | 7.2min | 44 | 3 | $0.90 | 4.0 | bash | ok |
 | PR Label Assigner | default | sonnet46-1m-medium | 9.6min | 44 | 7 | $1.38 | 3.0 | python | ok |
-| PR Label Assigner | powershell | haiku45-200k | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
+| PR Label Assigner | powershell | haiku45-200k-na | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
 | PR Label Assigner | typescript-bun | opus47-1m-high | 7.3min | 44 | 0 | $1.86 | 4.0 | typescript | ok |
 | Dependency License Checker | default | sonnet46-200k-medium | 11.7min | 44 | 4 | $1.68 | 4.5 | python | ok |
 | Test Results Aggregator | default | opus47-1m-high | 6.5min | 44 | 0 | $2.37 | 4.0 | python | ok |
@@ -3438,63 +3438,63 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Semantic Version Bumper | default | opus47-1m-xhigh | 6.8min | 45 | 0 | $2.45 | 4.5 | python | ok |
 | Dependency License Checker | powershell-tool | sonnet46-1m-medium | 12.0min | 45 | 1 | $1.79 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | bash | sonnet46-1m-medium | 11.6min | 45 | 6 | $1.78 | 4.0 | bash | ok |
-| Artifact Cleanup Script | default | haiku45-200k | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
+| Artifact Cleanup Script | default | haiku45-200k-na | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
 | Secret Rotation Validator | default | opus47-1m-xhigh | 9.1min | 45 | 0 | $2.54 | 4.0 | python | ok |
 | Secret Rotation Validator | powershell | opus47-1m-xhigh | 11.0min | 46 | 2 | $3.07 | 4.5 | powershell | ok |
 | Secret Rotation Validator | typescript-bun | opus47-1m-xhigh | 8.2min | 46 | 1 | $2.52 | 4.5 | typescript | ok |
-| Dependency License Checker | bash | haiku45-200k | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
-| Dependency License Checker | default | haiku45-200k | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
-| Semantic Version Bumper | bash | haiku45-200k | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
+| Dependency License Checker | bash | haiku45-200k-na | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
+| Dependency License Checker | default | haiku45-200k-na | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
+| Semantic Version Bumper | bash | haiku45-200k-na | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
 | Semantic Version Bumper | bash | opus47-1m-xhigh | 17.2min | 48 | 2 | $2.95 | 4.5 | bash | ok |
 | Dependency License Checker | powershell | opus47-1m-xhigh | 10.2min | 48 | 1 | $2.95 | 4.0 | powershell | ok |
 | Dependency License Checker | powershell-tool | opus47-1m-xhigh | 11.2min | 48 | 0 | $2.86 | 4.0 | powershell | ok |
-| Dependency License Checker | typescript-bun | haiku45-200k | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
+| Dependency License Checker | typescript-bun | haiku45-200k-na | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
 | Test Results Aggregator | bash | opus47-1m-high | 11.3min | 48 | 1 | $2.37 | 3.5 | bash | ok |
 | Semantic Version Bumper | powershell-tool | opus47-1m-xhigh | 8.0min | 49 | 0 | $2.90 | 3.5 | powershell | ok |
 | PR Label Assigner | powershell | opus47-1m-high | 10.0min | 49 | 1 | $2.92 | 4.0 | powershell | ok |
 | Test Results Aggregator | powershell | opus47-1m-high | 11.1min | 49 | 1 | $3.14 | 4.0 | powershell | ok |
-| Environment Matrix Generator | powershell-tool | haiku45-200k | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
+| Environment Matrix Generator | powershell-tool | haiku45-200k-na | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
 | Artifact Cleanup Script | typescript-bun | sonnet46-1m-medium | 7.9min | 49 | 4 | $1.37 | 4.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | sonnet46-1m-medium | 8.4min | 50 | 3 | $1.23 | 4.0 | typescript | ok |
 | Artifact Cleanup Script | powershell-tool | sonnet46-200k-medium | 6.0min | 50 | 1 | $0.94 | 4.0 | powershell | ok |
 | Environment Matrix Generator | bash | opus47-1m-xhigh | 8.3min | 51 | 2 | $2.49 | 3.5 | bash | ok |
-| Artifact Cleanup Script | bash | haiku45-200k | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
+| Artifact Cleanup Script | bash | haiku45-200k-na | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-xhigh | 12.0min | 51 | 1 | $3.21 | 4.0 | powershell | ok |
 | Environment Matrix Generator | typescript-bun | opus47-1m-xhigh | 9.8min | 52 | 0 | $2.60 | 4.5 | typescript | ok |
 | Artifact Cleanup Script | typescript-bun | opus47-1m-xhigh | 8.5min | 53 | 0 | $2.41 | 4.5 | typescript | ok |
 | Test Results Aggregator | default | opus47-1m-xhigh | 9.2min | 54 | 1 | $2.81 | 4.0 | python | ok |
 | Environment Matrix Generator | powershell | opus47-1m-xhigh | 13.5min | 54 | 0 | $3.93 | 4.0 | powershell | ok |
 | Artifact Cleanup Script | powershell-tool | opus47-1m-high | 11.7min | 54 | 1 | $3.33 | 4.0 | powershell | ok |
-| Dependency License Checker | powershell-tool | haiku45-200k | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
-| Secret Rotation Validator | typescript-bun | haiku45-200k | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
+| Dependency License Checker | powershell-tool | haiku45-200k-na | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
+| Secret Rotation Validator | typescript-bun | haiku45-200k-na | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
 | Secret Rotation Validator | typescript-bun | opus47-1m-high | 9.5min | 55 | 0 | $2.95 | 3.5 | typescript | ok |
-| Secret Rotation Validator | bash | haiku45-200k | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
-| Secret Rotation Validator | powershell | haiku45-200k | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
+| Secret Rotation Validator | bash | haiku45-200k-na | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
+| Secret Rotation Validator | powershell | haiku45-200k-na | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
 | PR Label Assigner | typescript-bun | opus47-1m-xhigh | 10.4min | 57 | 0 | $3.05 | 4.5 | typescript | ok |
 | Environment Matrix Generator | bash | sonnet46-1m-medium | 29.1min | 58 | 6 | $3.25 | 3.5 | bash | ok |
 | Environment Matrix Generator | powershell | opus47-1m-medium | 14.0min | 59 | 0 | $3.01 | 4.0 | powershell | ok |
-| Test Results Aggregator | default | haiku45-200k | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
+| Test Results Aggregator | default | haiku45-200k-na | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
 | PR Label Assigner | bash | opus47-1m-xhigh | 16.7min | 61 | 2 | $3.14 | 3.5 | bash | ok |
 | Semantic Version Bumper | typescript-bun | opus47-1m-high | 10.9min | 62 | 1 | $2.99 | 4.5 | typescript | ok |
-| PR Label Assigner | bash | haiku45-200k | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
-| Test Results Aggregator | powershell | haiku45-200k | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
-| Test Results Aggregator | powershell-tool | haiku45-200k | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
+| PR Label Assigner | bash | haiku45-200k-na | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
+| Test Results Aggregator | powershell | haiku45-200k-na | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
+| Test Results Aggregator | powershell-tool | haiku45-200k-na | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
 | Test Results Aggregator | powershell-tool | opus47-1m-xhigh | 15.2min | 63 | 0 | $5.47 | 4.0 | powershell | ok |
-| Semantic Version Bumper | powershell | haiku45-200k | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
-| Test Results Aggregator | typescript-bun | haiku45-200k | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
+| Semantic Version Bumper | powershell | haiku45-200k-na | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
+| Test Results Aggregator | typescript-bun | haiku45-200k-na | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | opus47-1m-high | 10.9min | 68 | 0 | $3.08 | 4.5 | typescript | ok |
 | Test Results Aggregator | powershell-tool | opus47-1m-high | 15.9min | 69 | 1 | $3.91 | 4.0 | powershell | ok |
-| Dependency License Checker | powershell | haiku45-200k | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
-| Environment Matrix Generator | typescript-bun | haiku45-200k | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
-| Semantic Version Bumper | typescript-bun | haiku45-200k | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
+| Dependency License Checker | powershell | haiku45-200k-na | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
+| Semantic Version Bumper | typescript-bun | haiku45-200k-na | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
 | Dependency License Checker | typescript-bun | opus47-1m-xhigh | 11.8min | 74 | 0 | $3.64 | 4.5 | typescript | ok |
 | Test Results Aggregator | powershell | opus47-1m-xhigh | 17.3min | 74 | 0 | $4.47 | 3.5 | powershell | ok |
-| Test Results Aggregator | bash | haiku45-200k | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
+| Test Results Aggregator | bash | haiku45-200k-na | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
 | Test Results Aggregator | bash | opus47-1m-xhigh | 16.5min | 79 | 1 | $5.09 | 4.5 | bash | ok |
 | Semantic Version Bumper | typescript-bun | opus47-1m-xhigh | 14.3min | 80 | 1 | $4.21 | 4.5 | typescript | ok |
-| Environment Matrix Generator | bash | haiku45-200k | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
-| Semantic Version Bumper | powershell-tool | haiku45-200k | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
-| Semantic Version Bumper | default | haiku45-200k | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
+| Environment Matrix Generator | bash | haiku45-200k-na | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
+| Semantic Version Bumper | powershell-tool | haiku45-200k-na | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
+| Semantic Version Bumper | default | haiku45-200k-na | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
 | Test Results Aggregator | typescript-bun | opus47-1m-xhigh | 20.8min | 103 | 1 | $6.31 | 4.5 | typescript | ok |
 
 </details>
@@ -3651,7 +3651,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Environment Matrix Generator | bash | opus47-1m-xhigh | 8.3min | 51 | 2 | $2.49 | 3.5 | bash | ok |
 | Environment Matrix Generator | bash | opus47-200k-medium | 2.9min | 23 | 0 | $1.05 | 3.5 | bash | ok |
 | Environment Matrix Generator | bash | sonnet46-1m-medium | 29.1min | 58 | 6 | $3.25 | 3.5 | bash | ok |
-| Environment Matrix Generator | powershell-tool | haiku45-200k | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
+| Environment Matrix Generator | powershell-tool | haiku45-200k-na | 6.1min | 49 | 6 | $0.56 | 3.5 | powershell | ok |
 | Environment Matrix Generator | powershell-tool | opus47-1m-high | 7.4min | 30 | 0 | $2.13 | 3.5 | powershell | ok |
 | Environment Matrix Generator | powershell-tool | opus47-1m-medium | 4.6min | 29 | 2 | $1.30 | 3.5 | powershell | ok |
 | Environment Matrix Generator | typescript-bun | opus47-1m-high | 6.7min | 42 | 0 | $2.13 | 3.5 | typescript | ok |
@@ -3680,7 +3680,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Test Results Aggregator | powershell | sonnet46-1m-medium | 8.3min | 24 | 1 | $0.99 | 3.0 | powershell | ok |
 | Environment Matrix Generator | bash | opus47-1m-medium | 3.5min | 23 | 1 | $0.88 | 3.0 | bash | ok |
 | Environment Matrix Generator | default | opus47-1m-xhigh | 6.8min | 34 | 2 | $2.01 | 3.0 | python | ok |
-| Environment Matrix Generator | typescript-bun | haiku45-200k | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 8.2min | 73 | 4 | $0.68 | 3.0 | typescript | ok |
 | Environment Matrix Generator | typescript-bun | opus47-1m-medium | 7.4min | 29 | 0 | $1.07 | 3.0 | typescript | ok |
 | Artifact Cleanup Script | bash | opus47-1m-medium | 3.1min | 24 | 3 | $0.92 | 3.0 | bash | ok |
 | Artifact Cleanup Script | bash | opus47-200k-medium | 5.8min | 25 | 1 | $1.26 | 3.0 | bash | ok |
@@ -3689,66 +3689,66 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 | Secret Rotation Validator | bash | opus47-1m-high | 4.6min | 22 | 0 | $1.06 | 3.0 | bash | ok |
 | Secret Rotation Validator | bash | opus47-1m-medium | 5.4min | 24 | 0 | $1.09 | 3.0 | bash | ok |
 | Secret Rotation Validator | bash | opus47-200k-medium | 3.4min | 29 | 2 | $1.10 | 3.0 | bash | ok |
-| Secret Rotation Validator | powershell-tool | haiku45-200k | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
+| Secret Rotation Validator | powershell-tool | haiku45-200k-na | 11.4min | 40 | 3 | $0.39 | 3.0 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | sonnet46-200k-medium | 8.0min | 19 | 0 | $0.96 | 3.0 | powershell | ok |
 | Secret Rotation Validator | typescript-bun | sonnet46-1m-medium | 6.6min | 37 | 3 | $0.78 | 3.0 | typescript | ok |
-| Semantic Version Bumper | bash | haiku45-200k | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
+| Semantic Version Bumper | bash | haiku45-200k-na | 6.3min | 48 | 1 | $0.45 | 2.5 | bash | ok |
 | Semantic Version Bumper | bash | opus47-1m-medium | 4.2min | 30 | 2 | $1.07 | 2.5 | bash | ok |
 | PR Label Assigner | default | sonnet46-200k-medium | 4.4min | 34 | 1 | $0.66 | 2.5 | python | ok |
-| PR Label Assigner | powershell-tool | haiku45-200k | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
+| PR Label Assigner | powershell-tool | haiku45-200k-na | 3.0min | 26 | 1 | $0.23 | 2.5 | powershell | ok |
 | PR Label Assigner | powershell-tool | sonnet46-1m-medium | 4.4min | 28 | 1 | $0.59 | 2.5 | powershell | ok |
 | PR Label Assigner | typescript-bun | sonnet46-200k-medium | 6.9min | 41 | 3 | $0.87 | 2.5 | typescript | ok |
-| Dependency License Checker | bash | haiku45-200k | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
+| Dependency License Checker | bash | haiku45-200k-na | 14.2min | 47 | 2 | $0.36 | 2.5 | bash | ok |
 | Dependency License Checker | bash | opus47-1m-high | 4.0min | 30 | 0 | $1.35 | 2.5 | bash | ok |
 | Dependency License Checker | bash | opus47-1m-xhigh | 39.8min | 38 | 2 | $2.19 | 2.5 | bash | ok |
-| Dependency License Checker | default | haiku45-200k | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
-| Dependency License Checker | powershell | haiku45-200k | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
-| Dependency License Checker | powershell-tool | haiku45-200k | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
-| Test Results Aggregator | bash | haiku45-200k | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
-| Test Results Aggregator | default | haiku45-200k | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
+| Dependency License Checker | default | haiku45-200k-na | 4.0min | 47 | 7 | $0.40 | 2.5 | python | ok |
+| Dependency License Checker | powershell | haiku45-200k-na | 7.6min | 70 | 1 | $0.58 | 2.5 | powershell | ok |
+| Dependency License Checker | powershell-tool | haiku45-200k-na | 4.0min | 55 | 2 | $0.42 | 2.5 | powershell | ok |
+| Test Results Aggregator | bash | haiku45-200k-na | 7.4min | 77 | 5 | $0.64 | 2.5 | bash | ok |
+| Test Results Aggregator | default | haiku45-200k-na | 4.3min | 60 | 5 | $0.51 | 2.5 | python | ok |
 | Environment Matrix Generator | powershell | sonnet46-200k-medium | 2.1min | 14 | 1 | $0.28 | 2.5 | powershell | ok |
 | Environment Matrix Generator | powershell | sonnet46-1m-medium | 2.7min | 16 | 1 | $0.34 | 2.5 | powershell | ok |
-| Artifact Cleanup Script | bash | haiku45-200k | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
+| Artifact Cleanup Script | bash | haiku45-200k-na | 6.6min | 51 | 3 | $0.43 | 2.5 | bash | ok |
 | Artifact Cleanup Script | bash | sonnet46-200k-medium | 4.4min | 31 | 2 | $0.61 | 2.5 | bash | ok |
-| Artifact Cleanup Script | default | haiku45-200k | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
+| Artifact Cleanup Script | default | haiku45-200k-na | 4.8min | 45 | 4 | $0.46 | 2.5 | python | ok |
 | Secret Rotation Validator | powershell | sonnet46-200k-medium | 3.4min | 22 | 1 | $0.47 | 2.5 | powershell | ok |
 | Secret Rotation Validator | powershell-tool | sonnet46-1m-medium | 7.8min | 33 | 1 | $0.94 | 2.5 | powershell | ok |
 | Semantic Version Bumper | default | sonnet46-1m-medium | 4.6min | 33 | 3 | $0.67 | 2.0 | python | ok |
-| Semantic Version Bumper | typescript-bun | haiku45-200k | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
+| Semantic Version Bumper | typescript-bun | haiku45-200k-na | 7.6min | 74 | 10 | $0.62 | 2.0 | typescript | ok |
 | Semantic Version Bumper | typescript-bun | sonnet46-200k-medium | 7.4min | 33 | 4 | $0.68 | 2.0 | typescript | ok |
-| PR Label Assigner | bash | haiku45-200k | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
+| PR Label Assigner | bash | haiku45-200k-na | 7.1min | 62 | 4 | $0.50 | 2.0 | bash | ok |
 | PR Label Assigner | bash | opus47-200k-medium | 5.0min | 29 | 3 | $1.18 | 2.0 | bash | ok |
 | PR Label Assigner | bash | sonnet46-1m-medium | 3.1min | 28 | 4 | $0.50 | 2.0 | bash | ok |
 | PR Label Assigner | default | opus47-1m-medium | 3.1min | 23 | 0 | $0.83 | 2.0 | python | ok |
 | PR Label Assigner | default | opus47-200k-medium | 3.2min | 21 | 0 | $0.70 | 2.0 | python | ok |
-| PR Label Assigner | powershell | haiku45-200k | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
-| PR Label Assigner | typescript-bun | haiku45-200k | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
+| PR Label Assigner | powershell | haiku45-200k-na | 5.2min | 44 | 1 | $0.38 | 2.0 | powershell | ok |
+| PR Label Assigner | typescript-bun | haiku45-200k-na | 6.0min | 43 | 2 | $0.37 | 2.0 | typescript | ok |
 | Dependency License Checker | bash | sonnet46-200k-medium | 6.9min | 34 | 2 | $0.97 | 2.0 | bash | ok |
-| Dependency License Checker | typescript-bun | haiku45-200k | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
-| Test Results Aggregator | typescript-bun | haiku45-200k | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
-| Environment Matrix Generator | bash | haiku45-200k | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
-| Environment Matrix Generator | default | haiku45-200k | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
+| Dependency License Checker | typescript-bun | haiku45-200k-na | 4.3min | 48 | 1 | $0.39 | 2.0 | typescript | ok |
+| Test Results Aggregator | typescript-bun | haiku45-200k-na | 7.8min | 67 | 9 | $0.60 | 2.0 | typescript | ok |
+| Environment Matrix Generator | bash | haiku45-200k-na | 322.8min | 85 | 10 | $0.75 | 2.0 | bash | timeout |
+| Environment Matrix Generator | default | haiku45-200k-na | 4.0min | 42 | 4 | $0.38 | 2.0 | python | ok |
 | Environment Matrix Generator | default | sonnet46-200k-medium | 2.9min | 23 | 2 | $0.41 | 2.0 | python | ok |
 | Environment Matrix Generator | default | sonnet46-1m-medium | 3.7min | 25 | 3 | $0.56 | 2.0 | python | ok |
-| Artifact Cleanup Script | typescript-bun | haiku45-200k | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
-| Secret Rotation Validator | bash | haiku45-200k | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
+| Artifact Cleanup Script | typescript-bun | haiku45-200k-na | 3.8min | 39 | 3 | $0.33 | 2.0 | typescript | ok |
+| Secret Rotation Validator | bash | haiku45-200k-na | 7.7min | 56 | 3 | $0.49 | 2.0 | bash | ok |
 | Secret Rotation Validator | default | opus47-1m-medium | 7.0min | 19 | 0 | $0.88 | 2.0 | python | ok |
-| Secret Rotation Validator | powershell | haiku45-200k | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
-| Secret Rotation Validator | typescript-bun | haiku45-200k | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
-| PR Label Assigner | default | haiku45-200k | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
+| Secret Rotation Validator | powershell | haiku45-200k-na | 6.8min | 56 | 5 | $0.49 | 2.0 | powershell | ok |
+| Secret Rotation Validator | typescript-bun | haiku45-200k-na | 3.8min | 55 | 6 | $0.42 | 2.0 | typescript | ok |
+| PR Label Assigner | default | haiku45-200k-na | 2.9min | 27 | 3 | $0.25 | 1.5 | python | ok |
 | PR Label Assigner | powershell | sonnet46-200k-medium | 2.9min | 19 | 0 | $0.38 | 1.5 | powershell | ok |
-| Test Results Aggregator | powershell | haiku45-200k | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
-| Artifact Cleanup Script | powershell-tool | haiku45-200k | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
-| Secret Rotation Validator | default | haiku45-200k | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
-| Semantic Version Bumper | default | haiku45-200k | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
+| Test Results Aggregator | powershell | haiku45-200k-na | 6.6min | 63 | 2 | $0.62 | 1.5 | powershell | ok |
+| Artifact Cleanup Script | powershell-tool | haiku45-200k-na | 3.2min | 29 | 2 | $0.28 | 1.5 | powershell | ok |
+| Secret Rotation Validator | default | haiku45-200k-na | 4.2min | 38 | 3 | $0.34 | 1.5 | python | ok |
+| Semantic Version Bumper | default | haiku45-200k-na | 59.1min | 97 | 12 | $0.84 | — | javascript | ok |
 | Semantic Version Bumper | default | opus47-1m-high | 7.1min | 31 | 0 | $1.85 | — | javascript | ok |
 | Semantic Version Bumper | default | opus47-200k-medium | 4.2min | 31 | 1 | $1.21 | — | javascript | ok |
-| Semantic Version Bumper | powershell | haiku45-200k | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
-| Semantic Version Bumper | powershell-tool | haiku45-200k | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
-| Test Results Aggregator | powershell-tool | haiku45-200k | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
+| Semantic Version Bumper | powershell | haiku45-200k-na | 6.3min | 65 | 4 | $0.57 | — | powershell | ok |
+| Semantic Version Bumper | powershell-tool | haiku45-200k-na | 15.1min | 92 | 7 | $0.93 | — | powershell | ok |
+| Test Results Aggregator | powershell-tool | haiku45-200k-na | 7.1min | 63 | 5 | $0.63 | — | powershell | ok |
 | Environment Matrix Generator | bash | sonnet46-200k-medium | 4.2min | 7 | 1 | $0.35 | — | bash | cli_error |
-| Environment Matrix Generator | powershell | haiku45-200k | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
-| Artifact Cleanup Script | powershell | haiku45-200k | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
+| Environment Matrix Generator | powershell | haiku45-200k-na | 4.6min | 43 | 3 | $0.39 | — | powershell | ok |
+| Artifact Cleanup Script | powershell | haiku45-200k-na | 7.8min | 31 | 2 | $0.28 | — | powershell | ok |
 
 </details>
 
@@ -3765,7 +3765,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 | Variant label | CLI version | Tasks | Languages |
 |---------------|-------------|-------|-----------|
-| haiku45-200k | 2.1.114 | All | All |
+| haiku45-200k-na | 2.1.114 | All | All |
 | opus47-1m-high | 2.1.114 | All | All |
 | opus47-1m-medium | 2.1.112 | All | All |
 | opus47-1m-xhigh | 2.1.112 | All | All |
@@ -3775,11 +3775,11 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Judge Consistency Summary
 
-**🟢 The panel is doing its job:** judges agree strongly on which models produce better code (Spearman +0.90 on Workflow Craft model rankings, +0.70 on Tests Quality), Opus 4.7-1m at high/xhigh effort tops both boards, and haiku45 lands last for both judges — so the score drops on weaker configs are signal, not own-model favoritism.
+**🟢 The panel is doing its job:** the two judges agree strongly on the ranking that matters — Opus 4.7-1m tops both boards, Haiku 4.5 lands last, with Spearman ρ = +0.90 on Workflow Craft and +0.70 on Tests Quality. Gemini scores 1.5–2 points more generously on average, but that's calibration, not bias; no pair-wise reversal elevates Haiku's own model family above a stronger competitor.
 
-- 👀 **Where to look closer:** the widest disagreements (a judge scoring 1 vs 5, a 4-point gap on a 1–5 scale) cluster on 15-test-results-aggregator and 16-environment-matrix-generator — e.g. 15-test-results-aggregator / default / opus47-1m-medium and 16-environment-matrix-generator / powershell / opus47-1m-xhigh — where Haiku floors at 1 while Gemini ceilings at 5; a human read would tell us which judge is mis-calibrated.
-- 🤓 **Surprise finding:** the panel splits cleanly on language ordering (Spearman +0.00 on both axes) — Haiku ranks bash #1 for Workflow Craft while Gemini ranks it #4, even though all five language means sit inside a 0.2-point band, so this is calibration noise around a tight cluster.
-- ℹ️ **Recommended next step:** read three of the 4-point-gap runs end-to-end and recalibrate whichever judge is floor-clipping or ceiling-rounding borderline output.
+- 👀 **Where to look closer:** the widest disagreements (a judge scoring 1 vs 5, a 4-point gap on a 1–5 scale) all fall on Opus 4.7-1m at medium effort — e.g. 15-test-results-aggregator / default / opus47-1m-medium and 12-pr-label-assigner / bash / opus47-1m-medium — where Haiku hit the floor while Gemini hit the ceiling. Language ordering also splits (ρ = +0.00): Haiku prefers bash, Gemini prefers default.
+- 🤓 **Surprise finding:** Haiku ranks its own model family dead last on both axes — the opposite of self-preference bias.
+- ℹ️ **Recommended next step:** hand-review three of the 4-point-gap opus47-1m-medium runs to decide whether Haiku's floor scores reflect real defects or overly strict rubric application.
 
 #### Provenance
 
@@ -3787,7 +3787,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 - **Inputs:** the [`judge-consistency-data.md`](judge-consistency-data.md) tables plus benchmark context (rubrics, task list, experiment setup).
 - **Script:** [`conclusions_report.py`](../../conclusions_report.py) — regenerate with `python3 generate_results.py <run_dir>`.
 - **Instruction:** [`JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT`](../../judge_consistency_report.py) in that script.
-- **Usage:** 5 input + 2030 output tokens, $0.3373.
+- **Usage:** 5 input + 2944 output tokens, $0.3676.
 
 *Full breakdown with per-model / per-language / per-language×model ranking tables and disagreement hotspots in [judge-consistency-data.md](judge-consistency-data.md).*
 
