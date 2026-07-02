@@ -1,0 +1,62 @@
+# CI pipeline for the test-results aggregator.
+#
+# Job 1 (unit-tests) runs the Pester unit suite for the module.
+# Job 2 (aggregate) depends on job 1, runs the aggregator over the
+# fixtures/ directory (each file simulating one matrix-build run) and
+# publishes the markdown summary to the GitHub Actions job summary.
+name: Test Results Aggregator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Directory of test result files to aggregate. The act-based test
+  # harness swaps this directory's contents per pipeline test case.
+  FIXTURES_DIR: fixtures
+
+jobs:
+  unit-tests:
+    name: Pester unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Pester unit tests
+        shell: pwsh
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests/unit'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+  aggregate:
+    name: Aggregate results and publish summary
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Aggregate test results
+        shell: pwsh
+        run: |
+          ./Invoke-TestResultsAggregator.ps1 -Path $env:FIXTURES_DIR -OutputPath summary.md
+
+      - name: Publish job summary
+        shell: pwsh
+        run: |
+          # GITHUB_STEP_SUMMARY is set by GitHub / act; guard for safety.
+          if ($env:GITHUB_STEP_SUMMARY) {
+            Get-Content -LiteralPath summary.md -Raw | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+            Write-Host 'Summary appended to job summary.'
+          }
+          else {
+            Write-Warning 'GITHUB_STEP_SUMMARY not set; skipping.'
+          }
