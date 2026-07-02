@@ -1,0 +1,972 @@
+{
+  "task_id": "17-artifact-cleanup-script",
+  "task_name": "Artifact Cleanup Script",
+  "task_category": "GitHub Actions / Maintenance",
+  "language_mode": "typescript-bun",
+  "language_chosen": "typescript",
+  "language_breakdown": {
+    "typescript": 100.0
+  },
+  "interpreter_versions": {},
+  "powershell_version": "",
+  "dotnet_version": "",
+  "model": "claude-fable-5",
+  "model_short": "fable5",
+  "variant": "fable5-medium",
+  "claude_code_version": "2.1.198",
+  "instructions_version": "v4",
+  "timestamp_start": "2026-07-02T02:39:31.565580+00:00",
+  "timestamp_end": "2026-07-02T02:54:01.040376+00:00",
+  "prompt_text": "You are completing a scripting task. You MUST use TypeScript with Bun as your implementation language and runtime.\n\nTASK: Given a list of artifacts with metadata (name, size, creation date, workflow run ID \u2014 provided as mock data), apply retention policies (max age, max total size, keep-latest-N per workflow), determine which artifacts to delete, and generate a deletion plan with a summary (total space reclaimed, artifacts retained vs deleted). Support dry-run mode.\n\nREQUIREMENTS:\n1. Use red/green TDD methodology: write a failing test FIRST, then write the minimum code to make it pass, then refactor. Repeat for each piece of functionality.\n2. Create mocks and test fixtures as necessary for testability. Use Bun's built-in test runner (`bun test`).\n3. All tests must be runnable with `bun test` and must pass at the end.\n4. Include clear comments explaining your approach.\n5. Handle errors gracefully with meaningful error messages.\n6. Use TypeScript features: explicit types, interfaces, and type annotations. Run scripts with `bun run <file>.ts`.\n\nCreate your solution in the current working directory. Start by writing your first failing test.\n\nGITHUB ACTIONS REQUIREMENT:\nCreate a GitHub Actions workflow file at .github/workflows/artifact-cleanup-script.yml that uses\nyour script in a real CI/CD pipeline. The workflow must:\n- Use appropriate trigger events (push, pull_request, schedule, workflow_dispatch, etc.)\n- Reference your script correctly\n- Pass actionlint validation (valid YAML, valid action references, correct syntax)\n- Include appropriate permissions, environment variables, and job dependencies\n- Actually run successfully when executed locally with `act` (nektos/act)\n\nDesign your workflow so its steps work in an isolated Docker container \u2014 use\n`actions/checkout@v4`, install dependencies your script needs, and run it.\nAvoid steps requiring external services or secrets without sensible defaults.\n\nIMPORTANT for PowerShell mode: Use `shell: pwsh` on your workflow run: steps instead\nof invoking `pwsh -Command` or `pwsh -File` from bash. This avoids escaping issues\nand works correctly in act containers. pwsh and Pester are pre-installed in the\ncontainer.\n\nWORKFLOW VALIDATION:\nRun `actionlint .github/workflows/artifact-cleanup-script.yml` and fix any errors. actionlint is\npre-installed. Iterate until it passes cleanly. Validate with actionlint BEFORE\nrunning act \u2014 actionlint is instant, act takes 30-90 seconds per run.\n\nALL TESTS MUST RUN THROUGH ACT:\nEvery single test case must execute through the GitHub Actions workflow via `act`.\nDo NOT test your script directly \u2014 all testing goes through the pipeline.\n\nStructure your workflow to accept test fixture data and produce verifiable output.\nYour test harness must:\n1. For each test case: set up a temp git repo with your project files + that case's\n   fixture data, run `act push --rm`, capture the output\n2. Save all act output to `act-result.txt` in the current working directory (append\n   each test case's output, clearly delimited)\n3. Assert that act exited with code 0 for each case\n4. Parse the act output and assert on EXACT EXPECTED VALUES \u2014 not just that output\n   appeared, but that it matches the known-good result for that test case's input.\n   For example: if your workflow bumps version 1.1.0 with a feat commit, assert\n   the output contains exactly \"1.2.0\", not just \"a version number\"\n5. Assert every job shows \"Job succeeded\"\n\nThe `act-result.txt` file MUST exist when done. It is a required artifact.\n`act` and Docker are pre-installed. Limit yourself to at most 3 `act push` runs \u2014\ndiagnose errors from the output rather than re-running blindly.\n\nWORKFLOW STRUCTURE TESTS (also required):\n- Parse the YAML and check expected structure (triggers, jobs, steps)\n- Verify the workflow references your script files correctly (paths exist)\n- Verify actionlint passes (assert exit code 0)\n",
+  "exit_code": 0,
+  "run_success": true,
+  "failure_reason": null,
+  "session": {
+    "session_id": "b8c71a38-1f76-4ba7-9d05-d289027e2cbe",
+    "stop_reason": "end_turn",
+    "terminal_reason": "completed",
+    "fast_mode_state": "off",
+    "service_tier": "standard",
+    "speed": "standard",
+    "inference_geo": "not_available",
+    "context_window": 200000,
+    "max_output_tokens": 32000,
+    "permission_mode": "bypassPermissions",
+    "output_style": "default",
+    "tools_available_count": 30,
+    "mcp_servers": [],
+    "permission_denials": []
+  },
+  "model_usage_detail": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 1471,
+      "outputTokens": 18,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.001561,
+      "contextWindow": 200000,
+      "maxOutputTokens": 32000
+    },
+    "claude-fable-5": {
+      "inputTokens": 4573,
+      "outputTokens": 34958,
+      "cacheReadInputTokens": 2720933,
+      "cacheCreationInputTokens": 58229,
+      "webSearchRequests": 0,
+      "costUSD": 5.679142999999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "effort_level": "medium",
+  "timing": {
+    "grand_total_duration_ms": 869474,
+    "total_api_duration_ms": 589515,
+    "total_execution_duration_ms": 278967,
+    "num_turns": 51
+  },
+  "tokens": {
+    "input_tokens": 4573,
+    "output_tokens": 34958,
+    "cache_read_tokens": 2720933,
+    "cache_creation_tokens": 58229,
+    "total_context_consumed": 2783735,
+    "compaction_count": 0
+  },
+  "cost": {
+    "total_cost_usd": 5.680703999999999,
+    "assumed_input_cost_per_mtok": 10.0,
+    "assumed_output_cost_per_mtok": 50.0,
+    "assumed_cache_read_cost_per_mtok": 1.0,
+    "assumed_cache_write_cost_per_mtok": 12.5
+  },
+  "code_metrics": {
+    "code_lines": 1081,
+    "total_tokens_estimate": 20088,
+    "file_count": 18,
+    "files": [
+      "act-result.txt",
+      "bun.lock",
+      "package.json",
+      "tsconfig.json",
+      "fixtures/artifacts.json",
+      "fixtures/case1-artifacts.json",
+      "fixtures/case1-policy.json",
+      "fixtures/case2-artifacts.json",
+      "fixtures/case2-policy.json",
+      "fixtures/policy.json",
+      "src/cleanup.ts",
+      "src/cli.ts",
+      "src/config.ts",
+      ".github/workflows/artifact-cleanup-script.yml",
+      "tests/act.test.ts",
+      "tests/cleanup.test.ts",
+      "tests/config.test.ts",
+      "tests/workflow.test.ts"
+    ]
+  },
+  "quality": {
+    "tests_pass": null,
+    "error_count": 0,
+    "error_details": [],
+    "actionlint_pass": true,
+    "actionlint_errors": 0,
+    "actionlint_results": [
+      {
+        "file": ".github/workflows/artifact-cleanup-script.yml",
+        "passed": true,
+        "errors": ""
+      }
+    ],
+    "act_result_txt_exists": true,
+    "act_result_txt_size": 42681,
+    "areas_of_difficulty": [],
+    "observations": ""
+  },
+  "tool_install": {
+    "tool_install_duration_ms": 0,
+    "tools_installed": [],
+    "install_commands_count": 0
+  },
+  "tool_use_timing": {
+    "total_tool_uses": 50,
+    "total_tool_duration_ms": 281485,
+    "bash_tool_uses": 26,
+    "bash_total_ms": 88640,
+    "slowest_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "bun test 2>&1 | tail -8",
+        "duration_ms": 81291,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15193,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15145,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15118,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15084,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15077,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15067,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 12373,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 8841,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 8217,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "all_tool_uses": [
+      {
+        "tool_name": "Bash",
+        "command": "ls -la /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17-artifact-cleanup-script/typescript-bun-fable5-medium && cat /home/passp/repos/GHA-bench-fable5/workspaces/2026-07-01_184135/17",
+        "duration_ms": 198,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Read",
+        "command": "",
+        "duration_ms": 9,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker run --rm act-ubuntu-pwsh:latest bash -lc 'which bun node; bun --version' 2>&1 | head -5",
+        "duration_ms": 750,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "docker run --rm act-ubuntu-pwsh:latest bash -lc 'curl -sSf -m 10 -o /dev/null -w \"%{http_code}\" https://bun.sh/install && echo OK' 2>&1 | tail -2",
+        "duration_ms": 793,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun init -y 2>&1 | tail -2 && ls",
+        "duration_ms": 266,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "rm index.ts CLAUDE.md README.md && cat package.json tsconfig.json",
+        "duration_ms": 110,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15145,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 8841,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test tests/cleanup.test.ts 2>&1 | tail -15",
+        "duration_ms": 88,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 4709,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test tests/cleanup.test.ts 2>&1 | tail -4",
+        "duration_ms": 82,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 4530,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 5974,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 6677,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "cat >> tests/cleanup.test.ts <<'EOF'\n\ndescribe(\"partitionByKeepLatest\", () => {\n  test(\"keeps only the newest N per workflow run ID\", () => {\n    const artifacts: Artifact[] = [\n      art(\"a3\", 1, \"20",
+        "duration_ms": 89,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15067,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test tests/cleanup.test.ts 2>&1 | tail -4",
+        "duration_ms": 106,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15118,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 - <<'EOF'\nimport re\np='tests/cleanup.test.ts'\ns=open(p).read()\ns=s.replace(\"  partitionByKeepLatest,\\n\",\"  partitionByKeepLatest,\\n  partitionByMaxTotalSize,\\n\")\ns+='''\ndescribe(\"partitionByMa",
+        "duration_ms": 115,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 6128,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test tests/cleanup.test.ts 2>&1 | tail -4",
+        "duration_ms": 88,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 3637,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 - <<'EOF'\np='tests/cleanup.test.ts'\ns=open(p).read()\ns=s.replace(\"import {\\n\",\"import {\\n  buildDeletionPlan,\\n\",1)\ns+='''\ndescribe(\"buildDeletionPlan\", () => {\n  // This fixture mirrors fixtu",
+        "duration_ms": 114,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 12373,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test tests/cleanup.test.ts 2>&1 | tail -4",
+        "duration_ms": 93,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 15084,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "python3 - <<'EOF'\np='tests/cleanup.test.ts'\ns=open(p).read()\ns=s.replace(\"import {\\n\",\"import {\\n  executePlan,\\n  formatPlanReport,\\n\",1)\ns+='''\ndescribe(\"executePlan / formatPlanReport\", () => {\n  c",
+        "duration_ms": 101,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 5542,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 4334,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test tests/cleanup.test.ts 2>&1 | tail -4",
+        "duration_ms": 81,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 4837,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 7385,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test tests/config.test.ts 2>&1 | tail -4",
+        "duration_ms": 103,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15077,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test 2>&1 | tail -4",
+        "duration_ms": 121,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 8166,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "mkdir -p fixtures && cat > fixtures/case1-artifacts.json <<'EOF'\n[\n  { \"name\": \"a-old\",  \"sizeBytes\": 52428800,  \"createdAt\": \"2026-05-15T00:00:00Z\", \"workflowRunId\": 100 },\n  { \"name\": \"a-new1\", \"siz",
+        "duration_ms": 119,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 114,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "actionlint .github/workflows/artifact-cleanup-script.yml && echo ACTIONLINT_OK",
+        "duration_ms": 146,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun -e 'console.log(typeof Bun.YAML?.parse)'",
+        "duration_ms": 101,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 15193,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test tests/workflow.test.ts 2>&1 | tail -4",
+        "duration_ms": 919,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Write",
+        "command": "",
+        "duration_ms": 5853,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 4835,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bunx tsc --noEmit && echo TSC_OK",
+        "duration_ms": 1305,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test 2>&1 | tail -25",
+        "duration_ms": 1327,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "head -20 act-result.txt",
+        "duration_ms": 49,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Edit",
+        "command": "",
+        "duration_ms": 8217,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "bun test 2>&1 | tail -8",
+        "duration_ms": 81291,
+        "is_error": false,
+        "is_install": false
+      },
+      {
+        "tool_name": "Bash",
+        "command": "grep -E \"^===|SUMMARY|Job succeeded|EXECUTED\" act-result.txt | head -20 && echo \"---\" && wc -l act-result.txt && ls",
+        "duration_ms": 85,
+        "is_error": false,
+        "is_install": false
+      }
+    ],
+    "install_duration_ms": 793,
+    "test_duration_ms": 84299,
+    "act_duration_ms": 0
+  },
+  "hooks": {
+    "hook_fires": 25,
+    "hook_errors_caught": 14,
+    "hook_failures": 6,
+    "hook_events": [
+      {
+        "subtype": "hook_started",
+        "hook_id": "6412d5b6-77fc-4bb4-9f84-3dac3a82cc60",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f8599cd6-ba0e-4256-9fe1-3f461daabe13",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "6412d5b6-77fc-4bb4-9f84-3dac3a82cc60",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f8599cd6-ba0e-4256-9fe1-3f461daabe13",
+        "hook_name": "UserPromptSubmit",
+        "hook_event": "UserPromptSubmit",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": "Resolving dependencies\nResolved, downloaded and extracted [2]\nSaved lockfile\n"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f0c9c90a-cc66-4427-90ce-dd753b21e310",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f0c9c90a-cc66-4427-90ce-dd753b21e310",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "458862ac-0a66-42c5-b7b4-573f14922ced",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "458862ac-0a66-42c5-b7b4-573f14922ced",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\ntests/cleanup.test.ts(6,50): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "67f69e8d-e443-4372-af2e-13fd26003489",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "67f69e8d-e443-4372-af2e-13fd26003489",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ff287c4c-1ee7-4822-a882-2c09d21c7b1a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ff287c4c-1ee7-4822-a882-2c09d21c7b1a",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "b85521a9-31c7-4437-ba8e-9ed535fc13c2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "b85521a9-31c7-4437-ba8e-9ed535fc13c2",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\ntests/cleanup.test.ts(10,8): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "aca6a91c-dccf-4b14-8d6c-a28070fdf697",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "aca6a91c-dccf-4b14-8d6c-a28070fdf697",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\ntests/cleanup.test.ts(10,8): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "81384f45-6048-43d5-8e22-4480ae77917c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "81384f45-6048-43d5-8e22-4480ae77917c",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "13a38cb0-ab1b-4fe3-a03a-3013a9be7521",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "13a38cb0-ab1b-4fe3-a03a-3013a9be7521",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "3db7b358-802d-46e7-b518-b4236765cdfa",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "3db7b358-802d-46e7-b518-b4236765cdfa",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nsrc/cleanup.ts(82,23): error TS2802: Type 'MapIterator<Artifact[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "cdbb592c-48cb-463a-bd28-1f00995cddeb",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "cdbb592c-48cb-463a-bd28-1f00995cddeb",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nsrc/cleanup.ts(82,23): error TS2802: Type 'MapIterator<Artifact[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "5645dd71-a53f-4085-ac9c-2e7a258064f7",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "5645dd71-a53f-4085-ac9c-2e7a258064f7",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nsrc/cleanup.ts(82,23): error TS2802: Type 'MapIterator<Artifact[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "904e1293-23e6-4159-bde1-0905da740fac",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "904e1293-23e6-4159-bde1-0905da740fac",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "36e994c9-36e7-4987-b2c6-a44e0477afcc",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "36e994c9-36e7-4987-b2c6-a44e0477afcc",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nsrc/cleanup.ts(82,23): error TS2802: Type 'MapIterator<Artifact[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "ea5effd2-b3a3-4c7f-8f58-629c5a37742d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "ea5effd2-b3a3-4c7f-8f58-629c5a37742d",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nsrc/cleanup.ts(82,23): error TS2802: Type 'MapIterator<Artifact[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "5726ee91-ed36-4a8e-9926-b9e2fbe3948d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "5726ee91-ed36-4a8e-9926-b9e2fbe3948d",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nsrc/cleanup.ts(82,23): error TS2802: Type 'MapIterator<Artifact[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "f2685e04-a946-4e32-838f-56190b36d4a7",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "f2685e04-a946-4e32-838f-56190b36d4a7",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nsrc/cleanup.ts(82,23): error TS2802: Type 'MapIterator<Artifact[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.\\ntests/config.test.ts(9,51): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "06fa077d-c4c0-4a1a-a262-aba6b5e03a4c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "06fa077d-c4c0-4a1a-a262-aba6b5e03a4c",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "177000e8-5d5e-47b9-9b88-6c99f8d17b8b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "177000e8-5d5e-47b9-9b88-6c99f8d17b8b",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\nsrc/cleanup.ts(82,23): error TS2802: Type 'MapIterator<Artifact[]>' can only be iterated through when using the '--downlevelIteration' flag or with a '--target' of 'es2015' or higher.\\nsrc/cli.ts(18,8): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.\\nsrc/cli.ts(19,51): error TS5097: An import path can only end with ",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "bee283f5-8d40-430d-bf25-a740ae9844c1",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "bee283f5-8d40-430d-bf25-a740ae9844c1",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "91bfab35-ee93-4dba-b7db-4f04b7996a4f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "91bfab35-ee93-4dba-b7db-4f04b7996a4f",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 1,
+        "outcome": "cancelled",
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "03893384-a227-40fe-a2c1-db3a2b9733d1",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "03893384-a227-40fe-a2c1-db3a2b9733d1",
+        "hook_name": "PostToolUse:Write",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\ntests/act.test.ts(17,27): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "077892d1-f7ab-4f72-a2a8-fb1281fdf444",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "077892d1-f7ab-4f72-a2a8-fb1281fdf444",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\ntests/act.test.ts(17,27): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.\"}",
+        "stderr": ""
+      },
+      {
+        "subtype": "hook_started",
+        "hook_id": "c5dfde9c-2bfc-46e9-b019-ed0f6d5c3247",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_id": "c5dfde9c-2bfc-46e9-b019-ed0f6d5c3247",
+        "hook_name": "PostToolUse:Edit",
+        "hook_event": "PostToolUse",
+        "exit_code": 0,
+        "outcome": "success",
+        "stdout": "{\"additionalContext\": \"\\u26a0\\ufe0f SYNTAX/TYPE ERRORS detected in the file you just wrote. Fix these before running:\\ntests/act.test.ts(17,27): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.\"}",
+        "stderr": ""
+      }
+    ]
+  }
+}
