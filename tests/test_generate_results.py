@@ -260,6 +260,87 @@ class TestDetectTraps:
     def test_empty_events(self):
         assert _detect_traps([], "", {"language_mode": "default"}) == []
 
+    # ── #27 fix 1: cd-prefix dedup for repeated-test-reruns ──
+    _CD = ("cd /home/user/repos/GHA-bench/workspaces/2026-01-01_000000/"
+           "11-some-task-name/bash-opus48-1m-medium && ")
+
+    def _bash_events(self, commands):
+        return [
+            {"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "name": "Bash", "input": {"command": c}}
+            ]}}
+            for c in commands
+        ]
+
+    def test_repeated_reruns_distinct_commands_behind_cd_not_collapsed(self):
+        # 5 DISTINCT test files behind the same long absolute cd-prefix. The
+        # 80-char dedup key is computed AFTER stripping the cd, so these stay
+        # 5 keys (count 1 each) and do NOT trip the trap (issue #27, finding 1).
+        events = self._bash_events([self._CD + f"pytest test_{i}.py" for i in range(5)])
+        traps = _detect_traps(events, "", {"language_mode": "default"})
+        assert "repeated-test-reruns" not in [t["name"] for t in traps]
+
+    def test_repeated_reruns_same_command_behind_cd_still_fires(self):
+        # The same test command 5x (behind a cd) is genuine reruns — must fire.
+        events = self._bash_events([self._CD + "pytest test_app.py"] * 5)
+        traps = _detect_traps(events, "", {"language_mode": "default"})
+        assert "repeated-test-reruns" in [t["name"] for t in traps]
+
+    # ── #27 fix 2: fixture rework counts redo cycles, not references ──
+    def test_fixture_rework_distinct_fixtures_created_once_not_flagged(self):
+        # Writing 4 DISTINCT fixtures once each is fixture design, not rework.
+        events = self._bash_events(
+            [f"cat > fixtures/case_{i}.json <<'EOF'\n{{}}\nEOF" for i in range(4)])
+        traps = _detect_traps(events, "", {"language_mode": "default"})
+        assert "fixture-rework" not in [t["name"] for t in traps]
+
+    def test_fixture_rework_same_fixture_rewritten_fires(self):
+        # Same fixture written 3x + removed once = genuine redo cycle.
+        events = self._bash_events([
+            "echo '{}' > fixtures/data.json",
+            "echo '{\"a\":1}' > fixtures/data.json",
+            "rm fixtures/data.json",
+            "echo '{\"a\":2}' > fixtures/data.json",
+        ])
+        traps = _detect_traps(events, "", {"language_mode": "default"})
+        assert "fixture-rework" in [t["name"] for t in traps]
+
+    # ── #27 fix 3: act-fixture-paths ignores the agent's own test output ──
+    def test_act_fixture_paths_ignores_agent_validator_probe(self):
+        events = [{"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "name": "Bash", "input": {"command": "act push"}},
+            {"type": "text", "text": "copy the fixtures to the fixture path"},
+        ]}}]
+        # The agent's validator deliberately tests a "config not found" branch
+        # with a fake input — not an act-step path failure (issue #27, finding 3).
+        console = ("secret-validator.sh: error: config file not found: nope.json\n"
+                   "[build/test] ❌ Failure - Main test step\n")
+        traps = _detect_traps(events, console, {"language_mode": "bash"})
+        assert "act-fixture-paths" not in [t["name"] for t in traps]
+
+    def test_act_fixture_paths_real_act_failure_fires(self):
+        events = [{"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "name": "Bash", "input": {"command": "act push"}},
+            {"type": "text", "text": "the workflow copies fixtures to the fixture path"},
+        ]}}]
+        console = ("[build/test] ❌ Failure - Run tests\n"
+                   "Error: fixtures/config.json not found inside container\n")
+        traps = _detect_traps(events, console, {"language_mode": "bash"})
+        assert "act-fixture-paths" in [t["name"] for t in traps]
+
+
+# =========================================================================
+# _disp_mode (#30: powershell + powershell-tool collapse into one display col)
+# =========================================================================
+
+def test_disp_mode_collapses_powershell_tool():
+    from generate_results import _disp_mode
+    assert _disp_mode("powershell-tool") == "powershell"
+    assert _disp_mode("powershell") == "powershell"
+    assert _disp_mode("bash") == "bash"
+    assert _disp_mode("default") == "default"
+    assert _disp_mode("typescript-bun") == "typescript-bun"
+
 
 # =========================================================================
 # _find_discrepancies

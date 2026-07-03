@@ -120,6 +120,21 @@ class TestAggregateRows:
         assert r["avg_cost"] == pytest.approx(5.0)
         assert r["total_cost"] == pytest.approx(10.0)
 
+    def test_powershell_tool_pools_into_single_powershell_row(self):
+        # #30: powershell + powershell-tool are replicates of one condition and
+        # must pool into a single `powershell` row (not two rows / two columns).
+        mm = [
+            _mk_metric("11", mode="powershell", model="opus", effort="medium", cost=2.0),
+            _mk_metric("11", mode="powershell-tool", model="opus", effort="medium", cost=4.0),
+        ]
+        rows = aggregate_rows(mm)
+        assert len(rows) == 1
+        r = rows[0]
+        assert r["mode"] == "powershell"          # collapsed display label
+        assert r["n"] == 2                         # pooled, not two N=1 rows
+        assert r["avg_cost"] == pytest.approx(3.0)
+        assert all(row["mode"] != "powershell-tool" for row in rows)
+
     def test_groups_by_language_model_effort(self):
         mm = [
             _mk_metric("11", mode="default", model="opus", effort="xhigh", cost=3.0),

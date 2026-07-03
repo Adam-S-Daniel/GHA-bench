@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-03 07:19:53 AM ET — 111/144 runs completed, 33 remaining; total cost $76.34; total agent time 459.2 min.
+**Last updated:** 2026-07-03 08:47:19 AM ET — 111/144 runs completed, 33 remaining; total cost $76.34; total agent time 459.2 min.
 **Claude Code versions used:** [v2.1.94](claude-code-2.1.94.md) (25 runs), [v2.1.96](claude-code-2.1.96.md) (86 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -306,7 +306,6 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.96 | 13 | 40.0min | 8.7% | $10.22 | 13.38% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.94 | 2 | 2.3min | 0.5% | $0.32 | 0.42% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.96 | 4 | 3.3min | 0.7% | $0.44 | 0.57% |
-| fixture-rework | powershell-strict | opus46-200k-medium-cli2.1.96 | 1 | 0.5min | 0.1% | $0.12 | 0.15% |
 
 
 <details>
@@ -314,7 +313,6 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | powershell-strict | opus46-200k-medium-cli2.1.96 | 1 | 0.5min | 0.1% | $0.12 | 0.15% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.94 | 1 | 0.7min | 0.1% | $0.08 | 0.11% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.96 | 1 | 0.7min | 0.1% | $0.09 | 0.12% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.94 | 2 | 2.3min | 0.5% | $0.32 | 0.42% |
@@ -335,7 +333,6 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |------|------|-------|---------|-----------|-----------|--------|--------|
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.94 | 1 | 0.7min | 0.1% | $0.08 | 0.11% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.96 | 1 | 0.7min | 0.1% | $0.09 | 0.12% |
-| fixture-rework | powershell-strict | opus46-200k-medium-cli2.1.96 | 1 | 0.5min | 0.1% | $0.12 | 0.15% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.94 | 2 | 2.3min | 0.5% | $0.32 | 0.42% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.96 | 4 | 3.3min | 0.7% | $0.44 | 0.57% |
 | repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.94 | 4 | 8.7min | 1.9% | $1.97 | 2.59% |
@@ -354,7 +351,6 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |------|------|-------|---------|-----------|-----------|--------|--------|
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.94 | 1 | 0.7min | 0.1% | $0.08 | 0.11% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.96 | 1 | 0.7min | 0.1% | $0.09 | 0.12% |
-| fixture-rework | powershell-strict | opus46-200k-medium-cli2.1.96 | 1 | 0.5min | 0.1% | $0.12 | 0.15% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.94 | 2 | 2.3min | 0.5% | $0.32 | 0.42% |
 | repeated-test-reruns | default | opus46-200k-medium-cli2.1.94 | 3 | 7.7min | 1.7% | $2.11 | 2.77% |
 | repeated-test-reruns | powershell | opus46-200k-medium-cli2.1.94 | 4 | 15.7min | 3.4% | $3.73 | 4.88% |
@@ -368,7 +364,6 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 #### Trap Descriptions
 
-- **fixture-rework**: Agent wrote, broke, and rewrote test fixture data (4+ fixture-related commands).
 - **repeated-test-reruns**: Same test command executed 4+ times without the underlying code changing.
 
 #### Column Definitions
@@ -395,7 +390,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | sonnet46-200k-medium-cli2.1.94 | 4 | 1 | 0.7min | 0.1% | $0.08 | 0.11% |
 | powershell | sonnet46-200k-medium-cli2.1.96 | 14 | 1 | 0.7min | 0.1% | $0.09 | 0.12% |
 | powershell-strict | opus46-200k-medium-cli2.1.94 | 4 | 4 | 8.7min | 1.9% | $1.97 | 2.59% |
-| powershell-strict | opus46-200k-medium-cli2.1.96 | 14 | 14 | 40.5min | 8.8% | $10.33 | 13.53% |
+| powershell-strict | opus46-200k-medium-cli2.1.96 | 14 | 13 | 40.0min | 8.7% | $10.22 | 13.38% |
 | powershell-strict | sonnet46-200k-medium-cli2.1.94 | 4 | 2 | 2.3min | 0.5% | $0.32 | 0.42% |
 | powershell-strict | sonnet46-200k-medium-cli2.1.96 | 14 | 4 | 3.3min | 0.7% | $0.44 | 0.57% |
 
@@ -418,7 +413,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus46-200k-medium-cli2.1.94 | 4 | 4 | 15.7min | 3.4% | $3.73 | 4.88% |
 | default | opus46-200k-medium-cli2.1.96 | 13 | 10 | 19.3min | 4.2% | $4.79 | 6.28% |
 | powershell | opus46-200k-medium-cli2.1.96 | 14 | 13 | 27.3min | 6.0% | $6.16 | 8.07% |
-| powershell-strict | opus46-200k-medium-cli2.1.96 | 14 | 14 | 40.5min | 8.8% | $10.33 | 13.53% |
+| powershell-strict | opus46-200k-medium-cli2.1.96 | 14 | 13 | 40.0min | 8.7% | $10.22 | 13.38% |
 
 </details>
 
@@ -440,7 +435,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus46-200k-medium-cli2.1.94 | 4 | 4 | 15.7min | 3.4% | $3.73 | 4.88% |
 | default | opus46-200k-medium-cli2.1.96 | 13 | 10 | 19.3min | 4.2% | $4.79 | 6.28% |
 | powershell | opus46-200k-medium-cli2.1.96 | 14 | 13 | 27.3min | 6.0% | $6.16 | 8.07% |
-| powershell-strict | opus46-200k-medium-cli2.1.96 | 14 | 14 | 40.5min | 8.8% | $10.33 | 13.53% |
+| powershell-strict | opus46-200k-medium-cli2.1.96 | 14 | 13 | 40.0min | 8.7% | $10.22 | 13.38% |
 
 </details>
 

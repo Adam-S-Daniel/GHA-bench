@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-03 07:19:51 AM ET — 144/144 runs completed, 0 remaining; total cost $436.67; total agent time 5098.1 min.
+**Last updated:** 2026-07-03 08:47:15 AM ET — 144/144 runs completed, 0 remaining; total cost $436.67; total agent time 5098.1 min.
 **Claude Code versions used:** [v2.1.81](claude-code-2.1.81.md) (139 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -158,12 +158,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | csharp-script | opus46-200k-medium | 16 | 40.2min | 3.8min | 154.0 | 163 | $5.59 | $89.38 | 4.1 | — |
-| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.3min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
-| default | opus46-200k-medium | 18 | 30.8min | -18.0min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
-| default | sonnet46-200k-medium | 18 | 16.7min | 10.0min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
-| powershell | opus46-200k-medium | 17 | 30.1min | 0.9min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
+| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.2min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
+| default | opus46-200k-medium | 18 | 30.8min | -18.2min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
+| default | sonnet46-200k-medium | 18 | 16.7min | 9.9min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
+| powershell | opus46-200k-medium | 17 | 30.1min | 0.8min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
 | powershell | sonnet46-200k-medium | 18 | 31.1min | 22.5min | 46.9 | 63 | $1.63 | $29.38 | 4.0 | — |
-| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.3min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
+| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.1min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
 | powershell-strict | sonnet46-200k-medium | 17 | 21.9min | 16.7min | 32.5 | 48 | $1.55 | $26.42 | 3.8 | — |
 
 
@@ -172,13 +172,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | sonnet46-200k-medium | 18 | 16.7min | 10.0min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
+| default | sonnet46-200k-medium | 18 | 16.7min | 9.9min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
 | powershell-strict | sonnet46-200k-medium | 17 | 21.9min | 16.7min | 32.5 | 48 | $1.55 | $26.42 | 3.8 | — |
 | powershell | sonnet46-200k-medium | 18 | 31.1min | 22.5min | 46.9 | 63 | $1.63 | $29.38 | 4.0 | — |
-| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.3min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
-| powershell | opus46-200k-medium | 17 | 30.1min | 0.9min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
-| default | opus46-200k-medium | 18 | 30.8min | -18.0min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
-| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.3min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
+| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.2min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
+| powershell | opus46-200k-medium | 17 | 30.1min | 0.8min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
+| default | opus46-200k-medium | 18 | 30.8min | -18.2min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
+| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.1min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
 | csharp-script | opus46-200k-medium | 16 | 40.2min | 3.8min | 154.0 | 163 | $5.59 | $89.38 | 4.1 | — |
 
 </details>
@@ -188,14 +188,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | sonnet46-200k-medium | 18 | 16.7min | 10.0min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
+| default | sonnet46-200k-medium | 18 | 16.7min | 9.9min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
 | powershell-strict | sonnet46-200k-medium | 17 | 21.9min | 16.7min | 32.5 | 48 | $1.55 | $26.42 | 3.8 | — |
-| powershell | opus46-200k-medium | 17 | 30.1min | 0.9min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
-| default | opus46-200k-medium | 18 | 30.8min | -18.0min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
+| powershell | opus46-200k-medium | 17 | 30.1min | 0.8min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
+| default | opus46-200k-medium | 18 | 30.8min | -18.2min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
 | powershell | sonnet46-200k-medium | 18 | 31.1min | 22.5min | 46.9 | 63 | $1.63 | $29.38 | 4.0 | — |
-| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.3min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
+| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.2min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
 | csharp-script | opus46-200k-medium | 16 | 40.2min | 3.8min | 154.0 | 163 | $5.59 | $89.38 | 4.1 | — |
-| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.3min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
+| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.1min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
 
 </details>
 
@@ -204,13 +204,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | opus46-200k-medium | 18 | 30.8min | -18.0min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
-| powershell | opus46-200k-medium | 17 | 30.1min | 0.9min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
+| default | opus46-200k-medium | 18 | 30.8min | -18.2min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
+| powershell | opus46-200k-medium | 17 | 30.1min | 0.8min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
 | csharp-script | opus46-200k-medium | 16 | 40.2min | 3.8min | 154.0 | 163 | $5.59 | $89.38 | 4.1 | — |
-| default | sonnet46-200k-medium | 18 | 16.7min | 10.0min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
-| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.3min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
+| default | sonnet46-200k-medium | 18 | 16.7min | 9.9min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
+| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.1min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
 | powershell-strict | sonnet46-200k-medium | 17 | 21.9min | 16.7min | 32.5 | 48 | $1.55 | $26.42 | 3.8 | — |
-| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.3min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
+| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.2min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
 | powershell | sonnet46-200k-medium | 18 | 31.1min | 22.5min | 46.9 | 63 | $1.63 | $29.38 | 4.0 | — |
 
 </details>
@@ -221,12 +221,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell-strict | sonnet46-200k-medium | 17 | 21.9min | 16.7min | 32.5 | 48 | $1.55 | $26.42 | 3.8 | — |
-| default | sonnet46-200k-medium | 18 | 16.7min | 10.0min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
+| default | sonnet46-200k-medium | 18 | 16.7min | 9.9min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
 | powershell | sonnet46-200k-medium | 18 | 31.1min | 22.5min | 46.9 | 63 | $1.63 | $29.38 | 4.0 | — |
-| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.3min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
-| powershell | opus46-200k-medium | 17 | 30.1min | 0.9min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
-| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.3min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
-| default | opus46-200k-medium | 18 | 30.8min | -18.0min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
+| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.2min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
+| powershell | opus46-200k-medium | 17 | 30.1min | 0.8min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
+| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.1min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
+| default | opus46-200k-medium | 18 | 30.8min | -18.2min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
 | csharp-script | opus46-200k-medium | 16 | 40.2min | 3.8min | 154.0 | 163 | $5.59 | $89.38 | 4.1 | — |
 
 </details>
@@ -237,12 +237,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell-strict | sonnet46-200k-medium | 17 | 21.9min | 16.7min | 32.5 | 48 | $1.55 | $26.42 | 3.8 | — |
-| default | sonnet46-200k-medium | 18 | 16.7min | 10.0min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
+| default | sonnet46-200k-medium | 18 | 16.7min | 9.9min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
 | powershell | sonnet46-200k-medium | 18 | 31.1min | 22.5min | 46.9 | 63 | $1.63 | $29.38 | 4.0 | — |
-| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.3min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
-| powershell | opus46-200k-medium | 17 | 30.1min | 0.9min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
-| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.3min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
-| default | opus46-200k-medium | 18 | 30.8min | -18.0min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
+| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.2min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
+| powershell | opus46-200k-medium | 17 | 30.1min | 0.8min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
+| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.1min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
+| default | opus46-200k-medium | 18 | 30.8min | -18.2min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
 | csharp-script | opus46-200k-medium | 16 | 40.2min | 3.8min | 154.0 | 163 | $5.59 | $89.38 | 4.1 | — |
 
 </details>
@@ -252,14 +252,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | opus46-200k-medium | 18 | 30.8min | -18.0min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
-| powershell | opus46-200k-medium | 17 | 30.1min | 0.9min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
+| default | opus46-200k-medium | 18 | 30.8min | -18.2min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
+| powershell | opus46-200k-medium | 17 | 30.1min | 0.8min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
 | csharp-script | opus46-200k-medium | 16 | 40.2min | 3.8min | 154.0 | 163 | $5.59 | $89.38 | 4.1 | — |
-| default | sonnet46-200k-medium | 18 | 16.7min | 10.0min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
-| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.3min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
+| default | sonnet46-200k-medium | 18 | 16.7min | 9.9min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
+| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.1min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
 | powershell | sonnet46-200k-medium | 18 | 31.1min | 22.5min | 46.9 | 63 | $1.63 | $29.38 | 4.0 | — |
 | powershell-strict | sonnet46-200k-medium | 17 | 21.9min | 16.7min | 32.5 | 48 | $1.55 | $26.42 | 3.8 | — |
-| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.3min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
+| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.2min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
 
 </details>
 
@@ -269,12 +269,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | csharp-script | opus46-200k-medium | 16 | 40.2min | 3.8min | 154.0 | 163 | $5.59 | $89.38 | 4.1 | — |
-| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.3min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
-| default | opus46-200k-medium | 18 | 30.8min | -18.0min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
-| default | sonnet46-200k-medium | 18 | 16.7min | 10.0min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
-| powershell | opus46-200k-medium | 17 | 30.1min | 0.9min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
+| csharp-script | sonnet46-200k-medium | 17 | 33.1min | 21.2min | 59.9 | 86 | $2.77 | $47.12 | 3.5 | — |
+| default | opus46-200k-medium | 18 | 30.8min | -18.2min | 149.4 | 148 | $3.99 | $71.84 | 4.4 | — |
+| default | sonnet46-200k-medium | 18 | 16.7min | 9.9min | 35.5 | 51 | $1.23 | $22.08 | 4.1 | — |
+| powershell | opus46-200k-medium | 17 | 30.1min | 0.8min | 101.4 | 112 | $3.65 | $61.98 | 4.2 | — |
 | powershell | sonnet46-200k-medium | 18 | 31.1min | 22.5min | 46.9 | 63 | $1.63 | $29.38 | 4.0 | — |
-| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.3min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
+| powershell-strict | opus46-200k-medium | 18 | 52.8min | 14.1min | 134.1 | 145 | $4.92 | $88.48 | 4.1 | — |
 | powershell-strict | sonnet46-200k-medium | 17 | 21.9min | 16.7min | 32.5 | 48 | $1.55 | $26.42 | 3.8 | — |
 
 </details>
@@ -294,19 +294,16 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | permission-denial-loops | powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 391.5min | 7.7% | $101.79 | 23.31% |
 | permission-denial-loops | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 17 | 81.3min | 1.6% | $9.45 | 2.16% |
 | repeated-test-reruns | csharp-script | opus46-200k-medium-cli2.1.81 | 24 | 55.7min | 1.1% | $16.57 | 3.79% |
-| repeated-test-reruns | csharp-script | sonnet46-200k-medium-cli2.1.81 | 15 | 18.0min | 0.4% | $2.60 | 0.59% |
-| repeated-test-reruns | default | opus46-200k-medium-cli2.1.81 | 50 | 439.7min | 8.6% | $107.75 | 24.68% |
-| repeated-test-reruns | default | sonnet46-200k-medium-cli2.1.81 | 23 | 27.7min | 0.5% | $3.54 | 0.81% |
-| repeated-test-reruns | powershell | opus46-200k-medium-cli2.1.81 | 48 | 215.3min | 4.2% | $50.76 | 11.62% |
+| repeated-test-reruns | csharp-script | sonnet46-200k-medium-cli2.1.81 | 16 | 19.0min | 0.4% | $2.70 | 0.62% |
+| repeated-test-reruns | default | opus46-200k-medium-cli2.1.81 | 49 | 443.0min | 8.7% | $108.52 | 24.85% |
+| repeated-test-reruns | default | sonnet46-200k-medium-cli2.1.81 | 24 | 29.0min | 0.6% | $3.74 | 0.86% |
+| repeated-test-reruns | powershell | opus46-200k-medium-cli2.1.81 | 48 | 217.3min | 4.3% | $51.32 | 11.75% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.81 | 12 | 21.3min | 0.4% | $3.68 | 0.84% |
-| repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.81 | 49 | 302.7min | 5.9% | $73.02 | 16.72% |
+| repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.81 | 49 | 305.7min | 6.0% | $73.64 | 16.86% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 6 | 7.0min | 0.1% | $0.64 | 0.15% |
 | dotnet-install-loop | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 178.6min | 3.5% | $40.93 | 9.37% |
 | dotnet-install-loop | csharp-script | sonnet46-200k-medium-cli2.1.81 | 13 | 44.2min | 0.9% | $7.17 | 1.64% |
 | pwsh-invoked-from-bash | powershell | sonnet46-200k-medium-cli2.1.81 | 1 | 7.7min | 0.2% | $1.46 | 0.33% |
-| fixture-rework | default | opus46-200k-medium-cli2.1.81 | 1 | 0.5min | 0.0% | $0.03 | 0.01% |
-| fixture-rework | default | sonnet46-200k-medium-cli2.1.81 | 1 | 0.8min | 0.0% | $0.15 | 0.03% |
-| fixture-rework | powershell | sonnet46-200k-medium-cli2.1.81 | 1 | 0.5min | 0.0% | $0.08 | 0.02% |
 
 
 <details>
@@ -314,14 +311,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | default | opus46-200k-medium-cli2.1.81 | 1 | 0.5min | 0.0% | $0.03 | 0.01% |
-| fixture-rework | powershell | sonnet46-200k-medium-cli2.1.81 | 1 | 0.5min | 0.0% | $0.08 | 0.02% |
-| fixture-rework | default | sonnet46-200k-medium-cli2.1.81 | 1 | 0.8min | 0.0% | $0.15 | 0.03% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 6 | 7.0min | 0.1% | $0.64 | 0.15% |
 | pwsh-invoked-from-bash | powershell | sonnet46-200k-medium-cli2.1.81 | 1 | 7.7min | 0.2% | $1.46 | 0.33% |
-| repeated-test-reruns | csharp-script | sonnet46-200k-medium-cli2.1.81 | 15 | 18.0min | 0.4% | $2.60 | 0.59% |
+| repeated-test-reruns | csharp-script | sonnet46-200k-medium-cli2.1.81 | 16 | 19.0min | 0.4% | $2.70 | 0.62% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.81 | 12 | 21.3min | 0.4% | $3.68 | 0.84% |
-| repeated-test-reruns | default | sonnet46-200k-medium-cli2.1.81 | 23 | 27.7min | 0.5% | $3.54 | 0.81% |
+| repeated-test-reruns | default | sonnet46-200k-medium-cli2.1.81 | 24 | 29.0min | 0.6% | $3.74 | 0.86% |
 | dotnet-install-loop | csharp-script | sonnet46-200k-medium-cli2.1.81 | 13 | 44.2min | 0.9% | $7.17 | 1.64% |
 | repeated-test-reruns | csharp-script | opus46-200k-medium-cli2.1.81 | 24 | 55.7min | 1.1% | $16.57 | 3.79% |
 | permission-denial-loops | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 17 | 81.3min | 1.6% | $9.45 | 2.16% |
@@ -329,13 +323,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | permission-denial-loops | powershell | sonnet46-200k-medium-cli2.1.81 | 18 | 126.0min | 2.5% | $19.18 | 4.39% |
 | permission-denial-loops | csharp-script | sonnet46-200k-medium-cli2.1.81 | 17 | 138.8min | 2.7% | $21.10 | 4.83% |
 | dotnet-install-loop | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 178.6min | 3.5% | $40.93 | 9.37% |
-| repeated-test-reruns | powershell | opus46-200k-medium-cli2.1.81 | 48 | 215.3min | 4.2% | $50.76 | 11.62% |
+| repeated-test-reruns | powershell | opus46-200k-medium-cli2.1.81 | 48 | 217.3min | 4.3% | $51.32 | 11.75% |
 | permission-denial-loops | powershell | opus46-200k-medium-cli2.1.81 | 17 | 280.0min | 5.5% | $65.92 | 15.10% |
-| repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.81 | 49 | 302.7min | 5.9% | $73.02 | 16.72% |
+| repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.81 | 49 | 305.7min | 6.0% | $73.64 | 16.86% |
 | permission-denial-loops | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 349.2min | 6.8% | $87.42 | 20.02% |
 | permission-denial-loops | powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 391.5min | 7.7% | $101.79 | 23.31% |
 | permission-denial-loops | default | opus46-200k-medium-cli2.1.81 | 18 | 439.2min | 8.6% | $99.42 | 22.77% |
-| repeated-test-reruns | default | opus46-200k-medium-cli2.1.81 | 50 | 439.7min | 8.6% | $107.75 | 24.68% |
+| repeated-test-reruns | default | opus46-200k-medium-cli2.1.81 | 49 | 443.0min | 8.7% | $108.52 | 24.85% |
 
 </details>
 
@@ -344,14 +338,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| fixture-rework | default | opus46-200k-medium-cli2.1.81 | 1 | 0.5min | 0.0% | $0.03 | 0.01% |
-| fixture-rework | powershell | sonnet46-200k-medium-cli2.1.81 | 1 | 0.5min | 0.0% | $0.08 | 0.02% |
-| fixture-rework | default | sonnet46-200k-medium-cli2.1.81 | 1 | 0.8min | 0.0% | $0.15 | 0.03% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 6 | 7.0min | 0.1% | $0.64 | 0.15% |
 | pwsh-invoked-from-bash | powershell | sonnet46-200k-medium-cli2.1.81 | 1 | 7.7min | 0.2% | $1.46 | 0.33% |
-| repeated-test-reruns | csharp-script | sonnet46-200k-medium-cli2.1.81 | 15 | 18.0min | 0.4% | $2.60 | 0.59% |
-| repeated-test-reruns | default | sonnet46-200k-medium-cli2.1.81 | 23 | 27.7min | 0.5% | $3.54 | 0.81% |
+| repeated-test-reruns | csharp-script | sonnet46-200k-medium-cli2.1.81 | 16 | 19.0min | 0.4% | $2.70 | 0.62% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.81 | 12 | 21.3min | 0.4% | $3.68 | 0.84% |
+| repeated-test-reruns | default | sonnet46-200k-medium-cli2.1.81 | 24 | 29.0min | 0.6% | $3.74 | 0.86% |
 | dotnet-install-loop | csharp-script | sonnet46-200k-medium-cli2.1.81 | 13 | 44.2min | 0.9% | $7.17 | 1.64% |
 | permission-denial-loops | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 17 | 81.3min | 1.6% | $9.45 | 2.16% |
 | permission-denial-loops | default | sonnet46-200k-medium-cli2.1.81 | 18 | 93.7min | 1.8% | $12.17 | 2.79% |
@@ -359,13 +350,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | permission-denial-loops | powershell | sonnet46-200k-medium-cli2.1.81 | 18 | 126.0min | 2.5% | $19.18 | 4.39% |
 | permission-denial-loops | csharp-script | sonnet46-200k-medium-cli2.1.81 | 17 | 138.8min | 2.7% | $21.10 | 4.83% |
 | dotnet-install-loop | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 178.6min | 3.5% | $40.93 | 9.37% |
-| repeated-test-reruns | powershell | opus46-200k-medium-cli2.1.81 | 48 | 215.3min | 4.2% | $50.76 | 11.62% |
+| repeated-test-reruns | powershell | opus46-200k-medium-cli2.1.81 | 48 | 217.3min | 4.3% | $51.32 | 11.75% |
 | permission-denial-loops | powershell | opus46-200k-medium-cli2.1.81 | 17 | 280.0min | 5.5% | $65.92 | 15.10% |
-| repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.81 | 49 | 302.7min | 5.9% | $73.02 | 16.72% |
+| repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.81 | 49 | 305.7min | 6.0% | $73.64 | 16.86% |
 | permission-denial-loops | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 349.2min | 6.8% | $87.42 | 20.02% |
 | permission-denial-loops | default | opus46-200k-medium-cli2.1.81 | 18 | 439.2min | 8.6% | $99.42 | 22.77% |
 | permission-denial-loops | powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 391.5min | 7.7% | $101.79 | 23.31% |
-| repeated-test-reruns | default | opus46-200k-medium-cli2.1.81 | 50 | 439.7min | 8.6% | $107.75 | 24.68% |
+| repeated-test-reruns | default | opus46-200k-medium-cli2.1.81 | 49 | 443.0min | 8.7% | $108.52 | 24.85% |
 
 </details>
 
@@ -375,14 +366,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
 | pwsh-invoked-from-bash | powershell | sonnet46-200k-medium-cli2.1.81 | 1 | 7.7min | 0.2% | $1.46 | 0.33% |
-| fixture-rework | default | opus46-200k-medium-cli2.1.81 | 1 | 0.5min | 0.0% | $0.03 | 0.01% |
-| fixture-rework | default | sonnet46-200k-medium-cli2.1.81 | 1 | 0.8min | 0.0% | $0.15 | 0.03% |
-| fixture-rework | powershell | sonnet46-200k-medium-cli2.1.81 | 1 | 0.5min | 0.0% | $0.08 | 0.02% |
 | repeated-test-reruns | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 6 | 7.0min | 0.1% | $0.64 | 0.15% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.81 | 12 | 21.3min | 0.4% | $3.68 | 0.84% |
 | dotnet-install-loop | csharp-script | sonnet46-200k-medium-cli2.1.81 | 13 | 44.2min | 0.9% | $7.17 | 1.64% |
-| repeated-test-reruns | csharp-script | sonnet46-200k-medium-cli2.1.81 | 15 | 18.0min | 0.4% | $2.60 | 0.59% |
 | permission-denial-loops | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 349.2min | 6.8% | $87.42 | 20.02% |
+| repeated-test-reruns | csharp-script | sonnet46-200k-medium-cli2.1.81 | 16 | 19.0min | 0.4% | $2.70 | 0.62% |
 | dotnet-install-loop | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 178.6min | 3.5% | $40.93 | 9.37% |
 | permission-denial-loops | csharp-script | sonnet46-200k-medium-cli2.1.81 | 17 | 138.8min | 2.7% | $21.10 | 4.83% |
 | permission-denial-loops | powershell | opus46-200k-medium-cli2.1.81 | 17 | 280.0min | 5.5% | $65.92 | 15.10% |
@@ -391,18 +379,17 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | permission-denial-loops | default | sonnet46-200k-medium-cli2.1.81 | 18 | 93.7min | 1.8% | $12.17 | 2.79% |
 | permission-denial-loops | powershell | sonnet46-200k-medium-cli2.1.81 | 18 | 126.0min | 2.5% | $19.18 | 4.39% |
 | permission-denial-loops | powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 391.5min | 7.7% | $101.79 | 23.31% |
-| repeated-test-reruns | default | sonnet46-200k-medium-cli2.1.81 | 23 | 27.7min | 0.5% | $3.54 | 0.81% |
 | repeated-test-reruns | csharp-script | opus46-200k-medium-cli2.1.81 | 24 | 55.7min | 1.1% | $16.57 | 3.79% |
-| repeated-test-reruns | powershell | opus46-200k-medium-cli2.1.81 | 48 | 215.3min | 4.2% | $50.76 | 11.62% |
-| repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.81 | 49 | 302.7min | 5.9% | $73.02 | 16.72% |
-| repeated-test-reruns | default | opus46-200k-medium-cli2.1.81 | 50 | 439.7min | 8.6% | $107.75 | 24.68% |
+| repeated-test-reruns | default | sonnet46-200k-medium-cli2.1.81 | 24 | 29.0min | 0.6% | $3.74 | 0.86% |
+| repeated-test-reruns | powershell | opus46-200k-medium-cli2.1.81 | 48 | 217.3min | 4.3% | $51.32 | 11.75% |
+| repeated-test-reruns | default | opus46-200k-medium-cli2.1.81 | 49 | 443.0min | 8.7% | $108.52 | 24.85% |
+| repeated-test-reruns | powershell-strict | opus46-200k-medium-cli2.1.81 | 49 | 305.7min | 6.0% | $73.64 | 16.86% |
 
 </details>
 
 #### Trap Descriptions
 
 - **dotnet-install-loop**: Agent stuck in loop trying to install/verify .NET SDK, blocked by CLI sandbox.
-- **fixture-rework**: Agent wrote, broke, and rewrote test fixture data (4+ fixture-related commands).
 - **permission-denial-loops**: CLI sandbox blocked commands and agent retried instead of adapting (v1 harness issue).
 - **pwsh-invoked-from-bash**: Agent used `pwsh -Command`/`-File` from bash `run:` steps instead of `shell: pwsh`, causing cross-shell debugging (parse errors, quoting issues, scope problems, late pwsh discovery in act).
 - **repeated-test-reruns**: Same test command executed 4+ times without the underlying code changing.
@@ -422,14 +409,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |------|-------|------|-------|-----------|-----------|--------|--------|
 | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 56 | 583.4min | 11.4% | $144.91 | 33.19% |
 | csharp-script | opus46-200k-medium-cliunk | 2 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
-| csharp-script | sonnet46-200k-medium-cli2.1.81 | 17 | 45 | 201.0min | 3.9% | $30.87 | 7.07% |
+| csharp-script | sonnet46-200k-medium-cli2.1.81 | 17 | 46 | 202.0min | 4.0% | $30.97 | 7.09% |
 | csharp-script | sonnet46-200k-medium-cliunk | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
-| default | opus46-200k-medium-cli2.1.81 | 18 | 69 | 879.3min | 17.2% | $207.20 | 47.45% |
-| default | sonnet46-200k-medium-cli2.1.81 | 18 | 42 | 122.1min | 2.4% | $15.86 | 3.63% |
-| powershell | opus46-200k-medium-cli2.1.81 | 17 | 65 | 495.3min | 9.7% | $116.68 | 26.72% |
+| default | opus46-200k-medium-cli2.1.81 | 18 | 67 | 882.2min | 17.3% | $207.94 | 47.62% |
+| default | sonnet46-200k-medium-cli2.1.81 | 18 | 42 | 122.7min | 2.4% | $15.91 | 3.64% |
+| powershell | opus46-200k-medium-cli2.1.81 | 17 | 65 | 497.3min | 9.8% | $117.25 | 26.85% |
 | powershell | opus46-200k-medium-cliunk | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
-| powershell | sonnet46-200k-medium-cli2.1.81 | 18 | 32 | 155.5min | 3.1% | $24.40 | 5.59% |
-| powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 67 | 694.2min | 13.6% | $174.81 | 40.03% |
+| powershell | sonnet46-200k-medium-cli2.1.81 | 18 | 31 | 155.0min | 3.0% | $24.31 | 5.57% |
+| powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 67 | 697.2min | 13.7% | $175.43 | 40.17% |
 | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 17 | 23 | 88.3min | 1.7% | $10.09 | 2.31% |
 | powershell-strict | sonnet46-200k-medium-cliunk | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 
@@ -444,13 +431,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus46-200k-medium-cliunk | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | powershell-strict | sonnet46-200k-medium-cliunk | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 17 | 23 | 88.3min | 1.7% | $10.09 | 2.31% |
-| default | sonnet46-200k-medium-cli2.1.81 | 18 | 42 | 122.1min | 2.4% | $15.86 | 3.63% |
-| powershell | sonnet46-200k-medium-cli2.1.81 | 18 | 32 | 155.5min | 3.1% | $24.40 | 5.59% |
-| csharp-script | sonnet46-200k-medium-cli2.1.81 | 17 | 45 | 201.0min | 3.9% | $30.87 | 7.07% |
-| powershell | opus46-200k-medium-cli2.1.81 | 17 | 65 | 495.3min | 9.7% | $116.68 | 26.72% |
+| default | sonnet46-200k-medium-cli2.1.81 | 18 | 42 | 122.7min | 2.4% | $15.91 | 3.64% |
+| powershell | sonnet46-200k-medium-cli2.1.81 | 18 | 31 | 155.0min | 3.0% | $24.31 | 5.57% |
+| csharp-script | sonnet46-200k-medium-cli2.1.81 | 17 | 46 | 202.0min | 4.0% | $30.97 | 7.09% |
+| powershell | opus46-200k-medium-cli2.1.81 | 17 | 65 | 497.3min | 9.8% | $117.25 | 26.85% |
 | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 56 | 583.4min | 11.4% | $144.91 | 33.19% |
-| powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 67 | 694.2min | 13.6% | $174.81 | 40.03% |
-| default | opus46-200k-medium-cli2.1.81 | 18 | 69 | 879.3min | 17.2% | $207.20 | 47.45% |
+| powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 67 | 697.2min | 13.7% | $175.43 | 40.17% |
+| default | opus46-200k-medium-cli2.1.81 | 18 | 67 | 882.2min | 17.3% | $207.94 | 47.62% |
 
 </details>
 
@@ -464,13 +451,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus46-200k-medium-cliunk | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | powershell-strict | sonnet46-200k-medium-cliunk | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | powershell-strict | sonnet46-200k-medium-cli2.1.81 | 17 | 23 | 88.3min | 1.7% | $10.09 | 2.31% |
-| default | sonnet46-200k-medium-cli2.1.81 | 18 | 42 | 122.1min | 2.4% | $15.86 | 3.63% |
-| powershell | sonnet46-200k-medium-cli2.1.81 | 18 | 32 | 155.5min | 3.1% | $24.40 | 5.59% |
-| csharp-script | sonnet46-200k-medium-cli2.1.81 | 17 | 45 | 201.0min | 3.9% | $30.87 | 7.07% |
-| powershell | opus46-200k-medium-cli2.1.81 | 17 | 65 | 495.3min | 9.7% | $116.68 | 26.72% |
+| default | sonnet46-200k-medium-cli2.1.81 | 18 | 42 | 122.7min | 2.4% | $15.91 | 3.64% |
+| powershell | sonnet46-200k-medium-cli2.1.81 | 18 | 31 | 155.0min | 3.0% | $24.31 | 5.57% |
+| csharp-script | sonnet46-200k-medium-cli2.1.81 | 17 | 46 | 202.0min | 4.0% | $30.97 | 7.09% |
+| powershell | opus46-200k-medium-cli2.1.81 | 17 | 65 | 497.3min | 9.8% | $117.25 | 26.85% |
 | csharp-script | opus46-200k-medium-cli2.1.81 | 16 | 56 | 583.4min | 11.4% | $144.91 | 33.19% |
-| powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 67 | 694.2min | 13.6% | $174.81 | 40.03% |
-| default | opus46-200k-medium-cli2.1.81 | 18 | 69 | 879.3min | 17.2% | $207.20 | 47.45% |
+| powershell-strict | opus46-200k-medium-cli2.1.81 | 18 | 67 | 697.2min | 13.7% | $175.43 | 40.17% |
+| default | opus46-200k-medium-cli2.1.81 | 18 | 67 | 882.2min | 17.3% | $207.94 | 47.62% |
 
 </details>
 

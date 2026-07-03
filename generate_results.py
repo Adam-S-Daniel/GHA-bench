@@ -205,18 +205,57 @@ def _detect_traps(events: list[dict], console: str, metrics: dict) -> list[dict]
         if len(bs) >= 3 and be >= 1:
             _add("bats-setup-issues", len(bs) * 15, f"{len(bs)} commands debugging bats setup")
 
-    # 8. Fixture rework
-    # Use word-boundary patterns to avoid matching filenames like "test_database"
-    fc = [c for c in bash_cmds if re.search(
-        r"fixture|sample[_\-\s]data|mock[_\-\s]data|test[_\-\s]data\b", c, re.I)]
-    if len(fc) >= 4:
-        _add("fixture-rework", (len(fc) - 2) * 15, f"{len(fc)} commands creating/fixing fixtures")
+    # 8. Fixture rework — count genuine redo cycles on an existing fixture, not
+    # mere references. Building a fixtures/ tree up front and pointing scripts
+    # at it is recommended design; the old "count any command mentioning
+    # fixture/sample_data" penalised that good behavior and scaled with a
+    # model's command *style* rather than actual rework (issue #27, finding 2).
+    # Rework signal: the same fixture file written more than once, or edited /
+    # removed after being created.
+    _FIXTURE = r"[\w./\-]*(?:fixtures?/[\w./\-]+|(?:sample|mock|test)[_\-]?data[\w./\-]*)"
+    fx_writes: dict[str, int] = {}
+    fx_edits: dict[str, int] = {}
+    for c in bash_cmds:
+        paths = re.findall(_FIXTURE, c, re.I)
+        if not paths:
+            continue
+        # A redirection to a file / write cmdlet / heredoc creates or overwrites.
+        if re.search(r">>?\s|\btee\b|Set-Content|Out-File|Add-Content|<<", c):
+            for p in paths:
+                fx_writes[p] = fx_writes.get(p, 0) + 1
+        # In-place edit / remove / rename of an existing fixture.
+        if re.search(r"sed\s+-i|\brm\b|\bmv\b", c):
+            for p in paths:
+                fx_edits[p] = fx_edits.get(p, 0) + 1
+    reworked = 0
+    redundant = 0
+    for p in set(fx_writes) | set(fx_edits):
+        w, e = fx_writes.get(p, 0), fx_edits.get(p, 0)
+        if w >= 2 or (w >= 1 and e >= 1) or e >= 2:
+            reworked += 1
+            redundant += max(0, w - 1) + e
+    if redundant >= 2:
+        _add("fixture-rework", redundant * 20,
+             f"{reworked} fixture file(s) reworked ({redundant} redo edits)")
 
     # 9. Repeated identical test reruns
+    #
+    # Strip any leading `cd <path> &&` / `cd <path>;` prefixes before building
+    # the 80-char dedup key. Some models (notably opus-4.8) prefix nearly every
+    # Bash command with a long absolute `cd /home/.../workspaces/<task>/<cell>`
+    # path; without stripping, the `[:80]` truncation lands inside that shared
+    # path and collapses several *distinct* test commands into one key —
+    # falsely reading as "same test rerun N times" (issue #27, finding 1).
     cmd_cnt: dict[str, int] = {}
     for c in bash_cmds:
         if re.search(r"pytest|Invoke-Pester|bun\s+test|bats\s+|dotnet\s+test|unittest\b", c):
-            key = re.sub(r"\s+2>&1.*|\s+\|.*", "", c)[:80]
+            stripped = c
+            while True:
+                nxt = re.sub(r"^\s*cd\s+\S+\s*(?:&&|;)\s*", "", stripped)
+                if nxt == stripped:
+                    break
+                stripped = nxt
+            key = re.sub(r"\s+2>&1.*|\s+\|.*", "", stripped)[:80]
             cmd_cnt[key] = cmd_cnt.get(key, 0) + 1
     for cmd, count in cmd_cnt.items():
         if count >= 4:
@@ -242,9 +281,31 @@ def _detect_traps(events: list[dict], console: str, metrics: dict) -> list[dict]
             _add("act-permission-path-errors", pe * 15, f"{pe} permission/path errors in act container")
 
     # 12. act fixture path issues
-    if used_act and (re.search(r"Config file not found|fixture.*not found|No such file.*fixture", console, re.I)
-            and re.search(r"fixture.*path|copy.*fixture|missing.*fixture", all_text, re.I)):
-        _add("act-fixture-paths", 60, "Fixtures not found inside act Docker container")
+    #
+    # Only a *real* act-step failure caused by a missing fixture counts — not the
+    # agent's own validator/test output. Agents routinely feed a deliberately
+    # non-existent input (e.g. `nope.json`) to exercise a "config not found"
+    # branch, or write a bats assertion like `[[ "$output" == *"not found"* ]]`;
+    # those are expected behavior, not a container path bug (issue #27, finding 3).
+    if used_act:
+        fixture_missing = re.findall(
+            r"[^\n]*(?:Config file not found|fixture[^\n]*not found|"
+            r"not found[^\n]*fixture|No such file[^\n]*fixture)[^\n]*",
+            console, re.I)
+
+        def _is_agent_probe(line: str) -> bool:
+            # Test assertions, deliberately-fake inputs, or the agent's own
+            # validator error line — not an act-step path failure.
+            return bool(re.search(
+                r"==|Should|\bassert|\bexpect|\bnope\b|nonexist|doesn.?t exist|"
+                r"\.sh: error:|validator.*error", line, re.I))
+
+        real_failures = [l for l in fixture_missing if not _is_agent_probe(l)]
+        act_failed = re.search(r"❌\s*Failure|\bJob failed\b|exitcode '1'", console)
+        if real_failures and act_failed and re.search(
+                r"fixture.*path|copy.*fixture|missing.*fixture", all_text, re.I):
+            _add("act-fixture-paths", 60,
+                 f"{len(real_failures)} act-step fixture path failure(s)")
 
     # 13. Permission denial retry loops (v1 harness issue — sandbox blocked commands)
     denial_count = len(re.findall(
@@ -367,6 +428,17 @@ def _categorize_tool_time(tool_uses: list[dict]) -> dict:
         "act_duration_ms": act_ms,
     }
 
+
+def _disp_mode(mode: str) -> str:
+    """Display/grouping language label. `powershell-tool` collapses into
+    `powershell`: per the #23 analysis (`results/analysis/
+    powershell-vs-powershell-tool_2026-06-28.md`) they are the same experiment
+    in this WSL environment — the native PowerShell tool is essentially never
+    invoked (2/133 cells) and both reach `pwsh` through the Bash tool — so
+    reports pool them as replicates under one `powershell` column (#30). Raw
+    `language_mode` is kept for on-disk paths and trap detection; this only
+    affects grouping and display. Mirrors combine_results._disp_mode."""
+    return "powershell" if mode in ("powershell", "powershell-tool") else mode
 
 
 def _collapsible_table(summary: str, header: str, separator: str, rows: list[str]) -> list[str]:
@@ -716,7 +788,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         core = _CLI_SUFFIX_RE.sub("", core)
         return core + ("*" if had_star else "")
 
-    modes_seen = sorted(set(m["language_mode"] for m in all_metrics))
+    modes_seen = sorted(set(_disp_mode(m["language_mode"]) for m in all_metrics))
     models_seen = sorted(set(_label(m) for m in all_metrics))
     # Map variant label -> plain model_short for pricing lookups (keyed by
     # COST_PER_MTOK, which indexes on model_short only).
@@ -757,29 +829,33 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
     # that exclusion visible at every table that renders the aggregates.
     excluded_by_combo: dict[tuple, int] = {}
     for m in failed:
-        excluded_by_combo[(m["language_mode"], _label(m))] = (
-            excluded_by_combo.get((m["language_mode"], _label(m)), 0) + 1
+        excluded_by_combo[(_disp_mode(m["language_mode"]), _label(m))] = (
+            excluded_by_combo.get((_disp_mode(m["language_mode"]), _label(m)), 0) + 1
         )
     cmp_rows = []
     for mode in modes_seen:
         for model in models_seen:
-            mm = [m for m in successful if m["language_mode"] == mode and _label(m) == model]
+            # `mode` is a DISPLAY label; pool every raw cell that maps to it
+            # (so `powershell` pools `powershell` + `powershell-tool` cells).
+            mm = [m for m in successful if _disp_mode(m["language_mode"]) == mode and _label(m) == model]
             n = len(mm)
             if n == 0:
                 continue
             # Average LLM-judge Overall across this combo's runs that have a
             # cached score. Stored as 0.0 for sort purposes + a separate
             # display string so missing data doesn't sort above zero scores.
-            llm_scores = [llm_data_by_key[(m["task_id"], mode, model)].get("overall")
+            # Score caches are keyed by the cell's RAW mode, so look up each
+            # pooled cell by its own `language_mode`.
+            llm_scores = [llm_data_by_key[(m["task_id"], m["language_mode"], model)].get("overall")
                           for m in mm
-                          if (m["task_id"], mode, model) in llm_data_by_key]
+                          if (m["task_id"], m["language_mode"], model) in llm_data_by_key]
             llm_scores = [s for s in llm_scores if isinstance(s, (int, float))]
             avg_llm = sum(llm_scores) / len(llm_scores) if llm_scores else None
             # Same treatment for the deliverable-quality judge (scores the
             # produced workflows + scripts, not the test code).
-            deliv_scores = [deliv_data_by_key[(m["task_id"], mode, model)].get("overall")
+            deliv_scores = [deliv_data_by_key[(m["task_id"], m["language_mode"], model)].get("overall")
                             for m in mm
-                            if (m["task_id"], mode, model) in deliv_data_by_key]
+                            if (m["task_id"], m["language_mode"], model) in deliv_data_by_key]
             deliv_scores = [s for s in deliv_scores if isinstance(s, (int, float))]
             avg_deliv = sum(deliv_scores) / len(deliv_scores) if deliv_scores else None
             excl = excluded_by_combo.get((mode, model), 0)
@@ -867,8 +943,10 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
     combo_run_counts = {}
 
     for m in all_metrics:
-        mode, model = m["language_mode"], _label(m)
-        path_subdir = f"{mode}-{_path_label(m)}"
+        # Group traps under the DISPLAY mode (pools powershell + powershell-tool),
+        # but read on-disk artifacts by the RAW mode subdir.
+        mode, model = _disp_mode(m["language_mode"]), _label(m)
+        path_subdir = f"{m['language_mode']}-{_path_label(m)}"
         combo = (mode, model)
         combo_run_counts[combo] = combo_run_counts.get(combo, 0) + 1
 
@@ -892,7 +970,8 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         # Trap: PowerShell runtime install overhead (pwsh + Pester pre-installed on
         # real GitHub runners but must be installed in act containers every run).
         # Primary source: act-result.txt step timings.  Fallback: event stream.
-        if mode in ("powershell", "powershell-tool"):
+        # `mode` here is the display label, so both PS variants read "powershell".
+        if mode == "powershell":
             act_result_path = (run_dir / "tasks" / m["task_id"]
                                / path_subdir / "generated-code" / "act-result.txt")
             act_text = act_result_path.read_text() if act_result_path.exists() else ""
@@ -970,7 +1049,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
                 ms_label = _label(m)
                 saved = cr * (cache_create_rates.get(ms_price, 0) - cache_read_rates.get(ms_price, 0)) / 1_000_000 if cr else 0
                 status = "full_hit" if cr > 0 and cc == 0 else "partial" if cr > 0 else "miss"
-                cache_data.append({"mode": m["language_mode"], "model": ms_label, "saved": saved, "status": status})
+                cache_data.append({"mode": _disp_mode(m["language_mode"]), "model": ms_label, "saved": saved, "status": status})
                 break
 
     # ==================================================================
@@ -1130,7 +1209,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
             gen_dir = run_dir / "tasks" / m["task_id"] / f"{m['language_mode']}-{_path_label(m)}" / "generated-code"
             code_lines = compute_structural_metrics(gen_dir).get("code_lines", 0)
             lines.append(
-                f"| {m['task_name'][:30]} | {m['language_mode']} | {_strip_cli(_label(m))} "
+                f"| {m['task_name'][:30]} | {_disp_mode(m['language_mode'])} | {_strip_cli(_label(m))} "
                 f"| {_dur(dur)} | {reason} | {code_lines} | {alint} | {act} |")
         lines.append("")
         lines.append(f"*{len(failed)} run(s) excluded from averages below.*")
@@ -1176,10 +1255,10 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
     # ── Trap Analysis by Language/Model/Effort/Category ──
     if trap_instances:
         # Each value is a tuple of modes the trap applies to. A trap that can
-        # fire in any PowerShell variant uses the full PS family so its
-        # catch-rate denominator counts runs of both `powershell` and
-        # `powershell-tool` modes.
-        PS_FAMILY = ("powershell", "powershell-tool")
+        # fire in any PowerShell variant uses the PS display label, whose
+        # denominator already pools `powershell` + `powershell-tool` runs
+        # (they collapse into one `powershell` group — see `_disp_mode`).
+        PS_FAMILY = ("powershell",)
         trap_applicable_mode = {
             "pester-cmdletbinding-spiral": PS_FAMILY,
             "pester-wrong-assertions": PS_FAMILY,
@@ -1192,7 +1271,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         }
         trap_descriptions = {
             "act-push-debug-loops": "Agent ran `act push` more than twice, indicating repeated workflow debugging.",
-            "fixture-rework": "Agent wrote, broke, and rewrote test fixture data (4+ fixture-related commands).",
+            "fixture-rework": "Agent rewrote or edited the same fixture file multiple times (genuine redo cycles, not one-time fixture creation).",
             "repeated-test-reruns": "Same test command executed 4+ times without the underlying code changing.",
             "docker-pwsh-install": "Multiple Docker test runs trying to figure out how to install PowerShell in act's container.",
             "act-permission-path-errors": "Files not found or permission denied inside the act Docker container.",
@@ -1212,7 +1291,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         trap_agg = defaultdict(list)
         for t in trap_instances:
             trap_agg[t["name"]].append(t)
-        mode_run_totals = {md: sum(1 for m in all_metrics if m["language_mode"] == md) for md in modes_seen}
+        mode_run_totals = {md: sum(1 for m in all_metrics if _disp_mode(m["language_mode"]) == md) for md in modes_seen}
 
         # Build rows: one per (trap, mode, model) combo that actually occurred
         tlmc_rows = []
@@ -1364,7 +1443,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         sq = compute_structural_metrics(gen_dir)
 
         tq_rows.append({
-            "task": m["task_name"][:30], "mode": m["language_mode"],
+            "task": m["task_name"][:30], "mode": _disp_mode(m["language_mode"]),
             "model": _strip_cli(_label(m)),
             "tests": sq["test_count"], "asserts": sq["assertion_count"],
             "apt": sq["assertions_per_test"],
@@ -1378,7 +1457,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         if lj:
             has_llm = True
             llm_rows.append({
-                "task": m["task_name"][:30], "mode": m["language_mode"],
+                "task": m["task_name"][:30], "mode": _disp_mode(m["language_mode"]),
                 "model": _strip_cli(_label(m)),
                 "coverage": lj.get("coverage", 0), "rigor": lj.get("rigor", 0),
                 "design": lj.get("design", 0), "overall": lj.get("overall", 0),
@@ -1624,7 +1703,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         lj = llm_data_by_key.get((m["task_id"], m["language_mode"], _label(m)))
         llm_overall = lj.get("overall") if lj else None
         pr_rows.append({
-            "task": m["task_name"][:30], "mode": m["language_mode"],
+            "task": m["task_name"][:30], "mode": _disp_mode(m["language_mode"]),
             "model": _strip_cli(_label(m)),
             "dur": dur, "turns": m["timing"]["num_turns"],
             "errors": m["quality"]["error_count"],
@@ -1670,7 +1749,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         # every task / every language present in this report.
         from collections import defaultdict as _defaultdict
         all_task_ids = sorted({m["task_id"] for m in successful})
-        all_langs = sorted({m["language_mode"] for m in successful})
+        all_langs = sorted({_disp_mode(m["language_mode"]) for m in successful})
         per_pair: dict[tuple[str, str], dict[str, set[str]]] = _defaultdict(
             lambda: {"tasks": set(), "langs": set()})
         for m in successful:
@@ -1680,7 +1759,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
             cli = m.get("claude_code_version") or "?"
             bucket = per_pair[(variant, cli)]
             bucket["tasks"].add(m["task_id"])
-            bucket["langs"].add(m["language_mode"])
+            bucket["langs"].add(_disp_mode(m["language_mode"]))
         if per_pair:
             def _cell(observed: set[str], universe: list[str]) -> str:
                 if set(observed) == set(universe):

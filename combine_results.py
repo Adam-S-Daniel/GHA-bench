@@ -210,6 +210,16 @@ def _label(m: dict) -> str:
     return _derived_label(m) + _cli_suffix(m)
 
 
+def _disp_mode(mode: str) -> str:
+    """Display/grouping language label — mirrors generate_results._disp_mode.
+    `powershell-tool` collapses into `powershell` (the #23 analysis found the
+    native PowerShell tool is essentially never invoked in this WSL
+    environment, so the two are replicates of one condition and reports pool
+    them under a single `powershell` column, #30). Raw `language_mode` is kept
+    for on-disk paths and the compound-subdir parser."""
+    return "powershell" if mode in ("powershell", "powershell-tool") else mode
+
+
 def _is_successful(m: dict) -> bool:
     """Mirror generate_results.py's definition — a run counts as successful
     if the CLI exited 0 and at least one turn was executed."""
@@ -235,7 +245,9 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
     by_key: dict[tuple, list[dict]] = defaultdict(list)
     excluded_by_key: dict[tuple, int] = defaultdict(int)
     for m in metrics:
-        key = (m["language_mode"], _derived_label(m))
+        # Group by the DISPLAY mode so powershell + powershell-tool pool into
+        # one `powershell` row (they are replicates — see `_disp_mode`).
+        key = (_disp_mode(m["language_mode"]), _derived_label(m))
         if _is_successful(m):
             by_key[key].append(m)
         else:
@@ -400,9 +412,9 @@ def _build_markdown(
         # (Panel JSONs are retrieved via `key` = the on-disk path, so this
         # only affects which aggregate row a score rolls up into.)
         if key in llm_scores:
-            llm_by_variant[(m["language_mode"], _derived_label(m))].append(llm_scores[key])
+            llm_by_variant[(_disp_mode(m["language_mode"]), _derived_label(m))].append(llm_scores[key])
         if key in deliv_scores:
-            deliv_by_variant[(m["language_mode"], _derived_label(m))].append(deliv_scores[key])
+            deliv_by_variant[(_disp_mode(m["language_mode"]), _derived_label(m))].append(deliv_scores[key])
     for r in rows:
         vkey = (r["mode"], r["variant"])
         ll = llm_by_variant.get(vkey, [])
@@ -606,7 +618,7 @@ def _build_markdown(
                 gen_dir = rd / "tasks" / m["task_id"] / f"{m['language_mode']}-{_path_label(m)}" / "generated-code"
                 code_lines = compute_structural_metrics(gen_dir).get("code_lines", 0)
             lines.append(
-                f"| {m['task_name'][:30]} | {m['language_mode']} | {_label(m)} "
+                f"| {m['task_name'][:30]} | {_disp_mode(m['language_mode'])} | {_label(m)} "
                 f"| {m.get('source_run_dir', '')} | {_dur(dur)} | {reason} "
                 f"| {code_lines} | {alint} | {act} |"
             )
@@ -665,7 +677,7 @@ def _build_markdown(
                 continue
             variant = _derived_label(m)
             tq_per_run.append({
-                "mode": m["language_mode"],
+                "mode": _disp_mode(m["language_mode"]),
                 "variant": variant,
                 "tests": sq.get("test_count", 0),
                 "asserts": sq.get("assertion_count", 0),
@@ -748,7 +760,7 @@ def _build_markdown(
         pr_rows.append({
             "task": m["task_name"][:34],
             "task_id": m["task_id"],
-            "mode": m["language_mode"],
+            "mode": _disp_mode(m["language_mode"]),
             "variant": _label(m),
             "source": m.get("source_run_dir", ""),
             "dur": m["timing"]["grand_total_duration_ms"] / 1000,
@@ -777,7 +789,7 @@ def _build_markdown(
     # otherwise — handy when a CLI release was added partway through a
     # campaign.
     all_task_ids = sorted({m["task_id"] for m in annotated})
-    all_langs = sorted({m["language_mode"] for m in annotated})
+    all_langs = sorted({_disp_mode(m["language_mode"]) for m in annotated})
     per_pair: dict[tuple[str, str], dict[str, set[str]]] = defaultdict(
         lambda: {"tasks": set(), "langs": set()})
     for m in annotated:
@@ -787,7 +799,7 @@ def _build_markdown(
         cli = m.get("claude_code_version") or "?"
         bucket = per_pair[(variant, cli)]
         bucket["tasks"].add(m["task_id"])
-        bucket["langs"].add(m["language_mode"])
+        bucket["langs"].add(_disp_mode(m["language_mode"]))
     if per_pair:
         def _cell(observed: set[str], universe: list[str]) -> str:
             if set(observed) == set(universe):
@@ -938,6 +950,7 @@ def _build_markdown(
                     lang = compound
                     model = a.variant_subdir[len(compound) + 1:]
                     break
+            lang = _disp_mode(lang)  # collapse powershell-tool -> powershell (#30)
             adj = "—" if a.adjusted_mean is None else f"{a.adjusted_mean:.1f}"
             audit_block.append(
                 f"| {a.task_id} | {lang} | {model} | {a.kind} "
