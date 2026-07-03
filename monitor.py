@@ -10,7 +10,7 @@ distinct from the other run-adjacent tools:
     reports the *numbers* and never touches the run.
 
 It groups completed cells by `variant` and prints, per variant: run-health
-(duration, cost, turns, errors, actionlint, hooks, test-exec time), structural
+(duration, cost, turns, errors, actionlint, test-exec time), structural
 code metrics (impl files/lines, workflow files/lines, total lines — all
 non-LLM), structural test metrics (test files/lines, tests, assertions,
 assertions/test, test:code ratio — all non-LLM), and live-detected traps.
@@ -160,7 +160,6 @@ def _mean(vals):
 def aggregate(cells: list[dict]) -> dict:
     if not cells:
         return {"n": 0}
-    h = lambda k: sum(d.get("hooks", {}).get(k, 0) for d in cells)
     return {
         "n": len(cells),
         "ok": sum(1 for d in cells if d.get("run_success")),
@@ -171,9 +170,6 @@ def aggregate(cells: list[dict]) -> dict:
         "testsec": _mean([_testsec(d) for d in cells]),
         "errors": sum(_errs(d) for d in cells),
         "actionlint_pass": sum(1 for d in cells if d.get("quality", {}).get("actionlint_pass") is True),
-        "hook_fires": h("hook_fires"),
-        "hook_errs_caught": h("hook_errors_caught"),
-        "hook_failures": h("hook_failures"),
     }
 
 

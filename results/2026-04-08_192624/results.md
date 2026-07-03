@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-02 09:53:09 AM ET — 64/64 runs completed, 0 remaining; total cost $84.25; total agent time 726.1 min.
+**Last updated:** 2026-07-03 07:19:54 AM ET — 64/64 runs completed, 0 remaining; total cost $84.25; total agent time 726.1 min.
 **Claude Code versions used:** [v2.1.97](claude-code-2.1.97.md) (64 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -10,7 +10,6 @@
 - [Tiers by Language/Model/Effort](#tiers-by-languagemodeleffort)
 - [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort)
 - [Savings Analysis](#savings-analysis)
-  - [Hook Savings by Language/Model/Effort](#hook-savings-by-languagemodeleffort)
   - [Trap Analysis by Language/Model/Effort/Category](#trap-analysis-by-languagemodeleffortcategory)
   - [Traps by Language/Model/Effort](#traps-by-languagemodeleffort)
   - [Prompt Cache Savings](#prompt-cache-savings)
@@ -54,7 +53,7 @@ Properties:
 
 ### Duration columns
 
-Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution + hooks).
+Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).
 
 - **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.
 - **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.
@@ -151,8 +150,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
 | powershell | opus46-200k-medium | 8 | 9.1min | 6.9min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
 | powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 7.2min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 9.4min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.5min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
 
 
 <details>
@@ -162,9 +161,9 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | bash | sonnet46-200k-medium | 8 | 10.2min | 9.6min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
 | powershell | opus46-200k-medium | 8 | 9.1min | 6.9min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 9.4min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
 | default | opus46-200k-medium | 8 | 7.0min | 6.8min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 7.2min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.5min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
 | bash | opus46-200k-medium | 8 | 8.7min | 7.9min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
 | default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
 | powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
@@ -178,10 +177,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | opus46-200k-medium | 8 | 7.0min | 6.8min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
 | bash | opus46-200k-medium | 8 | 8.7min | 7.9min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 7.2min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.5min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
 | powershell | opus46-200k-medium | 8 | 9.1min | 6.9min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
 | bash | sonnet46-200k-medium | 8 | 10.2min | 9.6min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 9.4min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
 | default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
 | powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
 
@@ -194,10 +193,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | opus46-200k-medium | 8 | 7.0min | 6.8min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
 | powershell | opus46-200k-medium | 8 | 9.1min | 6.9min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 7.2min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
 | bash | opus46-200k-medium | 8 | 8.7min | 7.9min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 9.4min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.5min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
 | bash | sonnet46-200k-medium | 8 | 10.2min | 9.6min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
 | default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
 | powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
 
@@ -212,9 +211,9 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
 | default | opus46-200k-medium | 8 | 7.0min | 6.8min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
 | powershell | opus46-200k-medium | 8 | 9.1min | 6.9min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 7.2min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.5min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
 | bash | opus46-200k-medium | 8 | 8.7min | 7.9min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 9.4min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
 | bash | sonnet46-200k-medium | 8 | 10.2min | 9.6min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
 
 </details>
@@ -225,12 +224,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 9.4min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
 | powershell | opus46-200k-medium | 8 | 9.1min | 6.9min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
 | default | opus46-200k-medium | 8 | 7.0min | 6.8min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
 | bash | sonnet46-200k-medium | 8 | 10.2min | 9.6min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
 | bash | opus46-200k-medium | 8 | 8.7min | 7.9min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 7.2min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.5min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
 | powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
 
 </details>
@@ -243,9 +242,9 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
 | bash | sonnet46-200k-medium | 8 | 10.2min | 9.6min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
 | powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 9.4min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
 | default | opus46-200k-medium | 8 | 7.0min | 6.8min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 7.2min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.5min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
 | bash | opus46-200k-medium | 8 | 8.7min | 7.9min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
 | powershell | opus46-200k-medium | 8 | 9.1min | 6.9min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
 
@@ -262,63 +261,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
 | powershell | opus46-200k-medium | 8 | 9.1min | 6.9min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
 | powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 7.2min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 9.4min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.5min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
 
 </details>
 
 ## Savings Analysis
-
-### Hook Savings by Language/Model/Effort
-
-Each hook-caught error avoids one test run that would otherwise have been needed to discover it.
-Every hook fire (hit or miss) costs execution time for the syntax/type checker.
-
-*`% of Test Time Saved` = `net / (net + test_time) × 100` — the share of total (would-have-been + actually-spent) test time that hooks eliminated. Bounded in (-∞, 100%) without an artificial cap; near 100% means hooks substituted for almost all of the hypothetical test work.*
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|
-| bash | opus46-200k-medium-cli2.1.97 | 93 | 5 | 5.4% | 1.0min | 0.1% | 0.9min | 0.1% | 0.1min | 0.0% |
-| bash | sonnet46-200k-medium-cli2.1.97 | 98 | 14 | 14.3% | 2.8min | 0.4% | 0.8min | 0.1% | 2.0min | 0.3% |
-| default | opus46-200k-medium-cli2.1.97 | 90 | 5 | 5.6% | 0.7min | 0.1% | 0.8min | 0.1% | -0.1min | -0.0% |
-| default | sonnet46-200k-medium-cli2.1.97 | 81 | 4 | 4.9% | 0.5min | 0.1% | 0.2min | 0.0% | 0.3min | 0.0% |
-| powershell | opus46-200k-medium-cli2.1.97 | 68 | 2 | 2.9% | 1.2min | 0.2% | 2.1min | 0.3% | -0.9min | -0.1% |
-| powershell | sonnet46-200k-medium-cli2.1.97 | 82 | 1 | 1.2% | 0.6min | 0.1% | 0.7min | 0.1% | -0.1min | -0.0% |
-| typescript-bun | opus46-200k-medium-cli2.1.97 | 94 | 50 | 53.2% | 6.7min | 0.9% | 3.2min | 0.4% | 3.5min | 0.5% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.97 | 99 | 46 | 46.5% | 6.1min | 0.8% | 6.0min | 0.8% | 0.2min | 0.0% |
-
-
-<details>
-<summary>Sorted by net saved (most first)</summary>
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|
-| typescript-bun | opus46-200k-medium-cli2.1.97 | 94 | 50 | 53.2% | 6.7min | 0.9% | 3.2min | 0.4% | 3.5min | 0.5% |
-| bash | sonnet46-200k-medium-cli2.1.97 | 98 | 14 | 14.3% | 2.8min | 0.4% | 0.8min | 0.1% | 2.0min | 0.3% |
-| default | sonnet46-200k-medium-cli2.1.97 | 81 | 4 | 4.9% | 0.5min | 0.1% | 0.2min | 0.0% | 0.3min | 0.0% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.97 | 99 | 46 | 46.5% | 6.1min | 0.8% | 6.0min | 0.8% | 0.2min | 0.0% |
-| bash | opus46-200k-medium-cli2.1.97 | 93 | 5 | 5.4% | 1.0min | 0.1% | 0.9min | 0.1% | 0.1min | 0.0% |
-| powershell | sonnet46-200k-medium-cli2.1.97 | 82 | 1 | 1.2% | 0.6min | 0.1% | 0.7min | 0.1% | -0.1min | -0.0% |
-| default | opus46-200k-medium-cli2.1.97 | 90 | 5 | 5.6% | 0.7min | 0.1% | 0.8min | 0.1% | -0.1min | -0.0% |
-| powershell | opus46-200k-medium-cli2.1.97 | 68 | 2 | 2.9% | 1.2min | 0.2% | 2.1min | 0.3% | -0.9min | -0.1% |
-
-</details>
-
-<details>
-<summary>Sorted by catch rate (highest first)</summary>
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|
-| typescript-bun | opus46-200k-medium-cli2.1.97 | 94 | 50 | 53.2% | 6.7min | 0.9% | 3.2min | 0.4% | 3.5min | 0.5% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.97 | 99 | 46 | 46.5% | 6.1min | 0.8% | 6.0min | 0.8% | 0.2min | 0.0% |
-| bash | sonnet46-200k-medium-cli2.1.97 | 98 | 14 | 14.3% | 2.8min | 0.4% | 0.8min | 0.1% | 2.0min | 0.3% |
-| default | opus46-200k-medium-cli2.1.97 | 90 | 5 | 5.6% | 0.7min | 0.1% | 0.8min | 0.1% | -0.1min | -0.0% |
-| bash | opus46-200k-medium-cli2.1.97 | 93 | 5 | 5.4% | 1.0min | 0.1% | 0.9min | 0.1% | 0.1min | 0.0% |
-| default | sonnet46-200k-medium-cli2.1.97 | 81 | 4 | 4.9% | 0.5min | 0.1% | 0.2min | 0.0% | 0.3min | 0.0% |
-| powershell | opus46-200k-medium-cli2.1.97 | 68 | 2 | 2.9% | 1.2min | 0.2% | 2.1min | 0.3% | -0.9min | -0.1% |
-| powershell | sonnet46-200k-medium-cli2.1.97 | 82 | 1 | 1.2% | 0.6min | 0.1% | 0.7min | 0.1% | -0.1min | -0.0% |
-
-</details>
 
 ### Trap Analysis by Language/Model/Effort/Category
 
@@ -330,8 +278,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | act-push-debug-loops | powershell | opus46-200k-medium-cli2.1.97 | 1 | 0.8min | 0.1% | $0.13 | 0.16% |
 | act-push-debug-loops | powershell | sonnet46-200k-medium-cli2.1.97 | 3 | 15.7min | 2.2% | $0.93 | 1.10% |
 | act-push-debug-loops | typescript-bun | sonnet46-200k-medium-cli2.1.97 | 2 | 2.8min | 0.4% | $0.29 | 0.35% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 10.0min | 1.4% | $1.64 | 1.94% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 9.2min | 1.3% | $1.07 | 1.26% |
 | fixture-rework | bash | opus46-200k-medium-cli2.1.97 | 4 | 5.2min | 0.7% | $0.95 | 1.13% |
 | fixture-rework | bash | sonnet46-200k-medium-cli2.1.97 | 3 | 3.5min | 0.5% | $0.37 | 0.44% |
 | fixture-rework | default | opus46-200k-medium-cli2.1.97 | 2 | 1.5min | 0.2% | $0.30 | 0.35% |
@@ -380,8 +326,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.97 | 5 | 5.0min | 0.7% | $0.38 | 0.45% |
 | fixture-rework | bash | opus46-200k-medium-cli2.1.97 | 4 | 5.2min | 0.7% | $0.95 | 1.13% |
 | pwsh-invoked-from-bash | powershell | sonnet46-200k-medium-cli2.1.97 | 1 | 5.6min | 0.8% | $0.52 | 0.62% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 9.2min | 1.3% | $1.07 | 1.26% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 10.0min | 1.4% | $1.64 | 1.94% |
 | pwsh-runtime-install-overhead | powershell | opus46-200k-medium-cli2.1.97 | 7 | 10.2min | 1.4% | $1.13 | 1.34% |
 | act-push-debug-loops | powershell | sonnet46-200k-medium-cli2.1.97 | 3 | 15.7min | 2.2% | $0.93 | 1.10% |
 | pwsh-runtime-install-overhead | powershell | sonnet46-200k-medium-cli2.1.97 | 8 | 16.0min | 2.2% | $1.31 | 1.56% |
@@ -416,10 +360,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | typescript-bun | opus46-200k-medium-cli2.1.97 | 3 | 3.0min | 0.4% | $0.62 | 0.74% |
 | act-push-debug-loops | powershell | sonnet46-200k-medium-cli2.1.97 | 3 | 15.7min | 2.2% | $0.93 | 1.10% |
 | fixture-rework | bash | opus46-200k-medium-cli2.1.97 | 4 | 5.2min | 0.7% | $0.95 | 1.13% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 9.2min | 1.3% | $1.07 | 1.26% |
 | pwsh-runtime-install-overhead | powershell | opus46-200k-medium-cli2.1.97 | 7 | 10.2min | 1.4% | $1.13 | 1.34% |
 | pwsh-runtime-install-overhead | powershell | sonnet46-200k-medium-cli2.1.97 | 8 | 16.0min | 2.2% | $1.31 | 1.56% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 10.0min | 1.4% | $1.64 | 1.94% |
 
 </details>
 
@@ -453,8 +395,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.97 | 5 | 5.0min | 0.7% | $0.38 | 0.45% |
 | pwsh-runtime-install-overhead | powershell | opus46-200k-medium-cli2.1.97 | 7 | 10.2min | 1.4% | $1.13 | 1.34% |
 | pwsh-runtime-install-overhead | powershell | sonnet46-200k-medium-cli2.1.97 | 8 | 16.0min | 2.2% | $1.31 | 1.56% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 10.0min | 1.4% | $1.64 | 1.94% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 9.2min | 1.3% | $1.07 | 1.26% |
 
 </details>
 
@@ -469,7 +409,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 - **pwsh-invoked-from-bash**: Agent used `pwsh -Command`/`-File` from bash `run:` steps instead of `shell: pwsh`, causing cross-shell debugging (parse errors, quoting issues, scope problems, late pwsh discovery in act).
 - **pwsh-runtime-install-overhead**: Time spent installing PowerShell and Pester inside act containers. Both are pre-installed on real GitHub runners but must be downloaded (~56MB) and installed in each act job. Measured from act step durations.
 - **repeated-test-reruns**: Same test command executed 4+ times without the underlying code changing.
-- **ts-type-error-fix-cycles**: TypeScript type errors caught by `tsc --noEmit` hooks; each requires a fix cycle.
 
 #### Column Definitions
 
@@ -490,8 +429,8 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | default | sonnet46-200k-medium-cli2.1.97 | 8 | 7 | 8.7min | 1.2% | $0.92 | 1.09% |
 | powershell | opus46-200k-medium-cli2.1.97 | 8 | 11 | 17.5min | 2.4% | $2.20 | 2.61% |
 | powershell | sonnet46-200k-medium-cli2.1.97 | 8 | 21 | 48.0min | 6.6% | $3.66 | 4.34% |
-| typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 12 | 13.7min | 1.9% | $2.37 | 2.81% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 12 | 14.7min | 2.0% | $1.67 | 1.98% |
+| typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 4 | 3.7min | 0.5% | $0.73 | 0.87% |
+| typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 4 | 5.5min | 0.8% | $0.60 | 0.71% |
 
 
 <details>
@@ -500,11 +439,11 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
 | default | opus46-200k-medium-cli2.1.97 | 8 | 2 | 1.5min | 0.2% | $0.30 | 0.35% |
+| typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 4 | 3.7min | 0.5% | $0.73 | 0.87% |
 | bash | sonnet46-200k-medium-cli2.1.97 | 8 | 5 | 5.2min | 0.7% | $0.56 | 0.67% |
+| typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 4 | 5.5min | 0.8% | $0.60 | 0.71% |
 | bash | opus46-200k-medium-cli2.1.97 | 8 | 5 | 5.9min | 0.8% | $1.05 | 1.24% |
 | default | sonnet46-200k-medium-cli2.1.97 | 8 | 7 | 8.7min | 1.2% | $0.92 | 1.09% |
-| typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 12 | 13.7min | 1.9% | $2.37 | 2.81% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 12 | 14.7min | 2.0% | $1.67 | 1.98% |
 | powershell | opus46-200k-medium-cli2.1.97 | 8 | 11 | 17.5min | 2.4% | $2.20 | 2.61% |
 | powershell | sonnet46-200k-medium-cli2.1.97 | 8 | 21 | 48.0min | 6.6% | $3.66 | 4.34% |
 
@@ -517,11 +456,11 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 |------|-------|------|-------|-----------|-----------|--------|--------|
 | default | opus46-200k-medium-cli2.1.97 | 8 | 2 | 1.5min | 0.2% | $0.30 | 0.35% |
 | bash | sonnet46-200k-medium-cli2.1.97 | 8 | 5 | 5.2min | 0.7% | $0.56 | 0.67% |
+| typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 4 | 5.5min | 0.8% | $0.60 | 0.71% |
+| typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 4 | 3.7min | 0.5% | $0.73 | 0.87% |
 | default | sonnet46-200k-medium-cli2.1.97 | 8 | 7 | 8.7min | 1.2% | $0.92 | 1.09% |
 | bash | opus46-200k-medium-cli2.1.97 | 8 | 5 | 5.9min | 0.8% | $1.05 | 1.24% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.97 | 8 | 12 | 14.7min | 2.0% | $1.67 | 1.98% |
 | powershell | opus46-200k-medium-cli2.1.97 | 8 | 11 | 17.5min | 2.4% | $2.20 | 2.61% |
-| typescript-bun | opus46-200k-medium-cli2.1.97 | 8 | 12 | 13.7min | 1.9% | $2.37 | 2.81% |
 | powershell | sonnet46-200k-medium-cli2.1.97 | 8 | 21 | 48.0min | 6.6% | $3.66 | 4.34% |
 
 </details>

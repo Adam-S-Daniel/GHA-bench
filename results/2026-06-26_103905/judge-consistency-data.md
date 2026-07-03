@@ -4,8 +4,8 @@
 
 ## Notes
 
-- **Generated:** 2026-07-02 09:57:14 AM ET
-- **Source:** `/home/passp/repos/GHA-bench-integration/results/2026-06-26_103905`
+- **Generated:** 2026-07-03 07:23:10 AM ET
+- **Source:** `/home/passp/repos/GHA-bench/results/2026-06-26_103905`
 - **Judges present:** haiku45, gemini31pro
 - **Score conventions:** Scores shown are the `overall` dimension from each judge (1-5). Δ column is the second judge minus the first; positive = second judge is more generous.
 
@@ -19,7 +19,7 @@ Opus 4.8 at ultracode effort produces the highest-quality test suites in the dat
 - **Bash trails consistently**: Bash lands last on Tests Quality (3.15 / 4.57) and last on Workflow Craft (3.15 / 4.79) — the one axis where the panel agrees decisively at the bottom.
 - **Where rankings diverge**: Workflow Craft language ordering shows only weak agreement (ρ = +0.10) because Gemini scores nearly every non-Bash language at 5.00, so past first place those rankings carry less signal than the Tests Quality panel.
 
-*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI; 5 in / 2028 out tokens, $0.2346. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
+*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI (from cache); 5 in / 2028 out tokens, $0.2346. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
 
 ## Campaign summary
 

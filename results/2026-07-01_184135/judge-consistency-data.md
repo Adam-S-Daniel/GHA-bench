@@ -4,22 +4,22 @@
 
 ## Notes
 
-- **Generated:** 2026-07-02 09:58:11 AM ET
-- **Source:** `/home/passp/repos/GHA-bench-integration/results/2026-07-01_184135`
+- **Generated:** 2026-07-03 07:26:10 AM ET
+- **Source:** `/home/passp/repos/GHA-bench/results/2026-07-01_184135`
 - **Judges present:** haiku45, gemini31pro
 - **Score conventions:** Scores shown are the `overall` dimension from each judge (1-5). Δ column is the second judge minus the first; positive = second judge is more generous.
 
 ## Quality Analysis
 
-The panel converges on fable5 as the top-scoring model on both Tests Quality and Workflow Craft, with no pair-wise model reversals across the two judges. Both judges also agree that the default (python) language is the weakest choice for Tests Quality, though language ordering on Workflow Craft splits sharply between the panel (ρ = -0.60).
+The panel-of-judges rankings support fable5 at high effort as the top configuration for Workflow Craft, with both judges placing it above the medium tier on average (haiku45: 3.44 vs 3.00; gemini31pro tied at 4.89) and no model-axis reversals recorded. On the language axis, both judges consistently place default/Python at the bottom for Tests Quality, while bash draws Gemini's top mark across both axes and powershell draws Haiku's top mark for Tests Quality.
 
-- **Top performer**: fable5 sits at rank 1 on both axes for both judges; Haiku shows fable5-high edging fable5-medium on Workflow Craft (3.36 vs 3.00) while Gemini treats the two effort tiers as equal (4.89 each), so the high tier has at most a small measurable lift.
-- **Best by language for Tests Quality**: Both judges place default at the bottom (Haiku 2.86, Gemini 3.57) — the one place their language orderings agree — while bash, powershell, and typescript-bun tie for Gemini at 5.00.
-- **Effort tier**: The high-vs-medium gap barely registers on Tests Quality — both judges score the tiers within 0.07 of each other — and only appears at all in Haiku's Workflow Craft numbers (+0.36).
-- **Workflow Craft ceiling**: Gemini caps bash and powershell at 5.00, but Haiku ranks those same two languages last (3.14 and 3.00); the ρ = -0.60 correlation and four pair-wise reversals mean the panel offers no shared verdict on language for shippable workflows.
-- **Where rankings diverge**: All disagreement lives on the language axis, not the model axis — zero model reversals on either metric, versus two language reversals on Tests Quality and four on Workflow Craft.
+- **Top performer**: fable5 at high effort leads on Workflow Craft under Haiku (3.44 vs 3.00 for medium) and ties at the ceiling under Gemini — no pair-wise reversals on the model axis in either quality lens.
+- **Weakest language**: default/Python sits last for Tests Quality under both judges (2.86 and 3.57), the one language ordering both agree on and the anchor behind the +0.40 Spearman correlation on that axis.
+- **Effort tier**: separation between high and medium effort shows up only on Workflow Craft, where Haiku splits them by 0.44 points; on Tests Quality the two tiers are within 0.07 points for Haiku and identical for Gemini.
+- **Workflow Craft ceiling**: Gemini scores bash and powershell at 5.00 across every task, so the deliverable-quality headroom is exhausted on the compiled-scripting languages under the cross-family judge.
+- **Where rankings diverge**: Workflow Craft language ordering flips between judges (ρ = -0.60, four reversals) — Gemini favors bash and powershell, Haiku favors default and typescript-bun.
 
-*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI (from cache); 5 in / 3935 out tokens, $0.2362. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
+*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI; 5 in / 2178 out tokens, $0.1924. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
 
 ## Campaign summary
 
@@ -33,7 +33,7 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 
 | Scope | n | haiku45 ovr | gemini31pro ovr | Δ(gemini31pro−haiku45) |
 |---|---|---|---|---|
-| all | 56 | 3.18 | 4.89 | +1.71 |
+| all | 55 | 3.22 | 4.89 | +1.67 |
 
 ## By task
 
@@ -55,7 +55,7 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 |---|---|---|---|---|
 | 11-semantic-version-bumper | 8 | 3.75 | 5.00 | +1.25 |
 | 12-pr-label-assigner | 8 | 2.62 | 4.88 | +2.25 |
-| 13-dependency-license-checker | 8 | 3.12 | 5.00 | +1.88 |
+| 13-dependency-license-checker | 7 | 3.43 | 5.00 | +1.57 |
 | 15-test-results-aggregator | 8 | 3.00 | 5.00 | +2.00 |
 | 16-environment-matrix-generator | 8 | 3.00 | 4.88 | +1.88 |
 | 17-artifact-cleanup-script | 8 | 3.12 | 4.88 | +1.75 |
@@ -77,7 +77,7 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 | Mode | n | haiku45 ovr | gemini31pro ovr | Δ(gemini31pro−haiku45) |
 |---|---|---|---|---|
 | bash | 14 | 3.14 | 5.00 | +1.86 |
-| default | 14 | 3.29 | 4.79 | +1.50 |
+| default | 13 | 3.46 | 4.77 | +1.31 |
 | powershell | 14 | 3.00 | 5.00 | +2.00 |
 | typescript-bun | 14 | 3.29 | 4.79 | +1.50 |
 
@@ -94,7 +94,7 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 
 | Model-Effort | n | haiku45 ovr | gemini31pro ovr | Δ(gemini31pro−haiku45) |
 |---|---|---|---|---|
-| fable5-high | 28 | 3.36 | 4.89 | +1.54 |
+| fable5-high | 27 | 3.44 | 4.89 | +1.44 |
 | fable5-medium | 28 | 3.00 | 4.89 | +1.89 |
 
 ## Disagreement hotspots (panel span ≥ 2 on overall)
@@ -126,7 +126,6 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 | Task | Mode | Model | Span | haiku45 ovr | gemini31pro ovr |
 |---|---|---|---|---|---|
 | 12-pr-label-assigner | powershell | fable5-medium | 4.0 | 1.0 | 5.0 |
-| 13-dependency-license-checker | default | fable5-high | 4.0 | 1.0 | 5.0 |
 | 11-semantic-version-bumper | powershell | fable5-medium | 3.0 | 2.0 | 5.0 |
 | 12-pr-label-assigner | default | fable5-medium | 3.0 | 2.0 | 5.0 |
 | 12-pr-label-assigner | typescript-bun | fable5-medium | 3.0 | 2.0 | 5.0 |
@@ -150,6 +149,7 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 | 16-environment-matrix-generato | default | fable5-medium | 2.0 | 2.0 | 4.0 |
 | 17-artifact-cleanup-script | bash | fable5-medium | 2.0 | 3.0 | 5.0 |
 | 17-artifact-cleanup-script | powershell | fable5-high | 2.0 | 3.0 | 5.0 |
+| 17-artifact-cleanup-script | typescript-bun | fable5-high | 2.0 | 3.0 | 5.0 |
 
 ## Model rankings by judge
 
@@ -167,7 +167,7 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 
 | Model | haiku45 rank (mean, n) | gemini31pro rank (mean, n) |
 |---|---|---|
-| fable5 | 1 (3.18, n=56) | 1 (4.89, n=56) |
+| fable5 | 1 (3.22, n=55) | 1 (4.89, n=56) |
 
 *No pair-wise reversals — both judges agree on every model-vs-model ordering.*
 
@@ -197,7 +197,7 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 
 | Language | haiku45 rank (mean, n) | gemini31pro rank (mean, n) |
 |---|---|---|
-| default | 1 (3.29, n=14) | 3 (4.79, n=14) |
+| default | 1 (3.46, n=13) | 3 (4.79, n=14) |
 | typescript-bun | 2 (3.29, n=14) | 4 (4.79, n=14) |
 | bash | 3 (3.14, n=14) | 1 (5.00, n=14) |
 | powershell | 4 (3.00, n=14) | 2 (5.00, n=14) |
@@ -239,7 +239,7 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 
 | Language / Model | haiku45 rank (mean, n) | gemini31pro rank (mean, n) |
 |---|---|---|
-| default / fable5 | 1 (3.29, n=14) | 3 (4.79, n=14) |
+| default / fable5 | 1 (3.46, n=13) | 3 (4.79, n=14) |
 | typescript-bun / fable5 | 2 (3.29, n=14) | 4 (4.79, n=14) |
 | bash / fable5 | 3 (3.14, n=14) | 1 (5.00, n=14) |
 | powershell / fable5 | 4 (3.00, n=14) | 2 (5.00, n=14) |
@@ -267,7 +267,7 @@ The panel converges on fable5 as the top-scoring model on both Tests Quality and
 
 ### Workflow Craft
 
-*Baseline delta (gemini31pro − haiku45) across the whole dataset: **+1.71**.*
+*Baseline delta (gemini31pro − haiku45) across the whole dataset: **+1.67**.*
 
 *(no self-judgment rows exceed the 1.0-point deviation threshold — judges agree about in-family output roughly as much as about out-of-family output)*
 

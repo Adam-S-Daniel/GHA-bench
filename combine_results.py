@@ -633,8 +633,8 @@ def _build_markdown(
     # ── Test Quality Evaluation ──
     # Parity with per-run reports: structural metrics (counters) +
     # panel LLM-as-judge scores per (language, model+effort). The
-    # Savings Analysis block (hook telemetry + trap detection) that
-    # per-run reports also emit is NOT ported here yet — see
+    # Savings Analysis block (trap detection + prompt-cache savings)
+    # that per-run reports also emit is NOT ported here yet — see
     # AGENTS.md's "Combined-report invariants" section for the
     # tracking note.
     try:
@@ -1033,7 +1033,7 @@ def _build_markdown(
         "",
         "### Duration columns",
         "",
-        "Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution + hooks).",
+        "Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).",
         "",
         "- **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.",
         "- **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.",

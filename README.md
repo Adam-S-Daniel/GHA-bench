@@ -37,7 +37,6 @@ Each benchmark version defines a set of scripting tasks, language modes, and mod
 - Whether the agent's own tests pass
 - Code quality metrics (errors, turns, cost)
 - Actionlint validation and act execution (v3+)
-- PostToolUse hook effectiveness (v3+)
 - Trap detection and analysis (v3+)
 
 ## Files
@@ -55,7 +54,6 @@ Each benchmark version defines a set of scripting tasks, language modes, and mod
 | `results/analysis/` | Dated follow-up analyses (e.g. judge-disagreement spot-checks) referenced from the main reports |
 | `test_quality.py` | Test quality evaluation — structural metrics + LLM-as-judge |
 | `llm_providers.py` | Pluggable LLM provider abstraction for evaluation tasks |
-| `hooks/syntax-check.py` | PostToolUse hook for syntax/lint checking (v3+) |
 | `Dockerfile.act` | Custom act container with pwsh/Pester pre-installed (v4+) |
 | `tests/` | Unit tests for repo code — run with `python3 -m pytest tests/ -v` |
 | `.github/workflows/ci.yml` | CI workflow — runs tests and import validation on push/PR |

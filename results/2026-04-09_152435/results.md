@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-02 09:53:17 AM ET — 64/64 runs completed, 0 remaining; total cost $86.90; total agent time 550.6 min.
+**Last updated:** 2026-07-03 07:19:56 AM ET — 64/64 runs completed, 0 remaining; total cost $86.90; total agent time 550.6 min.
 **Claude Code versions used:** [v2.1.97](claude-code-2.1.97.md) (1 run), [v2.1.98](claude-code-2.1.98.md) (57 runs), [v2.1.100](claude-code-2.1.100.md) (6 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -10,7 +10,6 @@
 - [Tiers by Language/Model/Effort](#tiers-by-languagemodeleffort)
 - [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort)
 - [Savings Analysis](#savings-analysis)
-  - [Hook Savings by Language/Model/Effort](#hook-savings-by-languagemodeleffort)
   - [Trap Analysis by Language/Model/Effort/Category](#trap-analysis-by-languagemodeleffortcategory)
   - [Traps by Language/Model/Effort](#traps-by-languagemodeleffort)
   - [Prompt Cache Savings](#prompt-cache-savings)
@@ -54,7 +53,7 @@ Properties:
 
 ### Duration columns
 
-Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution + hooks).
+Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).
 
 - **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.
 - **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.
@@ -269,109 +268,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 ## Savings Analysis
 
-### Hook Savings by Language/Model/Effort
-
-Each hook-caught error avoids one test run that would otherwise have been needed to discover it.
-Every hook fire (hit or miss) costs execution time for the syntax/type checker.
-
-*`% of Test Time Saved` = `net / (net + test_time) × 100` — the share of total (would-have-been + actually-spent) test time that hooks eliminated. Bounded in (-∞, 100%) without an artificial cap; near 100% means hooks substituted for almost all of the hypothetical test work.*
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| bash | opus46-200k-medium-cli2.1.100 | 9 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 0.3min | -8.1% |
-| bash | opus46-200k-medium-cli2.1.98 | 82 | 3 | 3.7% | 0.6min | 0.1% | 0.6min | 0.1% | 0.0min | 0.0% | 6.8min | 0.4% |
-| bash | sonnet46-200k-medium-cli2.1.100 | 29 | 2 | 6.9% | 0.4min | 0.1% | 0.0min | 0.0% | 0.4min | 0.1% | 2.6min | 12.5% |
-| bash | sonnet46-200k-medium-cli2.1.98 | 78 | 7 | 9.0% | 1.4min | 0.3% | 0.2min | 0.0% | 1.2min | 0.2% | 6.4min | 16.1% |
-| default | opus46-200k-medium-cli2.1.97 | 7 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 0.4min | -12.6% |
-| default | opus46-200k-medium-cli2.1.98 | 70 | 14 | 20.0% | 1.9min | 0.3% | 0.2min | 0.0% | 1.7min | 0.3% | 2.6min | 39.2% |
-| default | sonnet46-200k-medium-cli2.1.100 | 12 | 2 | 16.7% | 0.3min | 0.0% | 0.0min | 0.0% | 0.3min | 0.0% | 0.3min | 43.2% |
-| default | sonnet46-200k-medium-cli2.1.98 | 69 | 1 | 1.4% | 0.1min | 0.0% | 0.2min | 0.0% | -0.1min | -0.0% | 3.3min | -1.9% |
-| powershell | opus46-200k-medium-cli2.1.98 | 86 | 10 | 11.6% | 5.8min | 1.1% | 0.7min | 0.1% | 5.2min | 0.9% | 5.9min | 46.6% |
-| powershell | sonnet46-200k-medium-cli2.1.100 | 11 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 0.8min | -7.1% |
-| powershell | sonnet46-200k-medium-cli2.1.98 | 75 | 1 | 1.3% | 0.6min | 0.1% | 0.7min | 0.1% | -0.1min | -0.0% | 8.8min | -1.6% |
-| typescript-bun | opus46-200k-medium-cli2.1.100 | 15 | 9 | 60.0% | 1.2min | 0.2% | 0.6min | 0.1% | 0.6min | 0.1% | 0.7min | 44.0% |
-| typescript-bun | opus46-200k-medium-cli2.1.98 | 51 | 27 | 52.9% | 3.6min | 0.7% | 3.6min | 0.7% | -0.0min | -0.0% | 4.5min | -0.8% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 12 | 4 | 33.3% | 0.5min | 0.1% | 0.3min | 0.1% | 0.2min | 0.0% | 0.4min | 36.7% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 82 | 42 | 51.2% | 5.6min | 1.0% | 2.1min | 0.4% | 3.5min | 0.6% | 4.9min | 41.6% |
-
-
-<details>
-<summary>Sorted by net saved (most first)</summary>
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| powershell | opus46-200k-medium-cli2.1.98 | 86 | 10 | 11.6% | 5.8min | 1.1% | 0.7min | 0.1% | 5.2min | 0.9% | 5.9min | 46.6% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 82 | 42 | 51.2% | 5.6min | 1.0% | 2.1min | 0.4% | 3.5min | 0.6% | 4.9min | 41.6% |
-| default | opus46-200k-medium-cli2.1.98 | 70 | 14 | 20.0% | 1.9min | 0.3% | 0.2min | 0.0% | 1.7min | 0.3% | 2.6min | 39.2% |
-| bash | sonnet46-200k-medium-cli2.1.98 | 78 | 7 | 9.0% | 1.4min | 0.3% | 0.2min | 0.0% | 1.2min | 0.2% | 6.4min | 16.1% |
-| typescript-bun | opus46-200k-medium-cli2.1.100 | 15 | 9 | 60.0% | 1.2min | 0.2% | 0.6min | 0.1% | 0.6min | 0.1% | 0.7min | 44.0% |
-| bash | sonnet46-200k-medium-cli2.1.100 | 29 | 2 | 6.9% | 0.4min | 0.1% | 0.0min | 0.0% | 0.4min | 0.1% | 2.6min | 12.5% |
-| default | sonnet46-200k-medium-cli2.1.100 | 12 | 2 | 16.7% | 0.3min | 0.0% | 0.0min | 0.0% | 0.3min | 0.0% | 0.3min | 43.2% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 12 | 4 | 33.3% | 0.5min | 0.1% | 0.3min | 0.1% | 0.2min | 0.0% | 0.4min | 36.7% |
-| bash | opus46-200k-medium-cli2.1.98 | 82 | 3 | 3.7% | 0.6min | 0.1% | 0.6min | 0.1% | 0.0min | 0.0% | 6.8min | 0.4% |
-| bash | opus46-200k-medium-cli2.1.100 | 9 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 0.3min | -8.1% |
-| typescript-bun | opus46-200k-medium-cli2.1.98 | 51 | 27 | 52.9% | 3.6min | 0.7% | 3.6min | 0.7% | -0.0min | -0.0% | 4.5min | -0.8% |
-| default | opus46-200k-medium-cli2.1.97 | 7 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 0.4min | -12.6% |
-| powershell | sonnet46-200k-medium-cli2.1.100 | 11 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 0.8min | -7.1% |
-| default | sonnet46-200k-medium-cli2.1.98 | 69 | 1 | 1.4% | 0.1min | 0.0% | 0.2min | 0.0% | -0.1min | -0.0% | 3.3min | -1.9% |
-| powershell | sonnet46-200k-medium-cli2.1.98 | 75 | 1 | 1.3% | 0.6min | 0.1% | 0.7min | 0.1% | -0.1min | -0.0% | 8.8min | -1.6% |
-
-</details>
-
-<details>
-<summary>Sorted by net % of test time saved (most first)</summary>
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| powershell | opus46-200k-medium-cli2.1.98 | 86 | 10 | 11.6% | 5.8min | 1.1% | 0.7min | 0.1% | 5.2min | 0.9% | 5.9min | 46.6% |
-| typescript-bun | opus46-200k-medium-cli2.1.100 | 15 | 9 | 60.0% | 1.2min | 0.2% | 0.6min | 0.1% | 0.6min | 0.1% | 0.7min | 44.0% |
-| default | sonnet46-200k-medium-cli2.1.100 | 12 | 2 | 16.7% | 0.3min | 0.0% | 0.0min | 0.0% | 0.3min | 0.0% | 0.3min | 43.2% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 82 | 42 | 51.2% | 5.6min | 1.0% | 2.1min | 0.4% | 3.5min | 0.6% | 4.9min | 41.6% |
-| default | opus46-200k-medium-cli2.1.98 | 70 | 14 | 20.0% | 1.9min | 0.3% | 0.2min | 0.0% | 1.7min | 0.3% | 2.6min | 39.2% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 12 | 4 | 33.3% | 0.5min | 0.1% | 0.3min | 0.1% | 0.2min | 0.0% | 0.4min | 36.7% |
-| bash | sonnet46-200k-medium-cli2.1.98 | 78 | 7 | 9.0% | 1.4min | 0.3% | 0.2min | 0.0% | 1.2min | 0.2% | 6.4min | 16.1% |
-| bash | sonnet46-200k-medium-cli2.1.100 | 29 | 2 | 6.9% | 0.4min | 0.1% | 0.0min | 0.0% | 0.4min | 0.1% | 2.6min | 12.5% |
-| bash | opus46-200k-medium-cli2.1.98 | 82 | 3 | 3.7% | 0.6min | 0.1% | 0.6min | 0.1% | 0.0min | 0.0% | 6.8min | 0.4% |
-| typescript-bun | opus46-200k-medium-cli2.1.98 | 51 | 27 | 52.9% | 3.6min | 0.7% | 3.6min | 0.7% | -0.0min | -0.0% | 4.5min | -0.8% |
-| powershell | sonnet46-200k-medium-cli2.1.98 | 75 | 1 | 1.3% | 0.6min | 0.1% | 0.7min | 0.1% | -0.1min | -0.0% | 8.8min | -1.6% |
-| default | sonnet46-200k-medium-cli2.1.98 | 69 | 1 | 1.4% | 0.1min | 0.0% | 0.2min | 0.0% | -0.1min | -0.0% | 3.3min | -1.9% |
-| powershell | sonnet46-200k-medium-cli2.1.100 | 11 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 0.8min | -7.1% |
-| bash | opus46-200k-medium-cli2.1.100 | 9 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 0.3min | -8.1% |
-| default | opus46-200k-medium-cli2.1.97 | 7 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 0.4min | -12.6% |
-
-</details>
-
-<details>
-<summary>Sorted by catch rate (highest first)</summary>
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-| typescript-bun | opus46-200k-medium-cli2.1.100 | 15 | 9 | 60.0% | 1.2min | 0.2% | 0.6min | 0.1% | 0.6min | 0.1% | 0.7min | 44.0% |
-| typescript-bun | opus46-200k-medium-cli2.1.98 | 51 | 27 | 52.9% | 3.6min | 0.7% | 3.6min | 0.7% | -0.0min | -0.0% | 4.5min | -0.8% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 82 | 42 | 51.2% | 5.6min | 1.0% | 2.1min | 0.4% | 3.5min | 0.6% | 4.9min | 41.6% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 12 | 4 | 33.3% | 0.5min | 0.1% | 0.3min | 0.1% | 0.2min | 0.0% | 0.4min | 36.7% |
-| default | opus46-200k-medium-cli2.1.98 | 70 | 14 | 20.0% | 1.9min | 0.3% | 0.2min | 0.0% | 1.7min | 0.3% | 2.6min | 39.2% |
-| default | sonnet46-200k-medium-cli2.1.100 | 12 | 2 | 16.7% | 0.3min | 0.0% | 0.0min | 0.0% | 0.3min | 0.0% | 0.3min | 43.2% |
-| powershell | opus46-200k-medium-cli2.1.98 | 86 | 10 | 11.6% | 5.8min | 1.1% | 0.7min | 0.1% | 5.2min | 0.9% | 5.9min | 46.6% |
-| bash | sonnet46-200k-medium-cli2.1.98 | 78 | 7 | 9.0% | 1.4min | 0.3% | 0.2min | 0.0% | 1.2min | 0.2% | 6.4min | 16.1% |
-| bash | sonnet46-200k-medium-cli2.1.100 | 29 | 2 | 6.9% | 0.4min | 0.1% | 0.0min | 0.0% | 0.4min | 0.1% | 2.6min | 12.5% |
-| bash | opus46-200k-medium-cli2.1.98 | 82 | 3 | 3.7% | 0.6min | 0.1% | 0.6min | 0.1% | 0.0min | 0.0% | 6.8min | 0.4% |
-| default | sonnet46-200k-medium-cli2.1.98 | 69 | 1 | 1.4% | 0.1min | 0.0% | 0.2min | 0.0% | -0.1min | -0.0% | 3.3min | -1.9% |
-| powershell | sonnet46-200k-medium-cli2.1.98 | 75 | 1 | 1.3% | 0.6min | 0.1% | 0.7min | 0.1% | -0.1min | -0.0% | 8.8min | -1.6% |
-| bash | opus46-200k-medium-cli2.1.100 | 9 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 0.3min | -8.1% |
-| default | opus46-200k-medium-cli2.1.97 | 7 | 0 | 0.0% | 0.0min | 0.0% | 0.0min | 0.0% | -0.0min | -0.0% | 0.4min | -12.6% |
-| powershell | sonnet46-200k-medium-cli2.1.100 | 11 | 0 | 0.0% | 0.0min | 0.0% | 0.1min | 0.0% | -0.1min | -0.0% | 0.8min | -7.1% |
-
-</details>
-
 ### Trap Analysis by Language/Model/Effort/Category
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 1.8min | 0.3% | $0.40 | 0.46% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.98 | 6 | 5.4min | 1.0% | $1.01 | 1.17% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 0.8min | 0.1% | $0.10 | 0.12% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 8.4min | 1.5% | $1.05 | 1.21% |
 | fixture-rework | bash | opus46-200k-medium-cli2.1.100 | 1 | 0.8min | 0.1% | $0.17 | 0.20% |
 | fixture-rework | bash | opus46-200k-medium-cli2.1.98 | 3 | 2.8min | 0.5% | $0.59 | 0.68% |
 | fixture-rework | bash | sonnet46-200k-medium-cli2.1.100 | 1 | 0.5min | 0.1% | $0.08 | 0.10% |
@@ -413,20 +313,16 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | fixture-rework | bash | opus46-200k-medium-cli2.1.100 | 1 | 0.8min | 0.1% | $0.17 | 0.20% |
 | fixture-rework | typescript-bun | opus46-200k-medium-cli2.1.98 | 1 | 0.8min | 0.1% | $0.14 | 0.16% |
 | act-permission-path-errors | default | sonnet46-200k-medium-cli2.1.98 | 1 | 0.8min | 0.1% | $0.09 | 0.10% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 0.8min | 0.1% | $0.10 | 0.12% |
 | act-push-debug-loops | bash | opus46-200k-medium-cli2.1.98 | 1 | 0.8min | 0.2% | $0.11 | 0.13% |
 | repeated-test-reruns | typescript-bun | sonnet46-200k-medium-cli2.1.98 | 1 | 1.0min | 0.2% | $0.14 | 0.17% |
 | act-push-debug-loops | typescript-bun | sonnet46-200k-medium-cli2.1.98 | 1 | 1.2min | 0.2% | $0.13 | 0.15% |
 | fixture-rework | powershell | opus46-200k-medium-cli2.1.98 | 1 | 1.5min | 0.3% | $0.37 | 0.42% |
 | bats-setup-issues | bash | sonnet46-200k-medium-cli2.1.98 | 2 | 1.8min | 0.3% | $0.25 | 0.29% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 1.8min | 0.3% | $0.40 | 0.46% |
 | act-push-debug-loops | default | sonnet46-200k-medium-cli2.1.98 | 2 | 2.2min | 0.4% | $0.28 | 0.32% |
 | fixture-rework | powershell | sonnet46-200k-medium-cli2.1.98 | 2 | 2.5min | 0.5% | $0.36 | 0.41% |
 | fixture-rework | bash | opus46-200k-medium-cli2.1.98 | 3 | 2.8min | 0.5% | $0.59 | 0.68% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.98 | 4 | 4.3min | 0.8% | $0.55 | 0.63% |
 | docker-pwsh-install | powershell | sonnet46-200k-medium-cli2.1.98 | 2 | 4.5min | 0.8% | $0.57 | 0.65% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.98 | 6 | 5.4min | 1.0% | $1.01 | 1.17% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 8.4min | 1.5% | $1.05 | 1.21% |
 
 </details>
 
@@ -443,7 +339,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | actionlint-fix-cycles | bash | opus46-200k-medium-cli2.1.98 | 1 | 0.7min | 0.1% | $0.09 | 0.10% |
 | act-permission-path-errors | default | sonnet46-200k-medium-cli2.1.98 | 1 | 0.8min | 0.1% | $0.09 | 0.10% |
 | act-push-debug-loops | typescript-bun | opus46-200k-medium-cli2.1.98 | 1 | 0.5min | 0.1% | $0.09 | 0.11% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 0.8min | 0.1% | $0.10 | 0.12% |
 | repeated-test-reruns | bash | sonnet46-200k-medium-cli2.1.100 | 1 | 0.7min | 0.1% | $0.11 | 0.13% |
 | act-push-debug-loops | bash | opus46-200k-medium-cli2.1.98 | 1 | 0.8min | 0.2% | $0.11 | 0.13% |
 | act-push-debug-loops | typescript-bun | sonnet46-200k-medium-cli2.1.98 | 1 | 1.2min | 0.2% | $0.13 | 0.15% |
@@ -455,12 +350,9 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | act-push-debug-loops | default | sonnet46-200k-medium-cli2.1.98 | 2 | 2.2min | 0.4% | $0.28 | 0.32% |
 | fixture-rework | powershell | sonnet46-200k-medium-cli2.1.98 | 2 | 2.5min | 0.5% | $0.36 | 0.41% |
 | fixture-rework | powershell | opus46-200k-medium-cli2.1.98 | 1 | 1.5min | 0.3% | $0.37 | 0.42% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 1.8min | 0.3% | $0.40 | 0.46% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.98 | 4 | 4.3min | 0.8% | $0.55 | 0.63% |
 | docker-pwsh-install | powershell | sonnet46-200k-medium-cli2.1.98 | 2 | 4.5min | 0.8% | $0.57 | 0.65% |
 | fixture-rework | bash | opus46-200k-medium-cli2.1.98 | 3 | 2.8min | 0.5% | $0.59 | 0.68% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.98 | 6 | 5.4min | 1.0% | $1.01 | 1.17% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 8.4min | 1.5% | $1.05 | 1.21% |
 
 </details>
 
@@ -469,8 +361,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 1.8min | 0.3% | $0.40 | 0.46% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 0.8min | 0.1% | $0.10 | 0.12% |
 | fixture-rework | bash | opus46-200k-medium-cli2.1.100 | 1 | 0.8min | 0.1% | $0.17 | 0.20% |
 | fixture-rework | bash | sonnet46-200k-medium-cli2.1.100 | 1 | 0.5min | 0.1% | $0.08 | 0.10% |
 | fixture-rework | bash | sonnet46-200k-medium-cli2.1.98 | 1 | 0.5min | 0.1% | $0.06 | 0.07% |
@@ -493,8 +383,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | bats-setup-issues | bash | sonnet46-200k-medium-cli2.1.98 | 2 | 1.8min | 0.3% | $0.25 | 0.29% |
 | fixture-rework | bash | opus46-200k-medium-cli2.1.98 | 3 | 2.8min | 0.5% | $0.59 | 0.68% |
 | repeated-test-reruns | powershell | sonnet46-200k-medium-cli2.1.98 | 4 | 4.3min | 0.8% | $0.55 | 0.63% |
-| ts-type-error-fix-cycles | typescript-bun | opus46-200k-medium-cli2.1.98 | 6 | 5.4min | 1.0% | $1.01 | 1.17% |
-| ts-type-error-fix-cycles | typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 8.4min | 1.5% | $1.05 | 1.21% |
 
 </details>
 
@@ -507,7 +395,6 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 - **docker-pwsh-install**: Multiple Docker test runs trying to figure out how to install PowerShell in act's container.
 - **fixture-rework**: Agent wrote, broke, and rewrote test fixture data (4+ fixture-related commands).
 - **repeated-test-reruns**: Same test command executed 4+ times without the underlying code changing.
-- **ts-type-error-fix-cycles**: TypeScript type errors caught by `tsc --noEmit` hooks; each requires a fix cycle.
 
 #### Column Definitions
 
@@ -533,10 +420,10 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | powershell | opus46-200k-medium-cli2.1.98 | 8 | 1 | 1.5min | 0.3% | $0.37 | 0.42% |
 | powershell | sonnet46-200k-medium-cli2.1.100 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | powershell | sonnet46-200k-medium-cli2.1.98 | 7 | 8 | 11.3min | 2.1% | $1.48 | 1.70% |
-| typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 2 | 2.5min | 0.4% | $0.55 | 0.63% |
-| typescript-bun | opus46-200k-medium-cli2.1.98 | 7 | 8 | 6.7min | 1.2% | $1.24 | 1.43% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 1 | 0.8min | 0.1% | $0.10 | 0.12% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 9 | 10.6min | 1.9% | $1.32 | 1.52% |
+| typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 1 | 0.7min | 0.1% | $0.15 | 0.17% |
+| typescript-bun | opus46-200k-medium-cli2.1.98 | 7 | 2 | 1.3min | 0.2% | $0.23 | 0.27% |
+| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
+| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 2 | 2.2min | 0.4% | $0.28 | 0.32% |
 
 
 <details>
@@ -548,16 +435,16 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | default | opus46-200k-medium-cli2.1.98 | 7 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | default | sonnet46-200k-medium-cli2.1.100 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | powershell | sonnet46-200k-medium-cli2.1.100 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
+| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
+| typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 1 | 0.7min | 0.1% | $0.15 | 0.17% |
 | bash | opus46-200k-medium-cli2.1.100 | 1 | 1 | 0.8min | 0.1% | $0.17 | 0.20% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 1 | 0.8min | 0.1% | $0.10 | 0.12% |
 | bash | sonnet46-200k-medium-cli2.1.100 | 1 | 2 | 1.2min | 0.2% | $0.19 | 0.22% |
+| typescript-bun | opus46-200k-medium-cli2.1.98 | 7 | 2 | 1.3min | 0.2% | $0.23 | 0.27% |
 | powershell | opus46-200k-medium-cli2.1.98 | 8 | 1 | 1.5min | 0.3% | $0.37 | 0.42% |
-| typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 2 | 2.5min | 0.4% | $0.55 | 0.63% |
+| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 2 | 2.2min | 0.4% | $0.28 | 0.32% |
 | bash | sonnet46-200k-medium-cli2.1.98 | 7 | 4 | 2.7min | 0.5% | $0.36 | 0.41% |
 | default | sonnet46-200k-medium-cli2.1.98 | 7 | 5 | 4.2min | 0.8% | $0.54 | 0.62% |
 | bash | opus46-200k-medium-cli2.1.98 | 7 | 5 | 4.2min | 0.8% | $0.79 | 0.91% |
-| typescript-bun | opus46-200k-medium-cli2.1.98 | 7 | 8 | 6.7min | 1.2% | $1.24 | 1.43% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 9 | 10.6min | 1.9% | $1.32 | 1.52% |
 | powershell | sonnet46-200k-medium-cli2.1.98 | 7 | 8 | 11.3min | 2.1% | $1.48 | 1.70% |
 
 </details>
@@ -571,16 +458,16 @@ Every hook fire (hit or miss) costs execution time for the syntax/type checker.
 | default | opus46-200k-medium-cli2.1.98 | 7 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | default | sonnet46-200k-medium-cli2.1.100 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 | powershell | sonnet46-200k-medium-cli2.1.100 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 1 | 0.8min | 0.1% | $0.10 | 0.12% |
+| typescript-bun | sonnet46-200k-medium-cli2.1.100 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
+| typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 1 | 0.7min | 0.1% | $0.15 | 0.17% |
 | bash | opus46-200k-medium-cli2.1.100 | 1 | 1 | 0.8min | 0.1% | $0.17 | 0.20% |
 | bash | sonnet46-200k-medium-cli2.1.100 | 1 | 2 | 1.2min | 0.2% | $0.19 | 0.22% |
+| typescript-bun | opus46-200k-medium-cli2.1.98 | 7 | 2 | 1.3min | 0.2% | $0.23 | 0.27% |
+| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 2 | 2.2min | 0.4% | $0.28 | 0.32% |
 | bash | sonnet46-200k-medium-cli2.1.98 | 7 | 4 | 2.7min | 0.5% | $0.36 | 0.41% |
 | powershell | opus46-200k-medium-cli2.1.98 | 8 | 1 | 1.5min | 0.3% | $0.37 | 0.42% |
 | default | sonnet46-200k-medium-cli2.1.98 | 7 | 5 | 4.2min | 0.8% | $0.54 | 0.62% |
-| typescript-bun | opus46-200k-medium-cli2.1.100 | 1 | 2 | 2.5min | 0.4% | $0.55 | 0.63% |
 | bash | opus46-200k-medium-cli2.1.98 | 7 | 5 | 4.2min | 0.8% | $0.79 | 0.91% |
-| typescript-bun | opus46-200k-medium-cli2.1.98 | 7 | 8 | 6.7min | 1.2% | $1.24 | 1.43% |
-| typescript-bun | sonnet46-200k-medium-cli2.1.98 | 7 | 9 | 10.6min | 1.9% | $1.32 | 1.52% |
 | powershell | sonnet46-200k-medium-cli2.1.98 | 7 | 8 | 11.3min | 2.1% | $1.48 | 1.70% |
 
 </details>
@@ -1357,11 +1244,11 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Judge Consistency Summary
 
-**🟡 The panel is doing its main job:** Both judges rank Sonnet above Opus on every axis with zero pair-wise reversals, and no reversal anywhere lines up with a judge's own model family — so the model-comparison verdict is trustworthy. But language rankings on Tests Quality fully invert between the two judges (Spearman -1.00), so any language-only claim needs care.
+**🟡 The panel agrees where it matters most:** Both judges rank Sonnet above Opus with perfect correlation (ρ = +1.00) and zero reversals across Tests Quality and Workflow Craft, and no own-model bias shows up in the haiku45 self-judgment rows. But language ordering on Tests Quality is fully reversed (ρ = −1.00) — Gemini ranks bash first while Haiku ranks it last — driven by Gemini scoring near its ceiling (average 4.37, many 5s) and Haiku near its floor (2.68), so between-language gaps compress on Gemini's scale.
 
-- 👀 **Where to look closer:** Bash is the pivot — Gemini rates it best on Tests Quality (mean 4.62) while Haiku rates it worst (mean 2.47). Spot-check the widest bash hotspots (3-point gaps on the 1–5 scale): 11-semantic-version-bumper / bash / opus and 18-secret-rotation-validator / bash / opus, both scored 2 by Haiku and 5 by Gemini.
-- 🤓 **Surprise finding:** Gemini's scores compress into a narrow 4.25–5.00 band, so the big gaps come from Gemini's ceiling meeting Haiku's full-range use — not from Haiku punishing any specific family, including its own.
-- ℹ️ **Recommended next step:** Lead with the model-axis ranking; footnote language rankings with the Tests Quality reversal and re-score the bash hotspots with a tie-breaker judge.
+- 👀 **Where to look closer:** The widest disagreements (one judge scoring 2, the other 5 — a 3-point gap on a 1–5 scale) cluster on bash: 11-semantic-version-bumper / bash / opus and 18-secret-rotation-validator / bash / sonnet both show Haiku 2 vs Gemini 5, worth a human spot-check.
+- 🤓 **Surprise finding:** None — panel behaved as expected.
+- ℹ️ **Recommended next step:** Report model-axis conclusions with high confidence but caveat any language-only claims until a human eyeballs the reversed bash rankings.
 
 #### Provenance
 
@@ -1369,7 +1256,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 - **Inputs:** the [`judge-consistency-data.md`](judge-consistency-data.md) tables plus benchmark context (rubrics, task list, experiment setup).
 - **Script:** [`conclusions_report.py`](../../conclusions_report.py) — regenerate with `python3 generate_results.py <run_dir>`.
 - **Instruction:** [`JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT`](../../judge_consistency_report.py) in that script.
-- **Usage:** 5 input + 2739 output tokens, $0.2396.
+- **Usage:** 5 input + 2129 output tokens, $0.2161.
 
 *Full breakdown with per-model / per-language / per-language×model ranking tables and disagreement hotspots in [judge-consistency-data.md](judge-consistency-data.md).*
 
