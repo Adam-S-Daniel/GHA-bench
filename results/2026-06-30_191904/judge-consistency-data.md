@@ -4,7 +4,7 @@
 
 ## Notes
 
-- **Generated:** 2026-07-03 07:25:08 AM ET
+- **Generated:** 2026-07-03 08:52:45 AM ET
 - **Source:** `/home/passp/repos/GHA-bench/results/2026-06-30_191904`
 - **Judges present:** haiku45, gemini31pro
 - **Score conventions:** Scores shown are the `overall` dimension from each judge (1-5). Δ column is the second judge minus the first; positive = second judge is more generous.
@@ -18,7 +18,7 @@ Sonnet at 1M context with medium effort produces the strongest workflow delivera
 - **Effort tier**: low-effort Sonnet trails on both axes for both judges — 2.10 / 4.00 on Workflow Craft, 2.50 / 2.87 on Tests Quality — and finishes last in every model ranking presented.
 - **Where rankings diverge**: Bash is Haiku's worst Tests Quality language but Gemini's second-best (three Bash reversals against Haiku); the default (Python) language shows the same pattern on Workflow Craft, ranked #1 by Gemini and #4 by Haiku.
 
-*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI; 5 in / 4445 out tokens, $0.2939. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
+*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI (from cache); 5 in / 4445 out tokens, $0.2939. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
 
 ## Campaign summary
 

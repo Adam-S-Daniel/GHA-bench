@@ -4,7 +4,7 @@
 
 ## Notes
 
-- **Generated:** 2026-07-03 07:26:10 AM ET
+- **Generated:** 2026-07-03 08:53:18 AM ET
 - **Source:** `/home/passp/repos/GHA-bench/results/2026-07-01_184135`
 - **Judges present:** haiku45, gemini31pro
 - **Score conventions:** Scores shown are the `overall` dimension from each judge (1-5). Δ column is the second judge minus the first; positive = second judge is more generous.
@@ -19,7 +19,7 @@ The panel-of-judges rankings support fable5 at high effort as the top configurat
 - **Workflow Craft ceiling**: Gemini scores bash and powershell at 5.00 across every task, so the deliverable-quality headroom is exhausted on the compiled-scripting languages under the cross-family judge.
 - **Where rankings diverge**: Workflow Craft language ordering flips between judges (ρ = -0.60, four reversals) — Gemini favors bash and powershell, Haiku favors default and typescript-bun.
 
-*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI; 5 in / 2178 out tokens, $0.1924. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
+*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI (from cache); 5 in / 2178 out tokens, $0.1924. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
 
 ## Campaign summary
 

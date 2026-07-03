@@ -72,9 +72,12 @@ When the runtime wrapper uses `language_mode` (Python-side variable name), the
 *user-facing* axis is called **language**, never "mode". This covers docs,
 prompts, report prose, and LLM summaries. The internal field name stays
 `language_mode` so existing metrics.json readers don't break; everything else
-says "language" (e.g. "default/Python, bash, powershell, powershell-tool,
-typescript-bun"). Rationale: "mode" is ambiguous with agent-approval-modes and
-execution modes; "language" is the concept readers expect.
+says "language" (e.g. "default/Python, bash, powershell, typescript-bun").
+Historical runs also carry a `powershell-tool` language, but reports collapse
+it into `powershell` at display time (`_disp_mode`, #30) — the raw
+`language_mode` and on-disk `powershell-tool-*` cell dirs are preserved.
+Rationale: "mode" is ambiguous with agent-approval-modes and execution modes;
+"language" is the concept readers expect.
 
 ## Repository rules
 
@@ -144,8 +147,10 @@ hold — changes here have broken the generated markdown before, so
 `tests/test_combine_results.py` guards them:
 
 - **No duplicate `(language, variant_disp)` rows in Tiers or
-  Comparison.** `aggregate_rows` groups by `(language_mode,
-  derived_label)` — where `derived_label` is
+  Comparison.** `aggregate_rows` groups by `(_disp_mode(language_mode),
+  derived_label)` — `_disp_mode` collapses `powershell-tool` into
+  `powershell` so the two pool into one column (#30; they are
+  replicates in this WSL environment). `derived_label` is
   `<name-version>-<context>-<effort>` built by `_derived_label(m)`
   (name+version from `model_short` with the `-1m`/`-200k` suffix
   stripped and the legacy `opus`/`sonnet`→`opus46`/`sonnet46` rename;
@@ -171,9 +176,10 @@ hold — changes here have broken the generated markdown before, so
   benefit from the panel-health verdict before they consume
   rankings.
 - **Quality-score lookup key.** The per-variant score bucket is keyed
-  by `(language_mode, _derived_label(m))` — the CLI-less derived label,
-  so quality-score pooling matches the duration/cost pooling in
-  `aggregate_rows` exactly. Aggregate lookups therefore use
+  by `(_disp_mode(language_mode), _derived_label(m))` — the display
+  mode + CLI-less derived label, so quality-score pooling matches the
+  duration/cost pooling in `aggregate_rows` exactly (including the
+  `powershell` + `powershell-tool` collapse). Aggregate lookups therefore use
   `r["variant"]` (the derived label), NOT `r["variant_with_cli"]`.
   (Panel JSONs are still retrieved by the on-disk path
   `(source_run_dir, task_id, original_subdir)` where `original_subdir`
