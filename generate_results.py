@@ -122,7 +122,7 @@ def _detect_traps(events: list[dict], console: str, metrics: dict) -> list[dict]
 
     1. Give the trap a kebab-case name (e.g. "yaml-indent-errors").
     2. Write detection logic that examines bash_cmds, all_text (agent's
-       reasoning), console (tool output), and/or metrics (hook counts, etc.).
+       reasoning), console (tool output), and/or metrics.
     3. Estimate time_s — use the number of wasted commands × a per-command
        cost.  For Bash commands, 15-25s is typical (API turn + execution).
        For act push, use 50s.  For pwsh Pester, use 25-35s.
@@ -192,33 +192,27 @@ def _detect_traps(events: list[dict], console: str, metrics: dict) -> list[dict]
         t = extra * (sum(act_times) / len(act_times) / 1000 if act_times else 50)
         _add("act-push-debug-loops", t, f"{len(act_pushes)} act push invocations ({extra} extra)")
 
-    # 6. TypeScript type error fix cycles
-    if mode == "typescript-bun":
-        he = metrics.get("hooks", {}).get("hook_errors_caught", 0)
-        if he >= 2:
-            _add("ts-type-error-fix-cycles", he * 12, f"{he} type errors caught by hooks")
-
-    # 7. Docker package install exploration (non-pwsh)
+    # 6. Docker package install exploration (non-pwsh)
     dpkg = [c for c in bash_cmds if re.search(r"docker\s+run.*(?:pip\s+install|apt-get\s+install)", c, re.I)
             and not re.search(r"powershell|pwsh", c, re.I)]
     if len(dpkg) >= 2:
         _add("docker-pkg-install", len(dpkg) * 30, f"{len(dpkg)} Docker runs exploring package install")
 
-    # 8. bats-core setup confusion
+    # 7. bats-core setup confusion
     if mode == "bash":
         bs = [c for c in bash_cmds if re.search(r"which bats|npm.*bats|install.*bats|load.*test_helper", c, re.I)]
         be = len(re.findall(r"bats.*not found|load.*error|helper.*not|cannot.*load", console, re.I))
         if len(bs) >= 3 and be >= 1:
             _add("bats-setup-issues", len(bs) * 15, f"{len(bs)} commands debugging bats setup")
 
-    # 9. Fixture rework
+    # 8. Fixture rework
     # Use word-boundary patterns to avoid matching filenames like "test_database"
     fc = [c for c in bash_cmds if re.search(
         r"fixture|sample[_\-\s]data|mock[_\-\s]data|test[_\-\s]data\b", c, re.I)]
     if len(fc) >= 4:
         _add("fixture-rework", (len(fc) - 2) * 15, f"{len(fc)} commands creating/fixing fixtures")
 
-    # 10. Repeated identical test reruns
+    # 9. Repeated identical test reruns
     cmd_cnt: dict[str, int] = {}
     for c in bash_cmds:
         if re.search(r"pytest|Invoke-Pester|bun\s+test|bats\s+|dotnet\s+test|unittest\b", c):
@@ -228,13 +222,13 @@ def _detect_traps(events: list[dict], console: str, metrics: dict) -> list[dict]
         if count >= 4:
             _add("repeated-test-reruns", (count - 2) * 20, f"Same test run {count} times")
 
-    # 11. actionlint fix cycles
+    # 10. actionlint fix cycles
     ar = [c for c in bash_cmds if "actionlint" in c]
     af = len(re.findall(r"actionlint.*error", console, re.I))
     if len(ar) >= 3 and af >= 2:
         _add("actionlint-fix-cycles", af * 20, f"{len(ar)} actionlint runs, {af} failures")
 
-    # 12. Permission/path errors in act container
+    # 11. Permission/path errors in act container
     # Only check when act was actually used in this run
     used_act = any(re.search(r"\bact\s+(push|run|pull)\b", c) for c in bash_cmds)
     if used_act:
@@ -247,19 +241,19 @@ def _detect_traps(events: list[dict], console: str, metrics: dict) -> list[dict]
         if pe >= 2:
             _add("act-permission-path-errors", pe * 15, f"{pe} permission/path errors in act container")
 
-    # 13. act fixture path issues
+    # 12. act fixture path issues
     if used_act and (re.search(r"Config file not found|fixture.*not found|No such file.*fixture", console, re.I)
             and re.search(r"fixture.*path|copy.*fixture|missing.*fixture", all_text, re.I)):
         _add("act-fixture-paths", 60, "Fixtures not found inside act Docker container")
 
-    # 14. Permission denial retry loops (v1 harness issue — sandbox blocked commands)
+    # 13. Permission denial retry loops (v1 harness issue — sandbox blocked commands)
     denial_count = len(re.findall(
         r"\[Result ERROR\].*(?:requires approval|haven't granted it yet|was blocked)", console))
     if denial_count >= 5:
         _add("permission-denial-loops", denial_count * 10,
              f"{denial_count} commands blocked by CLI sandbox (permission denials)")
 
-    # 15. Dotnet SDK install loop (csharp-script agents stuck installing .NET)
+    # 14. Dotnet SDK install loop (csharp-script agents stuck installing .NET)
     if mode == "csharp-script":
         dotnet_cmds = [c for c in bash_cmds if re.search(
             r"dotnet-install|dot\.net/v1|Install-DotNet|dotnet\s+--version", c, re.I)]
@@ -270,7 +264,7 @@ def _detect_traps(events: list[dict], console: str, metrics: dict) -> list[dict]
             _add("dotnet-install-loop", total * 12,
                  f"{total} attempts to install/verify .NET SDK")
 
-    # 16. PowerShell invoked from bash instead of shell: pwsh
+    # 15. PowerShell invoked from bash instead of shell: pwsh
     # When agents use `pwsh -Command "..."` or `pwsh -File` inside bash run: steps,
     # they can hit: (a) bash parser errors from PS syntax (e.g. @'...'@ heredocs),
     # (b) variable/quoting issues passing structured data through bash to pwsh,
@@ -868,25 +862,8 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         return merged
     cmp_rows = _consolidate_cmp_rows(cmp_rows)
 
-    # ── Trap & Hook data ──
-    TEST_RUN_COST_S = {"default": 8, "powershell": 35, "powershell-tool": 35, "bash": 12, "typescript-bun": 8}
-    # Compute per-(mode, model) hook overhead from actual Write/Edit durations.
-    # Use all_tool_uses when available (full list), fall back to slowest_tool_uses.
-    # Subtract 0.05s baseline for the Write operation itself.
-    _write_durs_by_combo: dict[tuple, list] = {}
-    for m in all_metrics:
-        combo = (m["language_mode"], _label(m))
-        source = m.get("tool_use_timing", {}).get("all_tool_uses") or m.get("tool_use_timing", {}).get("slowest_tool_uses", [])
-        for t in source:
-            if t["tool_name"] in ("Write", "Edit"):
-                _write_durs_by_combo.setdefault(combo, []).append(t["duration_ms"] / 1000)
-    HOOK_OVERHEAD_BY_COMBO = {
-        combo: max(0, (sum(ds) / len(ds)) - 0.05) if ds else 0.5
-        for combo, ds in _write_durs_by_combo.items()
-    }
-
+    # ── Trap data ──
     trap_instances = []
-    hook_by_combo = {}
     combo_run_counts = {}
 
     for m in all_metrics:
@@ -954,28 +931,6 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
                     "time_s": total_overhead,
                     "desc": "; ".join(parts),
                 })
-
-        caught = m.get("hooks", {}).get("hook_errors_caught", 0)
-        fires = m.get("hooks", {}).get("hook_fires", 0)
-        gross_saved = caught * TEST_RUN_COST_S.get(mode, 10)
-        overhead = fires * HOOK_OVERHEAD_BY_COMBO.get(combo, 0.5)
-        # Only include test time if we have real durations from all_tool_uses.
-        # Older runs that only have top-5/10 slowest_tool_uses produce a lower
-        # bound that's misleading — omit rather than show bad data.
-        all_uses = m.get("tool_use_timing", {}).get("all_tool_uses", [])
-        has_real_test_time = bool(all_uses)
-        test_time = _categorize_tool_time(all_uses)["test_duration_ms"] / 1000 if all_uses else 0
-        if combo not in hook_by_combo:
-            hook_by_combo[combo] = {"fires": 0, "caught": 0, "gross_saved": 0, "overhead": 0,
-                                     "test_time": 0, "has_real_test_time": True}
-        hook_by_combo[combo]["fires"] += fires
-        hook_by_combo[combo]["caught"] += caught
-        hook_by_combo[combo]["gross_saved"] += gross_saved
-        hook_by_combo[combo]["overhead"] += overhead
-        if has_real_test_time:
-            hook_by_combo[combo]["test_time"] += test_time
-        else:
-            hook_by_combo[combo]["has_real_test_time"] = False
 
     # ── Aggregate trap time/cost by (mode, model) for net-of-traps columns ──
     trap_time_by_combo: dict[tuple, float] = defaultdict(float)
@@ -1218,81 +1173,6 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
     lines.append("## Savings Analysis")
     lines.append("")
 
-    # ── Hook Savings by Language/Model/Effort ──
-    lines.append("### Hook Savings by Language/Model/Effort")
-    lines.append("")
-    lines.append("Each hook-caught error avoids one test run that would otherwise have been needed to discover it.")
-    lines.append("Every hook fire (hit or miss) costs execution time for the syntax/type checker.")
-    lines.append("")
-    lines.append("*`% of Test Time Saved` = `net / (net + test_time) × 100` — the share of total (would-have-been + actually-spent) test time that hooks eliminated. Bounded in (-∞, 100%) without an artificial cap; near 100% means hooks substituted for almost all of the hypothetical test work.*")
-    lines.append("")
-
-    # Determine if we have real test time data (all_tool_uses with durations)
-    has_test_time = all(hs.get("has_real_test_time", False) for hs in hook_by_combo.values() if hs.get("fires", 0) > 0)
-
-    if has_test_time:
-        hook_hdr = ("| Language | Model | Fires | Caught | Rate "
-                    "| Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time "
-                    "| Test Run Time | % of Test Time Saved |")
-        hook_sep = ("|------|-------|-------|--------|------"
-                    "|------------|-----------|----------|-----------|-----------|-----------|"
-                    "---------------|----------------------|")
-    else:
-        hook_hdr = ("| Language | Model | Fires | Caught | Rate "
-                    "| Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time |")
-        hook_sep = ("|------|-------|-------|--------|------"
-                    "|------------|-----------|----------|-----------|-----------|-----------|")
-
-    hook_rows = []
-    for mode in modes_seen:
-        for model in models_seen:
-            hs = hook_by_combo.get((mode, model), {})
-            f_count = hs.get("fires", 0)
-            c_count = hs.get("caught", 0)
-            if f_count == 0:
-                continue
-            gross = hs["gross_saved"]
-            overhead = hs["overhead"]
-            net = gross - overhead
-            test_t = hs.get("test_time", 0)
-            hook_rows.append({
-                "mode": mode, "model": model, "fires": f_count, "caught": c_count,
-                "rate": c_count / f_count * 100,
-                "gross": gross, "gross_pct": gross / total_duration * 100 if total_duration else 0,
-                "overhead": overhead, "overhead_pct": overhead / total_duration * 100 if total_duration else 0,
-                "net": net, "net_pct": net / total_duration * 100 if total_duration else 0,
-                "test_time": test_t,
-                # Denominator = net + test_t so the metric reads as "share
-                # of total (would-have-been + actually-spent) test time that
-                # hooks saved." Naturally bounded above by 100% without a
-                # cap, even when gross_saved far exceeds actual test time.
-                "test_time_pct": (net / (net + test_t) * 100) if (net + test_t) else 0,
-            })
-
-    def _fmt_hook(r):
-        base = (f"| {r['mode']} | {r['model']} | {r['fires']} | {r['caught']} | {r['rate']:.1f}% "
-                f"| {_dur(r['gross'])} | {r['gross_pct']:.1f}% "
-                f"| {_dur(r['overhead'])} | {r['overhead_pct']:.1f}% "
-                f"| {_dur(r['net'])} | {r['net_pct']:.1f}%")
-        if has_test_time:
-            return base + f" | {_dur(r['test_time'])} | {r['test_time_pct']:.1f}% |"
-        return base + " |"
-
-    lines.append(hook_hdr)
-    lines.append(hook_sep)
-    for r in hook_rows:
-        lines.append(_fmt_hook(r))
-    lines.append("")
-
-    sort_specs = [
-        ("Sorted by net saved (most first)", "net", True),
-        ("Sorted by catch rate (highest first)", "rate", True),
-    ]
-    if has_test_time:
-        sort_specs.insert(1, ("Sorted by net % of test time saved (most first)", "test_time_pct", True))
-    lines.extend(_emit_sorted_variants(hook_hdr, hook_sep, hook_rows, sort_specs, _fmt_hook))
-    lines.append("")
-
     # ── Trap Analysis by Language/Model/Effort/Category ──
     if trap_instances:
         # Each value is a tuple of modes the trap applies to. A trap that can
@@ -1305,7 +1185,6 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
             "pester-wrong-assertions": PS_FAMILY,
             "docker-pwsh-install": PS_FAMILY,
             "mid-run-module-restructure": PS_FAMILY,
-            "ts-type-error-fix-cycles": ("typescript-bun",),
             "bats-setup-issues": ("bash",),
             "dotnet-install-loop": ("csharp-script",),
             "pwsh-invoked-from-bash": PS_FAMILY,
@@ -1313,7 +1192,6 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         }
         trap_descriptions = {
             "act-push-debug-loops": "Agent ran `act push` more than twice, indicating repeated workflow debugging.",
-            "ts-type-error-fix-cycles": "TypeScript type errors caught by `tsc --noEmit` hooks; each requires a fix cycle.",
             "fixture-rework": "Agent wrote, broke, and rewrote test fixture data (4+ fixture-related commands).",
             "repeated-test-reruns": "Same test command executed 4+ times without the underlying code changing.",
             "docker-pwsh-install": "Multiple Docker test runs trying to figure out how to install PowerShell in act's container.",
@@ -2002,7 +1880,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
             "",
             "### Duration columns",
             "",
-            "Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution + hooks).",
+            "Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).",
             "",
             "- **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.",
             "- **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.",

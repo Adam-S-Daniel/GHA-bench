@@ -2,7 +2,7 @@
 
 This module provides a pluggable interface for calling LLMs. The benchmark
 runner (runner.py) is inherently tied to the Claude Code CLI since it tests
-CLI-specific features (streaming, hooks, workspace isolation). This provider
+CLI-specific features (streaming, workspace isolation, per-mode tooling). This provider
 layer is for *evaluation* tasks like the LLM-as-judge in test_quality.py,
 where the LLM is used as a tool rather than being the thing under test.
 

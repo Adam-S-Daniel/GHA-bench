@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-02 09:53:00 AM ET — 111/144 runs completed, 33 remaining; total cost $76.34; total agent time 459.2 min.
+**Last updated:** 2026-07-03 07:19:53 AM ET — 111/144 runs completed, 33 remaining; total cost $76.34; total agent time 459.2 min.
 **Claude Code versions used:** [v2.1.94](claude-code-2.1.94.md) (25 runs), [v2.1.96](claude-code-2.1.96.md) (86 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -11,7 +11,6 @@
 - [Failed / Timed-Out Runs](#failed-timed-out-runs)
 - [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort)
 - [Savings Analysis](#savings-analysis)
-  - [Hook Savings by Language/Model/Effort](#hook-savings-by-languagemodeleffort)
   - [Trap Analysis by Language/Model/Effort/Category](#trap-analysis-by-languagemodeleffortcategory)
   - [Traps by Language/Model/Effort](#traps-by-languagemodeleffort)
   - [Prompt Cache Savings](#prompt-cache-savings)
@@ -55,7 +54,7 @@ Properties:
 
 ### Duration columns
 
-Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution + hooks).
+Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).
 
 - **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.
 - **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.
@@ -292,41 +291,6 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 </details>
 
 ## Savings Analysis
-
-### Hook Savings by Language/Model/Effort
-
-Each hook-caught error avoids one test run that would otherwise have been needed to discover it.
-Every hook fire (hit or miss) costs execution time for the syntax/type checker.
-
-*`% of Test Time Saved` = `net / (net + test_time) × 100` — the share of total (would-have-been + actually-spent) test time that hooks eliminated. Bounded in (-∞, 100%) without an artificial cap; near 100% means hooks substituted for almost all of the hypothetical test work.*
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-
-
-<details>
-<summary>Sorted by net saved (most first)</summary>
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-
-</details>
-
-<details>
-<summary>Sorted by net % of test time saved (most first)</summary>
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-
-</details>
-
-<details>
-<summary>Sorted by catch rate (highest first)</summary>
-
-| Language | Model | Fires | Caught | Rate | Gross Saved | % of Time | Overhead | % of Time | Net Saved | % of Time | Test Run Time | % of Test Time Saved |
-|------|-------|-------|--------|------|------------|-----------|----------|-----------|-----------|-----------|---------------|----------------------|
-
-</details>
 
 ### Trap Analysis by Language/Model/Effort/Category
 

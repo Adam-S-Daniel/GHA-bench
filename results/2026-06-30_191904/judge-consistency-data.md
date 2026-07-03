@@ -4,22 +4,21 @@
 
 ## Notes
 
-- **Generated:** 2026-07-02 09:57:50 AM ET
-- **Source:** `/home/passp/repos/GHA-bench-integration/results/2026-06-30_191904`
+- **Generated:** 2026-07-03 07:25:08 AM ET
+- **Source:** `/home/passp/repos/GHA-bench/results/2026-06-30_191904`
 - **Judges present:** haiku45, gemini31pro
 - **Score conventions:** Scores shown are the `overall` dimension from each judge (1-5). Δ column is the second judge minus the first; positive = second judge is more generous.
 
 ## Quality Analysis
 
-The sonnet5-1m + powershell configuration produces the strongest Workflow Craft output, holding rank #1 with both judges and no pair-wise reversals against the alternatives. PowerShell is also the top language for Tests Quality (rank #1 with both judges), while bash sits last for Workflow Craft in both rankings — the panel agrees on both the ceiling and the floor of the language axis.
+Sonnet at 1M context with medium effort produces the strongest workflow deliverables, ranked #1 by both judges with perfect agreement on model ordering (ρ = +1.00 on Workflow Craft, zero reversals). PowerShell is the best language fit for that model on shipped workflows, taking the top language×model slot under both judges, and PowerShell also tops the Tests Quality language ranking under both.
 
-- **Top performer**: powershell paired with sonnet5-1m leads both quality axes (Workflow Craft rank #1 in both judges; Tests Quality rank #1 with Haiku and #2 with Gemini, means 3.29 and 5.00).
-- **Effort tier**: sonnet5-low trails the higher-effort tiers on both axes — last on Workflow Craft in both judges (means 2.07 / 4.03) and last on Tests Quality (2.50 / 2.87), so the effort ordering is unambiguous.
-- **Workflow Craft ceiling**: the 1M-context sonnet5-1m outscores 200K sonnet5 on Workflow Craft with perfect agreement (Spearman ρ = +1.00 and zero reversals across the model pair).
-- **Best by language for Tests Quality**: powershell tops the language ranking in both judges, and powershell-tool sits in the top three for both — the PowerShell family is the highest-confidence match for test-suite quality (ρ = +0.40 with matching #1).
-- **Where rankings diverge**: on Tests Quality the two judges flip on the sonnet5 vs sonnet5-1m ordering (ρ = −1.00), and on Workflow Craft language rankings bash swings from #5 (Haiku) to #2 (Gemini) — so fine-grained language×model claims (ρ = +0.22 to +0.37) carry lower confidence than the headline results.
+- **Top performer**: sonnet5-1m-medium leads Workflow Craft under both judges (ρ = +1.00, no reversals) and takes #1 on Tests Quality under Gemini, with a single reversal from Haiku on the model axis.
+- **Best by language**: PowerShell / sonnet5-1m is the #1 language×model cell on Workflow Craft under both judges, and Haiku's #1 on Tests Quality (tied-top for Gemini at a 5.00 average).
+- **Effort tier**: low-effort Sonnet trails on both axes for both judges — 2.10 / 4.00 on Workflow Craft, 2.50 / 2.87 on Tests Quality — and finishes last in every model ranking presented.
+- **Where rankings diverge**: Bash is Haiku's worst Tests Quality language but Gemini's second-best (three Bash reversals against Haiku); the default (Python) language shows the same pattern on Workflow Craft, ranked #1 by Gemini and #4 by Haiku.
 
-*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI (from cache); 5 in / 1813 out tokens, $0.2213. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
+*Provenance:* `claude-opus-4-7[1m]` at effort `xhigh` via Claude CLI; 5 in / 4445 out tokens, $0.2939. Prompt: [`QUALITY_ANALYSIS_SYSTEM_PROMPT`](../../judge_consistency_report.py).
 
 ## Campaign summary
 
@@ -33,7 +32,7 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 
 | Scope | n | haiku45 ovr | gemini31pro ovr | Δ(gemini31pro−haiku45) |
 |---|---|---|---|---|
-| all | 100 | 2.58 | 4.48 | +1.90 |
+| all | 95 | 2.66 | 4.45 | +1.79 |
 
 ## By task
 
@@ -54,12 +53,12 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 | Task | n | haiku45 ovr | gemini31pro ovr | Δ(gemini31pro−haiku45) |
 |---|---|---|---|---|
 | 11-semantic-version-bumper | 15 | 2.80 | 4.40 | +1.60 |
-| 12-pr-label-assigner | 15 | 2.60 | 4.53 | +1.93 |
+| 12-pr-label-assigner | 14 | 2.71 | 4.50 | +1.79 |
 | 13-dependency-license-checker | 14 | 3.14 | 4.79 | +1.64 |
 | 15-test-results-aggregator | 14 | 2.36 | 4.43 | +2.07 |
-| 16-environment-matrix-generator | 14 | 2.50 | 4.36 | +1.86 |
-| 17-artifact-cleanup-script | 14 | 2.43 | 4.64 | +2.21 |
-| 18-secret-rotation-validator | 14 | 2.21 | 4.21 | +2.00 |
+| 16-environment-matrix-generator | 12 | 2.75 | 4.25 | +1.50 |
+| 17-artifact-cleanup-script | 13 | 2.54 | 4.62 | +2.08 |
+| 18-secret-rotation-validator | 13 | 2.31 | 4.15 | +1.85 |
 
 ## By language mode
 
@@ -77,10 +76,10 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 
 | Mode | n | haiku45 ovr | gemini31pro ovr | Δ(gemini31pro−haiku45) |
 |---|---|---|---|---|
-| bash | 21 | 2.48 | 4.24 | +1.76 |
-| default | 21 | 2.52 | 4.71 | +2.19 |
-| powershell | 21 | 2.67 | 4.43 | +1.76 |
-| powershell-tool | 16 | 2.56 | 4.62 | +2.06 |
+| bash | 20 | 2.55 | 4.20 | +1.65 |
+| default | 20 | 2.60 | 4.70 | +2.10 |
+| powershell | 20 | 2.75 | 4.40 | +1.65 |
+| powershell-tool | 14 | 2.79 | 4.57 | +1.79 |
 | typescript-bun | 21 | 2.67 | 4.43 | +1.76 |
 
 ## By model + effort
@@ -97,9 +96,9 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 
 | Model-Effort | n | haiku45 ovr | gemini31pro ovr | Δ(gemini31pro−haiku45) |
 |---|---|---|---|---|
-| sonnet5 | 35 | 2.97 | 4.71 | +1.74 |
-| sonnet5-1m-medium | 35 | 2.63 | 4.63 | +2.00 |
-| sonnet5-low | 30 | 2.07 | 4.03 | +1.97 |
+| sonnet5 | 33 | 3.09 | 4.70 | +1.61 |
+| sonnet5-1m-medium | 33 | 2.73 | 4.61 | +1.88 |
+| sonnet5-low | 29 | 2.10 | 4.00 | +1.90 |
 
 ## Disagreement hotspots (panel span ≥ 2 on overall)
 
@@ -137,12 +136,7 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 
 | Task | Mode | Model | Span | haiku45 ovr | gemini31pro ovr |
 |---|---|---|---|---|---|
-| 12-pr-label-assigner | default | sonnet5-1m-medium | 4.0 | 1.0 | 5.0 |
 | 15-test-results-aggregator | typescript-bun | sonnet5-1m-medium | 4.0 | 1.0 | 5.0 |
-| 16-environment-matrix-generato | bash | sonnet5-low | 4.0 | 1.0 | 5.0 |
-| 16-environment-matrix-generato | powershell-tool | sonnet5 | 4.0 | 1.0 | 5.0 |
-| 17-artifact-cleanup-script | powershell-tool | sonnet5 | 4.0 | 1.0 | 5.0 |
-| 18-secret-rotation-validator | powershell | sonnet5-1m-medium | 4.0 | 1.0 | 5.0 |
 | 11-semantic-version-bumper | default | sonnet5 | 3.0 | 2.0 | 5.0 |
 | 11-semantic-version-bumper | typescript-bun | sonnet5-low | 3.0 | 1.0 | 4.0 |
 | 12-pr-label-assigner | bash | sonnet5-1m-medium | 3.0 | 2.0 | 5.0 |
@@ -162,6 +156,11 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 | 16-environment-matrix-generato | powershell-tool | sonnet5-1m-medium | 3.0 | 2.0 | 5.0 |
 | 17-artifact-cleanup-script | bash | sonnet5-1m-medium | 3.0 | 2.0 | 5.0 |
 | 17-artifact-cleanup-script | default | sonnet5 | 3.0 | 2.0 | 5.0 |
+| 17-artifact-cleanup-script | default | sonnet5-1m-medium | 3.0 | 2.0 | 5.0 |
+| 17-artifact-cleanup-script | default | sonnet5-low | 3.0 | 2.0 | 5.0 |
+| 17-artifact-cleanup-script | powershell | sonnet5-1m-medium | 3.0 | 2.0 | 5.0 |
+| 17-artifact-cleanup-script | powershell | sonnet5-low | 3.0 | 2.0 | 5.0 |
+| 17-artifact-cleanup-script | powershell-tool | sonnet5-1m-medium | 3.0 | 2.0 | 5.0 |
 
 ## Model rankings by judge
 
@@ -186,8 +185,8 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 
 | Model | haiku45 rank (mean, n) | gemini31pro rank (mean, n) |
 |---|---|---|
-| sonnet5-1m | 1 (2.63, n=35) | 1 (4.63, n=35) |
-| sonnet5 | 2 (2.55, n=65) | 2 (4.40, n=65) |
+| sonnet5-1m | 1 (2.73, n=33) | 1 (4.63, n=35) |
+| sonnet5 | 2 (2.63, n=62) | 2 (4.40, n=65) |
 
 *Spearman rank correlation between haiku45 and gemini31pro: **+1.00**. (+1.0 = judges agree perfectly on ordering; 0 = no correlation; -1.0 = reversed.)*
 
@@ -221,13 +220,13 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 
 | Language | haiku45 rank (mean, n) | gemini31pro rank (mean, n) |
 |---|---|---|
-| powershell | 1 (2.67, n=21) | 3 (4.43, n=21) |
-| typescript-bun | 2 (2.67, n=21) | 4 (4.43, n=21) |
-| powershell-tool | 3 (2.56, n=16) | 2 (4.62, n=16) |
-| default | 4 (2.52, n=21) | 1 (4.71, n=21) |
-| bash | 5 (2.48, n=21) | 5 (4.24, n=21) |
+| powershell-tool | 1 (2.79, n=14) | 2 (4.62, n=16) |
+| powershell | 2 (2.75, n=20) | 3 (4.43, n=21) |
+| typescript-bun | 3 (2.67, n=21) | 4 (4.43, n=21) |
+| default | 4 (2.60, n=20) | 1 (4.71, n=21) |
+| bash | 5 (2.55, n=20) | 5 (4.24, n=21) |
 
-*Spearman rank correlation between haiku45 and gemini31pro: **+0.10**. (+1.0 = judges agree perfectly on ordering; 0 = no correlation; -1.0 = reversed.)*
+*Spearman rank correlation between haiku45 and gemini31pro: **+0.40**. (+1.0 = judges agree perfectly on ordering; 0 = no correlation; -1.0 = reversed.)*
 
 **Pair-wise reversals** (where the two judges disagree on which language is better):
 
@@ -236,8 +235,6 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 | default vs powershell | powershell | default | — |
 | default vs powershell-tool | powershell-tool | default | — |
 | default vs typescript-bun | typescript-bun | default | — |
-| powershell vs powershell-tool | powershell | powershell-tool | — |
-| powershell-tool vs typescript-bun | typescript-bun | powershell-tool | — |
 
 ## Language×Model rankings by judge
 
@@ -285,18 +282,18 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 
 | Language / Model | haiku45 rank (mean, n) | gemini31pro rank (mean, n) |
 |---|---|---|
-| powershell / sonnet5-1m | 1 (3.00, n=7) | 1 (4.86, n=7) |
-| typescript-bun / sonnet5-1m | 2 (3.00, n=7) | 5 (4.57, n=7) |
-| bash / sonnet5 | 3 (2.71, n=14) | 9 (4.21, n=14) |
-| default / sonnet5-1m | 4 (2.71, n=7) | 3 (4.71, n=7) |
-| powershell-tool / sonnet5 | 5 (2.67, n=9) | 6 (4.56, n=9) |
+| powershell / sonnet5-1m | 1 (3.33, n=6) | 1 (4.86, n=7) |
+| powershell-tool / sonnet5 | 2 (3.14, n=7) | 6 (4.56, n=9) |
+| default / sonnet5-1m | 3 (3.00, n=6) | 3 (4.71, n=7) |
+| typescript-bun / sonnet5-1m | 4 (3.00, n=7) | 5 (4.57, n=7) |
+| bash / sonnet5 | 5 (2.85, n=13) | 9 (4.21, n=14) |
 | powershell / sonnet5 | 6 (2.50, n=14) | 10 (4.21, n=14) |
 | typescript-bun / sonnet5 | 7 (2.50, n=14) | 7 (4.36, n=14) |
 | default / sonnet5 | 8 (2.43, n=14) | 2 (4.71, n=14) |
 | powershell-tool / sonnet5-1m | 9 (2.43, n=7) | 4 (4.71, n=7) |
 | bash / sonnet5-1m | 10 (2.00, n=7) | 8 (4.29, n=7) |
 
-*Spearman rank correlation between haiku45 and gemini31pro: **+0.22**. (+1.0 = judges agree perfectly on ordering; 0 = no correlation; -1.0 = reversed.)*
+*Spearman rank correlation between haiku45 and gemini31pro: **+0.31**. (+1.0 = judges agree perfectly on ordering; 0 = no correlation; -1.0 = reversed.)*
 
 **Pair-wise reversals** (where the two judges disagree on which language×model is better):
 
@@ -304,8 +301,6 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 |---|---|---|---|
 | bash / sonnet5 vs bash / sonnet5-1m | bash / sonnet5 | bash / sonnet5-1m | — |
 | bash / sonnet5 vs default / sonnet5 | bash / sonnet5 | default / sonnet5 | — |
-| bash / sonnet5 vs default / sonnet5-1m | bash / sonnet5 | default / sonnet5-1m | — |
-| bash / sonnet5 vs powershell-tool / sonnet5 | bash / sonnet5 | powershell-tool / sonnet5 | — |
 | bash / sonnet5 vs powershell-tool / sonnet5-1m | bash / sonnet5 | powershell-tool / sonnet5-1m | — |
 | bash / sonnet5 vs typescript-bun / sonnet5 | bash / sonnet5 | typescript-bun / sonnet5 | — |
 | bash / sonnet5-1m vs powershell / sonnet5 | powershell / sonnet5 | bash / sonnet5-1m | — |
@@ -314,10 +309,11 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 | default / sonnet5 vs powershell-tool / sonnet5 | powershell-tool / sonnet5 | default / sonnet5 | — |
 | default / sonnet5 vs typescript-bun / sonnet5 | typescript-bun / sonnet5 | default / sonnet5 | — |
 | default / sonnet5 vs typescript-bun / sonnet5-1m | typescript-bun / sonnet5-1m | default / sonnet5 | — |
-| default / sonnet5-1m vs typescript-bun / sonnet5-1m | typescript-bun / sonnet5-1m | default / sonnet5-1m | — |
+| default / sonnet5-1m vs powershell-tool / sonnet5 | powershell-tool / sonnet5 | default / sonnet5-1m | — |
 | powershell / sonnet5 vs powershell-tool / sonnet5-1m | powershell / sonnet5 | powershell-tool / sonnet5-1m | — |
 | powershell / sonnet5 vs typescript-bun / sonnet5 | powershell / sonnet5 | typescript-bun / sonnet5 | — |
 | powershell-tool / sonnet5 vs powershell-tool / sonnet5-1m | powershell-tool / sonnet5 | powershell-tool / sonnet5-1m | — |
+| powershell-tool / sonnet5 vs typescript-bun / sonnet5-1m | powershell-tool / sonnet5 | typescript-bun / sonnet5-1m | — |
 | powershell-tool / sonnet5-1m vs typescript-bun / sonnet5 | typescript-bun / sonnet5 | powershell-tool / sonnet5-1m | — |
 | powershell-tool / sonnet5-1m vs typescript-bun / sonnet5-1m | typescript-bun / sonnet5-1m | powershell-tool / sonnet5-1m | — |
 
@@ -333,7 +329,7 @@ The sonnet5-1m + powershell configuration produces the strongest Workflow Craft 
 
 ### Workflow Craft
 
-*Baseline delta (gemini31pro − haiku45) across the whole dataset: **+1.90**.*
+*Baseline delta (gemini31pro − haiku45) across the whole dataset: **+1.79**.*
 
 *(no self-judgment rows exceed the 1.0-point deviation threshold — judges agree about in-family output roughly as much as about out-of-family output)*
 

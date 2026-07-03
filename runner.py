@@ -670,7 +670,6 @@ def parse_stream_output(timestamped_lines: list[tuple[int, str]]) -> dict:
     install_commands = []
     tools_installed = []
     interpreter_versions = {}
-    hook_events = []  # Collected from --include-hook-events
 
     # Track pending tool_use events by ID for duration calculation
     pending_tool_uses: dict[str, tuple[int, str, str]] = {}  # id -> (timestamp_ms, tool_name, command)
@@ -788,22 +787,6 @@ def parse_stream_output(timestamped_lines: list[tuple[int, str]]) -> dict:
         if "compact" in event_type.lower() or "compact" in str(obj.get("subtype", "")).lower():
             compaction_count += 1
 
-        # Hook events (from --include-hook-events)
-        subtype = obj.get("subtype", "")
-        if subtype in ("hook_started", "hook_response"):
-            hook_entry = {
-                "subtype": subtype,
-                "hook_id": obj.get("hook_id", ""),
-                "hook_name": obj.get("hook_name", ""),
-                "hook_event": obj.get("hook_event", ""),
-            }
-            if subtype == "hook_response":
-                hook_entry["exit_code"] = obj.get("exit_code")
-                hook_entry["outcome"] = obj.get("outcome", "")
-                hook_entry["stdout"] = (obj.get("stdout", "") or "")[:500]
-                hook_entry["stderr"] = (obj.get("stderr", "") or "")[:500]
-            hook_events.append(hook_entry)
-
         # Result event — keep the first one (background task notifications
         # can emit a second init+result pair that would overwrite the real data)
         if event_type == "result" and not result_data:
@@ -854,7 +837,6 @@ def parse_stream_output(timestamped_lines: list[tuple[int, str]]) -> dict:
         "model_used": model_used,
         "init_data": init_data,
         "result_meta": result_meta,
-        "hook_events": hook_events,
         "duration_ms": duration_ms,
         "duration_api_ms": duration_api_ms,
         "num_turns": num_turns,
@@ -933,29 +915,6 @@ def run_single_task(
     except Exception:
         pass  # docker not available or image not built — use act default
 
-    # Set up workspace hooks — syntax/lint checking on Write/Edit
-    hook_script = (repo_root / "hooks" / "syntax-check.py").resolve()
-    if hook_script.exists():
-        claude_dir = workspace / ".claude"
-        claude_dir.mkdir(parents=True, exist_ok=True)
-        hook_config = {
-            "hooks": {
-                "PostToolUse": [
-                    {
-                        "matcher": "Write|Edit",
-                        "hooks": [
-                            {
-                                "type": "command",
-                                "command": f"python3 {hook_script}",
-                                "timeout": 15,
-                            }
-                        ],
-                    }
-                ]
-            }
-        }
-        (claude_dir / "settings.json").write_text(json.dumps(hook_config, indent=2))
-
     # Create results directory
     result_dir = run_dir / "tasks" / task_id / f"{mode}-{variant}"
     result_dir.mkdir(parents=True, exist_ok=True)
@@ -974,7 +933,6 @@ def run_single_task(
         "--model", model_id,
         "--output-format", "stream-json",
         "--dangerously-skip-permissions",
-        "--include-hook-events",
         "--verbose",
         "--mcp-config", '{"mcpServers":{}}',
         "--strict-mcp-config",
@@ -1260,18 +1218,6 @@ def run_single_task(
             "slowest_tool_uses": sorted(parsed["tool_use_durations"], key=lambda d: -d["duration_ms"])[:10],
             "all_tool_uses": parsed["tool_use_durations"],  # full list for post-analysis
             **_categorize_tool_time(parsed["tool_use_durations"]),
-        },
-        "hooks": {
-            "hook_fires": len([h for h in parsed.get("hook_events", []) if h["subtype"] == "hook_response"]),
-            "hook_errors_caught": len([
-                h for h in parsed.get("hook_events", [])
-                if h["subtype"] == "hook_response" and h.get("stdout", "").strip()
-            ]),
-            "hook_failures": len([
-                h for h in parsed.get("hook_events", [])
-                if h["subtype"] == "hook_response" and h.get("exit_code", 0) != 0
-            ]),
-            "hook_events": parsed.get("hook_events", []),
         },
     }
 

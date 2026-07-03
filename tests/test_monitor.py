@@ -14,8 +14,7 @@ from monitor import (aggregate, match_pairs, group_by_variant,
 def _mk(task_id, mode="default", variant="opus48-1m-medium",
         model_short="opus48-1m", model="claude-opus-4-8[1m]", effort="medium",
         success=True, duration_ms=480_000, cost=2.0, turns=34, errors=0,
-        actionlint=True, test_ms=40_000, hook_fires=20, hook_caught=2,
-        hook_failures=0):
+        actionlint=True, test_ms=40_000):
     return {
         "task_id": task_id,
         "language_mode": mode,
@@ -28,8 +27,6 @@ def _mk(task_id, mode="default", variant="opus48-1m-medium",
         "cost": {"total_cost_usd": cost},
         "quality": {"error_count": errors, "actionlint_pass": actionlint},
         "tool_use_timing": {"test_duration_ms": test_ms},
-        "hooks": {"hook_fires": hook_fires, "hook_errors_caught": hook_caught,
-                  "hook_failures": hook_failures},
     }
 
 
@@ -40,10 +37,9 @@ def test_aggregate_empty():
 def test_aggregate_basic():
     cells = [
         _mk("11", duration_ms=480_000, cost=2.0, turns=30, errors=1,
-            actionlint=True, test_ms=40_000, hook_fires=20, hook_caught=3),
+            actionlint=True, test_ms=40_000),
         _mk("12", duration_ms=600_000, cost=3.0, turns=40, errors=2,
-            actionlint=False, test_ms=20_000, hook_fires=10, hook_caught=1,
-            success=False),
+            actionlint=False, test_ms=20_000, success=False),
     ]
     a = aggregate(cells)
     assert a["n"] == 2
@@ -54,7 +50,6 @@ def test_aggregate_basic():
     assert a["testsec"] == 30
     assert a["errors"] == 3         # sum
     assert a["actionlint_pass"] == 1
-    assert a["hook_fires"] == 30 and a["hook_errs_caught"] == 4 and a["hook_failures"] == 0
 
 
 def test_match_pairs_default_key():
