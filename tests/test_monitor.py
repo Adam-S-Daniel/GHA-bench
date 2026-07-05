@@ -6,6 +6,9 @@ strongest-vs-strongest head-to-head), and the per-language significance flag.
 The structural()/traps() helpers are best-effort file readers exercised by the
 live tool, not unit-tested here.
 """
+import math
+import pytest
+
 from monitor import (aggregate, match_pairs, group_by_variant,
                      model_power, strongest_model_short, flag_outliers,
                      format_usage)
@@ -14,8 +17,8 @@ from monitor import (aggregate, match_pairs, group_by_variant,
 def _mk(task_id, mode="default", variant="opus48-1m-medium",
         model_short="opus48-1m", model="claude-opus-4-8[1m]", effort="medium",
         success=True, duration_ms=480_000, cost=2.0, turns=34, errors=0,
-        actionlint=True, test_ms=40_000):
-    return {
+        actionlint=True, test_ms=40_000, failure_reason=None):
+    d = {
         "task_id": task_id,
         "language_mode": mode,
         "variant": variant,
@@ -28,6 +31,9 @@ def _mk(task_id, mode="default", variant="opus48-1m-medium",
         "quality": {"error_count": errors, "actionlint_pass": actionlint},
         "tool_use_timing": {"test_duration_ms": test_ms},
     }
+    if failure_reason is not None:
+        d["failure_reason"] = failure_reason
+    return d
 
 
 def test_aggregate_empty():
@@ -35,6 +41,11 @@ def test_aggregate_empty():
 
 
 def test_aggregate_basic():
+    # Cell "12" is a plain failure (success=False, no failure_reason —
+    # i.e. not a timeout), so it's excluded from EVERY geomean stat, not
+    # just cost/turns: dur/cost/turns all reduce to cell "11"'s own value
+    # (geomean of one value = itself). testsec/errors are unaffected (they
+    # still pool/sum over all cells, per spec).
     cells = [
         _mk("11", duration_ms=480_000, cost=2.0, turns=30, errors=1,
             actionlint=True, test_ms=40_000),
@@ -44,12 +55,28 @@ def test_aggregate_basic():
     a = aggregate(cells)
     assert a["n"] == 2
     assert a["ok"] == 1 and a["fail"] == 1
-    assert a["dur"] == 9.0          # mean of 8 and 10 minutes
-    assert a["cost"] == 2.5
-    assert a["turns"] == 35
+    assert a["dur"] == pytest.approx(8.0)   # only cell "11" (8 min)
+    assert a["cost"] == pytest.approx(2.0)  # only cell "11"
+    assert a["turns"] == pytest.approx(30)  # only cell "11"
     assert a["testsec"] == 30
     assert a["errors"] == 3         # sum
     assert a["actionlint_pass"] == 1
+
+
+def test_aggregate_timeout_pools_into_duration_but_not_cost_turns():
+    # A timeout (failure_reason="timeout") is right-censored: it's pooled
+    # into the duration geomean (it ran at LEAST that long) but excluded
+    # from cost/turns (a killed CLI records cost=0/turns=0 — missing data,
+    # not a real zero).
+    cells = [
+        _mk("11", duration_ms=480_000, cost=2.0, turns=30),
+        _mk("12", duration_ms=1_800_000, cost=0.0, turns=0,
+            success=False, failure_reason="timeout"),
+    ]
+    a = aggregate(cells)
+    assert a["dur"] == pytest.approx(math.sqrt(8.0 * 30.0))  # both cells, minutes
+    assert a["cost"] == pytest.approx(2.0)                   # cell "11" only
+    assert a["turns"] == pytest.approx(30)                   # cell "11" only
 
 
 def test_match_pairs_default_key():

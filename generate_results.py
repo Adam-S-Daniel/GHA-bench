@@ -12,6 +12,7 @@ Usage:
 """
 
 import json
+import math
 import os
 import re
 import sys
@@ -441,6 +442,14 @@ def _disp_mode(mode: str) -> str:
     return "powershell" if mode in ("powershell", "powershell-tool") else mode
 
 
+def _geomean(vals) -> float:
+    """Geometric mean over the positive values; 0.0 if none."""
+    pos = [v for v in vals if v > 0]
+    if not pos:
+        return 0.0
+    return math.exp(sum(math.log(v) for v in pos) / len(pos))
+
+
 def _collapsible_table(summary: str, header: str, separator: str, rows: list[str]) -> list[str]:
     """Wrap a markdown table in a <details> block."""
     out = ["", "<details>", f"<summary>{summary}</summary>", ""]
@@ -832,113 +841,11 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         excluded_by_combo[(_disp_mode(m["language_mode"]), _label(m))] = (
             excluded_by_combo.get((_disp_mode(m["language_mode"]), _label(m)), 0) + 1
         )
-    cmp_rows = []
-    for mode in modes_seen:
-        for model in models_seen:
-            # `mode` is a DISPLAY label; pool every raw cell that maps to it
-            # (so `powershell` pools `powershell` + `powershell-tool` cells).
-            mm = [m for m in successful if _disp_mode(m["language_mode"]) == mode and _label(m) == model]
-            n = len(mm)
-            if n == 0:
-                continue
-            # Average LLM-judge Overall across this combo's runs that have a
-            # cached score. Stored as 0.0 for sort purposes + a separate
-            # display string so missing data doesn't sort above zero scores.
-            # Score caches are keyed by the cell's RAW mode, so look up each
-            # pooled cell by its own `language_mode`.
-            llm_scores = [llm_data_by_key[(m["task_id"], m["language_mode"], model)].get("overall")
-                          for m in mm
-                          if (m["task_id"], m["language_mode"], model) in llm_data_by_key]
-            llm_scores = [s for s in llm_scores if isinstance(s, (int, float))]
-            avg_llm = sum(llm_scores) / len(llm_scores) if llm_scores else None
-            # Same treatment for the deliverable-quality judge (scores the
-            # produced workflows + scripts, not the test code).
-            deliv_scores = [deliv_data_by_key[(m["task_id"], m["language_mode"], model)].get("overall")
-                            for m in mm
-                            if (m["task_id"], m["language_mode"], model) in deliv_data_by_key]
-            deliv_scores = [s for s in deliv_scores if isinstance(s, (int, float))]
-            avg_deliv = sum(deliv_scores) / len(deliv_scores) if deliv_scores else None
-            excl = excluded_by_combo.get((mode, model), 0)
-            cmp_rows.append({
-                "mode": mode, "model": model,
-                # Plain model string; Model column display appends an
-                # asterisk in the row formatters when excluded > 0.
-                "excluded": excl,
-                # `model_disp` drops the `-cli<ver>` so rendered tables
-                # stay compact; the CLI Version Legend in Notes maps
-                # each stripped label back to its CLI release.
-                "model_disp": f"{_strip_cli(model)}*" if excl else _strip_cli(model),
-                "model_full": model,  # retained for legend/grouping use
-                "n": n,
-                "avg_dur": sum(m["timing"]["grand_total_duration_ms"] for m in mm) / n / 1000,
-                "avg_errors": sum(m["quality"]["error_count"] for m in mm) / n,
-                "avg_turns": sum(m["timing"]["num_turns"] for m in mm) / n,
-                "avg_cost": sum(m["cost"]["total_cost_usd"] for m in mm) / n,
-                "total_cost": sum(m["cost"]["total_cost_usd"] for m in mm),
-                "avg_llm": avg_llm if avg_llm is not None else 0.0,
-                "avg_llm_disp": f"{avg_llm:.1f}" if avg_llm is not None else "—",
-                "avg_llm_n": len(llm_scores),
-                "avg_deliv": avg_deliv if avg_deliv is not None else 0.0,
-                "avg_deliv_disp": f"{avg_deliv:.1f}" if avg_deliv is not None else "—",
-                "avg_deliv_n": len(deliv_scores),
-            })
-
-    # Consolidate per-CLI rows sharing the same display label into one.
-    # Without this step a run dir that spans two CLI releases for the
-    # same (language, model, effort) renders two Comparison/Tiers rows
-    # whose Language + Model cells are identical — indistinguishable
-    # duplicates to the reader. The CLI Version Legend further down
-    # still documents each CLI release individually.
-    def _consolidate_cmp_rows(rows):
-        grouped: dict[tuple, list[dict]] = {}
-        order: list[tuple] = []
-        for r in rows:
-            k = (r["mode"], _strip_cli(r["model"]))
-            if k not in grouped:
-                order.append(k)
-            grouped.setdefault(k, []).append(r)
-        merged: list[dict] = []
-        for k in order:
-            parts = grouped[k]
-            if len(parts) == 1:
-                merged.append(parts[0])
-                continue
-            n_total = sum(p["n"] for p in parts)
-            def _wavg(key):
-                return sum(p[key] * p["n"] for p in parts) / n_total
-            def _wavg_judged(key, n_key):
-                total_n = sum(p[n_key] for p in parts)
-                if not total_n:
-                    return None
-                return sum(p[key] * p[n_key] for p in parts) / total_n
-            avg_llm = _wavg_judged("avg_llm", "avg_llm_n")
-            avg_deliv = _wavg_judged("avg_deliv", "avg_deliv_n")
-            excl_total = sum(p.get("excluded", 0) for p in parts)
-            base = dict(parts[0])
-            display_model = _strip_cli(parts[0]["model"])
-            base.update({
-                "model": display_model,
-                "model_disp": f"{display_model}*" if excl_total else display_model,
-                "model_full": ",".join(p["model"] for p in parts),
-                "excluded": excl_total,
-                "n": n_total,
-                "avg_dur": _wavg("avg_dur"),
-                "avg_errors": _wavg("avg_errors"),
-                "avg_turns": _wavg("avg_turns"),
-                "avg_cost": _wavg("avg_cost"),
-                "total_cost": sum(p["total_cost"] for p in parts),
-                "avg_llm": avg_llm if avg_llm is not None else 0.0,
-                "avg_llm_disp": f"{avg_llm:.1f}" if avg_llm is not None else "—",
-                "avg_llm_n": sum(p["avg_llm_n"] for p in parts),
-                "avg_deliv": avg_deliv if avg_deliv is not None else 0.0,
-                "avg_deliv_disp": f"{avg_deliv:.1f}" if avg_deliv is not None else "—",
-                "avg_deliv_n": sum(p["avg_deliv_n"] for p in parts),
-            })
-            merged.append(base)
-        return merged
-    cmp_rows = _consolidate_cmp_rows(cmp_rows)
-
     # ── Trap data ──
+    # Moved above the cmp_rows loop (was after it) because per-cell trap
+    # time is needed inside that loop to compute Geo Duration Net of Traps
+    # per row (issue #33) — the later trap_time_by_combo/trap_cost_by_combo
+    # block stays in its original relative position, after cmp_rows.
     trap_instances = []
     combo_run_counts = {}
 
@@ -962,6 +869,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
             trap_instances.append({
                 "mode": mode, "model": model, "task_id": m["task_id"],
                 "task_name": m["task_name"],
+                "raw_mode": m["language_mode"],
                 "dur_s": m["timing"]["grand_total_duration_ms"] / 1000,
                 "cost": m["cost"]["total_cost_usd"],
                 **trap,
@@ -1004,6 +912,7 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
                 trap_instances.append({
                     "mode": mode, "model": model, "task_id": m["task_id"],
                     "task_name": m["task_name"],
+                    "raw_mode": m["language_mode"],
                     "dur_s": m["timing"]["grand_total_duration_ms"] / 1000,
                     "cost": m["cost"]["total_cost_usd"],
                     "name": "pwsh-runtime-install-overhead",
@@ -1011,7 +920,166 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
                     "desc": "; ".join(parts),
                 })
 
+    # Per-cell trap time, keyed by the RAW (task_id, language_mode, model)
+    # so the row loop below can subtract exactly the traps that fired in
+    # each individual cell (not a combo-wide average) when computing
+    # Geo Duration Net of Traps.
+    trap_time_by_cell: dict[tuple, float] = defaultdict(float)
+    for t in trap_instances:
+        trap_time_by_cell[(t["task_id"], t["raw_mode"], t["model"])] += t["time_s"]
+
+    cmp_rows = []
+    for mode in modes_seen:
+        for model in models_seen:
+            # `mode` is a DISPLAY label; pool every raw cell that maps to it
+            # (so `powershell` pools `powershell` + `powershell-tool` cells).
+            mm = [m for m in successful if _disp_mode(m["language_mode"]) == mode and _label(m) == model]
+            n = len(mm)
+            if n == 0:
+                continue
+            # Timed-out cells are right-censored duration observations (the
+            # cell ran at LEAST this long before being killed at the ~30-min
+            # cap), so they're pooled into the duration stats below instead
+            # of being dropped outright — dropping them would silently
+            # reward timing out with a better average. Non-timeout failures
+            # stay excluded from every stat (issue #33).
+            timeouts = [m for m in failed
+                        if _disp_mode(m["language_mode"]) == mode and _label(m) == model
+                        and m.get("failure_reason") == "timeout"]
+            dur_pool = mm + timeouts
+            dur_secs = [m["timing"]["grand_total_duration_ms"] / 1000 for m in dur_pool]
+            max_dur = max(dur_secs)
+            # The argmax cell is a timeout iff it came from `timeouts` —
+            # since `dur_pool` is `mm + timeouts`, that's any index >= len(mm).
+            max_dur_censored = dur_secs.index(max_dur) >= len(mm)
+            net_secs = [
+                max(m["timing"]["grand_total_duration_ms"] / 1000
+                    - trap_time_by_cell.get((m["task_id"], m["language_mode"], _label(m)), 0.0), 1.0)
+                for m in dur_pool
+            ]
+            # Average LLM-judge Overall across this combo's runs that have a
+            # cached score. Stored as 0.0 for sort purposes + a separate
+            # display string so missing data doesn't sort above zero scores.
+            # Score caches are keyed by the cell's RAW mode, so look up each
+            # pooled cell by its own `language_mode`.
+            llm_scores = [llm_data_by_key[(m["task_id"], m["language_mode"], model)].get("overall")
+                          for m in mm
+                          if (m["task_id"], m["language_mode"], model) in llm_data_by_key]
+            llm_scores = [s for s in llm_scores if isinstance(s, (int, float))]
+            avg_llm = sum(llm_scores) / len(llm_scores) if llm_scores else None
+            # Same treatment for the deliverable-quality judge (scores the
+            # produced workflows + scripts, not the test code).
+            deliv_scores = [deliv_data_by_key[(m["task_id"], m["language_mode"], model)].get("overall")
+                            for m in mm
+                            if (m["task_id"], m["language_mode"], model) in deliv_data_by_key]
+            deliv_scores = [s for s in deliv_scores if isinstance(s, (int, float))]
+            avg_deliv = sum(deliv_scores) / len(deliv_scores) if deliv_scores else None
+            excl = excluded_by_combo.get((mode, model), 0)
+            cmp_rows.append({
+                "mode": mode, "model": model,
+                # Plain model string; Model column display appends an
+                # asterisk in the row formatters when excluded > 0.
+                "excluded": excl,
+                # `model_disp` drops the `-cli<ver>` so rendered tables
+                # stay compact; the CLI Version Legend in Notes maps
+                # each stripped label back to its CLI release.
+                "model_disp": f"{_strip_cli(model)}*" if excl else _strip_cli(model),
+                "model_full": model,  # retained for legend/grouping use
+                "n": n,
+                "n_timeout": len(timeouts),
+                "geo_dur": _geomean(dur_secs),
+                "geo_dur_net": _geomean(net_secs),
+                "max_dur": max_dur,
+                "max_dur_censored": max_dur_censored,
+                "avg_errors": sum(m["quality"]["error_count"] for m in mm) / n,
+                "geo_turns": _geomean(m["timing"]["num_turns"] for m in mm),
+                "geo_cost": _geomean(m["cost"]["total_cost_usd"] for m in mm),
+                "total_cost": sum(m["cost"]["total_cost_usd"] for m in mm),
+                "avg_llm": avg_llm if avg_llm is not None else 0.0,
+                "avg_llm_disp": f"{avg_llm:.1f}" if avg_llm is not None else "—",
+                "avg_llm_n": len(llm_scores),
+                "avg_deliv": avg_deliv if avg_deliv is not None else 0.0,
+                "avg_deliv_disp": f"{avg_deliv:.1f}" if avg_deliv is not None else "—",
+                "avg_deliv_n": len(deliv_scores),
+            })
+
+    # Consolidate per-CLI rows sharing the same display label into one.
+    # Without this step a run dir that spans two CLI releases for the
+    # same (language, model, effort) renders two Comparison/Tiers rows
+    # whose Language + Model cells are identical — indistinguishable
+    # duplicates to the reader. The CLI Version Legend further down
+    # still documents each CLI release individually.
+    def _consolidate_cmp_rows(rows):
+        grouped: dict[tuple, list[dict]] = {}
+        order: list[tuple] = []
+        for r in rows:
+            k = (r["mode"], _strip_cli(r["model"]))
+            if k not in grouped:
+                order.append(k)
+            grouped.setdefault(k, []).append(r)
+        merged: list[dict] = []
+        for k in order:
+            parts = grouped[k]
+            if len(parts) == 1:
+                merged.append(parts[0])
+                continue
+            n_total = sum(p["n"] for p in parts)
+            def _wavg(key):
+                return sum(p[key] * p["n"] for p in parts) / n_total
+            def _wavg_judged(key, n_key):
+                total_n = sum(p[n_key] for p in parts)
+                if not total_n:
+                    return None
+                return sum(p[key] * p[n_key] for p in parts) / total_n
+            def _wgeo(key, weights):
+                # Pooled geomean of buckets = exp(sum(w_i * ln(g_i)) / sum(w_i)) —
+                # the log-domain equivalent of a weighted arithmetic mean.
+                pairs = [(p[key], w) for p, w in zip(parts, weights) if w > 0 and p[key] > 0]
+                if not pairs:
+                    return 0.0
+                wtot = sum(w for _, w in pairs)
+                return math.exp(sum(w * math.log(g) for g, w in pairs) / wtot)
+            avg_llm = _wavg_judged("avg_llm", "avg_llm_n")
+            avg_deliv = _wavg_judged("avg_deliv", "avg_deliv_n")
+            excl_total = sum(p.get("excluded", 0) for p in parts)
+            # Duration-pool weights (successful + timeout cells) vs.
+            # successful-only weights (cost/turns) must NOT be conflated —
+            # each field merges against the pool size it was actually
+            # computed over.
+            dur_pool_weights = [p["n"] + p["n_timeout"] for p in parts]
+            n_timeout_total = sum(p["n_timeout"] for p in parts)
+            max_part = max(parts, key=lambda p: p["max_dur"])
+            base = dict(parts[0])
+            display_model = _strip_cli(parts[0]["model"])
+            base.update({
+                "model": display_model,
+                "model_disp": f"{display_model}*" if excl_total else display_model,
+                "model_full": ",".join(p["model"] for p in parts),
+                "excluded": excl_total,
+                "n": n_total,
+                "n_timeout": n_timeout_total,
+                "geo_dur": _wgeo("geo_dur", dur_pool_weights),
+                "geo_dur_net": _wgeo("geo_dur_net", dur_pool_weights),
+                "max_dur": max_part["max_dur"],
+                "max_dur_censored": max_part["max_dur_censored"],
+                "avg_errors": _wavg("avg_errors"),
+                "geo_turns": _wgeo("geo_turns", [p["n"] for p in parts]),
+                "geo_cost": _wgeo("geo_cost", [p["n"] for p in parts]),
+                "total_cost": sum(p["total_cost"] for p in parts),
+                "avg_llm": avg_llm if avg_llm is not None else 0.0,
+                "avg_llm_disp": f"{avg_llm:.1f}" if avg_llm is not None else "—",
+                "avg_llm_n": sum(p["avg_llm_n"] for p in parts),
+                "avg_deliv": avg_deliv if avg_deliv is not None else 0.0,
+                "avg_deliv_disp": f"{avg_deliv:.1f}" if avg_deliv is not None else "—",
+                "avg_deliv_n": sum(p["avg_deliv_n"] for p in parts),
+            })
+            merged.append(base)
+        return merged
+    cmp_rows = _consolidate_cmp_rows(cmp_rows)
+
     # ── Aggregate trap time/cost by (mode, model) for net-of-traps columns ──
+    # (trap_instances was populated above, before the cmp_rows loop, so
+    # per-cell trap time was already available there for geo_dur_net.)
     trap_time_by_combo: dict[tuple, float] = defaultdict(float)
     trap_cost_by_combo: dict[tuple, float] = defaultdict(float)
     for t in trap_instances:
@@ -1020,12 +1088,6 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         # Estimate cost proportional to time fraction of the run
         if t["dur_s"] > 0 and t["cost"] > 0:
             trap_cost_by_combo[combo] += t["time_s"] / t["dur_s"] * t["cost"]
-
-    for r in cmp_rows:
-        combo = (r["mode"], r["model"])
-        n = r["n"]
-        r["avg_trap_dur"] = trap_time_by_combo.get(combo, 0) / n
-        r["avg_dur_net"] = r["avg_dur"] - r["avg_trap_dur"]
 
     # ── Prompt cache data ──
     cache_data = []
@@ -1058,9 +1120,9 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
     if len(successful) >= 2 and len(cmp_rows) >= 2:
         # Compute rank + tier once; the two sections below reuse these
         # per-row fields.
-        for i, r in enumerate(sorted(cmp_rows, key=lambda r: r["avg_dur"]), start=1):
+        for i, r in enumerate(sorted(cmp_rows, key=lambda r: r["geo_dur"]), start=1):
             r["dur_rank"] = i
-        for i, r in enumerate(sorted(cmp_rows, key=lambda r: r["avg_cost"]), start=1):
+        for i, r in enumerate(sorted(cmp_rows, key=lambda r: r["geo_cost"]), start=1):
             r["cost_rank"] = i
         llm_scored = [r for r in cmp_rows if r["avg_llm_n"] > 0]
         for i, r in enumerate(sorted(llm_scored, key=lambda r: -r["avg_llm"]), start=1):
@@ -1078,20 +1140,20 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         for r in cmp_rows:
             r.setdefault("deliv_rank", _deliv_sentinel)
             r["deliv_rank_disp"] = str(r["deliv_rank"]) if r["deliv_rank"] != _deliv_sentinel else "—"
-        best_dur = min(r["avg_dur"] for r in cmp_rows)
-        best_cost = min(r["avg_cost"] for r in cmp_rows)
+        best_dur = min(r["geo_dur"] for r in cmp_rows)
+        best_cost = min(r["geo_cost"] for r in cmp_rows)
         # Auto-calibrate ratio bands to this dataset's best-to-worst spread.
         # A tight cluster gets narrow bands (so meaningful gaps still show
         # as distinct tiers); a wide spread gets proportionally wide bands
         # (so the full A-E range is populated instead of everything pinned
         # to D/E). Formula: log-equal divisions — boundary i = max^(i/5).
-        dur_ratios = [r["avg_dur"] / best_dur for r in cmp_rows]
-        cost_ratios = [r["avg_cost"] / best_cost for r in cmp_rows]
+        dur_ratios = [r["geo_dur"] / best_dur for r in cmp_rows]
+        cost_ratios = [r["geo_cost"] / best_cost for r in cmp_rows]
         dur_bands = _compute_ratio_bands(dur_ratios)
         cost_bands = _compute_ratio_bands(cost_ratios)
         for r in cmp_rows:
-            r["dur_tier"] = _ratio_tier(r["avg_dur"] / best_dur, dur_bands)
-            r["cost_tier"] = _ratio_tier(r["avg_cost"] / best_cost, cost_bands)
+            r["dur_tier"] = _ratio_tier(r["geo_dur"] / best_dur, dur_bands)
+            r["cost_tier"] = _ratio_tier(r["geo_cost"] / best_cost, cost_bands)
             r["llm_tier"] = _llm_tier(r["avg_llm"]) if r["avg_llm_n"] > 0 else "—"
             r["deliv_tier"] = _llm_tier(r["avg_deliv"]) if r["avg_deliv_n"] > 0 else "—"
 
@@ -1122,14 +1184,14 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
         lines.append("*Default sort: weighted composite of tiers (40% Tests, 25% Workflow Craft, 35% split between Duration & Cost). See [Notes](#notes) for tier-band definitions and scoring rubric.*")
         any_excluded = sum(r["excluded"] for r in cmp_rows) > 0
         if any_excluded:
-            lines.append("*`*` after a Model label = this combo's aggregates exclude one or more failed/timed-out runs (see the Failed / Timed-Out Runs table).*")
+            lines.append("*`*` after a Model label = one or more of this combo's runs failed or timed out — excluded from the cost/turns/errors aggregates, though timeouts still pool into the duration stats (see the Failed / Timed-Out Runs table).*")
         lines.append("")
         tr_hdr = "| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |"
         tr_sep = "|----------|-------|----------|------|-----------|-------------|"
         def _fmt_tr(r):
             return (f"| {r['mode']} | {r['model_disp']} "
-                    f"| {r['dur_tier']} ({_dur(r['avg_dur'])}) "
-                    f"| {r['cost_tier']} (${r['avg_cost']:.2f}) "
+                    f"| {r['dur_tier']} ({_dur(r['geo_dur'])}) "
+                    f"| {r['cost_tier']} (${r['geo_cost']:.2f}) "
                     f"| {r['llm_tier']}"
                     + (f" ({r['avg_llm']:.1f})" if r['avg_llm_n'] > 0 else "")
                     + " | "
@@ -1221,14 +1283,15 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
     if cmp_rows:
         lines.append("## Comparison by Language/Model/Effort")
         if failed:
-            lines.append("*(averages exclude failed/timed-out runs)*")
+            lines.append("*(failed runs are excluded from the cost/turns/errors averages; timed-out runs still pool into the duration stats — see [Column Definitions](#column-definitions))*")
         lines.append("*See [Notes](#notes) for scoring rubric and CLI version legend.*")
         lines.append("")
-        cmp_hdr = "| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |"
-        cmp_sep = "|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|"
+        cmp_hdr = "| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |"
+        cmp_sep = "|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|"
         def _fmt_cmp(r):
-            return (f"| {r['mode']} | {r['model_disp']} | {r['n']} | {_dur(r['avg_dur'])} | {_dur(r['avg_dur_net'])} "
-                    f"| {r['avg_errors']:.1f} | {r['avg_turns']:.0f} | ${r['avg_cost']:.2f} | ${r['total_cost']:.2f} "
+            max_dur_disp = ("≥" if r["max_dur_censored"] else "") + _dur(r["max_dur"])
+            return (f"| {r['mode']} | {r['model_disp']} | {r['n']} | {_dur(r['geo_dur'])} | {max_dur_disp} | {_dur(r['geo_dur_net'])} "
+                    f"| {r['avg_errors']:.1f} | {r['geo_turns']:.0f} | ${r['geo_cost']:.2f} | ${r['total_cost']:.2f} "
                     f"| {r['avg_llm_disp']} | {r['avg_deliv_disp']} |")
         lines.append(cmp_hdr)
         lines.append(cmp_sep)
@@ -1236,11 +1299,11 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
             lines.append(_fmt_cmp(r))
         lines.append("")
         lines.extend(_emit_sorted_variants(cmp_hdr, cmp_sep, cmp_rows, [
-            ("Sorted by avg cost (cheapest first)", "avg_cost", False),
-            ("Sorted by avg duration (fastest first)", "avg_dur", False),
-            ("Sorted by avg duration net of traps (fastest first)", "avg_dur_net", False),
+            ("Sorted by cost (geomean, cheapest first)", "geo_cost", False),
+            ("Sorted by duration (geomean, fastest first)", "geo_dur", False),
+            ("Sorted by duration net of traps (geomean, fastest first)", "geo_dur_net", False),
             ("Sorted by avg errors (fewest first)", "avg_errors", False),
-            ("Sorted by avg turns (fewest first)", "avg_turns", False),
+            ("Sorted by turns (geomean, fewest first)", "geo_turns", False),
             ("Sorted by LLM-as-judge score (best first)", "avg_llm", True),
             ("Sorted by deliverable-quality score (best first)", "avg_deliv", True),
         ], _fmt_cmp))
@@ -1962,9 +2025,12 @@ def generate_results_md(run_dir, all_metrics, total_runs, run_count):
             "Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).",
             "",
             "- **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.",
-            "- **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.",
-            "- **Avg Duration Net of Traps** (in the Comparison table only): mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.",
-            "- The **Tier table's Duration column** shows the tier letter (A+..F) for the combo's gross **Avg Duration** ratio. Net of Traps does not feed the tier band.",
+            "- **Geo Duration / Geo Cost / Geo Turns** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; Geo Duration and Geo Cost also drive the [Tiers](#tiers-by-languagemodeleffort) Duration/Cost columns): **geometric** means (issue #33) — outlier-damped relative to a plain average, so one abnormally slow/expensive/chatty run doesn't dominate a combo's aggregate.",
+            "- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average. Geo Cost and Geo Turns still exclude ALL failed runs (including timeouts): a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and would bias those averages down if pooled in. This means **Total Cost can slightly understate** true spend on rows with timeouts (the timeout's own cost isn't in the sum either).",
+            "- **Max Duration** is the slowest run in the Geo Duration pool for that combo, `≥`-prefixed when that run was a timeout (true duration unknown, but at least the shown value).",
+            "- **Avg Errors** remains an arithmetic mean.",
+            "- **Geo Duration Net of Traps** (in the Comparison table only): the geometric mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Pooled over the SAME runs as Geo Duration — timed-out cells are included, with their detected traps (if any) deducted too. Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.",
+            "- The **Tier table's Duration/Cost columns** show the tier letter (A+..F) for the combo's gross **Geo Duration**/**Geo Cost** ratio. Net of Traps does not feed the tier band.",
             "",
         ]
     scoring_md = "\n".join(scoring_block)
