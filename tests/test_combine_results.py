@@ -1,5 +1,6 @@
 """Unit tests for combine_results — cross-run-dir comparison markdown."""
 import json
+import math
 from pathlib import Path
 import pytest
 
@@ -117,7 +118,7 @@ class TestAggregateRows:
         assert len(rows) == 1
         r = rows[0]
         assert r["n"] == 2
-        assert r["avg_cost"] == pytest.approx(5.0)
+        assert r["geo_cost"] == pytest.approx(5.0)
         assert r["total_cost"] == pytest.approx(10.0)
 
     def test_powershell_tool_pools_into_single_powershell_row(self):
@@ -132,7 +133,7 @@ class TestAggregateRows:
         r = rows[0]
         assert r["mode"] == "powershell"          # collapsed display label
         assert r["n"] == 2                         # pooled, not two N=1 rows
-        assert r["avg_cost"] == pytest.approx(3.0)
+        assert r["geo_cost"] == pytest.approx(math.sqrt(2.0 * 4.0))
         assert all(row["mode"] != "powershell-tool" for row in rows)
 
     def test_groups_by_language_model_effort(self):
@@ -147,7 +148,7 @@ class TestAggregateRows:
         # combine/generate reports disambiguate legacy plain short names and
         # annotate context window (v1-v4 runs were all 200k).
         by_key = {(r["mode"], r["model"], r["effort"]): r for r in rows}
-        assert by_key[("default", "opus46-200k", "xhigh")]["avg_cost"] == pytest.approx(4.0)
+        assert by_key[("default", "opus46-200k", "xhigh")]["geo_cost"] == pytest.approx(math.sqrt(3.0 * 5.0))
         assert by_key[("default", "opus46-200k", "medium")]["n"] == 1
         assert by_key[("bash", "opus46-200k", "xhigh")]["n"] == 1
 
@@ -170,7 +171,7 @@ class TestAggregateRows:
         r = rows[0]
         assert r["variant"] == "opus46-200k-medium"
         assert r["n"] == 2
-        assert r["avg_cost"] == pytest.approx(1.5)
+        assert r["geo_cost"] == pytest.approx(math.sqrt(1.0 * 2.0))
         # Pool retains the full set of CLI versions for legend use.
         assert sorted(r["cli_versions"]) == ["2.1.112", "2.1.114"]
 
@@ -212,9 +213,11 @@ class TestAggregateRows:
         r = rows[0]
         assert r["n"] == 1
         assert r["excluded"] == 1
-        # Average covers ONLY the good run, not polluted by the 322-min outlier.
-        assert r["avg_cost"] == pytest.approx(0.5)
-        assert r["avg_dur"] == pytest.approx(60.0)
+        # `bad` has no failure_reason == "timeout" (a plain exit_code=-9
+        # failure), so it's excluded from duration too, not just cost/turns.
+        assert r["geo_cost"] == pytest.approx(0.5)
+        assert r["geo_dur"] == pytest.approx(60.0)
+        assert r["n_timeout"] == 0
         # Model label in display form carries the asterisk.
         assert r["variant_disp"].endswith("*")
         assert r["variant_disp"].rstrip("*") == r["variant"]
@@ -250,12 +253,12 @@ class TestAggregateRows:
         assert ("default", "opus47-200k-medium") in by_variant
         pooled = by_variant[("default", "opus47-1m-medium")]
         assert pooled["n"] == 2                       # cells 11 + 12
-        assert pooled["avg_cost"] == pytest.approx(2.0)   # (1+3)/2
+        assert pooled["geo_cost"] == pytest.approx(math.sqrt(1.0 * 3.0))
         assert pooled["model"] == "opus47-1m"         # name+version+context
         assert pooled["effort"] == "medium"
         sep = by_variant[("default", "opus47-200k-medium")]
         assert sep["n"] == 1                          # cell 13 only
-        assert sep["avg_cost"] == pytest.approx(5.0)
+        assert sep["geo_cost"] == pytest.approx(5.0)
 
     def test_effort_derivation_haiku_and_legacy_cc_version(self):
         # Effort derivation for null effort_level:
@@ -302,6 +305,77 @@ class TestAggregateRows:
         assert no_effort == "sonnet5-1m-high"
         assert explicit_med == "sonnet5-1m-medium"
         assert no_effort != explicit_med
+
+    def test_timeout_pools_into_duration_but_not_cost_turns(self):
+        # A timeout (failure_reason="timeout") is right-censored: its
+        # recorded duration is a lower bound on how long it actually ran,
+        # so it's folded into the geometric-mean duration pool alongside
+        # the successful cells. Its cost/turns are 0 (SIGKILL'd — no
+        # usage recorded), so those stay excluded, as does its contribution
+        # to `n` (which counts only successful cells).
+        good1 = _mk_metric("11", mode="bash", model="haiku45", cost=2.0,
+                           duration_ms=60_000, num_turns=10)
+        good2 = _mk_metric("12", mode="bash", model="haiku45", cost=6.0,
+                           duration_ms=120_000, num_turns=20)
+        timeout = dict(_mk_metric("13", mode="bash", model="haiku45",
+                                  cost=0.0, duration_ms=1_800_000, num_turns=0))
+        timeout["run_success"] = False
+        timeout["exit_code"] = -9
+        timeout["failure_reason"] = "timeout"
+        rows = aggregate_rows([good1, good2, timeout])
+        assert len(rows) == 1
+        r = rows[0]
+        assert r["n"] == 2
+        assert r["n_timeout"] == 1
+        assert r["excluded"] == 1
+        expected_geo_dur = math.exp(
+            (math.log(60.0) + math.log(120.0) + math.log(1800.0)) / 3
+        )
+        assert r["geo_dur"] == pytest.approx(expected_geo_dur)
+        assert r["max_dur"] == pytest.approx(1800.0)
+        assert r["max_dur_censored"] is True
+        assert r["geo_cost"] == pytest.approx(math.sqrt(2.0 * 6.0))
+        assert r["geo_turns"] == pytest.approx(math.sqrt(10 * 20))
+
+    def test_non_timeout_failure_excluded_from_duration_pool_too(self):
+        # A non-timeout failure (e.g. failure_reason="cli_error") is NOT
+        # right-censored data — it's just excluded from every aggregate,
+        # duration included, same as before #33.
+        good = _mk_metric("11", mode="bash", model="haiku45", cost=1.0,
+                          duration_ms=60_000)
+        bad = dict(_mk_metric("12", mode="bash", model="haiku45", cost=0.0,
+                              duration_ms=900_000))
+        bad["run_success"] = False
+        bad["exit_code"] = 1
+        bad["failure_reason"] = "cli_error"
+        rows = aggregate_rows([good, bad])
+        assert len(rows) == 1
+        r = rows[0]
+        assert r["n"] == 1
+        assert r["n_timeout"] == 0
+        assert r["excluded"] == 1
+        # Pool is ONLY the successful cell — the cli_error cell's 900s
+        # duration must not appear anywhere in the aggregate.
+        assert r["geo_dur"] == pytest.approx(60.0)
+        assert r["max_dur"] == pytest.approx(60.0)
+        assert r["max_dur_censored"] is False   # the max is a successful cell
+
+    def test_slow_success_beats_timeout_for_max_dur_censored(self):
+        # When a successful run's duration exceeds the timeout cell's
+        # recorded (capped) duration, the successful cell holds the max —
+        # max_dur_censored must be False even though a timeout is pooled.
+        slow_success = _mk_metric("11", mode="bash", model="haiku45",
+                                  cost=1.0, duration_ms=2_000_000)  # ~33.3 min
+        timeout = dict(_mk_metric("12", mode="bash", model="haiku45",
+                                  cost=0.0, duration_ms=1_800_000, num_turns=0))  # 30 min cap
+        timeout["run_success"] = False
+        timeout["exit_code"] = -9
+        timeout["failure_reason"] = "timeout"
+        rows = aggregate_rows([slow_success, timeout])
+        assert len(rows) == 1
+        r = rows[0]
+        assert r["max_dur"] == pytest.approx(2_000_000 / 1000)
+        assert r["max_dur_censored"] is False
 
 
 class TestCombineIntegration:
@@ -580,10 +654,11 @@ class TestCombineIntegration:
                    if ln.startswith("| default | opus47-1m-medium |")]
         assert matches, f"no pooled opus47-1m-medium row in Comparison:\n{comp}"
         cols = [c.strip() for c in matches[0].strip().strip("|").split("|")]
-        # Columns: Language, Model, Runs, Avg Duration, Avg Errors,
-        # Avg Turns, Avg Cost, Total Cost, Avg Tests Quality, Avg Workflow.
+        # Columns: Language, Model, Runs, Geo Duration, Max Duration,
+        # Avg Errors, Geo Turns, Geo Cost, Total Cost, Avg Tests Quality,
+        # Avg Workflow.
         assert cols[2] == "2", f"expected 2 pooled runs; row: {matches[0]}"
-        assert cols[8] == "3.0", (
+        assert cols[9] == "3.0", (
             f"Avg Tests Quality must be the mean 3.0 of 4.0+2.0; "
             f"row: {matches[0]}"
         )

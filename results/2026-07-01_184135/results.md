@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-03 08:53:15 AM ET — 56/56 runs completed, 0 remaining; total cost $284.77; total agent time 668.9 min.
+**Last updated:** 2026-07-05 01:04:07 AM ET — 56/56 runs completed, 0 remaining; total cost $284.77; total agent time 668.9 min.
 **Claude Code versions used:** [v2.1.198](claude-code-2.1.198.md) (56 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -57,23 +57,26 @@ Properties:
 Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).
 
 - **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.
-- **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.
-- **Avg Duration Net of Traps** (in the Comparison table only): mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
-- The **Tier table's Duration column** shows the tier letter (A+..F) for the combo's gross **Avg Duration** ratio. Net of Traps does not feed the tier band.
+- **Geo Duration / Geo Cost / Geo Turns** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; Geo Duration and Geo Cost also drive the [Tiers](#tiers-by-languagemodeleffort) Duration/Cost columns): **geometric** means (issue #33) — outlier-damped relative to a plain average, so one abnormally slow/expensive/chatty run doesn't dominate a combo's aggregate.
+- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average. Geo Cost and Geo Turns still exclude ALL failed runs (including timeouts): a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and would bias those averages down if pooled in. This means **Total Cost can slightly understate** true spend on rows with timeouts (the timeout's own cost isn't in the sum either).
+- **Max Duration** is the slowest run in the Geo Duration pool for that combo, `≥`-prefixed when that run was a timeout (true duration unknown, but at least the shown value).
+- **Avg Errors** remains an arithmetic mean.
+- **Geo Duration Net of Traps** (in the Comparison table only): the geometric mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Pooled over the SAME runs as Geo Duration — timed-out cells are included, with their detected traps (if any) deducted too. Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
+- The **Tier table's Duration/Cost columns** show the tier letter (A+..F) for the combo's gross **Geo Duration**/**Geo Cost** ratio. Net of Traps does not feed the tier band.
 ## Tiers by Language/Model/Effort
 
 *Default sort: weighted composite of tiers (40% Tests, 25% Workflow Craft, 35% split between Duration & Cost). See [Notes](#notes) for tier-band definitions and scoring rubric.*
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | fable5-1m-medium | A+ (8.0min) | A+ ($3.63) | A- (4.1) | B+ (4.1) |
-| typescript-bun | fable5-1m-medium | B (10.8min) | B- ($4.65) | A (4.4) | A- (4.1) |
-| default | fable5-1m-medium | A (8.9min) | A- ($4.05) | B- (3.2) | B+ (3.9) |
-| powershell | fable5-1m-medium | D+ (15.0min) | B- ($4.70) | A (4.5) | B (3.6) |
-| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.52) | A- (4.3) | B+ (4.1) |
-| typescript-bun | fable5-1m-high | C+ (12.3min) | D- ($6.14) | A- (4.3) | B+ (3.9) |
-| default | fable5-1m-high | B- (11.5min) | D- ($5.97) | B- (3.2) | A (4.4) |
-| powershell | fable5-1m-high | D- (17.2min) | D- ($6.01) | A- (4.4) | A- (4.4) |
+| bash | fable5-1m-medium | A+ (7.9min) | A+ ($3.61) | A- (4.1) | B+ (4.1) |
+| typescript-bun | fable5-1m-medium | B (10.6min) | B- ($4.60) | A (4.4) | A- (4.1) |
+| default | fable5-1m-medium | A (8.7min) | A- ($3.94) | B- (3.2) | B+ (3.9) |
+| powershell | fable5-1m-medium | D+ (14.7min) | B- ($4.57) | A (4.5) | B (3.6) |
+| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.47) | A- (4.3) | B+ (4.1) |
+| typescript-bun | fable5-1m-high | C+ (12.2min) | D- ($5.98) | A- (4.3) | B+ (3.9) |
+| default | fable5-1m-high | B- (11.3min) | D- ($5.74) | B- (3.2) | A (4.4) |
+| powershell | fable5-1m-high | D- (16.9min) | D- ($5.96) | A- (4.4) | A- (4.4) |
 
 
 <details>
@@ -81,14 +84,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | fable5-1m-medium | A+ (8.0min) | A+ ($3.63) | A- (4.1) | B+ (4.1) |
-| default | fable5-1m-medium | A (8.9min) | A- ($4.05) | B- (3.2) | B+ (3.9) |
-| typescript-bun | fable5-1m-medium | B (10.8min) | B- ($4.65) | A (4.4) | A- (4.1) |
-| default | fable5-1m-high | B- (11.5min) | D- ($5.97) | B- (3.2) | A (4.4) |
-| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.52) | A- (4.3) | B+ (4.1) |
-| typescript-bun | fable5-1m-high | C+ (12.3min) | D- ($6.14) | A- (4.3) | B+ (3.9) |
-| powershell | fable5-1m-medium | D+ (15.0min) | B- ($4.70) | A (4.5) | B (3.6) |
-| powershell | fable5-1m-high | D- (17.2min) | D- ($6.01) | A- (4.4) | A- (4.4) |
+| bash | fable5-1m-medium | A+ (7.9min) | A+ ($3.61) | A- (4.1) | B+ (4.1) |
+| default | fable5-1m-medium | A (8.7min) | A- ($3.94) | B- (3.2) | B+ (3.9) |
+| typescript-bun | fable5-1m-medium | B (10.6min) | B- ($4.60) | A (4.4) | A- (4.1) |
+| default | fable5-1m-high | B- (11.3min) | D- ($5.74) | B- (3.2) | A (4.4) |
+| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.47) | A- (4.3) | B+ (4.1) |
+| typescript-bun | fable5-1m-high | C+ (12.2min) | D- ($5.98) | A- (4.3) | B+ (3.9) |
+| powershell | fable5-1m-medium | D+ (14.7min) | B- ($4.57) | A (4.5) | B (3.6) |
+| powershell | fable5-1m-high | D- (16.9min) | D- ($5.96) | A- (4.4) | A- (4.4) |
 
 </details>
 
@@ -97,14 +100,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | fable5-1m-medium | A+ (8.0min) | A+ ($3.63) | A- (4.1) | B+ (4.1) |
-| default | fable5-1m-medium | A (8.9min) | A- ($4.05) | B- (3.2) | B+ (3.9) |
-| typescript-bun | fable5-1m-medium | B (10.8min) | B- ($4.65) | A (4.4) | A- (4.1) |
-| powershell | fable5-1m-medium | D+ (15.0min) | B- ($4.70) | A (4.5) | B (3.6) |
-| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.52) | A- (4.3) | B+ (4.1) |
-| default | fable5-1m-high | B- (11.5min) | D- ($5.97) | B- (3.2) | A (4.4) |
-| typescript-bun | fable5-1m-high | C+ (12.3min) | D- ($6.14) | A- (4.3) | B+ (3.9) |
-| powershell | fable5-1m-high | D- (17.2min) | D- ($6.01) | A- (4.4) | A- (4.4) |
+| bash | fable5-1m-medium | A+ (7.9min) | A+ ($3.61) | A- (4.1) | B+ (4.1) |
+| default | fable5-1m-medium | A (8.7min) | A- ($3.94) | B- (3.2) | B+ (3.9) |
+| typescript-bun | fable5-1m-medium | B (10.6min) | B- ($4.60) | A (4.4) | A- (4.1) |
+| powershell | fable5-1m-medium | D+ (14.7min) | B- ($4.57) | A (4.5) | B (3.6) |
+| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.47) | A- (4.3) | B+ (4.1) |
+| default | fable5-1m-high | B- (11.3min) | D- ($5.74) | B- (3.2) | A (4.4) |
+| typescript-bun | fable5-1m-high | C+ (12.2min) | D- ($5.98) | A- (4.3) | B+ (3.9) |
+| powershell | fable5-1m-high | D- (16.9min) | D- ($5.96) | A- (4.4) | A- (4.4) |
 
 </details>
 
@@ -113,14 +116,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| typescript-bun | fable5-1m-medium | B (10.8min) | B- ($4.65) | A (4.4) | A- (4.1) |
-| powershell | fable5-1m-medium | D+ (15.0min) | B- ($4.70) | A (4.5) | B (3.6) |
-| bash | fable5-1m-medium | A+ (8.0min) | A+ ($3.63) | A- (4.1) | B+ (4.1) |
-| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.52) | A- (4.3) | B+ (4.1) |
-| typescript-bun | fable5-1m-high | C+ (12.3min) | D- ($6.14) | A- (4.3) | B+ (3.9) |
-| powershell | fable5-1m-high | D- (17.2min) | D- ($6.01) | A- (4.4) | A- (4.4) |
-| default | fable5-1m-medium | A (8.9min) | A- ($4.05) | B- (3.2) | B+ (3.9) |
-| default | fable5-1m-high | B- (11.5min) | D- ($5.97) | B- (3.2) | A (4.4) |
+| typescript-bun | fable5-1m-medium | B (10.6min) | B- ($4.60) | A (4.4) | A- (4.1) |
+| powershell | fable5-1m-medium | D+ (14.7min) | B- ($4.57) | A (4.5) | B (3.6) |
+| bash | fable5-1m-medium | A+ (7.9min) | A+ ($3.61) | A- (4.1) | B+ (4.1) |
+| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.47) | A- (4.3) | B+ (4.1) |
+| typescript-bun | fable5-1m-high | C+ (12.2min) | D- ($5.98) | A- (4.3) | B+ (3.9) |
+| powershell | fable5-1m-high | D- (16.9min) | D- ($5.96) | A- (4.4) | A- (4.4) |
+| default | fable5-1m-medium | A (8.7min) | A- ($3.94) | B- (3.2) | B+ (3.9) |
+| default | fable5-1m-high | B- (11.3min) | D- ($5.74) | B- (3.2) | A (4.4) |
 
 </details>
 
@@ -129,141 +132,141 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| default | fable5-1m-high | B- (11.5min) | D- ($5.97) | B- (3.2) | A (4.4) |
-| typescript-bun | fable5-1m-medium | B (10.8min) | B- ($4.65) | A (4.4) | A- (4.1) |
-| powershell | fable5-1m-high | D- (17.2min) | D- ($6.01) | A- (4.4) | A- (4.4) |
-| bash | fable5-1m-medium | A+ (8.0min) | A+ ($3.63) | A- (4.1) | B+ (4.1) |
-| default | fable5-1m-medium | A (8.9min) | A- ($4.05) | B- (3.2) | B+ (3.9) |
-| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.52) | A- (4.3) | B+ (4.1) |
-| typescript-bun | fable5-1m-high | C+ (12.3min) | D- ($6.14) | A- (4.3) | B+ (3.9) |
-| powershell | fable5-1m-medium | D+ (15.0min) | B- ($4.70) | A (4.5) | B (3.6) |
+| default | fable5-1m-high | B- (11.3min) | D- ($5.74) | B- (3.2) | A (4.4) |
+| typescript-bun | fable5-1m-medium | B (10.6min) | B- ($4.60) | A (4.4) | A- (4.1) |
+| powershell | fable5-1m-high | D- (16.9min) | D- ($5.96) | A- (4.4) | A- (4.4) |
+| bash | fable5-1m-medium | A+ (7.9min) | A+ ($3.61) | A- (4.1) | B+ (4.1) |
+| default | fable5-1m-medium | A (8.7min) | A- ($3.94) | B- (3.2) | B+ (3.9) |
+| bash | fable5-1m-high | C+ (11.8min) | D+ ($5.47) | A- (4.3) | B+ (4.1) |
+| typescript-bun | fable5-1m-high | C+ (12.2min) | D- ($5.98) | A- (4.3) | B+ (3.9) |
+| powershell | fable5-1m-medium | D+ (14.7min) | B- ($4.57) | A (4.5) | B (3.6) |
 
 </details>
 
 ## Comparison by Language/Model/Effort
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| bash | fable5-1m-high | 7 | 11.8min | 9.4min | 1.3 | 49 | $5.52 | $38.62 | 4.3 | 4.1 |
-| bash | fable5-1m-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | 4.1 | 4.1 |
-| default | fable5-1m-high | 7 | 11.5min | 9.0min | 0.7 | 53 | $5.97 | $41.81 | 3.2 | 4.4 |
-| default | fable5-1m-medium | 7 | 8.9min | 7.7min | 1.1 | 40 | $4.05 | $28.38 | 3.2 | 3.9 |
-| powershell | fable5-1m-high | 7 | 17.2min | 16.1min | 4.1 | 44 | $6.01 | $42.05 | 4.4 | 4.4 |
-| powershell | fable5-1m-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | 4.5 | 3.6 |
-| typescript-bun | fable5-1m-high | 7 | 12.3min | 10.6min | 1.3 | 52 | $6.14 | $43.01 | 4.3 | 3.9 |
-| typescript-bun | fable5-1m-medium | 7 | 10.8min | 9.8min | 0.4 | 43 | $4.65 | $32.58 | 4.4 | 4.1 |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | fable5-1m-high | 7 | 11.8min | 13.7min | 9.3min | 1.3 | 49 | $5.47 | $38.62 | 4.3 | 4.1 |
+| bash | fable5-1m-medium | 7 | 7.9min | 9.4min | 6.8min | 1.9 | 37 | $3.61 | $25.42 | 4.1 | 4.1 |
+| default | fable5-1m-high | 7 | 11.3min | 15.1min | 8.6min | 0.7 | 52 | $5.74 | $41.81 | 3.2 | 4.4 |
+| default | fable5-1m-medium | 7 | 8.7min | 12.1min | 7.6min | 1.1 | 39 | $3.94 | $28.38 | 3.2 | 3.9 |
+| powershell | fable5-1m-high | 7 | 16.9min | 21.5min | 15.7min | 4.1 | 43 | $5.96 | $42.05 | 4.4 | 4.4 |
+| powershell | fable5-1m-medium | 7 | 14.7min | 19.0min | 14.4min | 3.4 | 33 | $4.57 | $32.90 | 4.5 | 3.6 |
+| typescript-bun | fable5-1m-high | 7 | 12.2min | 15.2min | 10.4min | 1.3 | 52 | $5.98 | $43.01 | 4.3 | 3.9 |
+| typescript-bun | fable5-1m-medium | 7 | 10.6min | 14.5min | 9.7min | 0.4 | 43 | $4.60 | $32.58 | 4.4 | 4.1 |
 
 
 <details>
-<summary>Sorted by avg cost (cheapest first)</summary>
+<summary>Sorted by cost (geomean, cheapest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| bash | fable5-1m-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | 4.1 | 4.1 |
-| default | fable5-1m-medium | 7 | 8.9min | 7.7min | 1.1 | 40 | $4.05 | $28.38 | 3.2 | 3.9 |
-| typescript-bun | fable5-1m-medium | 7 | 10.8min | 9.8min | 0.4 | 43 | $4.65 | $32.58 | 4.4 | 4.1 |
-| powershell | fable5-1m-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | 4.5 | 3.6 |
-| bash | fable5-1m-high | 7 | 11.8min | 9.4min | 1.3 | 49 | $5.52 | $38.62 | 4.3 | 4.1 |
-| default | fable5-1m-high | 7 | 11.5min | 9.0min | 0.7 | 53 | $5.97 | $41.81 | 3.2 | 4.4 |
-| powershell | fable5-1m-high | 7 | 17.2min | 16.1min | 4.1 | 44 | $6.01 | $42.05 | 4.4 | 4.4 |
-| typescript-bun | fable5-1m-high | 7 | 12.3min | 10.6min | 1.3 | 52 | $6.14 | $43.01 | 4.3 | 3.9 |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | fable5-1m-medium | 7 | 7.9min | 9.4min | 6.8min | 1.9 | 37 | $3.61 | $25.42 | 4.1 | 4.1 |
+| default | fable5-1m-medium | 7 | 8.7min | 12.1min | 7.6min | 1.1 | 39 | $3.94 | $28.38 | 3.2 | 3.9 |
+| powershell | fable5-1m-medium | 7 | 14.7min | 19.0min | 14.4min | 3.4 | 33 | $4.57 | $32.90 | 4.5 | 3.6 |
+| typescript-bun | fable5-1m-medium | 7 | 10.6min | 14.5min | 9.7min | 0.4 | 43 | $4.60 | $32.58 | 4.4 | 4.1 |
+| bash | fable5-1m-high | 7 | 11.8min | 13.7min | 9.3min | 1.3 | 49 | $5.47 | $38.62 | 4.3 | 4.1 |
+| default | fable5-1m-high | 7 | 11.3min | 15.1min | 8.6min | 0.7 | 52 | $5.74 | $41.81 | 3.2 | 4.4 |
+| powershell | fable5-1m-high | 7 | 16.9min | 21.5min | 15.7min | 4.1 | 43 | $5.96 | $42.05 | 4.4 | 4.4 |
+| typescript-bun | fable5-1m-high | 7 | 12.2min | 15.2min | 10.4min | 1.3 | 52 | $5.98 | $43.01 | 4.3 | 3.9 |
 
 </details>
 
 <details>
-<summary>Sorted by avg duration (fastest first)</summary>
+<summary>Sorted by duration (geomean, fastest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| bash | fable5-1m-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | 4.1 | 4.1 |
-| default | fable5-1m-medium | 7 | 8.9min | 7.7min | 1.1 | 40 | $4.05 | $28.38 | 3.2 | 3.9 |
-| typescript-bun | fable5-1m-medium | 7 | 10.8min | 9.8min | 0.4 | 43 | $4.65 | $32.58 | 4.4 | 4.1 |
-| default | fable5-1m-high | 7 | 11.5min | 9.0min | 0.7 | 53 | $5.97 | $41.81 | 3.2 | 4.4 |
-| bash | fable5-1m-high | 7 | 11.8min | 9.4min | 1.3 | 49 | $5.52 | $38.62 | 4.3 | 4.1 |
-| typescript-bun | fable5-1m-high | 7 | 12.3min | 10.6min | 1.3 | 52 | $6.14 | $43.01 | 4.3 | 3.9 |
-| powershell | fable5-1m-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | 4.5 | 3.6 |
-| powershell | fable5-1m-high | 7 | 17.2min | 16.1min | 4.1 | 44 | $6.01 | $42.05 | 4.4 | 4.4 |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | fable5-1m-medium | 7 | 7.9min | 9.4min | 6.8min | 1.9 | 37 | $3.61 | $25.42 | 4.1 | 4.1 |
+| default | fable5-1m-medium | 7 | 8.7min | 12.1min | 7.6min | 1.1 | 39 | $3.94 | $28.38 | 3.2 | 3.9 |
+| typescript-bun | fable5-1m-medium | 7 | 10.6min | 14.5min | 9.7min | 0.4 | 43 | $4.60 | $32.58 | 4.4 | 4.1 |
+| default | fable5-1m-high | 7 | 11.3min | 15.1min | 8.6min | 0.7 | 52 | $5.74 | $41.81 | 3.2 | 4.4 |
+| bash | fable5-1m-high | 7 | 11.8min | 13.7min | 9.3min | 1.3 | 49 | $5.47 | $38.62 | 4.3 | 4.1 |
+| typescript-bun | fable5-1m-high | 7 | 12.2min | 15.2min | 10.4min | 1.3 | 52 | $5.98 | $43.01 | 4.3 | 3.9 |
+| powershell | fable5-1m-medium | 7 | 14.7min | 19.0min | 14.4min | 3.4 | 33 | $4.57 | $32.90 | 4.5 | 3.6 |
+| powershell | fable5-1m-high | 7 | 16.9min | 21.5min | 15.7min | 4.1 | 43 | $5.96 | $42.05 | 4.4 | 4.4 |
 
 </details>
 
 <details>
-<summary>Sorted by avg duration net of traps (fastest first)</summary>
+<summary>Sorted by duration net of traps (geomean, fastest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| bash | fable5-1m-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | 4.1 | 4.1 |
-| default | fable5-1m-medium | 7 | 8.9min | 7.7min | 1.1 | 40 | $4.05 | $28.38 | 3.2 | 3.9 |
-| default | fable5-1m-high | 7 | 11.5min | 9.0min | 0.7 | 53 | $5.97 | $41.81 | 3.2 | 4.4 |
-| bash | fable5-1m-high | 7 | 11.8min | 9.4min | 1.3 | 49 | $5.52 | $38.62 | 4.3 | 4.1 |
-| typescript-bun | fable5-1m-medium | 7 | 10.8min | 9.8min | 0.4 | 43 | $4.65 | $32.58 | 4.4 | 4.1 |
-| typescript-bun | fable5-1m-high | 7 | 12.3min | 10.6min | 1.3 | 52 | $6.14 | $43.01 | 4.3 | 3.9 |
-| powershell | fable5-1m-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | 4.5 | 3.6 |
-| powershell | fable5-1m-high | 7 | 17.2min | 16.1min | 4.1 | 44 | $6.01 | $42.05 | 4.4 | 4.4 |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | fable5-1m-medium | 7 | 7.9min | 9.4min | 6.8min | 1.9 | 37 | $3.61 | $25.42 | 4.1 | 4.1 |
+| default | fable5-1m-medium | 7 | 8.7min | 12.1min | 7.6min | 1.1 | 39 | $3.94 | $28.38 | 3.2 | 3.9 |
+| default | fable5-1m-high | 7 | 11.3min | 15.1min | 8.6min | 0.7 | 52 | $5.74 | $41.81 | 3.2 | 4.4 |
+| bash | fable5-1m-high | 7 | 11.8min | 13.7min | 9.3min | 1.3 | 49 | $5.47 | $38.62 | 4.3 | 4.1 |
+| typescript-bun | fable5-1m-medium | 7 | 10.6min | 14.5min | 9.7min | 0.4 | 43 | $4.60 | $32.58 | 4.4 | 4.1 |
+| typescript-bun | fable5-1m-high | 7 | 12.2min | 15.2min | 10.4min | 1.3 | 52 | $5.98 | $43.01 | 4.3 | 3.9 |
+| powershell | fable5-1m-medium | 7 | 14.7min | 19.0min | 14.4min | 3.4 | 33 | $4.57 | $32.90 | 4.5 | 3.6 |
+| powershell | fable5-1m-high | 7 | 16.9min | 21.5min | 15.7min | 4.1 | 43 | $5.96 | $42.05 | 4.4 | 4.4 |
 
 </details>
 
 <details>
 <summary>Sorted by avg errors (fewest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| typescript-bun | fable5-1m-medium | 7 | 10.8min | 9.8min | 0.4 | 43 | $4.65 | $32.58 | 4.4 | 4.1 |
-| default | fable5-1m-high | 7 | 11.5min | 9.0min | 0.7 | 53 | $5.97 | $41.81 | 3.2 | 4.4 |
-| default | fable5-1m-medium | 7 | 8.9min | 7.7min | 1.1 | 40 | $4.05 | $28.38 | 3.2 | 3.9 |
-| bash | fable5-1m-high | 7 | 11.8min | 9.4min | 1.3 | 49 | $5.52 | $38.62 | 4.3 | 4.1 |
-| typescript-bun | fable5-1m-high | 7 | 12.3min | 10.6min | 1.3 | 52 | $6.14 | $43.01 | 4.3 | 3.9 |
-| bash | fable5-1m-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | 4.1 | 4.1 |
-| powershell | fable5-1m-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | 4.5 | 3.6 |
-| powershell | fable5-1m-high | 7 | 17.2min | 16.1min | 4.1 | 44 | $6.01 | $42.05 | 4.4 | 4.4 |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| typescript-bun | fable5-1m-medium | 7 | 10.6min | 14.5min | 9.7min | 0.4 | 43 | $4.60 | $32.58 | 4.4 | 4.1 |
+| default | fable5-1m-high | 7 | 11.3min | 15.1min | 8.6min | 0.7 | 52 | $5.74 | $41.81 | 3.2 | 4.4 |
+| default | fable5-1m-medium | 7 | 8.7min | 12.1min | 7.6min | 1.1 | 39 | $3.94 | $28.38 | 3.2 | 3.9 |
+| bash | fable5-1m-high | 7 | 11.8min | 13.7min | 9.3min | 1.3 | 49 | $5.47 | $38.62 | 4.3 | 4.1 |
+| typescript-bun | fable5-1m-high | 7 | 12.2min | 15.2min | 10.4min | 1.3 | 52 | $5.98 | $43.01 | 4.3 | 3.9 |
+| bash | fable5-1m-medium | 7 | 7.9min | 9.4min | 6.8min | 1.9 | 37 | $3.61 | $25.42 | 4.1 | 4.1 |
+| powershell | fable5-1m-medium | 7 | 14.7min | 19.0min | 14.4min | 3.4 | 33 | $4.57 | $32.90 | 4.5 | 3.6 |
+| powershell | fable5-1m-high | 7 | 16.9min | 21.5min | 15.7min | 4.1 | 43 | $5.96 | $42.05 | 4.4 | 4.4 |
 
 </details>
 
 <details>
-<summary>Sorted by avg turns (fewest first)</summary>
+<summary>Sorted by turns (geomean, fewest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| powershell | fable5-1m-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | 4.5 | 3.6 |
-| bash | fable5-1m-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | 4.1 | 4.1 |
-| default | fable5-1m-medium | 7 | 8.9min | 7.7min | 1.1 | 40 | $4.05 | $28.38 | 3.2 | 3.9 |
-| typescript-bun | fable5-1m-medium | 7 | 10.8min | 9.8min | 0.4 | 43 | $4.65 | $32.58 | 4.4 | 4.1 |
-| powershell | fable5-1m-high | 7 | 17.2min | 16.1min | 4.1 | 44 | $6.01 | $42.05 | 4.4 | 4.4 |
-| bash | fable5-1m-high | 7 | 11.8min | 9.4min | 1.3 | 49 | $5.52 | $38.62 | 4.3 | 4.1 |
-| typescript-bun | fable5-1m-high | 7 | 12.3min | 10.6min | 1.3 | 52 | $6.14 | $43.01 | 4.3 | 3.9 |
-| default | fable5-1m-high | 7 | 11.5min | 9.0min | 0.7 | 53 | $5.97 | $41.81 | 3.2 | 4.4 |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| powershell | fable5-1m-medium | 7 | 14.7min | 19.0min | 14.4min | 3.4 | 33 | $4.57 | $32.90 | 4.5 | 3.6 |
+| bash | fable5-1m-medium | 7 | 7.9min | 9.4min | 6.8min | 1.9 | 37 | $3.61 | $25.42 | 4.1 | 4.1 |
+| default | fable5-1m-medium | 7 | 8.7min | 12.1min | 7.6min | 1.1 | 39 | $3.94 | $28.38 | 3.2 | 3.9 |
+| typescript-bun | fable5-1m-medium | 7 | 10.6min | 14.5min | 9.7min | 0.4 | 43 | $4.60 | $32.58 | 4.4 | 4.1 |
+| powershell | fable5-1m-high | 7 | 16.9min | 21.5min | 15.7min | 4.1 | 43 | $5.96 | $42.05 | 4.4 | 4.4 |
+| bash | fable5-1m-high | 7 | 11.8min | 13.7min | 9.3min | 1.3 | 49 | $5.47 | $38.62 | 4.3 | 4.1 |
+| typescript-bun | fable5-1m-high | 7 | 12.2min | 15.2min | 10.4min | 1.3 | 52 | $5.98 | $43.01 | 4.3 | 3.9 |
+| default | fable5-1m-high | 7 | 11.3min | 15.1min | 8.6min | 0.7 | 52 | $5.74 | $41.81 | 3.2 | 4.4 |
 
 </details>
 
 <details>
 <summary>Sorted by LLM-as-judge score (best first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| powershell | fable5-1m-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | 4.5 | 3.6 |
-| typescript-bun | fable5-1m-medium | 7 | 10.8min | 9.8min | 0.4 | 43 | $4.65 | $32.58 | 4.4 | 4.1 |
-| powershell | fable5-1m-high | 7 | 17.2min | 16.1min | 4.1 | 44 | $6.01 | $42.05 | 4.4 | 4.4 |
-| bash | fable5-1m-high | 7 | 11.8min | 9.4min | 1.3 | 49 | $5.52 | $38.62 | 4.3 | 4.1 |
-| typescript-bun | fable5-1m-high | 7 | 12.3min | 10.6min | 1.3 | 52 | $6.14 | $43.01 | 4.3 | 3.9 |
-| bash | fable5-1m-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | 4.1 | 4.1 |
-| default | fable5-1m-high | 7 | 11.5min | 9.0min | 0.7 | 53 | $5.97 | $41.81 | 3.2 | 4.4 |
-| default | fable5-1m-medium | 7 | 8.9min | 7.7min | 1.1 | 40 | $4.05 | $28.38 | 3.2 | 3.9 |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| powershell | fable5-1m-medium | 7 | 14.7min | 19.0min | 14.4min | 3.4 | 33 | $4.57 | $32.90 | 4.5 | 3.6 |
+| typescript-bun | fable5-1m-medium | 7 | 10.6min | 14.5min | 9.7min | 0.4 | 43 | $4.60 | $32.58 | 4.4 | 4.1 |
+| powershell | fable5-1m-high | 7 | 16.9min | 21.5min | 15.7min | 4.1 | 43 | $5.96 | $42.05 | 4.4 | 4.4 |
+| bash | fable5-1m-high | 7 | 11.8min | 13.7min | 9.3min | 1.3 | 49 | $5.47 | $38.62 | 4.3 | 4.1 |
+| typescript-bun | fable5-1m-high | 7 | 12.2min | 15.2min | 10.4min | 1.3 | 52 | $5.98 | $43.01 | 4.3 | 3.9 |
+| bash | fable5-1m-medium | 7 | 7.9min | 9.4min | 6.8min | 1.9 | 37 | $3.61 | $25.42 | 4.1 | 4.1 |
+| default | fable5-1m-high | 7 | 11.3min | 15.1min | 8.6min | 0.7 | 52 | $5.74 | $41.81 | 3.2 | 4.4 |
+| default | fable5-1m-medium | 7 | 8.7min | 12.1min | 7.6min | 1.1 | 39 | $3.94 | $28.38 | 3.2 | 3.9 |
 
 </details>
 
 <details>
 <summary>Sorted by deliverable-quality score (best first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | fable5-1m-high | 7 | 11.5min | 9.0min | 0.7 | 53 | $5.97 | $41.81 | 3.2 | 4.4 |
-| powershell | fable5-1m-high | 7 | 17.2min | 16.1min | 4.1 | 44 | $6.01 | $42.05 | 4.4 | 4.4 |
-| typescript-bun | fable5-1m-medium | 7 | 10.8min | 9.8min | 0.4 | 43 | $4.65 | $32.58 | 4.4 | 4.1 |
-| bash | fable5-1m-high | 7 | 11.8min | 9.4min | 1.3 | 49 | $5.52 | $38.62 | 4.3 | 4.1 |
-| bash | fable5-1m-medium | 7 | 8.0min | 6.9min | 1.9 | 37 | $3.63 | $25.42 | 4.1 | 4.1 |
-| default | fable5-1m-medium | 7 | 8.9min | 7.7min | 1.1 | 40 | $4.05 | $28.38 | 3.2 | 3.9 |
-| typescript-bun | fable5-1m-high | 7 | 12.3min | 10.6min | 1.3 | 52 | $6.14 | $43.01 | 4.3 | 3.9 |
-| powershell | fable5-1m-medium | 7 | 15.0min | 14.7min | 3.4 | 34 | $4.70 | $32.90 | 4.5 | 3.6 |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| default | fable5-1m-high | 7 | 11.3min | 15.1min | 8.6min | 0.7 | 52 | $5.74 | $41.81 | 3.2 | 4.4 |
+| powershell | fable5-1m-high | 7 | 16.9min | 21.5min | 15.7min | 4.1 | 43 | $5.96 | $42.05 | 4.4 | 4.4 |
+| typescript-bun | fable5-1m-medium | 7 | 10.6min | 14.5min | 9.7min | 0.4 | 43 | $4.60 | $32.58 | 4.4 | 4.1 |
+| bash | fable5-1m-high | 7 | 11.8min | 13.7min | 9.3min | 1.3 | 49 | $5.47 | $38.62 | 4.3 | 4.1 |
+| bash | fable5-1m-medium | 7 | 7.9min | 9.4min | 6.8min | 1.9 | 37 | $3.61 | $25.42 | 4.1 | 4.1 |
+| default | fable5-1m-medium | 7 | 8.7min | 12.1min | 7.6min | 1.1 | 39 | $3.94 | $28.38 | 3.2 | 3.9 |
+| typescript-bun | fable5-1m-high | 7 | 12.2min | 15.2min | 10.4min | 1.3 | 52 | $5.98 | $43.01 | 4.3 | 3.9 |
+| powershell | fable5-1m-medium | 7 | 14.7min | 19.0min | 14.4min | 3.4 | 33 | $4.57 | $32.90 | 4.5 | 3.6 |
 
 </details>
 
@@ -1106,8 +1109,8 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Tiers
 
-- **Duration bands:** **A+** ≤1.07×, **A** ≤1.14×, **A-** ≤1.21×, **B+** ≤1.29×, **B** ≤1.38×, **B-** ≤1.47×, **C+** ≤1.56×, **C** ≤1.67×, **C-** ≤1.78×, **D+** ≤1.90×, **D** ≤2.02×, **D-** ≤2.15×, **F** >2.15×
-- **Cost bands:** **A+** ≤1.04×, **A** ≤1.09×, **A-** ≤1.14×, **B+** ≤1.19×, **B** ≤1.25×, **B-** ≤1.30×, **C+** ≤1.36×, **C** ≤1.42×, **C-** ≤1.48×, **D+** ≤1.55×, **D** ≤1.62×, **D-** ≤1.69×, **F** >1.69×
+- **Duration bands:** **A+** ≤1.07×, **A** ≤1.14×, **A-** ≤1.21×, **B+** ≤1.29×, **B** ≤1.37×, **B-** ≤1.46×, **C+** ≤1.56×, **C** ≤1.66×, **C-** ≤1.77×, **D+** ≤1.89×, **D** ≤2.01×, **D-** ≤2.14×, **F** >2.14×
+- **Cost bands:** **A+** ≤1.04×, **A** ≤1.09×, **A-** ≤1.13×, **B+** ≤1.18×, **B** ≤1.23×, **B-** ≤1.29×, **C+** ≤1.34×, **C** ≤1.40×, **C-** ≤1.46×, **D+** ≤1.52×, **D** ≤1.59×, **D-** ≤1.66×, **F** >1.66×
 
 *Tests/Workflow Craft bands are absolute Overall score bands:* **A+** ≥4.7, **A** ≥4.4, **A-** ≥4.1, **B+** ≥3.8, **B** ≥3.5, **B-** ≥3.2, **C+** ≥2.9, **C** ≥2.6, **C-** ≥2.3, **D+** ≥2.0, **D** ≥1.7, **D-** ≥1.4, **F** <1.4, `—` = no data.*
 
@@ -1120,11 +1123,11 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Judge Consistency Summary
 
-**🟡 The panel largely agrees where it counts, but ceiling effects blur one ranking:** Model ranking is unanimous, and cross-family Gemini is actually more generous to fable5 than own-family Haiku (Δ +1.18 on Tests Quality, +1.67 on Workflow Craft) — the opposite direction of own-model favoritism. The yellow is the Workflow Craft language ordering flipping to a −0.60 Spearman, driven by Gemini pinning bash, powershell, and typescript-bun at 5.00 across every task, leaving Haiku's finer gradations as the only signal.
+**🟡 The panel agrees on model ranking but splits sharply on language:** Only fable5 (an Anthropic-family model) appears here, and the intra-family judge (Haiku) actually scores it harsher than the cross-family judge (Gemini) — the opposite of own-model preference. Language rankings for Workflow Craft, however, flip between judges (Spearman −0.60, four reversals) because Gemini pins bash, powershell, and typescript-bun to a flat 5.00 ceiling while Haiku separates them; both judges still agree default/Python is last on Tests Quality.
 
-- 👀 **Where to look closer:** The widest disagreements (a judge scoring 1 vs 5, a 4-point gap on the 1–5 scale) — 12-pr-label-assigner / powershell / fable5-medium (Haiku 1, Gemini 5), plus the four Workflow Craft rows on 15-test-results-aggregator (bash at both efforts, powershell-medium, typescript-bun-high) where Haiku sits at 2 and Gemini at 5.
-- 🤓 **Surprise finding:** Haiku ranks default/Python first for Workflow Craft while Gemini ranks it third — the own-family judge is harsher on Python deliverables than the cross-family one, opposite the self-preference prediction.
-- ℹ️ **Recommended next step:** Hand-check five 2-vs-5 Workflow Craft rows to decide whether Gemini's 5.00 ceiling reflects genuine quality or rubric saturation; if saturation, tighten the top anchor before the next campaign.
+- 👀 **Where to look closer:** The widest disagreement (a judge scoring 1 vs 5, a 4-point gap on a 1–5 scale) is 12-pr-label-assigner / powershell / fable5-medium on Workflow Craft; also spot-check 15-test-results-aggregator / typescript-bun / fable5-high on Tests Quality (Haiku 2, Gemini 5).
+- 🤓 **Surprise finding:** Gemini gives every bash and powershell Workflow Craft run a perfect 5.00, leaving the cross-family judge zero headroom to separate configurations on compiled-scripting languages.
+- ℹ️ **Recommended next step:** Have a human review the powershell / fable5-medium runs where Haiku scored 1 while Gemini scored 5, and re-run Gemini with a stricter deliverable rubric to break the ceiling.
 
 #### Provenance
 
@@ -1132,7 +1135,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 - **Inputs:** the [`judge-consistency-data.md`](judge-consistency-data.md) tables plus benchmark context (rubrics, task list, experiment setup).
 - **Script:** [`conclusions_report.py`](../../conclusions_report.py) — regenerate with `python3 generate_results.py <run_dir>`.
 - **Instruction:** [`JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT`](../../judge_consistency_report.py) in that script.
-- **Usage:** 5 input + 7678 output tokens, $0.3434.
+- **Usage:** 5 input + 2366 output tokens, $0.2162.
 
 *Full breakdown with per-model / per-language / per-language×model ranking tables and disagreement hotspots in [judge-consistency-data.md](judge-consistency-data.md).*
 

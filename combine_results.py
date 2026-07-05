@@ -17,6 +17,7 @@ Usage:
 """
 import sys
 import json
+import math
 from datetime import datetime
 from pathlib import Path
 from collections import defaultdict
@@ -237,13 +238,22 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
     share the derived label but ran on different CLI versions still pool
     into one row (the CLI Version Legend carries the per-CLI breakdown).
 
-    Failed/timed-out runs are excluded from the averages; each row
-    records the excluded count under `excluded` so callers can flag
-    that in the Model column with an asterisk. `cli_versions` on each
-    row is the sorted set of CLI releases the pooled runs ran on —
+    Failed runs are excluded from the cost/turns/errors averages (a
+    SIGKILL'd timeout records cost=0/turns=0 — missing data, not a real
+    zero). Duration is different: a timed-out cell's recorded duration is
+    a right-censored observation (it ran at LEAST that long before being
+    killed at the ~30-min cap), so it is folded into the geometric-mean
+    duration pool instead of being dropped — dropping it would silently
+    reward timing out with a better average. Each row still records the
+    total excluded count (successful cells excepted) under `excluded` so
+    callers can flag that in the Model column with an asterisk. A key with
+    only timeouts and no successful cells still renders no row (the `n ==
+    0` guard below), since `n` counts successful cells only. `cli_versions`
+    on each row is the sorted set of CLI releases the pooled runs ran on —
     consumed by the legend builder."""
     by_key: dict[tuple, list[dict]] = defaultdict(list)
     excluded_by_key: dict[tuple, int] = defaultdict(int)
+    timeout_by_key: dict[tuple, list[dict]] = defaultdict(list)
     for m in metrics:
         # Group by the DISPLAY mode so powershell + powershell-tool pool into
         # one `powershell` row (they are replicates — see `_disp_mode`).
@@ -252,6 +262,8 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
             by_key[key].append(m)
         else:
             excluded_by_key[key] += 1
+            if m.get("failure_reason") == "timeout":
+                timeout_by_key[key].append(m)
     rows = []
     for key in sorted(set(by_key) | set(excluded_by_key)):
         mode, derived = key
@@ -259,6 +271,13 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
         n = len(mm)
         if n == 0:
             continue
+        timeouts = timeout_by_key.get(key, [])
+        dur_pool = mm + timeouts
+        dur_secs = [m["timing"]["grand_total_duration_ms"] / 1000 for m in dur_pool]
+        max_dur = max(dur_secs)
+        # The argmax cell is a timeout iff it came from `timeouts` — since
+        # `dur_pool` is `mm + timeouts`, that's any index >= len(mm).
+        max_dur_censored = dur_secs.index(max_dur) >= len(mm)
         # Every member of a pool shares the same derived label, so any
         # member is a valid representative for the name+version/context/
         # effort components.
@@ -284,10 +303,13 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
             "variant_disp": f"{variant}*" if excl else variant,
             "excluded": excl,
             "n": n,
-            "avg_dur": sum(m["timing"]["grand_total_duration_ms"] for m in mm) / n / 1000,
+            "n_timeout": len(timeouts),
+            "geo_dur": _geomean(dur_secs),
+            "max_dur": max_dur,
+            "max_dur_censored": max_dur_censored,
             "avg_errors": sum(m["quality"]["error_count"] for m in mm) / n,
-            "avg_turns": sum(m["timing"]["num_turns"] for m in mm) / n,
-            "avg_cost": sum(m["cost"]["total_cost_usd"] for m in mm) / n,
+            "geo_turns": _geomean(m["timing"]["num_turns"] for m in mm),
+            "geo_cost": _geomean(m["cost"]["total_cost_usd"] for m in mm),
             "total_cost": sum(m["cost"]["total_cost_usd"] for m in mm),
         })
     return rows
@@ -295,6 +317,14 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
 
 def _dur(seconds: float) -> str:
     return f"{seconds/60:.1f}min"
+
+
+def _geomean(vals) -> float:
+    """Geometric mean over the positive values; 0.0 if none."""
+    pos = [v for v in vals if v > 0]
+    if not pos:
+        return 0.0
+    return math.exp(sum(math.log(v) for v in pos) / len(pos))
 
 
 def _load_llm_scores(run_dirs: list[Path]) -> dict[tuple, float]:
@@ -427,9 +457,9 @@ def _build_markdown(
         r["avg_deliv_disp"] = f"{r['avg_deliv']:.1f}" if r["avg_deliv_n"] > 0 else "—"
 
     # Compute rank + tier once; the Tiers and Rankings sections reuse them.
-    for i, r in enumerate(sorted(rows, key=lambda r: r["avg_dur"]), start=1):
+    for i, r in enumerate(sorted(rows, key=lambda r: r["geo_dur"]), start=1):
         r["dur_rank"] = i
-    for i, r in enumerate(sorted(rows, key=lambda r: r["avg_cost"]), start=1):
+    for i, r in enumerate(sorted(rows, key=lambda r: r["geo_cost"]), start=1):
         r["cost_rank"] = i
     llm_scored = [r for r in rows if r["avg_llm_n"] > 0]
     for i, r in enumerate(sorted(llm_scored, key=lambda r: -r["avg_llm"]), start=1):
@@ -445,14 +475,14 @@ def _build_markdown(
     for r in rows:
         r.setdefault("deliv_rank", _deliv_sentinel)
         r["deliv_rank_disp"] = str(r["deliv_rank"]) if r["deliv_rank"] != _deliv_sentinel else "—"
-    best_dur = min(r["avg_dur"] for r in rows)
-    best_cost = min(r["avg_cost"] for r in rows)
+    best_dur = min(r["geo_dur"] for r in rows)
+    best_cost = min(r["geo_cost"] for r in rows)
     # Auto-calibrate bands per dataset — see generate_results._compute_ratio_bands.
-    dur_bands = _compute_ratio_bands([r["avg_dur"] / best_dur for r in rows])
-    cost_bands = _compute_ratio_bands([r["avg_cost"] / best_cost for r in rows])
+    dur_bands = _compute_ratio_bands([r["geo_dur"] / best_dur for r in rows])
+    cost_bands = _compute_ratio_bands([r["geo_cost"] / best_cost for r in rows])
     for r in rows:
-        r["dur_tier"] = _ratio_tier(r["avg_dur"] / best_dur, dur_bands)
-        r["cost_tier"] = _ratio_tier(r["avg_cost"] / best_cost, cost_bands)
+        r["dur_tier"] = _ratio_tier(r["geo_dur"] / best_dur, dur_bands)
+        r["cost_tier"] = _ratio_tier(r["geo_cost"] / best_cost, cost_bands)
         r["llm_tier"] = _llm_tier(r["avg_llm"]) if r["avg_llm_n"] > 0 else "—"
         r["deliv_tier"] = _llm_tier(r["avg_deliv"]) if r["avg_deliv_n"] > 0 else "—"
 
@@ -482,14 +512,14 @@ def _build_markdown(
     lines.append("")
     lines.append("*Default sort: weighted composite of tiers (40% Tests, 25% Workflow Craft, 35% split between Duration & Cost). See [Notes](#notes) for tier-band definitions and scoring rubric.*")
     if any(r.get("excluded", 0) for r in rows):
-        lines.append("*`*` after a Model label = this combo's aggregates exclude one or more failed/timed-out runs.*")
+        lines.append("*`*` after a Model label = one or more of this combo's runs failed or timed out — excluded from the cost/turns/errors aggregates, though timeouts still pool into the duration stats.*")
     lines.append("")
     tr_hdr = "| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |"
     tr_sep = "|----------|-------|----------|------|-----------|-------------|"
     def _fmt_tr(r):
         return (f"| {r['mode']} | {r['variant_disp']} "
-                f"| {r['dur_tier']} ({_dur(r['avg_dur'])}) "
-                f"| {r['cost_tier']} (${r['avg_cost']:.2f}) "
+                f"| {r['dur_tier']} ({_dur(r['geo_dur'])}) "
+                f"| {r['cost_tier']} (${r['geo_cost']:.2f}) "
                 f"| {r['llm_tier']}"
                 + (f" ({r['avg_llm']:.1f})" if r['avg_llm_n'] > 0 else "")
                 + " | "
@@ -631,13 +661,14 @@ def _build_markdown(
     lines.append("")
     lines.append("*See [Notes](#notes) for scoring rubric and CLI version legend.*")
     lines.append("")
-    lines.append("| Language | Model | Runs | Avg Duration | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |")
-    lines.append("|----------|-------|------|--------------|------------|-----------|----------|------------|---------------|-----------------|")
+    lines.append("| Language | Model | Runs | Geo Duration | Max Duration | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |")
+    lines.append("|----------|-------|------|--------------|--------------|------------|-----------|----------|------------|---------------|-----------------|")
     for r in sorted(rows, key=lambda r: (r["mode"], r["variant"])):
+        max_dur_disp = ("≥" if r["max_dur_censored"] else "") + _dur(r["max_dur"])
         lines.append(
-            f"| {r['mode']} | {r['variant_disp']} | {r['n']} | {_dur(r['avg_dur'])} "
-            f"| {r['avg_errors']:.1f} | {r['avg_turns']:.0f} "
-            f"| ${r['avg_cost']:.2f} | ${r['total_cost']:.2f} "
+            f"| {r['mode']} | {r['variant_disp']} | {r['n']} | {_dur(r['geo_dur'])} | {max_dur_disp} "
+            f"| {r['avg_errors']:.1f} | {r['geo_turns']:.0f} "
+            f"| ${r['geo_cost']:.2f} | ${r['total_cost']:.2f} "
             f"| {r['avg_llm_disp']} | {r['avg_deliv_disp']} |"
         )
     lines.append("")
@@ -839,18 +870,18 @@ def _build_markdown(
             # records across the whole campaign.
             data_md = _build_jc(list(run_dirs), cache_dir=cache_path)
             sc_lines = [
-                "Rows below are (Language | Model | Runs | Avg Duration "
-                "min | Avg Cost USD | Total Cost USD | Avg Errors | "
-                "Avg Turns | Avg Tests Quality | Avg Workflow Craft "
+                "Rows below are (Language | Model | Runs | Geo Duration "
+                "min | Geo Cost USD | Total Cost USD | Avg Errors | "
+                "Geo Turns | Avg Tests Quality | Avg Workflow Craft "
                 "Quality). Scores `—` mean no judge data for that combo.",
                 "",
             ]
             for r in sorted(rows, key=lambda r: (r["mode"], r["variant"])):
                 sc_lines.append(
                     f"{r['mode']} | {r['variant_disp']} | {r['n']} | "
-                    f"{r['avg_dur']/60:.1f} | {r['avg_cost']:.3f} | "
+                    f"{r['geo_dur']/60:.1f} | {r['geo_cost']:.3f} | "
                     f"{r['total_cost']:.2f} | {r['avg_errors']:.1f} | "
-                    f"{r['avg_turns']:.1f} | {r['avg_llm_disp']} | "
+                    f"{r['geo_turns']:.1f} | {r['avg_llm_disp']} | "
                     f"{r['avg_deliv_disp']}"
                 )
             sc_input = "\n".join(sc_lines)
@@ -1049,9 +1080,12 @@ def _build_markdown(
         "Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).",
         "",
         "- **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.",
-        "- **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.",
-        "- **Avg Duration Net of Traps** is intentionally absent from this combined report — trap detection isn't yet threaded through `combine_results.py`. See each contributing source run's per-run `results.md` for trap-adjusted Duration figures.",
-        "- The **Tier table's Duration column** shows the tier letter (A+..F) for the combo's gross **Avg Duration** ratio.",
+        "- **Geo Duration / Geo Cost / Geo Turns** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; Geo Duration and Geo Cost also drive the [Tiers](#tiers-by-languagemodeleffort) Duration/Cost columns): **geometric** means (issue #33) — outlier-damped relative to a plain average, so one abnormally slow/expensive/chatty run doesn't dominate a combo's aggregate.",
+        "- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average. Geo Cost and Geo Turns still exclude ALL failed runs (including timeouts): a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and would bias those averages down if pooled in. This means **Total Cost can slightly understate** true spend on rows with timeouts (the timeout's own cost isn't in the sum either).",
+        "- **Max Duration** is the slowest run in the Geo Duration pool for that combo, `≥`-prefixed when that run was a timeout (true duration unknown, but at least the shown value).",
+        "- **Avg Errors** remains an arithmetic mean.",
+        "- **Geo Duration Net of Traps** is intentionally absent from this combined report — trap detection isn't yet threaded through `combine_results.py`. See each contributing source run's per-run `results.md` for trap-adjusted Duration figures.",
+        "- The **Tier table's Duration/Cost columns** show the tier letter (A+..F) for the combo's **Geo Duration**/**Geo Cost** ratio.",
         "",
     ]
     scoring_md = "\n".join(scoring_block)

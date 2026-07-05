@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-03 08:47:19 AM ET — 111/144 runs completed, 33 remaining; total cost $76.34; total agent time 459.2 min.
+**Last updated:** 2026-07-05 12:56:39 AM ET — 111/144 runs completed, 33 remaining; total cost $76.34; total agent time 459.2 min.
 **Claude Code versions used:** [v2.1.94](claude-code-2.1.94.md) (25 runs), [v2.1.96](claude-code-2.1.96.md) (86 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -57,24 +57,27 @@ Properties:
 Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).
 
 - **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.
-- **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.
-- **Avg Duration Net of Traps** (in the Comparison table only): mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
-- The **Tier table's Duration column** shows the tier letter (A+..F) for the combo's gross **Avg Duration** ratio. Net of Traps does not feed the tier band.
+- **Geo Duration / Geo Cost / Geo Turns** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; Geo Duration and Geo Cost also drive the [Tiers](#tiers-by-languagemodeleffort) Duration/Cost columns): **geometric** means (issue #33) — outlier-damped relative to a plain average, so one abnormally slow/expensive/chatty run doesn't dominate a combo's aggregate.
+- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average. Geo Cost and Geo Turns still exclude ALL failed runs (including timeouts): a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and would bias those averages down if pooled in. This means **Total Cost can slightly understate** true spend on rows with timeouts (the timeout's own cost isn't in the sum either).
+- **Max Duration** is the slowest run in the Geo Duration pool for that combo, `≥`-prefixed when that run was a timeout (true duration unknown, but at least the shown value).
+- **Avg Errors** remains an arithmetic mean.
+- **Geo Duration Net of Traps** (in the Comparison table only): the geometric mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Pooled over the SAME runs as Geo Duration — timed-out cells are included, with their detected traps (if any) deducted too. Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
+- The **Tier table's Duration/Cost columns** show the tier letter (A+..F) for the combo's gross **Geo Duration**/**Geo Cost** ratio. Net of Traps does not feed the tier band.
 ## Tiers by Language/Model/Effort
 
 *Default sort: weighted composite of tiers (40% Tests, 25% Workflow Craft, 35% split between Duration & Cost). See [Notes](#notes) for tier-band definitions and scoring rubric.*
-*`*` after a Model label = this combo's aggregates exclude one or more failed/timed-out runs (see the Failed / Timed-Out Runs table).*
+*`*` after a Model label = one or more of this combo's runs failed or timed out — excluded from the cost/turns/errors aggregates, though timeouts still pool into the duration stats (see the Failed / Timed-Out Runs table).*
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
 | csharp-script | sonnet46-200k-medium | A+ (0.6min) | A+ ($0.12) | B+ (4.0) | — |
-| default | sonnet46-200k-medium* | C (2.8min) | B- ($0.35) | A- (4.2) | — |
-| csharp-script | opus46-200k-medium | B- (1.8min) | C+ ($0.42) | B+ (4.0) | — |
-| powershell | sonnet46-200k-medium* | D+ (3.6min) | C+ ($0.39) | B+ (3.9) | — |
-| default | opus46-200k-medium | D+ (3.5min) | D ($0.88) | A- (4.2) | — |
-| powershell | opus46-200k-medium | D (4.3min) | D ($0.97) | B+ (4.1) | — |
-| powershell-strict | sonnet46-200k-medium* | D- (6.1min) | D+ ($0.74) | B+ (4.0) | — |
-| powershell-strict | opus46-200k-medium* | D (4.9min) | D- ($1.20) | B+ (3.9) | — |
+| default | sonnet46-200k-medium* | C (2.6min) | B- ($0.32) | A- (4.2) | — |
+| csharp-script | opus46-200k-medium | B (1.4min) | C+ ($0.38) | B+ (4.0) | — |
+| powershell | sonnet46-200k-medium* | C- (3.1min) | B- ($0.36) | B+ (3.9) | — |
+| default | opus46-200k-medium | D+ (3.3min) | D ($0.80) | A- (4.2) | — |
+| powershell | opus46-200k-medium | D (4.1min) | D ($0.92) | B+ (4.1) | — |
+| powershell-strict | sonnet46-200k-medium* | D- (5.4min) | D+ ($0.65) | B+ (4.0) | — |
+| powershell-strict | opus46-200k-medium* | D- (4.8min) | D- ($1.15) | B+ (3.9) | — |
 
 
 <details>
@@ -83,13 +86,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
 | csharp-script | sonnet46-200k-medium | A+ (0.6min) | A+ ($0.12) | B+ (4.0) | — |
-| csharp-script | opus46-200k-medium | B- (1.8min) | C+ ($0.42) | B+ (4.0) | — |
-| default | sonnet46-200k-medium* | C (2.8min) | B- ($0.35) | A- (4.2) | — |
-| powershell | sonnet46-200k-medium* | D+ (3.6min) | C+ ($0.39) | B+ (3.9) | — |
-| default | opus46-200k-medium | D+ (3.5min) | D ($0.88) | A- (4.2) | — |
-| powershell | opus46-200k-medium | D (4.3min) | D ($0.97) | B+ (4.1) | — |
-| powershell-strict | opus46-200k-medium* | D (4.9min) | D- ($1.20) | B+ (3.9) | — |
-| powershell-strict | sonnet46-200k-medium* | D- (6.1min) | D+ ($0.74) | B+ (4.0) | — |
+| csharp-script | opus46-200k-medium | B (1.4min) | C+ ($0.38) | B+ (4.0) | — |
+| default | sonnet46-200k-medium* | C (2.6min) | B- ($0.32) | A- (4.2) | — |
+| powershell | sonnet46-200k-medium* | C- (3.1min) | B- ($0.36) | B+ (3.9) | — |
+| default | opus46-200k-medium | D+ (3.3min) | D ($0.80) | A- (4.2) | — |
+| powershell | opus46-200k-medium | D (4.1min) | D ($0.92) | B+ (4.1) | — |
+| powershell-strict | sonnet46-200k-medium* | D- (5.4min) | D+ ($0.65) | B+ (4.0) | — |
+| powershell-strict | opus46-200k-medium* | D- (4.8min) | D- ($1.15) | B+ (3.9) | — |
 
 </details>
 
@@ -99,13 +102,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
 | csharp-script | sonnet46-200k-medium | A+ (0.6min) | A+ ($0.12) | B+ (4.0) | — |
-| default | sonnet46-200k-medium* | C (2.8min) | B- ($0.35) | A- (4.2) | — |
-| csharp-script | opus46-200k-medium | B- (1.8min) | C+ ($0.42) | B+ (4.0) | — |
-| powershell | sonnet46-200k-medium* | D+ (3.6min) | C+ ($0.39) | B+ (3.9) | — |
-| powershell-strict | sonnet46-200k-medium* | D- (6.1min) | D+ ($0.74) | B+ (4.0) | — |
-| default | opus46-200k-medium | D+ (3.5min) | D ($0.88) | A- (4.2) | — |
-| powershell | opus46-200k-medium | D (4.3min) | D ($0.97) | B+ (4.1) | — |
-| powershell-strict | opus46-200k-medium* | D (4.9min) | D- ($1.20) | B+ (3.9) | — |
+| default | sonnet46-200k-medium* | C (2.6min) | B- ($0.32) | A- (4.2) | — |
+| powershell | sonnet46-200k-medium* | C- (3.1min) | B- ($0.36) | B+ (3.9) | — |
+| csharp-script | opus46-200k-medium | B (1.4min) | C+ ($0.38) | B+ (4.0) | — |
+| powershell-strict | sonnet46-200k-medium* | D- (5.4min) | D+ ($0.65) | B+ (4.0) | — |
+| default | opus46-200k-medium | D+ (3.3min) | D ($0.80) | A- (4.2) | — |
+| powershell | opus46-200k-medium | D (4.1min) | D ($0.92) | B+ (4.1) | — |
+| powershell-strict | opus46-200k-medium* | D- (4.8min) | D- ($1.15) | B+ (3.9) | — |
 
 </details>
 
@@ -114,14 +117,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| default | sonnet46-200k-medium* | C (2.8min) | B- ($0.35) | A- (4.2) | — |
-| default | opus46-200k-medium | D+ (3.5min) | D ($0.88) | A- (4.2) | — |
+| default | sonnet46-200k-medium* | C (2.6min) | B- ($0.32) | A- (4.2) | — |
+| default | opus46-200k-medium | D+ (3.3min) | D ($0.80) | A- (4.2) | — |
 | csharp-script | sonnet46-200k-medium | A+ (0.6min) | A+ ($0.12) | B+ (4.0) | — |
-| csharp-script | opus46-200k-medium | B- (1.8min) | C+ ($0.42) | B+ (4.0) | — |
-| powershell | sonnet46-200k-medium* | D+ (3.6min) | C+ ($0.39) | B+ (3.9) | — |
-| powershell | opus46-200k-medium | D (4.3min) | D ($0.97) | B+ (4.1) | — |
-| powershell-strict | sonnet46-200k-medium* | D- (6.1min) | D+ ($0.74) | B+ (4.0) | — |
-| powershell-strict | opus46-200k-medium* | D (4.9min) | D- ($1.20) | B+ (3.9) | — |
+| csharp-script | opus46-200k-medium | B (1.4min) | C+ ($0.38) | B+ (4.0) | — |
+| powershell | sonnet46-200k-medium* | C- (3.1min) | B- ($0.36) | B+ (3.9) | — |
+| powershell | opus46-200k-medium | D (4.1min) | D ($0.92) | B+ (4.1) | — |
+| powershell-strict | sonnet46-200k-medium* | D- (5.4min) | D+ ($0.65) | B+ (4.0) | — |
+| powershell-strict | opus46-200k-medium* | D- (4.8min) | D- ($1.15) | B+ (3.9) | — |
 
 </details>
 
@@ -131,13 +134,13 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
 | csharp-script | sonnet46-200k-medium | A+ (0.6min) | A+ ($0.12) | B+ (4.0) | — |
-| csharp-script | opus46-200k-medium | B- (1.8min) | C+ ($0.42) | B+ (4.0) | — |
-| default | sonnet46-200k-medium* | C (2.8min) | B- ($0.35) | A- (4.2) | — |
-| powershell | sonnet46-200k-medium* | D+ (3.6min) | C+ ($0.39) | B+ (3.9) | — |
-| default | opus46-200k-medium | D+ (3.5min) | D ($0.88) | A- (4.2) | — |
-| powershell | opus46-200k-medium | D (4.3min) | D ($0.97) | B+ (4.1) | — |
-| powershell-strict | sonnet46-200k-medium* | D- (6.1min) | D+ ($0.74) | B+ (4.0) | — |
-| powershell-strict | opus46-200k-medium* | D (4.9min) | D- ($1.20) | B+ (3.9) | — |
+| csharp-script | opus46-200k-medium | B (1.4min) | C+ ($0.38) | B+ (4.0) | — |
+| default | sonnet46-200k-medium* | C (2.6min) | B- ($0.32) | A- (4.2) | — |
+| powershell | sonnet46-200k-medium* | C- (3.1min) | B- ($0.36) | B+ (3.9) | — |
+| default | opus46-200k-medium | D+ (3.3min) | D ($0.80) | A- (4.2) | — |
+| powershell | opus46-200k-medium | D (4.1min) | D ($0.92) | B+ (4.1) | — |
+| powershell-strict | sonnet46-200k-medium* | D- (5.4min) | D+ ($0.65) | B+ (4.0) | — |
+| powershell-strict | opus46-200k-medium* | D- (4.8min) | D- ($1.15) | B+ (3.9) | — |
 
 </details>
 
@@ -163,130 +166,130 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 *11 run(s) excluded from averages below.*
 
 ## Comparison by Language/Model/Effort
-*(averages exclude failed/timed-out runs)*
+*(failed runs are excluded from the cost/turns/errors averages; timed-out runs still pool into the duration stats — see [Column Definitions](#column-definitions))*
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| csharp-script | opus46-200k-medium | 2 | 1.8min | 1.8min | 0.0 | 10 | $0.42 | $0.84 | 4.0 | — |
-| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
-| default | opus46-200k-medium | 18 | 3.5min | 3.5min | 1.1 | 32 | $0.88 | $15.75 | 4.2 | — |
-| default | sonnet46-200k-medium* | 14 | 2.8min | 2.8min | 0.9 | 12 | $0.35 | $4.91 | 4.2 | — |
-| powershell | opus46-200k-medium | 18 | 4.3min | 4.3min | 0.4 | 32 | $0.97 | $17.49 | 4.1 | — |
-| powershell | sonnet46-200k-medium* | 16 | 3.6min | 3.6min | 0.0 | 11 | $0.39 | $6.32 | 3.9 | — |
-| powershell-strict | opus46-200k-medium* | 17 | 4.9min | 4.9min | 0.8 | 37 | $1.20 | $20.45 | 3.9 | — |
-| powershell-strict | sonnet46-200k-medium* | 14 | 6.1min | 6.1min | 0.1 | 17 | $0.74 | $10.31 | 4.0 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| csharp-script | opus46-200k-medium | 2 | 1.4min | 2.8min | 1.4min | 0.0 | 10 | $0.38 | $0.84 | 4.0 | — |
+| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
+| default | opus46-200k-medium | 18 | 3.3min | 5.6min | 1.3min | 1.1 | 28 | $0.80 | $15.75 | 4.2 | — |
+| default | sonnet46-200k-medium* | 14 | 2.6min | 6.3min | 2.6min | 0.9 | 10 | $0.32 | $4.91 | 4.2 | — |
+| powershell | opus46-200k-medium | 18 | 4.1min | 7.2min | 1.3min | 0.4 | 31 | $0.92 | $17.49 | 4.1 | — |
+| powershell | sonnet46-200k-medium* | 16 | 3.1min | 12.6min | 3.0min | 0.0 | 11 | $0.36 | $6.32 | 3.9 | — |
+| powershell-strict | opus46-200k-medium* | 17 | 4.8min | 8.7min | 1.6min | 0.8 | 35 | $1.15 | $20.45 | 3.9 | — |
+| powershell-strict | sonnet46-200k-medium* | 14 | 5.4min | 13.9min | 4.8min | 0.1 | 17 | $0.65 | $10.31 | 4.0 | — |
 
 
 <details>
-<summary>Sorted by avg cost (cheapest first)</summary>
+<summary>Sorted by cost (geomean, cheapest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
-| default | sonnet46-200k-medium* | 14 | 2.8min | 2.8min | 0.9 | 12 | $0.35 | $4.91 | 4.2 | — |
-| powershell | sonnet46-200k-medium* | 16 | 3.6min | 3.6min | 0.0 | 11 | $0.39 | $6.32 | 3.9 | — |
-| csharp-script | opus46-200k-medium | 2 | 1.8min | 1.8min | 0.0 | 10 | $0.42 | $0.84 | 4.0 | — |
-| powershell-strict | sonnet46-200k-medium* | 14 | 6.1min | 6.1min | 0.1 | 17 | $0.74 | $10.31 | 4.0 | — |
-| default | opus46-200k-medium | 18 | 3.5min | 3.5min | 1.1 | 32 | $0.88 | $15.75 | 4.2 | — |
-| powershell | opus46-200k-medium | 18 | 4.3min | 4.3min | 0.4 | 32 | $0.97 | $17.49 | 4.1 | — |
-| powershell-strict | opus46-200k-medium* | 17 | 4.9min | 4.9min | 0.8 | 37 | $1.20 | $20.45 | 3.9 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
+| default | sonnet46-200k-medium* | 14 | 2.6min | 6.3min | 2.6min | 0.9 | 10 | $0.32 | $4.91 | 4.2 | — |
+| powershell | sonnet46-200k-medium* | 16 | 3.1min | 12.6min | 3.0min | 0.0 | 11 | $0.36 | $6.32 | 3.9 | — |
+| csharp-script | opus46-200k-medium | 2 | 1.4min | 2.8min | 1.4min | 0.0 | 10 | $0.38 | $0.84 | 4.0 | — |
+| powershell-strict | sonnet46-200k-medium* | 14 | 5.4min | 13.9min | 4.8min | 0.1 | 17 | $0.65 | $10.31 | 4.0 | — |
+| default | opus46-200k-medium | 18 | 3.3min | 5.6min | 1.3min | 1.1 | 28 | $0.80 | $15.75 | 4.2 | — |
+| powershell | opus46-200k-medium | 18 | 4.1min | 7.2min | 1.3min | 0.4 | 31 | $0.92 | $17.49 | 4.1 | — |
+| powershell-strict | opus46-200k-medium* | 17 | 4.8min | 8.7min | 1.6min | 0.8 | 35 | $1.15 | $20.45 | 3.9 | — |
 
 </details>
 
 <details>
-<summary>Sorted by avg duration (fastest first)</summary>
+<summary>Sorted by duration (geomean, fastest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
-| csharp-script | opus46-200k-medium | 2 | 1.8min | 1.8min | 0.0 | 10 | $0.42 | $0.84 | 4.0 | — |
-| default | sonnet46-200k-medium* | 14 | 2.8min | 2.8min | 0.9 | 12 | $0.35 | $4.91 | 4.2 | — |
-| default | opus46-200k-medium | 18 | 3.5min | 3.5min | 1.1 | 32 | $0.88 | $15.75 | 4.2 | — |
-| powershell | sonnet46-200k-medium* | 16 | 3.6min | 3.6min | 0.0 | 11 | $0.39 | $6.32 | 3.9 | — |
-| powershell | opus46-200k-medium | 18 | 4.3min | 4.3min | 0.4 | 32 | $0.97 | $17.49 | 4.1 | — |
-| powershell-strict | opus46-200k-medium* | 17 | 4.9min | 4.9min | 0.8 | 37 | $1.20 | $20.45 | 3.9 | — |
-| powershell-strict | sonnet46-200k-medium* | 14 | 6.1min | 6.1min | 0.1 | 17 | $0.74 | $10.31 | 4.0 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
+| csharp-script | opus46-200k-medium | 2 | 1.4min | 2.8min | 1.4min | 0.0 | 10 | $0.38 | $0.84 | 4.0 | — |
+| default | sonnet46-200k-medium* | 14 | 2.6min | 6.3min | 2.6min | 0.9 | 10 | $0.32 | $4.91 | 4.2 | — |
+| powershell | sonnet46-200k-medium* | 16 | 3.1min | 12.6min | 3.0min | 0.0 | 11 | $0.36 | $6.32 | 3.9 | — |
+| default | opus46-200k-medium | 18 | 3.3min | 5.6min | 1.3min | 1.1 | 28 | $0.80 | $15.75 | 4.2 | — |
+| powershell | opus46-200k-medium | 18 | 4.1min | 7.2min | 1.3min | 0.4 | 31 | $0.92 | $17.49 | 4.1 | — |
+| powershell-strict | opus46-200k-medium* | 17 | 4.8min | 8.7min | 1.6min | 0.8 | 35 | $1.15 | $20.45 | 3.9 | — |
+| powershell-strict | sonnet46-200k-medium* | 14 | 5.4min | 13.9min | 4.8min | 0.1 | 17 | $0.65 | $10.31 | 4.0 | — |
 
 </details>
 
 <details>
-<summary>Sorted by avg duration net of traps (fastest first)</summary>
+<summary>Sorted by duration net of traps (geomean, fastest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
-| csharp-script | opus46-200k-medium | 2 | 1.8min | 1.8min | 0.0 | 10 | $0.42 | $0.84 | 4.0 | — |
-| default | sonnet46-200k-medium* | 14 | 2.8min | 2.8min | 0.9 | 12 | $0.35 | $4.91 | 4.2 | — |
-| default | opus46-200k-medium | 18 | 3.5min | 3.5min | 1.1 | 32 | $0.88 | $15.75 | 4.2 | — |
-| powershell | sonnet46-200k-medium* | 16 | 3.6min | 3.6min | 0.0 | 11 | $0.39 | $6.32 | 3.9 | — |
-| powershell | opus46-200k-medium | 18 | 4.3min | 4.3min | 0.4 | 32 | $0.97 | $17.49 | 4.1 | — |
-| powershell-strict | opus46-200k-medium* | 17 | 4.9min | 4.9min | 0.8 | 37 | $1.20 | $20.45 | 3.9 | — |
-| powershell-strict | sonnet46-200k-medium* | 14 | 6.1min | 6.1min | 0.1 | 17 | $0.74 | $10.31 | 4.0 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
+| powershell | opus46-200k-medium | 18 | 4.1min | 7.2min | 1.3min | 0.4 | 31 | $0.92 | $17.49 | 4.1 | — |
+| default | opus46-200k-medium | 18 | 3.3min | 5.6min | 1.3min | 1.1 | 28 | $0.80 | $15.75 | 4.2 | — |
+| csharp-script | opus46-200k-medium | 2 | 1.4min | 2.8min | 1.4min | 0.0 | 10 | $0.38 | $0.84 | 4.0 | — |
+| powershell-strict | opus46-200k-medium* | 17 | 4.8min | 8.7min | 1.6min | 0.8 | 35 | $1.15 | $20.45 | 3.9 | — |
+| default | sonnet46-200k-medium* | 14 | 2.6min | 6.3min | 2.6min | 0.9 | 10 | $0.32 | $4.91 | 4.2 | — |
+| powershell | sonnet46-200k-medium* | 16 | 3.1min | 12.6min | 3.0min | 0.0 | 11 | $0.36 | $6.32 | 3.9 | — |
+| powershell-strict | sonnet46-200k-medium* | 14 | 5.4min | 13.9min | 4.8min | 0.1 | 17 | $0.65 | $10.31 | 4.0 | — |
 
 </details>
 
 <details>
 <summary>Sorted by avg errors (fewest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| csharp-script | opus46-200k-medium | 2 | 1.8min | 1.8min | 0.0 | 10 | $0.42 | $0.84 | 4.0 | — |
-| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
-| powershell | sonnet46-200k-medium* | 16 | 3.6min | 3.6min | 0.0 | 11 | $0.39 | $6.32 | 3.9 | — |
-| powershell-strict | sonnet46-200k-medium* | 14 | 6.1min | 6.1min | 0.1 | 17 | $0.74 | $10.31 | 4.0 | — |
-| powershell | opus46-200k-medium | 18 | 4.3min | 4.3min | 0.4 | 32 | $0.97 | $17.49 | 4.1 | — |
-| powershell-strict | opus46-200k-medium* | 17 | 4.9min | 4.9min | 0.8 | 37 | $1.20 | $20.45 | 3.9 | — |
-| default | sonnet46-200k-medium* | 14 | 2.8min | 2.8min | 0.9 | 12 | $0.35 | $4.91 | 4.2 | — |
-| default | opus46-200k-medium | 18 | 3.5min | 3.5min | 1.1 | 32 | $0.88 | $15.75 | 4.2 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| csharp-script | opus46-200k-medium | 2 | 1.4min | 2.8min | 1.4min | 0.0 | 10 | $0.38 | $0.84 | 4.0 | — |
+| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
+| powershell | sonnet46-200k-medium* | 16 | 3.1min | 12.6min | 3.0min | 0.0 | 11 | $0.36 | $6.32 | 3.9 | — |
+| powershell-strict | sonnet46-200k-medium* | 14 | 5.4min | 13.9min | 4.8min | 0.1 | 17 | $0.65 | $10.31 | 4.0 | — |
+| powershell | opus46-200k-medium | 18 | 4.1min | 7.2min | 1.3min | 0.4 | 31 | $0.92 | $17.49 | 4.1 | — |
+| powershell-strict | opus46-200k-medium* | 17 | 4.8min | 8.7min | 1.6min | 0.8 | 35 | $1.15 | $20.45 | 3.9 | — |
+| default | sonnet46-200k-medium* | 14 | 2.6min | 6.3min | 2.6min | 0.9 | 10 | $0.32 | $4.91 | 4.2 | — |
+| default | opus46-200k-medium | 18 | 3.3min | 5.6min | 1.3min | 1.1 | 28 | $0.80 | $15.75 | 4.2 | — |
 
 </details>
 
 <details>
-<summary>Sorted by avg turns (fewest first)</summary>
+<summary>Sorted by turns (geomean, fewest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
-| csharp-script | opus46-200k-medium | 2 | 1.8min | 1.8min | 0.0 | 10 | $0.42 | $0.84 | 4.0 | — |
-| powershell | sonnet46-200k-medium* | 16 | 3.6min | 3.6min | 0.0 | 11 | $0.39 | $6.32 | 3.9 | — |
-| default | sonnet46-200k-medium* | 14 | 2.8min | 2.8min | 0.9 | 12 | $0.35 | $4.91 | 4.2 | — |
-| powershell-strict | sonnet46-200k-medium* | 14 | 6.1min | 6.1min | 0.1 | 17 | $0.74 | $10.31 | 4.0 | — |
-| default | opus46-200k-medium | 18 | 3.5min | 3.5min | 1.1 | 32 | $0.88 | $15.75 | 4.2 | — |
-| powershell | opus46-200k-medium | 18 | 4.3min | 4.3min | 0.4 | 32 | $0.97 | $17.49 | 4.1 | — |
-| powershell-strict | opus46-200k-medium* | 17 | 4.9min | 4.9min | 0.8 | 37 | $1.20 | $20.45 | 3.9 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
+| default | sonnet46-200k-medium* | 14 | 2.6min | 6.3min | 2.6min | 0.9 | 10 | $0.32 | $4.91 | 4.2 | — |
+| csharp-script | opus46-200k-medium | 2 | 1.4min | 2.8min | 1.4min | 0.0 | 10 | $0.38 | $0.84 | 4.0 | — |
+| powershell | sonnet46-200k-medium* | 16 | 3.1min | 12.6min | 3.0min | 0.0 | 11 | $0.36 | $6.32 | 3.9 | — |
+| powershell-strict | sonnet46-200k-medium* | 14 | 5.4min | 13.9min | 4.8min | 0.1 | 17 | $0.65 | $10.31 | 4.0 | — |
+| default | opus46-200k-medium | 18 | 3.3min | 5.6min | 1.3min | 1.1 | 28 | $0.80 | $15.75 | 4.2 | — |
+| powershell | opus46-200k-medium | 18 | 4.1min | 7.2min | 1.3min | 0.4 | 31 | $0.92 | $17.49 | 4.1 | — |
+| powershell-strict | opus46-200k-medium* | 17 | 4.8min | 8.7min | 1.6min | 0.8 | 35 | $1.15 | $20.45 | 3.9 | — |
 
 </details>
 
 <details>
 <summary>Sorted by LLM-as-judge score (best first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | opus46-200k-medium | 18 | 3.5min | 3.5min | 1.1 | 32 | $0.88 | $15.75 | 4.2 | — |
-| default | sonnet46-200k-medium* | 14 | 2.8min | 2.8min | 0.9 | 12 | $0.35 | $4.91 | 4.2 | — |
-| powershell | opus46-200k-medium | 18 | 4.3min | 4.3min | 0.4 | 32 | $0.97 | $17.49 | 4.1 | — |
-| csharp-script | opus46-200k-medium | 2 | 1.8min | 1.8min | 0.0 | 10 | $0.42 | $0.84 | 4.0 | — |
-| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
-| powershell-strict | sonnet46-200k-medium* | 14 | 6.1min | 6.1min | 0.1 | 17 | $0.74 | $10.31 | 4.0 | — |
-| powershell-strict | opus46-200k-medium* | 17 | 4.9min | 4.9min | 0.8 | 37 | $1.20 | $20.45 | 3.9 | — |
-| powershell | sonnet46-200k-medium* | 16 | 3.6min | 3.6min | 0.0 | 11 | $0.39 | $6.32 | 3.9 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| default | opus46-200k-medium | 18 | 3.3min | 5.6min | 1.3min | 1.1 | 28 | $0.80 | $15.75 | 4.2 | — |
+| default | sonnet46-200k-medium* | 14 | 2.6min | 6.3min | 2.6min | 0.9 | 10 | $0.32 | $4.91 | 4.2 | — |
+| powershell | opus46-200k-medium | 18 | 4.1min | 7.2min | 1.3min | 0.4 | 31 | $0.92 | $17.49 | 4.1 | — |
+| csharp-script | opus46-200k-medium | 2 | 1.4min | 2.8min | 1.4min | 0.0 | 10 | $0.38 | $0.84 | 4.0 | — |
+| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
+| powershell-strict | sonnet46-200k-medium* | 14 | 5.4min | 13.9min | 4.8min | 0.1 | 17 | $0.65 | $10.31 | 4.0 | — |
+| powershell-strict | opus46-200k-medium* | 17 | 4.8min | 8.7min | 1.6min | 0.8 | 35 | $1.15 | $20.45 | 3.9 | — |
+| powershell | sonnet46-200k-medium* | 16 | 3.1min | 12.6min | 3.0min | 0.0 | 11 | $0.36 | $6.32 | 3.9 | — |
 
 </details>
 
 <details>
 <summary>Sorted by deliverable-quality score (best first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| csharp-script | opus46-200k-medium | 2 | 1.8min | 1.8min | 0.0 | 10 | $0.42 | $0.84 | 4.0 | — |
-| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
-| default | opus46-200k-medium | 18 | 3.5min | 3.5min | 1.1 | 32 | $0.88 | $15.75 | 4.2 | — |
-| default | sonnet46-200k-medium* | 14 | 2.8min | 2.8min | 0.9 | 12 | $0.35 | $4.91 | 4.2 | — |
-| powershell | opus46-200k-medium | 18 | 4.3min | 4.3min | 0.4 | 32 | $0.97 | $17.49 | 4.1 | — |
-| powershell | sonnet46-200k-medium* | 16 | 3.6min | 3.6min | 0.0 | 11 | $0.39 | $6.32 | 3.9 | — |
-| powershell-strict | opus46-200k-medium* | 17 | 4.9min | 4.9min | 0.8 | 37 | $1.20 | $20.45 | 3.9 | — |
-| powershell-strict | sonnet46-200k-medium* | 14 | 6.1min | 6.1min | 0.1 | 17 | $0.74 | $10.31 | 4.0 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| csharp-script | opus46-200k-medium | 2 | 1.4min | 2.8min | 1.4min | 0.0 | 10 | $0.38 | $0.84 | 4.0 | — |
+| csharp-script | sonnet46-200k-medium | 1 | 0.6min | 0.6min | 0.6min | 0.0 | 7 | $0.12 | $0.12 | 4.0 | — |
+| default | opus46-200k-medium | 18 | 3.3min | 5.6min | 1.3min | 1.1 | 28 | $0.80 | $15.75 | 4.2 | — |
+| default | sonnet46-200k-medium* | 14 | 2.6min | 6.3min | 2.6min | 0.9 | 10 | $0.32 | $4.91 | 4.2 | — |
+| powershell | opus46-200k-medium | 18 | 4.1min | 7.2min | 1.3min | 0.4 | 31 | $0.92 | $17.49 | 4.1 | — |
+| powershell | sonnet46-200k-medium* | 16 | 3.1min | 12.6min | 3.0min | 0.0 | 11 | $0.36 | $6.32 | 3.9 | — |
+| powershell-strict | opus46-200k-medium* | 17 | 4.8min | 8.7min | 1.6min | 0.8 | 35 | $1.15 | $20.45 | 3.9 | — |
+| powershell-strict | sonnet46-200k-medium* | 14 | 5.4min | 13.9min | 4.8min | 0.1 | 17 | $0.65 | $10.31 | 4.0 | — |
 
 </details>
 
@@ -1576,8 +1579,8 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Tiers
 
-- **Duration bands:** **A+** ≤1.21×, **A** ≤1.47×, **A-** ≤1.79×, **B+** ≤2.17×, **B** ≤2.63×, **B-** ≤3.19×, **C+** ≤3.87×, **C** ≤4.69×, **C-** ≤5.69×, **D+** ≤6.90×, **D** ≤8.37×, **D-** ≤10.16×, **F** >10.16×
-- **Cost bands:** **A+** ≤1.21×, **A** ≤1.47×, **A-** ≤1.78×, **B+** ≤2.16×, **B** ≤2.61×, **B-** ≤3.17×, **C+** ≤3.84×, **C** ≤4.65×, **C-** ≤5.63×, **D+** ≤6.83×, **D** ≤8.27×, **D-** ≤10.03×, **F** >10.03×
+- **Duration bands:** **A+** ≤1.20×, **A** ≤1.44×, **A-** ≤1.73×, **B+** ≤2.07×, **B** ≤2.49×, **B-** ≤2.98×, **C+** ≤3.58×, **C** ≤4.29×, **C-** ≤5.15×, **D+** ≤6.18×, **D** ≤7.41×, **D-** ≤8.89×, **F** >8.89×
+- **Cost bands:** **A+** ≤1.21×, **A** ≤1.46×, **A-** ≤1.76×, **B+** ≤2.12×, **B** ≤2.57×, **B-** ≤3.10×, **C+** ≤3.74×, **C** ≤4.51×, **C-** ≤5.45×, **D+** ≤6.58×, **D** ≤7.95×, **D-** ≤9.59×, **F** >9.59×
 
 *Tests/Workflow Craft bands are absolute Overall score bands:* **A+** ≥4.7, **A** ≥4.4, **A-** ≥4.1, **B+** ≥3.8, **B** ≥3.5, **B-** ≥3.2, **C+** ≥2.9, **C** ≥2.6, **C-** ≥2.3, **D+** ≥2.0, **D** ≥1.7, **D-** ≥1.4, **F** <1.4, `—` = no data.*
 

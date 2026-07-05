@@ -52,7 +52,7 @@ Examples:
   python3 monitor.py results/2026-06-26_103905 --baseline results/2026-05-06_173435
 """
 from __future__ import annotations
-import argparse, glob, json, os, re, statistics, sys, time, datetime, collections
+import argparse, glob, json, math, os, re, statistics, sys, time, datetime, collections
 import urllib.request, urllib.error
 from pathlib import Path
 
@@ -157,6 +157,14 @@ def _mean(vals):
     return statistics.mean(vals) if vals else 0
 
 
+def _geomean(vals) -> float:
+    """Geometric mean over the positive values; 0.0 if none."""
+    pos = [v for v in vals if v > 0]
+    if not pos:
+        return 0.0
+    return math.exp(sum(math.log(v) for v in pos) / len(pos))
+
+
 def aggregate(cells: list[dict]) -> dict:
     if not cells:
         return {"n": 0}
@@ -164,9 +172,16 @@ def aggregate(cells: list[dict]) -> dict:
         "n": len(cells),
         "ok": sum(1 for d in cells if d.get("run_success")),
         "fail": sum(1 for d in cells if not d.get("run_success")),
-        "dur": _mean([_dur(d) for d in cells]),
-        "cost": _mean([_cost(d) for d in cells]),
-        "turns": _mean([_turns(d) for d in cells]),
+        # Geometric mean (issue #33): outlier-damped vs. a plain average.
+        # Duration pools successful cells + timeouts (a timeout ran at
+        # LEAST that long — right-censored, not droppable without
+        # rewarding it with a better average). Cost/turns exclude ALL
+        # failed cells (a SIGKILL'd timeout records cost=0/turns=0 —
+        # missing data, not a real zero).
+        "dur": _geomean([_dur(d) for d in cells
+                         if d.get("run_success") or d.get("failure_reason") == "timeout"]),
+        "cost": _geomean([_cost(d) for d in cells if d.get("run_success")]),
+        "turns": _geomean([_turns(d) for d in cells if d.get("run_success")]),
         "testsec": _mean([_testsec(d) for d in cells]),
         "errors": sum(_errs(d) for d in cells),
         "actionlint_pass": sum(1 for d in cells if d.get("quality", {}).get("actionlint_pass") is True),

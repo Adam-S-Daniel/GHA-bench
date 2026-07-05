@@ -1,5 +1,6 @@
 """Unit tests for generate_results.py — helper functions."""
 
+import math
 import re
 
 import pytest
@@ -802,6 +803,117 @@ class TestSingleRunNoDuplicateRows:
             f"expected one consolidated row in primary Comparison table, "
             f"got {len(bash_opus_rows)}:\n" + "\n".join(bash_opus_rows)
         )
+
+
+class TestConsolidateCmpRowsGeomean:
+    """`_consolidate_cmp_rows` is a nested function (not exported), so it
+    isn't independently testable — these tests exercise its geomean-merge
+    behavior indirectly through the public `generate_results_md` entrypoint,
+    the same way TestSingleRunNoDuplicateRows does (issue #33)."""
+
+    def _mk_metric(self, task_id, mode, model, cli, cost=1.0, dur_ms=60000):
+        return {
+            "task_id": task_id,
+            "task_name": f"Task {task_id}",
+            "language_mode": mode,
+            "model_short": model,
+            "effort_level": None,
+            "claude_code_version": cli,
+            "language_chosen": mode,
+            "timing": {"grand_total_duration_ms": dur_ms, "num_turns": 10,
+                       "tool_use_time_ms": 0, "overall_tool_use_time_ms": 0,
+                       "slowest_tool_uses": []},
+            "code_metrics": {"total_lines": 100},
+            "cost": {"total_cost_usd": cost},
+            "quality": {"error_count": 0},
+            "tool_use_timing": {"slowest_tool_uses": []},
+            "bash_commands": [],
+            "run_success": True,
+            "exit_code": 0,
+        }
+
+    def _row_cols(self, text, mode_prefix, model_substr):
+        comparison_block = text.split("## Comparison by Language/Model/Effort", 1)
+        assert len(comparison_block) == 2, "Comparison section missing"
+        primary_table = comparison_block[1].split("<details>", 1)[0]
+        matches = [
+            ln for ln in primary_table.splitlines()
+            if ln.startswith(f"| {mode_prefix} ") and model_substr in ln
+        ]
+        assert matches, f"no row found for {mode_prefix}/{model_substr}"
+        return [c.strip() for c in matches[0].strip().strip("|").split("|")]
+
+    def test_geo_dur_and_geo_cost_are_weighted_log_pooled(self, tmp_path):
+        import json
+        from generate_results import generate_results_md
+        # Two CLI-bucket cells sharing the display label `opus46-200k`
+        # (both bash/opus), distinct durations + costs, distinct CLI
+        # versions so they land in separate cmp_rows buckets pre-merge.
+        run = tmp_path / "2026-04-01_000000"
+        mm = [
+            self._mk_metric("11-stub", "bash", "opus", "2.1.97", cost=2.0, dur_ms=30_000),
+            self._mk_metric("12-stub", "bash", "opus", "2.1.98", cost=8.0, dur_ms=120_000),
+        ]
+        for m in mm:
+            d = run / "tasks" / m["task_id"] / "bash-opus"
+            d.mkdir(parents=True, exist_ok=True)
+            (d / "metrics.json").write_text(json.dumps(m))
+        generate_results_md(run, mm, total_runs=2, run_count=2)
+        text = (run / "results.md").read_text()
+        cols = self._row_cols(text, "bash", "opus46-200k")
+        # Columns: Language, Model, Runs, Geo Duration, Max Duration,
+        # Geo Duration Net of Traps, Avg Errors, Geo Turns, Geo Cost,
+        # Total Cost, Avg Tests Quality, Avg Workflow Craft.
+        assert cols[2] == "2"
+        # Each CLI bucket has n=1, so its "geomean" is just its own value;
+        # the pooled geomean across both buckets (weights = each bucket's
+        # n) is the plain two-point geomean here.
+        expected_geo_dur_s = math.exp((math.log(30.0) + math.log(120.0)) / 2)
+        expected_geo_cost = math.exp((math.log(2.0) + math.log(8.0)) / 2)
+        got_geo_dur_min = float(cols[3].replace("min", ""))
+        assert got_geo_dur_min == pytest.approx(expected_geo_dur_s / 60, abs=0.05)
+        got_geo_cost = float(cols[8].lstrip("$"))
+        assert got_geo_cost == pytest.approx(expected_geo_cost, abs=0.005)
+
+    def test_max_dur_and_n_timeout_merge_across_cli_buckets(self, tmp_path):
+        import json
+        from generate_results import generate_results_md
+        # CLI 2.1.97 bucket: one success. CLI 2.1.98 bucket: one success
+        # plus a timeout. Both buckets share the display label
+        # `opus46-200k`, so consolidation must merge `max_dur` (the
+        # timeout's 1800s wins), `max_dur_censored` (True — the timeout
+        # holds the max), and `n_timeout` (sums to 1) across the two parts.
+        run = tmp_path / "2026-04-01_000000"
+        good_97 = self._mk_metric("11-stub", "bash", "opus", "2.1.97", cost=2.0, dur_ms=30_000)
+        good_98 = self._mk_metric("12-stub", "bash", "opus", "2.1.98", cost=4.0, dur_ms=60_000)
+        timeout_98 = dict(self._mk_metric("13-stub", "bash", "opus", "2.1.98",
+                                          cost=0.0, dur_ms=1_800_000))
+        timeout_98["timing"] = {**timeout_98["timing"], "num_turns": 0}
+        timeout_98["run_success"] = False
+        timeout_98["exit_code"] = -9
+        timeout_98["failure_reason"] = "timeout"
+        mm = [good_97, good_98, timeout_98]
+        for m in mm:
+            d = run / "tasks" / m["task_id"] / "bash-opus"
+            d.mkdir(parents=True, exist_ok=True)
+            (d / "metrics.json").write_text(json.dumps(m))
+        generate_results_md(run, mm, total_runs=3, run_count=3)
+        text = (run / "results.md").read_text()
+        cols = self._row_cols(text, "bash", "opus46-200k")
+        # Runs column counts only successful cells (2), not the timeout.
+        assert cols[2] == "2"
+        # Max Duration is the timeout's 1800s = 30.0min, `≥`-prefixed
+        # since that cell is censored.
+        assert cols[4] == "≥30.0min", f"expected censored max duration; row cols: {cols}"
+        # Geo Duration merges with DURATION-POOL weights (n + n_timeout =
+        # 1 vs 2), i.e. exp((1·ln g97 + 2·ln g98)/3) = geomean(30, 60,
+        # 1800) ≈ 2.5min. Successful-only weights (1 vs 1) would give
+        # ≈ 1.7min instead, so this discriminates the weight choice.
+        expected_geo_dur_s = math.exp(
+            (math.log(30.0) + math.log(60.0) + math.log(1800.0)) / 3
+        )
+        got_geo_dur_min = float(cols[3].replace("min", ""))
+        assert got_geo_dur_min == pytest.approx(expected_geo_dur_s / 60, abs=0.05)
 
 
 class TestUpdateReadmeIgnoresNonRunDirs:

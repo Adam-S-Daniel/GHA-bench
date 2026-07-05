@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-03 08:47:19 AM ET — 64/64 runs completed, 0 remaining; total cost $84.25; total agent time 726.1 min.
+**Last updated:** 2026-07-05 12:56:58 AM ET — 64/64 runs completed, 0 remaining; total cost $84.25; total agent time 726.1 min.
 **Claude Code versions used:** [v2.1.97](claude-code-2.1.97.md) (64 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -56,23 +56,26 @@ Properties:
 Every Duration figure in this report derives from `timing.grand_total_duration_ms` in `metrics.json` — wall-clock seconds from CLI invocation to the final assistant turn (agent thinking + tool execution).
 
 - **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.
-- **Avg Duration** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; also drives the [Tiers](#tiers-by-languagemodeleffort) Duration column): arithmetic mean of `Duration` over the runs in that combo, excluding failed/timed-out runs.
-- **Avg Duration Net of Traps** (in the Comparison table only): mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
-- The **Tier table's Duration column** shows the tier letter (A+..F) for the combo's gross **Avg Duration** ratio. Net of Traps does not feed the tier band.
+- **Geo Duration / Geo Cost / Geo Turns** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; Geo Duration and Geo Cost also drive the [Tiers](#tiers-by-languagemodeleffort) Duration/Cost columns): **geometric** means (issue #33) — outlier-damped relative to a plain average, so one abnormally slow/expensive/chatty run doesn't dominate a combo's aggregate.
+- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average. Geo Cost and Geo Turns still exclude ALL failed runs (including timeouts): a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and would bias those averages down if pooled in. This means **Total Cost can slightly understate** true spend on rows with timeouts (the timeout's own cost isn't in the sum either).
+- **Max Duration** is the slowest run in the Geo Duration pool for that combo, `≥`-prefixed when that run was a timeout (true duration unknown, but at least the shown value).
+- **Avg Errors** remains an arithmetic mean.
+- **Geo Duration Net of Traps** (in the Comparison table only): the geometric mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Pooled over the SAME runs as Geo Duration — timed-out cells are included, with their detected traps (if any) deducted too. Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
+- The **Tier table's Duration/Cost columns** show the tier letter (A+..F) for the combo's gross **Geo Duration**/**Geo Cost** ratio. Net of Traps does not feed the tier band.
 ## Tiers by Language/Model/Effort
 
 *Default sort: weighted composite of tiers (40% Tests, 25% Workflow Craft, 35% split between Duration & Cost). See [Notes](#notes) for tier-band definitions and scoring rubric.*
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | sonnet46-200k-medium | B (10.2min) | A+ ($1.06) | B- (3.4) | — |
-| default | opus46-200k-medium | A+ (7.0min) | B- ($1.29) | C+ (3.1) | — |
-| typescript-bun | sonnet46-200k-medium | B- (11.3min) | B+ ($1.22) | B- (3.4) | — |
-| default | sonnet46-200k-medium | C- (14.6min) | C ($1.38) | A- (4.2) | — |
-| powershell | opus46-200k-medium | A- (9.1min) | B+ ($1.20) | C (2.9) | — |
-| bash | opus46-200k-medium | A- (8.7min) | C+ ($1.37) | C+ (3.0) | — |
-| typescript-bun | opus46-200k-medium | A- (8.9min) | C+ ($1.35) | C+ (3.1) | — |
-| powershell | sonnet46-200k-medium | D- (21.0min) | D- ($1.67) | B- (3.4) | — |
+| bash | sonnet46-200k-medium | B+ (9.4min) | A+ ($1.01) | B- (3.4) | — |
+| default | opus46-200k-medium | A+ (6.7min) | B- ($1.22) | C+ (3.1) | — |
+| typescript-bun | sonnet46-200k-medium | B- (11.0min) | B ($1.18) | B- (3.4) | — |
+| default | sonnet46-200k-medium | C- (14.5min) | C- ($1.36) | A- (4.2) | — |
+| typescript-bun | opus46-200k-medium | A- (8.5min) | C+ ($1.30) | C+ (3.1) | — |
+| powershell | opus46-200k-medium | B+ (8.9min) | B+ ($1.14) | C (2.9) | — |
+| bash | opus46-200k-medium | A- (8.2min) | C ($1.33) | C+ (3.0) | — |
+| powershell | sonnet46-200k-medium | D- (19.2min) | D- ($1.56) | B- (3.4) | — |
 
 
 <details>
@@ -80,14 +83,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| default | opus46-200k-medium | A+ (7.0min) | B- ($1.29) | C+ (3.1) | — |
-| powershell | opus46-200k-medium | A- (9.1min) | B+ ($1.20) | C (2.9) | — |
-| bash | opus46-200k-medium | A- (8.7min) | C+ ($1.37) | C+ (3.0) | — |
-| typescript-bun | opus46-200k-medium | A- (8.9min) | C+ ($1.35) | C+ (3.1) | — |
-| bash | sonnet46-200k-medium | B (10.2min) | A+ ($1.06) | B- (3.4) | — |
-| typescript-bun | sonnet46-200k-medium | B- (11.3min) | B+ ($1.22) | B- (3.4) | — |
-| default | sonnet46-200k-medium | C- (14.6min) | C ($1.38) | A- (4.2) | — |
-| powershell | sonnet46-200k-medium | D- (21.0min) | D- ($1.67) | B- (3.4) | — |
+| default | opus46-200k-medium | A+ (6.7min) | B- ($1.22) | C+ (3.1) | — |
+| typescript-bun | opus46-200k-medium | A- (8.5min) | C+ ($1.30) | C+ (3.1) | — |
+| bash | opus46-200k-medium | A- (8.2min) | C ($1.33) | C+ (3.0) | — |
+| bash | sonnet46-200k-medium | B+ (9.4min) | A+ ($1.01) | B- (3.4) | — |
+| powershell | opus46-200k-medium | B+ (8.9min) | B+ ($1.14) | C (2.9) | — |
+| typescript-bun | sonnet46-200k-medium | B- (11.0min) | B ($1.18) | B- (3.4) | — |
+| default | sonnet46-200k-medium | C- (14.5min) | C- ($1.36) | A- (4.2) | — |
+| powershell | sonnet46-200k-medium | D- (19.2min) | D- ($1.56) | B- (3.4) | — |
 
 </details>
 
@@ -96,14 +99,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | sonnet46-200k-medium | B (10.2min) | A+ ($1.06) | B- (3.4) | — |
-| powershell | opus46-200k-medium | A- (9.1min) | B+ ($1.20) | C (2.9) | — |
-| typescript-bun | sonnet46-200k-medium | B- (11.3min) | B+ ($1.22) | B- (3.4) | — |
-| default | opus46-200k-medium | A+ (7.0min) | B- ($1.29) | C+ (3.1) | — |
-| bash | opus46-200k-medium | A- (8.7min) | C+ ($1.37) | C+ (3.0) | — |
-| typescript-bun | opus46-200k-medium | A- (8.9min) | C+ ($1.35) | C+ (3.1) | — |
-| default | sonnet46-200k-medium | C- (14.6min) | C ($1.38) | A- (4.2) | — |
-| powershell | sonnet46-200k-medium | D- (21.0min) | D- ($1.67) | B- (3.4) | — |
+| bash | sonnet46-200k-medium | B+ (9.4min) | A+ ($1.01) | B- (3.4) | — |
+| powershell | opus46-200k-medium | B+ (8.9min) | B+ ($1.14) | C (2.9) | — |
+| typescript-bun | sonnet46-200k-medium | B- (11.0min) | B ($1.18) | B- (3.4) | — |
+| default | opus46-200k-medium | A+ (6.7min) | B- ($1.22) | C+ (3.1) | — |
+| typescript-bun | opus46-200k-medium | A- (8.5min) | C+ ($1.30) | C+ (3.1) | — |
+| bash | opus46-200k-medium | A- (8.2min) | C ($1.33) | C+ (3.0) | — |
+| default | sonnet46-200k-medium | C- (14.5min) | C- ($1.36) | A- (4.2) | — |
+| powershell | sonnet46-200k-medium | D- (19.2min) | D- ($1.56) | B- (3.4) | — |
 
 </details>
 
@@ -112,14 +115,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| default | sonnet46-200k-medium | C- (14.6min) | C ($1.38) | A- (4.2) | — |
-| bash | sonnet46-200k-medium | B (10.2min) | A+ ($1.06) | B- (3.4) | — |
-| typescript-bun | sonnet46-200k-medium | B- (11.3min) | B+ ($1.22) | B- (3.4) | — |
-| powershell | sonnet46-200k-medium | D- (21.0min) | D- ($1.67) | B- (3.4) | — |
-| default | opus46-200k-medium | A+ (7.0min) | B- ($1.29) | C+ (3.1) | — |
-| bash | opus46-200k-medium | A- (8.7min) | C+ ($1.37) | C+ (3.0) | — |
-| typescript-bun | opus46-200k-medium | A- (8.9min) | C+ ($1.35) | C+ (3.1) | — |
-| powershell | opus46-200k-medium | A- (9.1min) | B+ ($1.20) | C (2.9) | — |
+| default | sonnet46-200k-medium | C- (14.5min) | C- ($1.36) | A- (4.2) | — |
+| bash | sonnet46-200k-medium | B+ (9.4min) | A+ ($1.01) | B- (3.4) | — |
+| typescript-bun | sonnet46-200k-medium | B- (11.0min) | B ($1.18) | B- (3.4) | — |
+| powershell | sonnet46-200k-medium | D- (19.2min) | D- ($1.56) | B- (3.4) | — |
+| default | opus46-200k-medium | A+ (6.7min) | B- ($1.22) | C+ (3.1) | — |
+| typescript-bun | opus46-200k-medium | A- (8.5min) | C+ ($1.30) | C+ (3.1) | — |
+| bash | opus46-200k-medium | A- (8.2min) | C ($1.33) | C+ (3.0) | — |
+| powershell | opus46-200k-medium | B+ (8.9min) | B+ ($1.14) | C (2.9) | — |
 
 </details>
 
@@ -128,141 +131,141 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | sonnet46-200k-medium | B (10.2min) | A+ ($1.06) | B- (3.4) | — |
-| default | opus46-200k-medium | A+ (7.0min) | B- ($1.29) | C+ (3.1) | — |
-| powershell | opus46-200k-medium | A- (9.1min) | B+ ($1.20) | C (2.9) | — |
-| typescript-bun | sonnet46-200k-medium | B- (11.3min) | B+ ($1.22) | B- (3.4) | — |
-| bash | opus46-200k-medium | A- (8.7min) | C+ ($1.37) | C+ (3.0) | — |
-| typescript-bun | opus46-200k-medium | A- (8.9min) | C+ ($1.35) | C+ (3.1) | — |
-| default | sonnet46-200k-medium | C- (14.6min) | C ($1.38) | A- (4.2) | — |
-| powershell | sonnet46-200k-medium | D- (21.0min) | D- ($1.67) | B- (3.4) | — |
+| bash | sonnet46-200k-medium | B+ (9.4min) | A+ ($1.01) | B- (3.4) | — |
+| default | opus46-200k-medium | A+ (6.7min) | B- ($1.22) | C+ (3.1) | — |
+| powershell | opus46-200k-medium | B+ (8.9min) | B+ ($1.14) | C (2.9) | — |
+| typescript-bun | opus46-200k-medium | A- (8.5min) | C+ ($1.30) | C+ (3.1) | — |
+| typescript-bun | sonnet46-200k-medium | B- (11.0min) | B ($1.18) | B- (3.4) | — |
+| bash | opus46-200k-medium | A- (8.2min) | C ($1.33) | C+ (3.0) | — |
+| default | sonnet46-200k-medium | C- (14.5min) | C- ($1.36) | A- (4.2) | — |
+| powershell | sonnet46-200k-medium | D- (19.2min) | D- ($1.56) | B- (3.4) | — |
 
 </details>
 
 ## Comparison by Language/Model/Effort
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| bash | opus46-200k-medium | 8 | 8.7min | 8.6min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| bash | sonnet46-200k-medium | 8 | 10.2min | 10.0min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
-| default | opus46-200k-medium | 8 | 7.0min | 7.0min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
-| powershell | opus46-200k-medium | 8 | 9.1min | 7.2min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.8min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | opus46-200k-medium | 8 | 8.2min | 14.5min | 8.2min | 1.8 | 39 | $1.33 | $10.93 | 3.0 | — |
+| bash | sonnet46-200k-medium | 8 | 9.4min | 16.0min | 9.1min | 4.1 | 37 | $1.01 | $8.45 | 3.4 | — |
+| default | opus46-200k-medium | 8 | 6.7min | 10.6min | 6.7min | 1.2 | 35 | $1.22 | $10.31 | 3.1 | — |
+| default | sonnet46-200k-medium | 8 | 14.5min | 17.2min | 13.5min | 1.1 | 29 | $1.36 | $11.06 | 4.2 | — |
+| powershell | opus46-200k-medium | 8 | 8.9min | 11.1min | 7.1min | 1.2 | 33 | $1.14 | $9.62 | 2.9 | — |
+| powershell | sonnet46-200k-medium | 8 | 19.2min | 28.0min | 13.9min | 0.5 | 41 | $1.56 | $13.37 | 3.4 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.5min | 13.2min | 8.4min | 1.5 | 38 | $1.30 | $10.78 | 3.1 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.0min | 13.7min | 10.1min | 2.2 | 22 | $1.18 | $9.74 | 3.4 | — |
 
 
 <details>
-<summary>Sorted by avg cost (cheapest first)</summary>
+<summary>Sorted by cost (geomean, cheapest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| bash | sonnet46-200k-medium | 8 | 10.2min | 10.0min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
-| powershell | opus46-200k-medium | 8 | 9.1min | 7.2min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
-| default | opus46-200k-medium | 8 | 7.0min | 7.0min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.8min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| bash | opus46-200k-medium | 8 | 8.7min | 8.6min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
-| powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | sonnet46-200k-medium | 8 | 9.4min | 16.0min | 9.1min | 4.1 | 37 | $1.01 | $8.45 | 3.4 | — |
+| powershell | opus46-200k-medium | 8 | 8.9min | 11.1min | 7.1min | 1.2 | 33 | $1.14 | $9.62 | 2.9 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.0min | 13.7min | 10.1min | 2.2 | 22 | $1.18 | $9.74 | 3.4 | — |
+| default | opus46-200k-medium | 8 | 6.7min | 10.6min | 6.7min | 1.2 | 35 | $1.22 | $10.31 | 3.1 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.5min | 13.2min | 8.4min | 1.5 | 38 | $1.30 | $10.78 | 3.1 | — |
+| bash | opus46-200k-medium | 8 | 8.2min | 14.5min | 8.2min | 1.8 | 39 | $1.33 | $10.93 | 3.0 | — |
+| default | sonnet46-200k-medium | 8 | 14.5min | 17.2min | 13.5min | 1.1 | 29 | $1.36 | $11.06 | 4.2 | — |
+| powershell | sonnet46-200k-medium | 8 | 19.2min | 28.0min | 13.9min | 0.5 | 41 | $1.56 | $13.37 | 3.4 | — |
 
 </details>
 
 <details>
-<summary>Sorted by avg duration (fastest first)</summary>
+<summary>Sorted by duration (geomean, fastest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | opus46-200k-medium | 8 | 7.0min | 7.0min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| bash | opus46-200k-medium | 8 | 8.7min | 8.6min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.8min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| powershell | opus46-200k-medium | 8 | 9.1min | 7.2min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| bash | sonnet46-200k-medium | 8 | 10.2min | 10.0min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
-| default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
-| powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| default | opus46-200k-medium | 8 | 6.7min | 10.6min | 6.7min | 1.2 | 35 | $1.22 | $10.31 | 3.1 | — |
+| bash | opus46-200k-medium | 8 | 8.2min | 14.5min | 8.2min | 1.8 | 39 | $1.33 | $10.93 | 3.0 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.5min | 13.2min | 8.4min | 1.5 | 38 | $1.30 | $10.78 | 3.1 | — |
+| powershell | opus46-200k-medium | 8 | 8.9min | 11.1min | 7.1min | 1.2 | 33 | $1.14 | $9.62 | 2.9 | — |
+| bash | sonnet46-200k-medium | 8 | 9.4min | 16.0min | 9.1min | 4.1 | 37 | $1.01 | $8.45 | 3.4 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.0min | 13.7min | 10.1min | 2.2 | 22 | $1.18 | $9.74 | 3.4 | — |
+| default | sonnet46-200k-medium | 8 | 14.5min | 17.2min | 13.5min | 1.1 | 29 | $1.36 | $11.06 | 4.2 | — |
+| powershell | sonnet46-200k-medium | 8 | 19.2min | 28.0min | 13.9min | 0.5 | 41 | $1.56 | $13.37 | 3.4 | — |
 
 </details>
 
 <details>
-<summary>Sorted by avg duration net of traps (fastest first)</summary>
+<summary>Sorted by duration net of traps (geomean, fastest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | opus46-200k-medium | 8 | 7.0min | 7.0min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| powershell | opus46-200k-medium | 8 | 9.1min | 7.2min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| bash | opus46-200k-medium | 8 | 8.7min | 8.6min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.8min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| bash | sonnet46-200k-medium | 8 | 10.2min | 10.0min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
-| default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
-| powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| default | opus46-200k-medium | 8 | 6.7min | 10.6min | 6.7min | 1.2 | 35 | $1.22 | $10.31 | 3.1 | — |
+| powershell | opus46-200k-medium | 8 | 8.9min | 11.1min | 7.1min | 1.2 | 33 | $1.14 | $9.62 | 2.9 | — |
+| bash | opus46-200k-medium | 8 | 8.2min | 14.5min | 8.2min | 1.8 | 39 | $1.33 | $10.93 | 3.0 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.5min | 13.2min | 8.4min | 1.5 | 38 | $1.30 | $10.78 | 3.1 | — |
+| bash | sonnet46-200k-medium | 8 | 9.4min | 16.0min | 9.1min | 4.1 | 37 | $1.01 | $8.45 | 3.4 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.0min | 13.7min | 10.1min | 2.2 | 22 | $1.18 | $9.74 | 3.4 | — |
+| default | sonnet46-200k-medium | 8 | 14.5min | 17.2min | 13.5min | 1.1 | 29 | $1.36 | $11.06 | 4.2 | — |
+| powershell | sonnet46-200k-medium | 8 | 19.2min | 28.0min | 13.9min | 0.5 | 41 | $1.56 | $13.37 | 3.4 | — |
 
 </details>
 
 <details>
 <summary>Sorted by avg errors (fewest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
-| default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
-| default | opus46-200k-medium | 8 | 7.0min | 7.0min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| powershell | opus46-200k-medium | 8 | 9.1min | 7.2min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.8min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| bash | opus46-200k-medium | 8 | 8.7min | 8.6min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
-| bash | sonnet46-200k-medium | 8 | 10.2min | 10.0min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| powershell | sonnet46-200k-medium | 8 | 19.2min | 28.0min | 13.9min | 0.5 | 41 | $1.56 | $13.37 | 3.4 | — |
+| default | sonnet46-200k-medium | 8 | 14.5min | 17.2min | 13.5min | 1.1 | 29 | $1.36 | $11.06 | 4.2 | — |
+| default | opus46-200k-medium | 8 | 6.7min | 10.6min | 6.7min | 1.2 | 35 | $1.22 | $10.31 | 3.1 | — |
+| powershell | opus46-200k-medium | 8 | 8.9min | 11.1min | 7.1min | 1.2 | 33 | $1.14 | $9.62 | 2.9 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.5min | 13.2min | 8.4min | 1.5 | 38 | $1.30 | $10.78 | 3.1 | — |
+| bash | opus46-200k-medium | 8 | 8.2min | 14.5min | 8.2min | 1.8 | 39 | $1.33 | $10.93 | 3.0 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.0min | 13.7min | 10.1min | 2.2 | 22 | $1.18 | $9.74 | 3.4 | — |
+| bash | sonnet46-200k-medium | 8 | 9.4min | 16.0min | 9.1min | 4.1 | 37 | $1.01 | $8.45 | 3.4 | — |
 
 </details>
 
 <details>
-<summary>Sorted by avg turns (fewest first)</summary>
+<summary>Sorted by turns (geomean, fewest first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
-| powershell | opus46-200k-medium | 8 | 9.1min | 7.2min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| default | opus46-200k-medium | 8 | 7.0min | 7.0min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| bash | sonnet46-200k-medium | 8 | 10.2min | 10.0min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
-| bash | opus46-200k-medium | 8 | 8.7min | 8.6min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.8min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| typescript-bun | sonnet46-200k-medium | 8 | 11.0min | 13.7min | 10.1min | 2.2 | 22 | $1.18 | $9.74 | 3.4 | — |
+| default | sonnet46-200k-medium | 8 | 14.5min | 17.2min | 13.5min | 1.1 | 29 | $1.36 | $11.06 | 4.2 | — |
+| powershell | opus46-200k-medium | 8 | 8.9min | 11.1min | 7.1min | 1.2 | 33 | $1.14 | $9.62 | 2.9 | — |
+| default | opus46-200k-medium | 8 | 6.7min | 10.6min | 6.7min | 1.2 | 35 | $1.22 | $10.31 | 3.1 | — |
+| bash | sonnet46-200k-medium | 8 | 9.4min | 16.0min | 9.1min | 4.1 | 37 | $1.01 | $8.45 | 3.4 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.5min | 13.2min | 8.4min | 1.5 | 38 | $1.30 | $10.78 | 3.1 | — |
+| bash | opus46-200k-medium | 8 | 8.2min | 14.5min | 8.2min | 1.8 | 39 | $1.33 | $10.93 | 3.0 | — |
+| powershell | sonnet46-200k-medium | 8 | 19.2min | 28.0min | 13.9min | 0.5 | 41 | $1.56 | $13.37 | 3.4 | — |
 
 </details>
 
 <details>
 <summary>Sorted by LLM-as-judge score (best first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
-| bash | sonnet46-200k-medium | 8 | 10.2min | 10.0min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
-| powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
-| default | opus46-200k-medium | 8 | 7.0min | 7.0min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.8min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| bash | opus46-200k-medium | 8 | 8.7min | 8.6min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| powershell | opus46-200k-medium | 8 | 9.1min | 7.2min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| default | sonnet46-200k-medium | 8 | 14.5min | 17.2min | 13.5min | 1.1 | 29 | $1.36 | $11.06 | 4.2 | — |
+| bash | sonnet46-200k-medium | 8 | 9.4min | 16.0min | 9.1min | 4.1 | 37 | $1.01 | $8.45 | 3.4 | — |
+| powershell | sonnet46-200k-medium | 8 | 19.2min | 28.0min | 13.9min | 0.5 | 41 | $1.56 | $13.37 | 3.4 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.0min | 13.7min | 10.1min | 2.2 | 22 | $1.18 | $9.74 | 3.4 | — |
+| default | opus46-200k-medium | 8 | 6.7min | 10.6min | 6.7min | 1.2 | 35 | $1.22 | $10.31 | 3.1 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.5min | 13.2min | 8.4min | 1.5 | 38 | $1.30 | $10.78 | 3.1 | — |
+| bash | opus46-200k-medium | 8 | 8.2min | 14.5min | 8.2min | 1.8 | 39 | $1.33 | $10.93 | 3.0 | — |
+| powershell | opus46-200k-medium | 8 | 8.9min | 11.1min | 7.1min | 1.2 | 33 | $1.14 | $9.62 | 2.9 | — |
 
 </details>
 
 <details>
 <summary>Sorted by deliverable-quality score (best first)</summary>
 
-| Language | Model | Runs | Avg Duration | Avg Duration Net of Traps | Avg Errors | Avg Turns | Avg Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
-|----------|-------|------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| bash | opus46-200k-medium | 8 | 8.7min | 8.6min | 1.8 | 39 | $1.37 | $10.93 | 3.0 | — |
-| bash | sonnet46-200k-medium | 8 | 10.2min | 10.0min | 4.1 | 38 | $1.06 | $8.45 | 3.4 | — |
-| default | opus46-200k-medium | 8 | 7.0min | 7.0min | 1.2 | 36 | $1.29 | $10.31 | 3.1 | — |
-| default | sonnet46-200k-medium | 8 | 14.6min | 13.6min | 1.1 | 32 | $1.38 | $11.06 | 4.2 | — |
-| powershell | opus46-200k-medium | 8 | 9.1min | 7.2min | 1.2 | 34 | $1.20 | $9.62 | 2.9 | — |
-| powershell | sonnet46-200k-medium | 8 | 21.0min | 15.0min | 0.5 | 42 | $1.67 | $13.37 | 3.4 | — |
-| typescript-bun | opus46-200k-medium | 8 | 8.9min | 8.8min | 1.5 | 39 | $1.35 | $10.78 | 3.1 | — |
-| typescript-bun | sonnet46-200k-medium | 8 | 11.3min | 10.6min | 2.2 | 33 | $1.22 | $9.74 | 3.4 | — |
+| Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
+|----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| bash | opus46-200k-medium | 8 | 8.2min | 14.5min | 8.2min | 1.8 | 39 | $1.33 | $10.93 | 3.0 | — |
+| bash | sonnet46-200k-medium | 8 | 9.4min | 16.0min | 9.1min | 4.1 | 37 | $1.01 | $8.45 | 3.4 | — |
+| default | opus46-200k-medium | 8 | 6.7min | 10.6min | 6.7min | 1.2 | 35 | $1.22 | $10.31 | 3.1 | — |
+| default | sonnet46-200k-medium | 8 | 14.5min | 17.2min | 13.5min | 1.1 | 29 | $1.36 | $11.06 | 4.2 | — |
+| powershell | opus46-200k-medium | 8 | 8.9min | 11.1min | 7.1min | 1.2 | 33 | $1.14 | $9.62 | 2.9 | — |
+| powershell | sonnet46-200k-medium | 8 | 19.2min | 28.0min | 13.9min | 0.5 | 41 | $1.56 | $13.37 | 3.4 | — |
+| typescript-bun | opus46-200k-medium | 8 | 8.5min | 13.2min | 8.4min | 1.5 | 38 | $1.30 | $10.78 | 3.1 | — |
+| typescript-bun | sonnet46-200k-medium | 8 | 11.0min | 13.7min | 10.1min | 2.2 | 22 | $1.18 | $9.74 | 3.4 | — |
 
 </details>
 
@@ -1214,8 +1217,8 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Tiers
 
-- **Duration bands:** **A+** ≤1.10×, **A** ≤1.20×, **A-** ≤1.31×, **B+** ≤1.44×, **B** ≤1.58×, **B-** ≤1.73×, **C+** ≤1.89×, **C** ≤2.08×, **C-** ≤2.27×, **D+** ≤2.49×, **D** ≤2.73×, **D-** ≤2.99×, **F** >2.99×
-- **Cost bands:** **A+** ≤1.04×, **A** ≤1.08×, **A-** ≤1.12×, **B+** ≤1.17×, **B** ≤1.21×, **B-** ≤1.26×, **C+** ≤1.31×, **C** ≤1.36×, **C-** ≤1.41×, **D+** ≤1.47×, **D** ≤1.52×, **D-** ≤1.58×, **F** >1.58×
+- **Duration bands:** **A+** ≤1.09×, **A** ≤1.19×, **A-** ≤1.30×, **B+** ≤1.42×, **B** ≤1.55×, **B-** ≤1.69×, **C+** ≤1.84×, **C** ≤2.01×, **C-** ≤2.19×, **D+** ≤2.39×, **D** ≤2.61×, **D-** ≤2.85×, **F** >2.85×
+- **Cost bands:** **A+** ≤1.04×, **A** ≤1.08×, **A-** ≤1.12×, **B+** ≤1.16×, **B** ≤1.20×, **B-** ≤1.24×, **C+** ≤1.29×, **C** ≤1.34×, **C-** ≤1.39×, **D+** ≤1.44×, **D** ≤1.49×, **D-** ≤1.55×, **F** >1.55×
 
 *Tests/Workflow Craft bands are absolute Overall score bands:* **A+** ≥4.7, **A** ≥4.4, **A-** ≥4.1, **B+** ≥3.8, **B** ≥3.5, **B-** ≥3.2, **C+** ≥2.9, **C** ≥2.6, **C-** ≥2.3, **D+** ≥2.0, **D** ≥1.7, **D-** ≥1.4, **F** <1.4, `—` = no data.*
 
