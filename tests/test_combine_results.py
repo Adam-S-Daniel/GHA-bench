@@ -11,6 +11,7 @@ from combine_results import (
     aggregate_rows,
     combine,
 )
+from recover_cost import recover_timeout_cost
 
 
 def _mk_metric(task_id: str, mode: str = "default", model: str = "opus",
@@ -376,6 +377,56 @@ class TestAggregateRows:
         r = rows[0]
         assert r["max_dur"] == pytest.approx(2_000_000 / 1000)
         assert r["max_dur_censored"] is False
+
+    def test_timeout_with_cell_dir_recovers_floor_into_total_cost(self, tmp_path):
+        # A zero-cost timeout with a `_cell_dir` pointing at a tmp dir that
+        # holds a synthetic partial event stream: `total_cost` must include
+        # the recovered floor and `total_cost_floor` flips True, while
+        # `geo_cost` (successful cells only) stays IDENTICAL to the same
+        # combo with no timeout at all — the floor never touches geo stats.
+        usage = {"input_tokens": 1000, "cache_read_input_tokens": 0,
+                 "cache_creation_input_tokens": 0, "output_tokens": 200}
+        stream = [{
+            "type": "assistant",
+            "message": {"id": "m1", "model": "claude-haiku-4-5", "usage": usage, "content": []},
+        }]
+        (tmp_path / "cli-output.json").write_text(json.dumps(stream))
+
+        good = _mk_metric("11", mode="bash", model="haiku45", cost=2.0)
+        timeout = dict(_mk_metric("12", mode="bash", model="haiku45", cost=0.0,
+                                  duration_ms=1_800_000, num_turns=0))
+        timeout["run_success"] = False
+        timeout["exit_code"] = -9
+        timeout["failure_reason"] = "timeout"
+        timeout["_cell_dir"] = str(tmp_path)
+
+        rows_with_timeout = aggregate_rows([good, timeout])
+        rows_without = aggregate_rows([good])
+        assert len(rows_with_timeout) == 1
+        r = rows_with_timeout[0]
+        expected_floor = recover_timeout_cost(tmp_path)
+        assert expected_floor > 0
+        assert r["total_cost"] == pytest.approx(2.0 + expected_floor)
+        assert r["total_cost_floor"] is True
+        assert r["geo_cost"] == pytest.approx(rows_without[0]["geo_cost"])
+
+    def test_timeout_with_recorded_cost_is_exact_no_floor_flag(self):
+        # A timeout whose stream DID finish in time to record cost (rare,
+        # but has happened — see AGENTS.md): its contribution is the exact
+        # recorded figure, and the row is NOT `≥`-flagged.
+        good = _mk_metric("11", mode="bash", model="haiku45", cost=2.0)
+        timeout = dict(_mk_metric("12", mode="bash", model="haiku45", cost=1.5,
+                                  duration_ms=1_800_000, num_turns=0))
+        timeout["run_success"] = False
+        timeout["exit_code"] = -9
+        timeout["failure_reason"] = "timeout"
+        # No `_cell_dir` — recorded cost > 0 short-circuits to exact
+        # without ever needing to touch disk.
+        rows = aggregate_rows([good, timeout])
+        assert len(rows) == 1
+        r = rows[0]
+        assert r["total_cost"] == pytest.approx(2.0 + 1.5)
+        assert r["total_cost_floor"] is False
 
 
 class TestCombineIntegration:

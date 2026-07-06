@@ -1,14 +1,17 @@
 """Unit tests for runner.select_tasks — --tasks CLI argument resolution."""
 
 import json
+import math
 import subprocess
 import sys
 import threading
 import time
 
+import pytest
+
 from runner import (
     TASKS, PROMPT_TEMPLATES, select_tasks, _metrics_valid,
-    effort_capable_models,
+    effort_capable_models, _group_summary,
 )
 
 
@@ -134,6 +137,69 @@ class TestSelectTasks:
     def test_whitespace_tolerant(self):
         result = select_tasks(" 11 , 12 ")
         assert [t["id"].split("-", 1)[0] for t in result] == ["11", "12"]
+
+
+def _mk(duration_ms, num_turns=10, error_count=0, cost=1.0,
+        success=True, failure_reason=None):
+    """Minimal metrics dict shaped like print_summary_table's `is_ok` idiom."""
+    return {
+        "run_success": success,
+        "exit_code": 0 if success else -9,
+        "failure_reason": failure_reason,
+        "timing": {"grand_total_duration_ms": duration_ms, "num_turns": num_turns},
+        "quality": {"error_count": error_count},
+        "cost": {"total_cost_usd": cost},
+    }
+
+
+class TestGroupSummary:
+    """_group_summary must match results.md's report-time semantics: geo
+    duration pools successful + timed-out cells only, avg_errors is
+    arithmetic over successful cells only, and total_cost is the plain
+    recorded sum (the runner never estimates a timeout's true spend —
+    that's report-time-only, see recover_cost.py)."""
+
+    def test_mix_of_successful_timeout_and_crashed(self):
+        good1 = _mk(60_000, num_turns=10, error_count=2, cost=1.0)
+        good2 = _mk(120_000, num_turns=20, error_count=4, cost=3.0)
+        timeout = _mk(1_800_000, num_turns=0, error_count=0, cost=0.0,
+                      success=False, failure_reason="timeout")
+        crashed = _mk(30_000, num_turns=0, error_count=0, cost=0.5,
+                      success=False, failure_reason="cli_error")
+        summary = _group_summary([good1, good2, timeout, crashed])
+
+        assert summary["n"] == 4
+        assert summary["n_success"] == 2
+        assert summary["n_timeout"] == 1
+
+        # Geo duration pools successful + timeout ONLY — the crashed cell's
+        # 30s must not appear in the geomean.
+        expected_geo = math.exp(
+            (math.log(60.0) + math.log(120.0) + math.log(1800.0)) / 3
+        )
+        assert summary["geo_duration_s"] == pytest.approx(expected_geo)
+
+        # avg_errors is arithmetic over successful cells only.
+        assert summary["avg_errors"] == pytest.approx((2 + 4) / 2)
+
+        # total_cost sums the WHOLE group, crashed included — the runner
+        # records the raw sum, it doesn't estimate/recover anything.
+        assert summary["total_cost_usd"] == pytest.approx(1.0 + 3.0 + 0.0 + 0.5)
+
+    def test_no_successful_cells_falls_back_to_zero_errors(self):
+        timeout = _mk(1_800_000, num_turns=0, error_count=0, cost=0.0,
+                      success=False, failure_reason="timeout")
+        summary = _group_summary([timeout])
+        assert summary["n_success"] == 0
+        assert summary["avg_errors"] == 0.0
+        assert summary["geo_duration_s"] == pytest.approx(1800.0)
+
+    def test_empty_group_returns_zeros(self):
+        summary = _group_summary([])
+        assert summary == {
+            "n": 0, "n_success": 0, "n_timeout": 0,
+            "geo_duration_s": 0.0, "avg_errors": 0.0, "total_cost_usd": 0.0,
+        }
 
 
 class TestPromptTemplates:
