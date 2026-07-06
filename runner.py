@@ -644,6 +644,7 @@ from generate_results import (  # noqa: E402
     generate_results_md,
     _detect_traps,
     _categorize_tool_time,
+    _geomean,
 )
 
 
@@ -1251,6 +1252,35 @@ def select_tasks(task_arg: str) -> list[dict]:
     task_nums = [int(t.strip()) for t in task_arg.split(",") if t.strip()]
     return [task_by_id[n] for n in task_nums if n in task_by_id]
 
+
+def _group_summary(group: list[dict]) -> dict:
+    """Aggregate a mode/model group with the same semantics as results.md:
+    geometric-mean duration over successful + timed-out cells (timeouts are
+    right-censored, counted at recorded wall clock), arithmetic errors over
+    successful cells only, cost as the plain recorded sum."""
+    successful = [m for m in group if m.get("run_success", m.get("exit_code", 0) == 0 and m.get("timing", {}).get("num_turns", 0) > 0)]
+    timeouts = [m for m in group if m not in successful and m.get("failure_reason") == "timeout"]
+    dur_pool = successful + timeouts
+    geo_duration_s = _geomean(m["timing"]["grand_total_duration_ms"] / 1000 for m in dur_pool)
+    avg_errors = (sum(m["quality"]["error_count"] for m in successful) / len(successful)
+                  if successful else 0.0)
+    # total_cost_usd is the plain recorded sum, unchanged — timed-out cells
+    # recorded 0 (SIGKILL'd before the CLI's final cost record). The runner
+    # observes/records; it never estimates. Report-time recovery of a
+    # timeout's spend from its partial event stream happens later, in
+    # generate_results.py / combine_results.py (see recover_cost.py), never
+    # here.
+    total_cost_usd = sum(m["cost"]["total_cost_usd"] for m in group)
+    return {
+        "n": len(group),
+        "n_success": len(successful),
+        "n_timeout": len(timeouts),
+        "geo_duration_s": geo_duration_s,
+        "avg_errors": avg_errors,
+        "total_cost_usd": total_cost_usd,
+    }
+
+
 def print_summary_table(all_metrics: list[dict]) -> None:
     """Print a summary table of all runs."""
     print("\n" + "=" * 130)
@@ -1598,25 +1628,20 @@ def main():
         } for m in all_metrics],
     }
 
-    # Aggregate by mode
+    # Aggregate by mode. `avg_duration_s` is RENAMED to `geo_duration_s` here
+    # (grep shows no consumers outside runner.py; archived summary.json
+    # files keep the old key, which is fine) to match results.md semantics
+    # — see `_group_summary`.
     for mode in selected_modes:
         mode_metrics = [m for m in all_metrics if m["language_mode"] == mode]
         if mode_metrics:
-            summary["by_mode"][mode] = {
-                "avg_duration_s": sum(m["timing"]["grand_total_duration_ms"] for m in mode_metrics) / len(mode_metrics) / 1000,
-                "avg_errors": sum(m["quality"]["error_count"] for m in mode_metrics) / len(mode_metrics),
-                "total_cost_usd": sum(m["cost"]["total_cost_usd"] for m in mode_metrics),
-            }
+            summary["by_mode"][mode] = _group_summary(mode_metrics)
 
     # Aggregate by model
     for model_short, _ in selected_models:
         model_metrics = [m for m in all_metrics if m["model_short"] == model_short]
         if model_metrics:
-            summary["by_model"][model_short] = {
-                "avg_duration_s": sum(m["timing"]["grand_total_duration_ms"] for m in model_metrics) / len(model_metrics) / 1000,
-                "avg_errors": sum(m["quality"]["error_count"] for m in model_metrics) / len(model_metrics),
-                "total_cost_usd": sum(m["cost"]["total_cost_usd"] for m in model_metrics),
-            }
+            summary["by_model"][model_short] = _group_summary(model_metrics)
 
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
 

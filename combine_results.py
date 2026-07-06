@@ -30,6 +30,7 @@ from generate_results import (  # noqa: E402
     _collapsible_table, _compute_ratio_bands, _emit_sorted_variants,
     _llm_tier, _ratio_tier, _tier_num,
 )
+from recover_cost import timeout_cost_contribution  # noqa: E402  (report-time timeout-cost floor)
 from version_docs import version_tuple  # noqa: E402  (CC version → int-tuple)
 
 
@@ -39,6 +40,10 @@ def load_run_metrics(run_dir: Path) -> list[dict]:
     for mf in sorted(run_dir.glob("tasks/*/*/metrics.json")):
         try:
             out.append(json.loads(mf.read_text()))
+            # In-memory only (leading underscore = never serialized): lets
+            # aggregate_rows recover a timed-out cell's cost from its
+            # partial event stream without re-deriving the on-disk path.
+            out[-1]["_cell_dir"] = str(mf.parent)
         except Exception:
             pass
     return out
@@ -244,7 +249,15 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
     a right-censored observation (it ran at LEAST that long before being
     killed at the ~30-min cap), so it is folded into the geometric-mean
     duration pool instead of being dropped — dropping it would silently
-    reward timing out with a better average. Each row still records the
+    reward timing out with a better average. Total Cost, however, DOES
+    recover a timeout's spend: the CLI-recorded cost when the stream
+    captured a final result record, else a floor estimate recovered from
+    the partial `cli-output.json` event stream (`recover_cost.py`) — never
+    a real zero, which would understate the row's true spend. `geo_cost`/
+    `geo_turns` still exclude every failed run, including timeouts (a
+    recovered floor is an estimate, and pooling a known-low bound into a
+    geometric mean would bias the ratio statistics the tiers are built
+    from). Each row still records the
     total excluded count (successful cells excepted) under `excluded` so
     callers can flag that in the Model column with an asterisk. A key with
     only timeouts and no successful cells still renders no row (the `n ==
@@ -291,6 +304,16 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
         cli_suffix = f"-cli{cli_for_label}" if cli_for_label else "-cliunk"
         variant_with_cli = variant + cli_suffix
         excl = excluded_by_key.get(key, 0)
+        # Each pooled timeout's Total Cost share: CLI-recorded (exact) when
+        # the stream finished in time, else a stream-recovered floor. Real
+        # metrics carry `_cell_dir` (set by load_run_metrics); synthetic
+        # test metrics without it fall back to the recorded cost as-is.
+        t_costs = [
+            timeout_cost_contribution(m, Path(m["_cell_dir"])) if "_cell_dir" in m
+            else ((m.get("cost") or {}).get("total_cost_usd") or 0.0,
+                  ((m.get("cost") or {}).get("total_cost_usd") or 0.0) > 0)
+            for m in timeouts
+        ]
         rows.append({
             "mode": mode,
             # `model` = name+version+context (no effort) so callers keying
@@ -310,7 +333,11 @@ def aggregate_rows(metrics: list[dict]) -> list[dict]:
             "avg_errors": sum(m["quality"]["error_count"] for m in mm) / n,
             "geo_turns": _geomean(m["timing"]["num_turns"] for m in mm),
             "geo_cost": _geomean(m["cost"]["total_cost_usd"] for m in mm),
-            "total_cost": sum(m["cost"]["total_cost_usd"] for m in mm),
+            "total_cost": sum(m["cost"]["total_cost_usd"] for m in mm) + sum(c for c, _ in t_costs),
+            # True iff a pooled timeout's cost isn't CLI-recorded (a
+            # stream-recovered floor, or 0 when recovery failed) — the
+            # row's Total Cost then renders `≥`-prefixed.
+            "total_cost_floor": any(not exact for _, exact in t_costs),
         })
     return rows
 
@@ -629,14 +656,24 @@ def _build_markdown(
     if failed:
         lines.append("## Failed / Timed-Out Runs")
         lines.append("")
-        lines.append("| Task | Language | Model | Source | Duration | Reason | Lines | actionlint | act-result.txt |")
-        lines.append("|------|----------|-------|--------|----------|--------|-------|------------|----------------|")
+        lines.append("| Task | Language | Model | Source | Duration | Cost | Reason | Lines | actionlint | act-result.txt |")
+        lines.append("|------|----------|-------|--------|----------|------|--------|-------|------------|----------------|")
         from test_quality import compute_structural_metrics
         _rd_by_name = {rd.name: rd for rd in run_dirs}
         for m in sorted(failed, key=lambda m: (m["task_id"], m["language_mode"],
                                                _label(m), m.get("source_run_dir", ""))):
             dur = m["timing"]["grand_total_duration_ms"] / 1000
             reason = m.get("failure_reason", f"exit_code={m.get('exit_code', '?')}")
+            # Cost: `$x.xx` when the CLI recorded it (exact); `≥$x.xx (est)`
+            # when it's a stream-recovered floor for a timeout; `—`
+            # otherwise (non-timeout failure, or recovery found nothing).
+            cost_disp = "—"
+            if reason == "timeout" and "_cell_dir" in m:
+                t_cost, t_exact = timeout_cost_contribution(m, Path(m["_cell_dir"]))
+                if t_exact:
+                    cost_disp = f"${t_cost:.2f}"
+                elif t_cost > 0:
+                    cost_disp = f"≥${t_cost:.2f} (est)"
             alint_val = m.get("quality", {}).get("actionlint_pass")
             alint = "pass" if alint_val else ("fail" if alint_val is False else "n/a")
             act = "yes" if m.get("quality", {}).get("act_result_txt_exists") else "no"
@@ -649,11 +686,13 @@ def _build_markdown(
                 code_lines = compute_structural_metrics(gen_dir).get("code_lines", 0)
             lines.append(
                 f"| {m['task_name'][:30]} | {_disp_mode(m['language_mode'])} | {_label(m)} "
-                f"| {m.get('source_run_dir', '')} | {_dur(dur)} | {reason} "
+                f"| {m.get('source_run_dir', '')} | {_dur(dur)} | {cost_disp} | {reason} "
                 f"| {code_lines} | {alint} | {act} |"
             )
         lines.append("")
-        lines.append(f"*{len(failed)} run(s) excluded from averages below.*")
+        lines.append(f"*{len(failed)} run(s) excluded from averages below. Timed-out rows' cost is "
+                     "included in Total Cost above (recovered from the event stream when the "
+                     "CLI didn't record it — see [Column Definitions](#column-definitions)).*")
         lines.append("")
 
     # ── Comparison ──
@@ -665,10 +704,11 @@ def _build_markdown(
     lines.append("|----------|-------|------|--------------|--------------|------------|-----------|----------|------------|---------------|-----------------|")
     for r in sorted(rows, key=lambda r: (r["mode"], r["variant"])):
         max_dur_disp = ("≥" if r["max_dur_censored"] else "") + _dur(r["max_dur"])
+        total_cost_disp = ("≥" if r.get("total_cost_floor") else "") + f"${r['total_cost']:.2f}"
         lines.append(
             f"| {r['mode']} | {r['variant_disp']} | {r['n']} | {_dur(r['geo_dur'])} | {max_dur_disp} "
             f"| {r['avg_errors']:.1f} | {r['geo_turns']:.0f} "
-            f"| ${r['geo_cost']:.2f} | ${r['total_cost']:.2f} "
+            f"| ${r['geo_cost']:.2f} | {total_cost_disp} "
             f"| {r['avg_llm_disp']} | {r['avg_deliv_disp']} |"
         )
     lines.append("")
@@ -877,10 +917,11 @@ def _build_markdown(
                 "",
             ]
             for r in sorted(rows, key=lambda r: (r["mode"], r["variant"])):
+                total_cost_disp = ("≥" if r.get("total_cost_floor") else "") + f"{r['total_cost']:.2f}"
                 sc_lines.append(
                     f"{r['mode']} | {r['variant_disp']} | {r['n']} | "
                     f"{r['geo_dur']/60:.1f} | {r['geo_cost']:.3f} | "
-                    f"{r['total_cost']:.2f} | {r['avg_errors']:.1f} | "
+                    f"{total_cost_disp} | {r['avg_errors']:.1f} | "
                     f"{r['geo_turns']:.1f} | {r['avg_llm_disp']} | "
                     f"{r['avg_deliv_disp']}"
                 )
@@ -1081,7 +1122,9 @@ def _build_markdown(
         "",
         "- **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.",
         "- **Geo Duration / Geo Cost / Geo Turns** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; Geo Duration and Geo Cost also drive the [Tiers](#tiers-by-languagemodeleffort) Duration/Cost columns): **geometric** means (issue #33) — outlier-damped relative to a plain average, so one abnormally slow/expensive/chatty run doesn't dominate a combo's aggregate.",
-        "- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average. Geo Cost and Geo Turns still exclude ALL failed runs (including timeouts): a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and would bias those averages down if pooled in. This means **Total Cost can slightly understate** true spend on rows with timeouts (the timeout's own cost isn't in the sum either).",
+        "- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average.",
+        "- **Total Cost** now includes timed-out cells: the CLI-recorded cost when the stream captured a final result record, otherwise a **floor estimate recovered from the partial `cli-output.json` event stream** (see `recover_cost.py`) — input / cache-read / cache-write tokens are exact per-message usage; output tokens are estimated from visible content plus thinking-token telemetry (a lower bound: most thinking output never appears in a killed stream) and priced via `models.py`. Rows containing a timeout without CLI-recorded cost are `≥`-prefixed.",
+        "- **Geo Cost / Geo Turns still exclude every failed run, including timeouts**: a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and recovered floors are estimates — pooling a known-low bound into a geometric mean would bias the ratio statistics the tiers are built from. The exact-vs-floor distinction only affects the additive Total Cost column.",
         "- **Max Duration** is the slowest run in the Geo Duration pool for that combo, `≥`-prefixed when that run was a timeout (true duration unknown, but at least the shown value).",
         "- **Avg Errors** remains an arithmetic mean.",
         "- **Geo Duration Net of Traps** is intentionally absent from this combined report — trap detection isn't yet threaded through `combine_results.py`. See each contributing source run's per-run `results.md` for trap-adjusted Duration figures.",

@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-05 12:56:39 AM ET — 111/144 runs completed, 33 remaining; total cost $76.34; total agent time 459.2 min.
+**Last updated:** 2026-07-06 01:01:53 PM ET — 111/144 runs completed, 33 remaining; total cost $76.34; total agent time 459.2 min.
 **Claude Code versions used:** [v2.1.94](claude-code-2.1.94.md) (25 runs), [v2.1.96](claude-code-2.1.96.md) (86 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -58,7 +58,9 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 - **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.
 - **Geo Duration / Geo Cost / Geo Turns** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; Geo Duration and Geo Cost also drive the [Tiers](#tiers-by-languagemodeleffort) Duration/Cost columns): **geometric** means (issue #33) — outlier-damped relative to a plain average, so one abnormally slow/expensive/chatty run doesn't dominate a combo's aggregate.
-- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average. Geo Cost and Geo Turns still exclude ALL failed runs (including timeouts): a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and would bias those averages down if pooled in. This means **Total Cost can slightly understate** true spend on rows with timeouts (the timeout's own cost isn't in the sum either).
+- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average.
+- **Total Cost** now includes timed-out cells: the CLI-recorded cost when the stream captured a final result record, otherwise a **floor estimate recovered from the partial `cli-output.json` event stream** (see `recover_cost.py`) — input / cache-read / cache-write tokens are exact per-message usage; output tokens are estimated from visible content plus thinking-token telemetry (a lower bound: most thinking output never appears in a killed stream) and priced via `models.py`. Rows containing a timeout without CLI-recorded cost are `≥`-prefixed.
+- **Geo Cost / Geo Turns still exclude every failed run, including timeouts**: a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and recovered floors are estimates — pooling a known-low bound into a geometric mean would bias the ratio statistics the tiers are built from. The exact-vs-floor distinction only affects the additive Total Cost column.
 - **Max Duration** is the slowest run in the Geo Duration pool for that combo, `≥`-prefixed when that run was a timeout (true duration unknown, but at least the shown value).
 - **Avg Errors** remains an arithmetic mean.
 - **Geo Duration Net of Traps** (in the Comparison table only): the geometric mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Pooled over the SAME runs as Geo Duration — timed-out cells are included, with their detected traps (if any) deducted too. Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
@@ -149,24 +151,24 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 ## Failed / Timed-Out Runs
 
-| Task | Language | Model | Duration | Reason | Lines | actionlint | act-result.txt |
-|------|------|-------|----------|--------|-------|------------|----------------|
-| Database Seed Script | default | sonnet46-200k-medium | 3.9min | exit_code=1 | 0 | n/a | no |
-| Database Seed Script | powershell | sonnet46-200k-medium | 3.8min | exit_code=1 | 0 | n/a | no |
-| Database Seed Script | powershell-strict | sonnet46-200k-medium | 3.6min | exit_code=1 | 0 | n/a | no |
-| Error Retry Pipeline | default | sonnet46-200k-medium | 3.7min | exit_code=1 | 0 | n/a | no |
-| Error Retry Pipeline | powershell | sonnet46-200k-medium | 3.8min | exit_code=1 | 0 | n/a | no |
-| Error Retry Pipeline | powershell-strict | opus46-200k-medium | 9.7min | exit_code=143 | 425 | n/a | no |
-| Error Retry Pipeline | powershell-strict | sonnet46-200k-medium | 3.8min | exit_code=1 | 0 | n/a | no |
-| Multi-file Search and Replace | default | sonnet46-200k-medium | 3.9min | exit_code=1 | 0 | n/a | no |
-| Multi-file Search and Replace | powershell-strict | sonnet46-200k-medium | 3.8min | exit_code=1 | 0 | n/a | no |
-| Semantic Version Bumper | powershell-strict | sonnet46-200k-medium | 5.3min | exit_code=1 | 353 | n/a | no |
-| Dependency License Checker | default | sonnet46-200k-medium | 4.0min | exit_code=1 | 0 | n/a | no |
+| Task | Language | Model | Duration | Cost | Reason | Lines | actionlint | act-result.txt |
+|------|------|-------|----------|------|--------|-------|------------|----------------|
+| Database Seed Script | default | sonnet46-200k-medium | 3.9min | — | exit_code=1 | 0 | n/a | no |
+| Database Seed Script | powershell | sonnet46-200k-medium | 3.8min | — | exit_code=1 | 0 | n/a | no |
+| Database Seed Script | powershell-strict | sonnet46-200k-medium | 3.6min | — | exit_code=1 | 0 | n/a | no |
+| Error Retry Pipeline | default | sonnet46-200k-medium | 3.7min | — | exit_code=1 | 0 | n/a | no |
+| Error Retry Pipeline | powershell | sonnet46-200k-medium | 3.8min | — | exit_code=1 | 0 | n/a | no |
+| Error Retry Pipeline | powershell-strict | opus46-200k-medium | 9.7min | — | exit_code=143 | 425 | n/a | no |
+| Error Retry Pipeline | powershell-strict | sonnet46-200k-medium | 3.8min | — | exit_code=1 | 0 | n/a | no |
+| Multi-file Search and Replace | default | sonnet46-200k-medium | 3.9min | — | exit_code=1 | 0 | n/a | no |
+| Multi-file Search and Replace | powershell-strict | sonnet46-200k-medium | 3.8min | — | exit_code=1 | 0 | n/a | no |
+| Semantic Version Bumper | powershell-strict | sonnet46-200k-medium | 5.3min | — | exit_code=1 | 353 | n/a | no |
+| Dependency License Checker | default | sonnet46-200k-medium | 4.0min | — | exit_code=1 | 0 | n/a | no |
 
-*11 run(s) excluded from averages below.*
+*11 run(s) excluded from averages below. Timed-out rows' cost is included in Total Cost above (recovered from the event stream when the CLI didn't record it — see [Column Definitions](#column-definitions)).*
 
 ## Comparison by Language/Model/Effort
-*(failed runs are excluded from the cost/turns/errors averages; timed-out runs still pool into the duration stats — see [Column Definitions](#column-definitions))*
+*(failed runs are excluded from the cost/turns/errors averages; timed-out runs still pool into the duration stats, and timed-out runs' spend is folded into Total Cost — see [Column Definitions](#column-definitions))*
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
 
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |

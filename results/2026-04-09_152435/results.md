@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-05 12:57:51 AM ET — 64/64 runs completed, 0 remaining; total cost $86.90; total agent time 550.6 min.
+**Last updated:** 2026-07-06 01:02:10 PM ET — 64/64 runs completed, 0 remaining; total cost $86.90; total agent time 550.6 min.
 **Claude Code versions used:** [v2.1.97](claude-code-2.1.97.md) (1 run), [v2.1.98](claude-code-2.1.98.md) (57 runs), [v2.1.100](claude-code-2.1.100.md) (6 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -57,7 +57,9 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 - **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.
 - **Geo Duration / Geo Cost / Geo Turns** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; Geo Duration and Geo Cost also drive the [Tiers](#tiers-by-languagemodeleffort) Duration/Cost columns): **geometric** means (issue #33) — outlier-damped relative to a plain average, so one abnormally slow/expensive/chatty run doesn't dominate a combo's aggregate.
-- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average. Geo Cost and Geo Turns still exclude ALL failed runs (including timeouts): a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and would bias those averages down if pooled in. This means **Total Cost can slightly understate** true spend on rows with timeouts (the timeout's own cost isn't in the sum either).
+- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average.
+- **Total Cost** now includes timed-out cells: the CLI-recorded cost when the stream captured a final result record, otherwise a **floor estimate recovered from the partial `cli-output.json` event stream** (see `recover_cost.py`) — input / cache-read / cache-write tokens are exact per-message usage; output tokens are estimated from visible content plus thinking-token telemetry (a lower bound: most thinking output never appears in a killed stream) and priced via `models.py`. Rows containing a timeout without CLI-recorded cost are `≥`-prefixed.
+- **Geo Cost / Geo Turns still exclude every failed run, including timeouts**: a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and recovered floors are estimates — pooling a known-low bound into a geometric mean would bias the ratio statistics the tiers are built from. The exact-vs-floor distinction only affects the additive Total Cost column.
 - **Max Duration** is the slowest run in the Geo Duration pool for that combo, `≥`-prefixed when that run was a timeout (true duration unknown, but at least the shown value).
 - **Avg Errors** remains an arithmetic mean.
 - **Geo Duration Net of Traps** (in the Comparison table only): the geometric mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Pooled over the SAME runs as Geo Duration — timed-out cells are included, with their detected traps (if any) deducted too. Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
@@ -1223,11 +1225,11 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Judge Consistency Summary
 
-**🟢 The panel is doing its job:** Both judges perfectly agree that Sonnet beats Opus on both Tests Quality and Workflow Craft (rank correlation +1.00, zero model-axis reversals), and none of the reversals that do exist boost a judge's own model family. Language rankings diverge sharply, so treat that axis as unreliable without conditioning on model.
+**🟢 The panel is doing its job:** Both judges independently place Sonnet above Opus on Tests Quality and Workflow Craft with perfect rank correlation (ρ = +1.00) and zero pair-wise reversals, and no own-family signal shows up anywhere — Haiku, the in-family judge, never elevates a Claude configuration above what Gemini says.
 
-- 👀 **Where to look closer:** Language ordering on Tests Quality is fully reversed between judges (correlation −1.00) — Haiku ranks bash last while Gemini ranks it first. The widest disagreements (a judge scoring 2 vs 5, a 3-point gap on the 1–5 scale) cluster on 11-semantic-version-bumper / bash / opus, 18-secret-rotation-validator / bash / opus, and 15-test-results-aggregator / default / opus — worth a human spot-check.
-- 🤓 **Surprise finding:** None — panel behaved as expected; the language reversal tracks Haiku's compressed low end (overall mean 2.68, floor-hugging) against Gemini's compressed high end (mean 4.37, ceiling-hugging), not bias.
-- ℹ️ **Recommended next step:** Report model-axis conclusions with confidence but caveat any language-only claim as judge-dependent, and add a third out-of-family judge before declaring a "best language."
+- 👀 **Where to look closer:** The language axis on Tests Quality flips end-to-end (ρ = -1.00): Haiku ranks bash last while Gemini ranks it first, driven by Gemini scoring bash/opus a 5 against Haiku's 2 on runs like 11-semantic-version-bumper / bash / opus and 18-secret-rotation-validator / bash / opus.
+- 🤓 **Surprise finding:** Despite being the in-family judge, Haiku is the harsher grader in absolute terms (Tests 2.68 vs Gemini 4.37; Workflow Craft 2.00 vs 4.54) — the cross-family judge is the one hugging the ceiling.
+- ℹ️ **Recommended next step:** Human-audit three bash/opus runs sitting at the widest 3-point disagreement — e.g. 11-semantic-version-bumper / bash / opus (Haiku 2, Gemini 5) — to decide whether Gemini's bash ceiling reflects real quality or a length/formality reward.
 
 #### Provenance
 
@@ -1235,7 +1237,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 - **Inputs:** the [`judge-consistency-data.md`](judge-consistency-data.md) tables plus benchmark context (rubrics, task list, experiment setup).
 - **Script:** [`conclusions_report.py`](../../conclusions_report.py) — regenerate with `python3 generate_results.py <run_dir>`.
 - **Instruction:** [`JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT`](../../judge_consistency_report.py) in that script.
-- **Usage:** 5 input + 1927 output tokens, $0.2181.
+- **Usage:** 5 input + 2087 output tokens, $0.4516.
 
 *Full breakdown with per-model / per-language / per-language×model ranking tables and disagreement hotspots in [judge-consistency-data.md](judge-consistency-data.md).*
 

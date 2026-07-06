@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-05 12:59:24 AM ET — 280/280 runs completed, 0 remaining; total cost $493.46; total agent time 2315.5 min.
+**Last updated:** 2026-07-06 01:05:24 PM ET — 280/280 runs completed, 0 remaining; total cost $493.46; total agent time 2315.5 min.
 **Claude Code versions used:** [v2.1.131](claude-code-2.1.131.md) (6 runs), [v2.1.132](claude-code-2.1.132.md) (274 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -59,7 +59,9 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 - **Duration** (single run): that one run's wall clock. Appears in the [Failed / Timed-Out Runs](#failed--timed-out-runs) and per-run detail tables.
 - **Geo Duration / Geo Cost / Geo Turns** (in the [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort) table; Geo Duration and Geo Cost also drive the [Tiers](#tiers-by-languagemodeleffort) Duration/Cost columns): **geometric** means (issue #33) — outlier-damped relative to a plain average, so one abnormally slow/expensive/chatty run doesn't dominate a combo's aggregate.
-- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average. Geo Cost and Geo Turns still exclude ALL failed runs (including timeouts): a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and would bias those averages down if pooled in. This means **Total Cost can slightly understate** true spend on rows with timeouts (the timeout's own cost isn't in the sum either).
+- The **Geo Duration pool additionally includes timed-out runs**, counted at their recorded wall clock. A timeout is right-censored — its true duration might have been longer, but is known to be AT LEAST the recorded value — so excluding it outright would effectively reward timing out with a better average.
+- **Total Cost** now includes timed-out cells: the CLI-recorded cost when the stream captured a final result record, otherwise a **floor estimate recovered from the partial `cli-output.json` event stream** (see `recover_cost.py`) — input / cache-read / cache-write tokens are exact per-message usage; output tokens are estimated from visible content plus thinking-token telemetry (a lower bound: most thinking output never appears in a killed stream) and priced via `models.py`. Rows containing a timeout without CLI-recorded cost are `≥`-prefixed.
+- **Geo Cost / Geo Turns still exclude every failed run, including timeouts**: a killed CLI records `cost=0`/`turns=0`, which is missing data, not a real zero, and recovered floors are estimates — pooling a known-low bound into a geometric mean would bias the ratio statistics the tiers are built from. The exact-vs-floor distinction only affects the additive Total Cost column.
 - **Max Duration** is the slowest run in the Geo Duration pool for that combo, `≥`-prefixed when that run was a timeout (true duration unknown, but at least the shown value).
 - **Avg Errors** remains an arithmetic mean.
 - **Geo Duration Net of Traps** (in the Comparison table only): the geometric mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Pooled over the SAME runs as Geo Duration — timed-out cells are included, with their detected traps (if any) deducted too. Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
@@ -247,15 +249,15 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 ## Failed / Timed-Out Runs
 
-| Task | Language | Model | Duration | Reason | Lines | actionlint | act-result.txt |
-|------|------|-------|----------|--------|-------|------------|----------------|
-| PR Label Assigner | powershell | haiku45-200k-na | 29.1min | timeout | 691 | pass | yes |
-| PR Label Assigner | powershell | opus47-1m-xhigh | 28.0min | timeout | 796 | pass | yes |
+| Task | Language | Model | Duration | Cost | Reason | Lines | actionlint | act-result.txt |
+|------|------|-------|----------|------|--------|-------|------------|----------------|
+| PR Label Assigner | powershell | haiku45-200k-na | 29.1min | $0.51 | timeout | 691 | pass | yes |
+| PR Label Assigner | powershell | opus47-1m-xhigh | 28.0min | $9.31 | timeout | 796 | pass | yes |
 
-*2 run(s) excluded from averages below.*
+*2 run(s) excluded from averages below. Timed-out rows' cost is included in Total Cost above (recovered from the event stream when the CLI didn't record it — see [Column Definitions](#column-definitions)).*
 
 ## Comparison by Language/Model/Effort
-*(failed runs are excluded from the cost/turns/errors averages; timed-out runs still pool into the duration stats — see [Column Definitions](#column-definitions))*
+*(failed runs are excluded from the cost/turns/errors averages; timed-out runs still pool into the duration stats, and timed-out runs' spend is folded into Total Cost — see [Column Definitions](#column-definitions))*
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
 
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
@@ -274,11 +276,11 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | default | opus47-1m-xhigh | 7 | 10.2min | 13.4min | 10.0min | 0.4 | 51 | $3.21 | $23.07 | 4.4 | 3.8 |
 | default | sonnet46-1m-medium | 7 | 5.8min | 8.6min | 5.6min | 3.4 | 35 | $1.02 | $7.43 | 3.8 | 3.4 |
 | default | sonnet46-200k-high | 7 | 9.6min | 14.9min | 9.4min | 3.6 | 41 | $1.44 | $10.26 | 3.9 | 3.4 |
-| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $6.57 | 2.2 | 2.8 |
+| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $7.08 | 2.2 | 2.8 |
 | powershell | opus46-200k-high | 14 | 7.6min | 18.5min | 7.5min | 1.1 | 29 | $1.54 | $23.41 | 3.6 | 3.7 |
 | powershell | opus47-1m-high | 14 | 10.6min | 18.4min | 10.2min | 0.6 | 46 | $2.98 | $44.47 | 4.0 | 3.9 |
 | powershell | opus47-1m-medium | 28 | 5.9min | 11.2min | 5.3min | 0.2 | 30 | $1.51 | $44.17 | 4.0 | 3.7 |
-| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $49.33 | 4.1 | 3.7 |
+| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $58.64 | 4.1 | 3.7 |
 | powershell | sonnet46-1m-medium | 14 | 8.8min | 16.7min | 8.1min | 2.0 | 33 | $1.29 | $19.00 | 3.8 | 3.1 |
 | powershell | sonnet46-200k-high | 14 | 10.5min | 15.1min | 10.3min | 1.9 | 34 | $1.47 | $21.67 | 3.6 | 3.5 |
 | typescript-bun | haiku45-200k-na | 7 | 5.3min | 8.5min | 2.6min | 4.0 | 49 | $0.46 | $3.34 | 1.9 | 3.1 |
@@ -297,7 +299,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | haiku45-200k-na | 7 | 4.6min | 7.5min | 1.7min | 3.6 | 39 | $0.38 | $2.68 | 2.4 | 2.7 |
 | typescript-bun | haiku45-200k-na | 7 | 5.3min | 8.5min | 2.6min | 4.0 | 49 | $0.46 | $3.34 | 1.9 | 3.1 |
-| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $6.57 | 2.2 | 2.8 |
+| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $7.08 | 2.2 | 2.8 |
 | bash | haiku45-200k-na | 7 | 7.1min | 11.9min | 3.9min | 4.9 | 68 | $0.65 | $4.87 | 1.9 | 2.5 |
 | default | sonnet46-1m-medium | 7 | 5.8min | 8.6min | 5.6min | 3.4 | 35 | $1.02 | $7.43 | 3.8 | 3.4 |
 | bash | sonnet46-1m-medium | 7 | 7.8min | 10.3min | 7.4min | 2.1 | 34 | $1.14 | $8.35 | 2.9 | 3.2 |
@@ -322,7 +324,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | opus47-1m-xhigh | 7 | 10.4min | 14.5min | 9.1min | 1.1 | 45 | $3.04 | $21.63 | 3.8 | 4.1 |
 | default | opus47-1m-xhigh | 7 | 10.2min | 13.4min | 10.0min | 0.4 | 51 | $3.21 | $23.07 | 4.4 | 3.8 |
 | typescript-bun | opus47-1m-xhigh | 7 | 12.2min | 16.4min | 10.7min | 0.4 | 57 | $3.52 | $25.02 | 4.1 | 3.9 |
-| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $49.33 | 4.1 | 3.7 |
+| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $58.64 | 4.1 | 3.7 |
 
 </details>
 
@@ -341,7 +343,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | typescript-bun | opus47-1m-medium | 14 | 6.0min | 15.2min | 5.3min | 0.5 | 34 | $1.41 | $20.19 | 4.0 | 3.7 |
 | default | opus46-200k-high | 7 | 6.2min | 8.3min | 6.2min | 2.9 | 33 | $1.33 | $9.59 | 3.6 | 3.1 |
 | bash | haiku45-200k-na | 7 | 7.1min | 11.9min | 3.9min | 4.9 | 68 | $0.65 | $4.87 | 1.9 | 2.5 |
-| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $6.57 | 2.2 | 2.8 |
+| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $7.08 | 2.2 | 2.8 |
 | typescript-bun | sonnet46-1m-medium | 7 | 7.3min | 12.1min | 6.9min | 2.7 | 38 | $1.23 | $9.09 | 3.8 | 3.7 |
 | bash | opus46-200k-high | 7 | 7.6min | 19.3min | 7.1min | 5.4 | 52 | $1.63 | $11.41 | 4.1 | 3.1 |
 | powershell | opus46-200k-high | 14 | 7.6min | 18.5min | 7.5min | 1.1 | 29 | $1.54 | $23.41 | 3.6 | 3.7 |
@@ -358,7 +360,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus47-1m-high | 14 | 10.6min | 18.4min | 10.2min | 0.6 | 46 | $2.98 | $44.47 | 4.0 | 3.9 |
 | bash | sonnet46-200k-high | 7 | 10.7min | 17.4min | 10.1min | 4.0 | 42 | $1.56 | $11.33 | 3.6 | 3.5 |
 | typescript-bun | opus47-1m-xhigh | 7 | 12.2min | 16.4min | 10.7min | 0.4 | 57 | $3.52 | $25.02 | 4.1 | 3.9 |
-| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $49.33 | 4.1 | 3.7 |
+| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $58.64 | 4.1 | 3.7 |
 
 </details>
 
@@ -367,7 +369,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
-| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $6.57 | 2.2 | 2.8 |
+| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $7.08 | 2.2 | 2.8 |
 | default | haiku45-200k-na | 7 | 4.6min | 7.5min | 1.7min | 3.6 | 39 | $0.38 | $2.68 | 2.4 | 2.7 |
 | typescript-bun | haiku45-200k-na | 7 | 5.3min | 8.5min | 2.6min | 4.0 | 49 | $0.46 | $3.34 | 1.9 | 3.1 |
 | bash | haiku45-200k-na | 7 | 7.1min | 11.9min | 3.9min | 4.9 | 68 | $0.65 | $4.87 | 1.9 | 2.5 |
@@ -394,7 +396,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | opus47-1m-high | 14 | 10.6min | 18.4min | 10.2min | 0.6 | 46 | $2.98 | $44.47 | 4.0 | 3.9 |
 | powershell | sonnet46-200k-high | 14 | 10.5min | 15.1min | 10.3min | 1.9 | 34 | $1.47 | $21.67 | 3.6 | 3.5 |
 | typescript-bun | opus47-1m-xhigh | 7 | 12.2min | 16.4min | 10.7min | 0.4 | 57 | $3.52 | $25.02 | 4.1 | 3.9 |
-| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $49.33 | 4.1 | 3.7 |
+| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $58.64 | 4.1 | 3.7 |
 
 </details>
 
@@ -411,12 +413,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | typescript-bun | opus47-1m-xhigh | 7 | 12.2min | 16.4min | 10.7min | 0.4 | 57 | $3.52 | $25.02 | 4.1 | 3.9 |
 | typescript-bun | opus47-1m-medium | 14 | 6.0min | 15.2min | 5.3min | 0.5 | 34 | $1.41 | $20.19 | 4.0 | 3.7 |
 | powershell | opus47-1m-high | 14 | 10.6min | 18.4min | 10.2min | 0.6 | 46 | $2.98 | $44.47 | 4.0 | 3.9 |
-| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $49.33 | 4.1 | 3.7 |
+| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $58.64 | 4.1 | 3.7 |
 | bash | opus47-1m-medium | 14 | 4.7min | 7.1min | 3.9min | 1.0 | 29 | $1.26 | $18.07 | 3.1 | 3.7 |
 | bash | opus47-1m-xhigh | 7 | 10.4min | 14.5min | 9.1min | 1.1 | 45 | $3.04 | $21.63 | 3.8 | 4.1 |
 | powershell | opus46-200k-high | 14 | 7.6min | 18.5min | 7.5min | 1.1 | 29 | $1.54 | $23.41 | 3.6 | 3.7 |
 | bash | opus47-1m-high | 7 | 9.0min | 20.6min | 8.9min | 1.6 | 43 | $2.35 | $17.89 | 3.4 | 3.0 |
-| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $6.57 | 2.2 | 2.8 |
+| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $7.08 | 2.2 | 2.8 |
 | powershell | sonnet46-200k-high | 14 | 10.5min | 15.1min | 10.3min | 1.9 | 34 | $1.47 | $21.67 | 3.6 | 3.5 |
 | typescript-bun | opus46-200k-high | 7 | 6.0min | 9.0min | 5.9min | 1.9 | 34 | $1.25 | $9.09 | 3.7 | 3.7 |
 | powershell | sonnet46-1m-medium | 14 | 8.8min | 16.7min | 8.1min | 2.0 | 33 | $1.29 | $19.00 | 3.8 | 3.1 |
@@ -458,12 +460,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | opus47-1m-high | 7 | 9.0min | 20.6min | 8.9min | 1.6 | 43 | $2.35 | $17.89 | 3.4 | 3.0 |
 | bash | opus47-1m-xhigh | 7 | 10.4min | 14.5min | 9.1min | 1.1 | 45 | $3.04 | $21.63 | 3.8 | 4.1 |
 | powershell | opus47-1m-high | 14 | 10.6min | 18.4min | 10.2min | 0.6 | 46 | $2.98 | $44.47 | 4.0 | 3.9 |
-| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $6.57 | 2.2 | 2.8 |
+| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $7.08 | 2.2 | 2.8 |
 | typescript-bun | sonnet46-200k-high | 7 | 8.9min | 10.8min | 8.4min | 2.7 | 48 | $1.48 | $10.52 | 3.9 | 3.8 |
 | typescript-bun | haiku45-200k-na | 7 | 5.3min | 8.5min | 2.6min | 4.0 | 49 | $0.46 | $3.34 | 1.9 | 3.1 |
 | default | opus47-1m-xhigh | 7 | 10.2min | 13.4min | 10.0min | 0.4 | 51 | $3.21 | $23.07 | 4.4 | 3.8 |
 | typescript-bun | opus47-1m-high | 7 | 8.8min | 10.4min | 8.1min | 0.4 | 51 | $2.67 | $19.26 | 4.3 | 3.8 |
-| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $49.33 | 4.1 | 3.7 |
+| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $58.64 | 4.1 | 3.7 |
 | bash | opus46-200k-high | 7 | 7.6min | 19.3min | 7.1min | 5.4 | 52 | $1.63 | $11.41 | 4.1 | 3.1 |
 | typescript-bun | opus47-1m-xhigh | 7 | 12.2min | 16.4min | 10.7min | 0.4 | 57 | $3.52 | $25.02 | 4.1 | 3.9 |
 | bash | haiku45-200k-na | 7 | 7.1min | 11.9min | 3.9min | 4.9 | 68 | $0.65 | $4.87 | 1.9 | 2.5 |
@@ -477,7 +479,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | default | opus47-1m-xhigh | 7 | 10.2min | 13.4min | 10.0min | 0.4 | 51 | $3.21 | $23.07 | 4.4 | 3.8 |
 | typescript-bun | opus47-1m-high | 7 | 8.8min | 10.4min | 8.1min | 0.4 | 51 | $2.67 | $19.26 | 4.3 | 3.8 |
-| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $49.33 | 4.1 | 3.7 |
+| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $58.64 | 4.1 | 3.7 |
 | bash | opus46-200k-high | 7 | 7.6min | 19.3min | 7.1min | 5.4 | 52 | $1.63 | $11.41 | 4.1 | 3.1 |
 | typescript-bun | opus47-1m-xhigh | 7 | 12.2min | 16.4min | 10.7min | 0.4 | 57 | $3.52 | $25.02 | 4.1 | 3.9 |
 | powershell | opus47-1m-high | 14 | 10.6min | 18.4min | 10.2min | 0.6 | 46 | $2.98 | $44.47 | 4.0 | 3.9 |
@@ -500,7 +502,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | opus47-1m-medium | 14 | 4.7min | 7.1min | 3.9min | 1.0 | 29 | $1.26 | $18.07 | 3.1 | 3.7 |
 | bash | sonnet46-1m-medium | 7 | 7.8min | 10.3min | 7.4min | 2.1 | 34 | $1.14 | $8.35 | 2.9 | 3.2 |
 | default | haiku45-200k-na | 7 | 4.6min | 7.5min | 1.7min | 3.6 | 39 | $0.38 | $2.68 | 2.4 | 2.7 |
-| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $6.57 | 2.2 | 2.8 |
+| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $7.08 | 2.2 | 2.8 |
 | bash | haiku45-200k-na | 7 | 7.1min | 11.9min | 3.9min | 4.9 | 68 | $0.65 | $4.87 | 1.9 | 2.5 |
 | typescript-bun | haiku45-200k-na | 7 | 5.3min | 8.5min | 2.6min | 4.0 | 49 | $0.46 | $3.34 | 1.9 | 3.1 |
 
@@ -524,7 +526,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | typescript-bun | opus46-200k-high | 7 | 6.0min | 9.0min | 5.9min | 1.9 | 34 | $1.25 | $9.09 | 3.7 | 3.7 |
 | typescript-bun | opus47-1m-medium | 14 | 6.0min | 15.2min | 5.3min | 0.5 | 34 | $1.41 | $20.19 | 4.0 | 3.7 |
 | typescript-bun | sonnet46-1m-medium | 7 | 7.3min | 12.1min | 6.9min | 2.7 | 38 | $1.23 | $9.09 | 3.8 | 3.7 |
-| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $49.33 | 4.1 | 3.7 |
+| powershell | opus47-1m-xhigh* | 13 | 12.9min | ≥28.0min | 11.6min | 0.7 | 52 | $3.66 | $58.64 | 4.1 | 3.7 |
 | default | opus47-1m-high | 7 | 7.9min | 10.3min | 7.8min | 0.0 | 36 | $2.18 | $15.39 | 4.0 | 3.6 |
 | bash | sonnet46-200k-high | 7 | 10.7min | 17.4min | 10.1min | 4.0 | 42 | $1.56 | $11.33 | 3.6 | 3.5 |
 | powershell | sonnet46-200k-high | 14 | 10.5min | 15.1min | 10.3min | 1.9 | 34 | $1.47 | $21.67 | 3.6 | 3.5 |
@@ -536,7 +538,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | typescript-bun | haiku45-200k-na | 7 | 5.3min | 8.5min | 2.6min | 4.0 | 49 | $0.46 | $3.34 | 1.9 | 3.1 |
 | default | opus46-200k-high | 7 | 6.2min | 8.3min | 6.2min | 2.9 | 33 | $1.33 | $9.59 | 3.6 | 3.1 |
 | bash | opus47-1m-high | 7 | 9.0min | 20.6min | 8.9min | 1.6 | 43 | $2.35 | $17.89 | 3.4 | 3.0 |
-| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $6.57 | 2.2 | 2.8 |
+| powershell | haiku45-200k-na* | 13 | 7.1min | ≥29.1min | 1.6min | 1.7 | 47 | $0.49 | $7.08 | 2.2 | 2.8 |
 | default | haiku45-200k-na | 7 | 4.6min | 7.5min | 1.7min | 3.6 | 39 | $0.38 | $2.68 | 2.4 | 2.7 |
 | bash | haiku45-200k-na | 7 | 7.1min | 11.9min | 3.9min | 4.9 | 68 | $0.65 | $4.87 | 1.9 | 2.5 |
 
@@ -3681,11 +3683,11 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 
 ### Judge Consistency Summary
 
-**🟢 The panel is doing its job:** Both judges independently produce the same top-to-bottom model and language orderings (Spearman ρ = +0.83 on models, +0.90 on languages), placing opus47-1m-xhigh at the ceiling and haiku45 / bash at the floor. The own-model warnings appear only at the fine language×model grain and cluster in the floor region where scores compress into 1–2, so they read as calibration noise rather than genuine self-preference.
+**🟢 The panel is doing its job:** Both judges agree on top-level rankings — model ordering correlates at +0.83 and language ordering at +0.90 on both rubrics, with opus47-1m xhigh and default/typescript-bun on top and haiku45-on-bash at the floor. Haiku grades harder overall (+1.67 Tests, +2.23 Craft baseline gap), but it also scores its own-model family (the haiku45 runs) more harshly than Gemini does — that is calibration, and it is the opposite of self-preference.
 
-- 👀 **Where to look closer:** The widest disagreements (one judge scoring 1, the other 5 — a 4-point gap on the 1–5 scale) sit on 13-dependency-license-checker / bash / opus47-1m-xhigh (Tests Quality) and on several 15-test-results-aggregator / bash rows — opus, opus47-1m-medium, opus47-200k-medium (Workflow Craft) — suggesting Haiku may be over-penalising bash scripts specifically.
-- 🤓 **Surprise finding:** Haiku scored its own family *lower* than Gemini on 16-environment-matrix-generator / default / haiku45 (Haiku 1 vs Gemini 5, Workflow Craft) — the opposite direction from self-preference.
-- ℹ️ **Recommended next step:** Hand-sample the bash 4-point-gap runs to decide whether Haiku's bash penalty is calibrated or biased, then re-check the correlation with bash excluded.
+- 👀 **Where to look closer:** The widest disagreements (a judge scoring 1 vs 5, a 4-point gap on a 1–5 scale) — notably 13-dependency-license-checker / bash / opus47-1m-xhigh on Tests and 16-environment-matrix-generator / default / haiku45 on Workflow Craft — deserve a human read.
+- 🤓 **Surprise finding:** Haiku rated its own-family run on 16-environment-matrix-generator / default / haiku45 a 1 while Gemini gave it a 5 — a strong anti-self-preference signal.
+- ℹ️ **Recommended next step:** Hand-audit the ~10 four-point-gap rows to see which judge tracks ground truth, since the finer language×model correlation drops to +0.56 on Workflow Craft.
 
 #### Provenance
 
@@ -3693,7 +3695,7 @@ Values near +1.0 indicate the LLM agrees with the structural signal; near 0 mean
 - **Inputs:** the [`judge-consistency-data.md`](judge-consistency-data.md) tables plus benchmark context (rubrics, task list, experiment setup).
 - **Script:** [`conclusions_report.py`](../../conclusions_report.py) — regenerate with `python3 generate_results.py <run_dir>`.
 - **Instruction:** [`JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT`](../../judge_consistency_report.py) in that script.
-- **Usage:** 5 input + 4253 output tokens, $0.4543.
+- **Usage:** 5 input + 2443 output tokens, $0.4053.
 
 *Full breakdown with per-model / per-language / per-language×model ranking tables and disagreement hotspots in [judge-consistency-data.md](judge-consistency-data.md).*
 

@@ -4,7 +4,7 @@
 
 ## Notes
 
-- **Generated:** 2026-07-05 12:57:55 AM ET
+- **Generated:** 2026-07-06 01:02:28 PM ET
 - **Source:** `/home/passp/repos/GHA-bench/results/2026-04-09_152435`
 - **Judges present:** haiku45, gemini31pro, sonnet-legacy
 - **Score conventions:** Scores shown are the `overall` dimension from each judge (1-5). Δ column is the second judge minus the first; positive = second judge is more generous.
