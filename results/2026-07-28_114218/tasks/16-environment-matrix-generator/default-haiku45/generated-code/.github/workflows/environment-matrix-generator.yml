@@ -1,0 +1,114 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'package.json'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit and integration tests
+        run: npm test
+
+  matrix-validation:
+    name: Validate Matrix Generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run matrix harness tests
+        run: node test/harness.js
+
+  generate-example-matrix:
+    name: Generate Example Matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate example matrix
+        run: |
+          cat > /tmp/matrix-config.json <<'EOF'
+          {
+            "config": {
+              "os": ["ubuntu-latest", "macos-latest", "windows-latest"],
+              "node_version": ["18", "20"],
+              "arch": ["x64"]
+            },
+            "options": {
+              "maxParallel": 4,
+              "failFast": true,
+              "exclude": [
+                { "os": "macos-latest", "node_version": "18" }
+              ]
+            }
+          }
+          EOF
+          node src/index.js /tmp/matrix-config.json
+
+      - name: Capture example output
+        if: always()
+        run: |
+          cat > /tmp/matrix-config.json <<'EOF'
+          {
+            "config": {
+              "os": ["ubuntu-latest", "macos-latest"],
+              "node_version": ["18", "20"]
+            },
+            "options": {
+              "maxParallel": 2
+            }
+          }
+          EOF
+          echo "::group::Example Matrix Output"
+          node src/index.js /tmp/matrix-config.json
+          echo "::endgroup::"
