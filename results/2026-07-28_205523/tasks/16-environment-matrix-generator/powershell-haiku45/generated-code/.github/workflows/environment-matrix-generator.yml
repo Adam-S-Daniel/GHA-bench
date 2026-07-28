@@ -1,0 +1,158 @@
+name: Environment Matrix Generator Tests
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  test-matrix-generator:
+    name: Test Matrix Generator
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create test fixture configurations
+        shell: pwsh
+        run: |
+          $fixtures = @{
+              "basic-os" = @{
+                  os = @("ubuntu-latest", "windows-latest")
+              }
+              "multi-dimensional" = @{
+                  os = @("ubuntu-latest", "windows-latest")
+                  node_version = @("18.x", "20.x")
+              }
+              "with-exclusions" = @{
+                  os = @("ubuntu-latest", "windows-latest")
+                  node_version = @("18.x", "20.x")
+                  exclude = @(
+                      @{ os = "windows-latest"; node_version = "18.x" }
+                  )
+              }
+              "with-inclusions" = @{
+                  os = @("ubuntu-latest")
+                  node_version = @("18.x")
+                  include = @(
+                      @{ os = "macos-latest"; node_version = "20.x"; special = $true }
+                  )
+              }
+              "with-parallel-config" = @{
+                  os = @("ubuntu-latest")
+                  max_parallel = 2
+                  fail_fast = $false
+              }
+          }
+
+          foreach ($name in $fixtures.Keys) {
+              $path = "test-fixtures/$name.json"
+              New-Item -ItemType Directory -Path (Split-Path $path) -Force | Out-Null
+              $fixtures[$name] | ConvertTo-Json -Depth 10 | Set-Content -Path $path
+              Write-Host "Created fixture: $path"
+          }
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $testOutput = Invoke-Pester -Path Test-MatrixGenerator.ps1 -Passthru -ErrorAction Stop
+
+          if ($testOutput.FailedCount -gt 0) {
+              Write-Error "Pester tests failed: $($testOutput.FailedCount) failures"
+              exit 1
+          }
+
+          Write-Host "✓ All Pester tests passed ($($testOutput.PassedCount) tests)"
+
+      - name: Test matrix generation with fixtures
+        shell: pwsh
+        run: |
+          . ./New-GitHubActionsMatrix.ps1
+
+          $fixtures = Get-ChildItem -Path test-fixtures -Filter "*.json"
+          $results = @()
+
+          foreach ($fixture in $fixtures) {
+              Write-Host "`n--- Testing fixture: $($fixture.Name) ---"
+              $config = Get-Content $fixture.FullName | ConvertFrom-Json -AsHashtable
+
+              try {
+                  $matrix = New-GitHubActionsMatrix -Config $config
+                  $json = $matrix | ConvertTo-Json -Depth 10
+                  Write-Host "✓ Generated matrix with $($matrix.include.Count) combinations"
+                  Write-Host "Matrix JSON:"
+                  Write-Host $json
+
+                  $results += @{
+                      fixture = $fixture.Name
+                      status = "success"
+                      combinationCount = $matrix.include.Count
+                  }
+              }
+              catch {
+                  Write-Host "✗ Failed: $_"
+                  $results += @{
+                      fixture = $fixture.Name
+                      status = "failed"
+                      error = $_
+                  }
+              }
+          }
+
+          Write-Host "`n--- Test Results Summary ---"
+          $results | ForEach-Object {
+              Write-Host "$($_.fixture): $($_.status)"
+          }
+
+          $failedCount = @($results | Where-Object { $_.status -eq "failed" }).Count
+          if ($failedCount -gt 0) {
+              Write-Error "$failedCount fixture(s) failed"
+              exit 1
+          }
+
+      - name: Test error handling
+        shell: pwsh
+        run: |
+          . ./New-GitHubActionsMatrix.ps1
+
+          # Test missing OS configuration
+          Write-Host "Testing error handling..."
+          $config = @{
+              node_version = @("18.x")
+          }
+
+          try {
+              $matrix = New-GitHubActionsMatrix -Config $config
+              Write-Error "Expected error for missing OS configuration"
+              exit 1
+          }
+          catch {
+              Write-Host "✓ Correctly threw error for missing OS: $_"
+          }
+
+          # Test matrix size validation
+          $config = @{
+              os = @("ubuntu-latest", "windows-latest")
+              node_version = @("18.x", "20.x")
+              max_matrix_size = 2
+          }
+
+          try {
+              $matrix = New-GitHubActionsMatrix -Config $config
+              Write-Error "Expected error for matrix size exceeded"
+              exit 1
+          }
+          catch {
+              Write-Host "✓ Correctly threw error for matrix size: $_"
+          }
+
+          Write-Host "✓ All error handling tests passed"
