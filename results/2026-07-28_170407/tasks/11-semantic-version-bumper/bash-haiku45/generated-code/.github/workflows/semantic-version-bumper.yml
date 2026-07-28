@@ -1,0 +1,113 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      test_only:
+        description: "Run tests only (do not update version)"
+        required: false
+        default: "false"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Run Tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          npm install -g bats
+
+      - name: Run all tests
+        run: |
+          bats tests/*.bats
+
+  version-bump:
+    runs-on: ubuntu-latest
+    name: Bump Version
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y jq
+
+      - name: Determine version file
+        id: version_file
+        run: |
+          if [ -f package.json ]; then
+            echo "file=package.json" >> "$GITHUB_OUTPUT"
+          elif [ -f version.txt ]; then
+            echo "file=version.txt" >> "$GITHUB_OUTPUT"
+          else
+            echo "No version file found (package.json or version.txt)"
+            exit 0
+          fi
+
+      - name: Bump version
+        if: steps.version_file.outputs.file != ''
+        run: |
+          source ./semantic-version-bumper.sh
+
+          VERSION_FILE="${{ steps.version_file.outputs.file }}"
+          OLD_VERSION=$(parse_version "$VERSION_FILE")
+          BUMP_TYPE=$(determine_bump "HEAD~1" "HEAD" 2>/dev/null || echo "none")
+
+          if [ "$BUMP_TYPE" != "none" ]; then
+            NEW_VERSION=$(next_version "$OLD_VERSION" "$BUMP_TYPE")
+            echo "Bumping version from $OLD_VERSION to $NEW_VERSION ($BUMP_TYPE)"
+
+            update_version "$VERSION_FILE" "$NEW_VERSION"
+
+            CHANGELOG=$(generate_changelog "HEAD~1" "HEAD")
+            {
+              echo "CHANGELOG_CONTENT<<EOF"
+              echo "$CHANGELOG"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+
+            echo "NEW_VERSION=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "No version bump required"
+            echo "NEW_VERSION=$OLD_VERSION" >> "$GITHUB_OUTPUT"
+          fi
+        id: bump
+
+      - name: Configure Git
+        if: steps.bump.outputs.NEW_VERSION != ''
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Commit version bump
+        if: steps.version_file.outputs.file != '' && steps.bump.outputs.NEW_VERSION != ''
+        run: |
+          VERSION_FILE="${{ steps.version_file.outputs.file }}"
+          NEW_VERSION="${{ steps.bump.outputs.NEW_VERSION }}"
+
+          git add "$VERSION_FILE"
+          git commit -m "chore: bump version to $NEW_VERSION" || echo "No changes to commit"
+          git push || echo "No changes to push"
