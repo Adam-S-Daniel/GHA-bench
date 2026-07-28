@@ -1,12 +1,13 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-28 05:01:24 PM ET — 1/8 runs completed, 7 remaining; total cost $0.36; total agent time 5.3 min.
-**Claude Code versions used:** v2.1.132 (1 run). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
+**Last updated:** 2026-07-28 05:08:57 PM ET — 2/8 runs completed, 6 remaining; total cost $0.65; total agent time 12.7 min.
+**Claude Code versions used:** v2.1.132 (2 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
 
 - [Scoring](#scoring)
   - [Duration columns](#duration-columns)
+- [Tiers by Language/Model/Effort](#tiers-by-languagemodeleffort)
 - [Comparison by Language/Model/Effort](#comparison-by-languagemodeleffort)
 - [Savings Analysis](#savings-analysis)
   - [Trap Analysis by Language/Model/Effort/Category](#trap-analysis-by-languagemodeleffortcategory)
@@ -16,6 +17,7 @@
   - [Structural Metrics by Language/Model/Effort](#structural-metrics-by-languagemodeleffort)
 - [Per-Run Results](#per-run-results)
 - [Notes](#notes)
+  - [Tiers](#tiers)
   - [CLI Version Legend](#cli-version-legend)
 
 ## Scoring
@@ -59,12 +61,66 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 - **Avg Errors** remains an arithmetic mean.
 - **Geo Duration Net of Traps** (in the Comparison table only): the geometric mean of (per-run `Duration` − that run's `Time Lost`), where `Time Lost` is the trap detector's estimate of seconds spent on detected anti-patterns (see [Trap Descriptions](#trap-descriptions) and the trap-table [Column Definitions](#column-definitions) for the trap list and how Time Lost is computed). Pooled over the SAME runs as Geo Duration — timed-out cells are included, with their detected traps (if any) deducted too. Reads as a counterfactual: roughly how fast each combo would have been without the detected traps.
 - The **Tier table's Duration/Cost columns** show the tier letter (A+..F) for the combo's gross **Geo Duration**/**Geo Cost** ratio. Net of Traps does not feed the tier band.
+## Tiers by Language/Model/Effort
+
+*Default sort: weighted composite of tiers (40% Tests, 25% Workflow Craft, 35% split between Duration & Cost). See [Notes](#notes) for tier-band definitions and scoring rubric.*
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| bash | haiku45-200k-na | A+ (5.3min) | D- ($0.36) | — | — |
+| default | haiku45-200k-na | D- (7.5min) | A+ ($0.29) | — | — |
+
+
+<details>
+<summary>Sorted by Duration tier (best-first), then avg of Cost/Tests/Workflow Craft tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| bash | haiku45-200k-na | A+ (5.3min) | D- ($0.36) | — | — |
+| default | haiku45-200k-na | D- (7.5min) | A+ ($0.29) | — | — |
+
+</details>
+
+<details>
+<summary>Sorted by Cost tier (best-first), then avg of Duration/Tests/Workflow Craft tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| default | haiku45-200k-na | D- (7.5min) | A+ ($0.29) | — | — |
+| bash | haiku45-200k-na | A+ (5.3min) | D- ($0.36) | — | — |
+
+</details>
+
+<details>
+<summary>Sorted by Tests Quality tier (best-first; no-data last), then avg of other tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| bash | haiku45-200k-na | A+ (5.3min) | D- ($0.36) | — | — |
+| default | haiku45-200k-na | D- (7.5min) | A+ ($0.29) | — | — |
+
+</details>
+
+<details>
+<summary>Sorted by Workflow Craft tier (best-first; no-data last), then avg of other tiers</summary>
+
+| Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
+|----------|-------|----------|------|-----------|-------------|
+| bash | haiku45-200k-na | A+ (5.3min) | D- ($0.36) | — | — |
+| default | haiku45-200k-na | D- (7.5min) | A+ ($0.29) | — | — |
+
+</details>
+
+- **Estimated time remaining:** 38.1min
+- **Estimated total cost:** $2.60
+
 ## Comparison by Language/Model/Effort
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
 
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | bash | haiku45-200k-na | 1 | 5.3min | 5.3min | 4.6min | 3.0 | 45 | $0.36 | $0.36 | — | — |
+| default | haiku45-200k-na | 1 | 7.5min | 7.5min | 7.5min | 2.0 | 40 | $0.29 | $0.29 | — | — |
 
 
 <details>
@@ -72,6 +128,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| default | haiku45-200k-na | 1 | 7.5min | 7.5min | 7.5min | 2.0 | 40 | $0.29 | $0.29 | — | — |
 | bash | haiku45-200k-na | 1 | 5.3min | 5.3min | 4.6min | 3.0 | 45 | $0.36 | $0.36 | — | — |
 
 </details>
@@ -82,6 +139,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | bash | haiku45-200k-na | 1 | 5.3min | 5.3min | 4.6min | 3.0 | 45 | $0.36 | $0.36 | — | — |
+| default | haiku45-200k-na | 1 | 7.5min | 7.5min | 7.5min | 2.0 | 40 | $0.29 | $0.29 | — | — |
 
 </details>
 
@@ -91,6 +149,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | bash | haiku45-200k-na | 1 | 5.3min | 5.3min | 4.6min | 3.0 | 45 | $0.36 | $0.36 | — | — |
+| default | haiku45-200k-na | 1 | 7.5min | 7.5min | 7.5min | 2.0 | 40 | $0.29 | $0.29 | — | — |
 
 </details>
 
@@ -99,6 +158,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| default | haiku45-200k-na | 1 | 7.5min | 7.5min | 7.5min | 2.0 | 40 | $0.29 | $0.29 | — | — |
 | bash | haiku45-200k-na | 1 | 5.3min | 5.3min | 4.6min | 3.0 | 45 | $0.36 | $0.36 | — | — |
 
 </details>
@@ -108,6 +168,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| default | haiku45-200k-na | 1 | 7.5min | 7.5min | 7.5min | 2.0 | 40 | $0.29 | $0.29 | — | — |
 | bash | haiku45-200k-na | 1 | 5.3min | 5.3min | 4.6min | 3.0 | 45 | $0.36 | $0.36 | — | — |
 
 </details>
@@ -118,6 +179,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | bash | haiku45-200k-na | 1 | 5.3min | 5.3min | 4.6min | 3.0 | 45 | $0.36 | $0.36 | — | — |
+| default | haiku45-200k-na | 1 | 7.5min | 7.5min | 7.5min | 2.0 | 40 | $0.29 | $0.29 | — | — |
 
 </details>
 
@@ -127,6 +189,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | bash | haiku45-200k-na | 1 | 5.3min | 5.3min | 4.6min | 3.0 | 45 | $0.36 | $0.36 | — | — |
+| default | haiku45-200k-na | 1 | 7.5min | 7.5min | 7.5min | 2.0 | 40 | $0.29 | $0.29 | — | — |
 
 </details>
 
@@ -136,7 +199,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.132 | 1 | 0.7min | 12.7% | $0.05 | 12.68% |
+| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.132 | 1 | 0.7min | 5.2% | $0.05 | 6.98% |
 
 
 <details>
@@ -144,7 +207,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.132 | 1 | 0.7min | 12.7% | $0.05 | 12.68% |
+| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.132 | 1 | 0.7min | 5.2% | $0.05 | 6.98% |
 
 </details>
 
@@ -153,7 +216,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.132 | 1 | 0.7min | 12.7% | $0.05 | 12.68% |
+| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.132 | 1 | 0.7min | 5.2% | $0.05 | 6.98% |
 
 </details>
 
@@ -162,7 +225,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.132 | 1 | 0.7min | 12.7% | $0.05 | 12.68% |
+| repeated-test-reruns | bash | haiku45-200k-na-cli2.1.132 | 1 | 0.7min | 5.2% | $0.05 | 6.98% |
 
 </details>
 
@@ -183,7 +246,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| bash | haiku45-200k-na-cli2.1.132 | 1 | 1 | 0.7min | 12.7% | $0.05 | 12.68% |
+| bash | haiku45-200k-na-cli2.1.132 | 1 | 1 | 0.7min | 5.2% | $0.05 | 6.98% |
+| default | haiku45-200k-na-cli2.1.132 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
 
 
 <details>
@@ -191,7 +255,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| bash | haiku45-200k-na-cli2.1.132 | 1 | 1 | 0.7min | 12.7% | $0.05 | 12.68% |
+| default | haiku45-200k-na-cli2.1.132 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
+| bash | haiku45-200k-na-cli2.1.132 | 1 | 1 | 0.7min | 5.2% | $0.05 | 6.98% |
 
 </details>
 
@@ -200,7 +265,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| bash | haiku45-200k-na-cli2.1.132 | 1 | 1 | 0.7min | 12.7% | $0.05 | 12.68% |
+| default | haiku45-200k-na-cli2.1.132 | 1 | 0 | 0.0min | 0.0% | $0.00 | 0.00% |
+| bash | haiku45-200k-na-cli2.1.132 | 1 | 1 | 0.7min | 5.2% | $0.05 | 6.98% |
 
 </details>
 
@@ -209,7 +275,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Status | Runs | $ Saved | % of $ |
 |--------|------|---------|--------|
 | Full hit (100%) | 0 | $0.00 | 0.00% |
-| Partial | 1 | $0.01 | 4.04% |
+| Partial | 2 | $0.03 | 4.45% |
 | Miss | 0 | $0.00 | 0.00% |
 
 ## Test Quality Evaluation
@@ -221,6 +287,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
 | bash | haiku45-200k-na | 12.0 | 15.0 | 1.2 | 0.00 |
+| default | haiku45-200k-na | 20.0 | 30.0 | 1.5 | 0.35 |
 
 
 <details>
@@ -228,6 +295,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| default | haiku45-200k-na | 20.0 | 30.0 | 1.5 | 0.35 |
 | bash | haiku45-200k-na | 12.0 | 15.0 | 1.2 | 0.00 |
 
 </details>
@@ -237,6 +305,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| default | haiku45-200k-na | 20.0 | 30.0 | 1.5 | 0.35 |
 | bash | haiku45-200k-na | 12.0 | 15.0 | 1.2 | 0.00 |
 
 </details>
@@ -246,6 +315,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| default | haiku45-200k-na | 20.0 | 30.0 | 1.5 | 0.35 |
 | bash | haiku45-200k-na | 12.0 | 15.0 | 1.2 | 0.00 |
 
 </details>
@@ -257,6 +327,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Tests | Assertions | Assert/Test | Test Lines | Impl Lines | Test:Code |
 |------|------|-------|-------|------------|-------------|------------|------------|-----------|
 | Semantic Version Bumper | bash | haiku45-200k-na | 12 | 15 | 1.2 | 223 | 0 | 0.00 |
+| Semantic Version Bumper | default | haiku45-200k-na | 20 | 30 | 1.5 | 209 | 605 | 0.35 |
 
 </details>
 
@@ -267,6 +338,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | bash | haiku45-200k-na | 5.3min | 45 | 3 | $0.36 | — | bash | ok |
+| Semantic Version Bumper | default | haiku45-200k-na | 7.5min | 40 | 2 | $0.29 | — | javascript | ok |
 
 
 <details>
@@ -274,6 +346,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
+| Semantic Version Bumper | default | haiku45-200k-na | 7.5min | 40 | 2 | $0.29 | — | javascript | ok |
 | Semantic Version Bumper | bash | haiku45-200k-na | 5.3min | 45 | 3 | $0.36 | — | bash | ok |
 
 </details>
@@ -284,6 +357,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | bash | haiku45-200k-na | 5.3min | 45 | 3 | $0.36 | — | bash | ok |
+| Semantic Version Bumper | default | haiku45-200k-na | 7.5min | 40 | 2 | $0.29 | — | javascript | ok |
 
 </details>
 
@@ -292,6 +366,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
+| Semantic Version Bumper | default | haiku45-200k-na | 7.5min | 40 | 2 | $0.29 | — | javascript | ok |
 | Semantic Version Bumper | bash | haiku45-200k-na | 5.3min | 45 | 3 | $0.36 | — | bash | ok |
 
 </details>
@@ -301,6 +376,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
+| Semantic Version Bumper | default | haiku45-200k-na | 7.5min | 40 | 2 | $0.29 | — | javascript | ok |
 | Semantic Version Bumper | bash | haiku45-200k-na | 5.3min | 45 | 3 | $0.36 | — | bash | ok |
 
 </details>
@@ -311,10 +387,18 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Semantic Version Bumper | bash | haiku45-200k-na | 5.3min | 45 | 3 | $0.36 | — | bash | ok |
+| Semantic Version Bumper | default | haiku45-200k-na | 7.5min | 40 | 2 | $0.29 | — | javascript | ok |
 
 </details>
 
 ## Notes
+
+### Tiers
+
+- **Duration bands:** **A+** ≤1.03×, **A** ≤1.06×, **A-** ≤1.09×, **B+** ≤1.12×, **B** ≤1.16×, **B-** ≤1.19×, **C+** ≤1.23×, **C** ≤1.26×, **C-** ≤1.30×, **D+** ≤1.34×, **D** ≤1.38×, **D-** ≤1.42×, **F** >1.42×
+- **Cost bands:** **A+** ≤1.02×, **A** ≤1.03×, **A-** ≤1.05×, **B+** ≤1.07×, **B** ≤1.09×, **B-** ≤1.11×, **C+** ≤1.12×, **C** ≤1.14×, **C-** ≤1.16×, **D+** ≤1.18×, **D** ≤1.20×, **D-** ≤1.22×, **F** >1.22×
+
+*Tests/Workflow Craft bands are absolute Overall score bands:* **A+** ≥4.7, **A** ≥4.4, **A-** ≥4.1, **B+** ≥3.8, **B** ≥3.5, **B-** ≥3.2, **C+** ≥2.9, **C** ≥2.6, **C-** ≥2.3, **D+** ≥2.0, **D** ≥1.7, **D-** ≥1.4, **F** <1.4, `—` = no data.*
 
 ### CLI Version Legend
 
