@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-28 08:11:44 AM ET — 4/4 runs completed, 0 remaining; total cost $2.45; total agent time 29.4 min.
+**Last updated:** 2026-07-28 08:13:37 AM ET — 4/8 runs completed, 4 remaining; total cost $2.45; total agent time 29.4 min.
 **Claude Code versions used:** v2.1.220 (4 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
@@ -120,6 +120,9 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | haiku45-200k-na | D- (9.0min) | D- ($0.71) | — | — |
 
 </details>
+
+- **Estimated time remaining:** 29.4min
+- **Estimated total cost:** $4.90
 
 ## Comparison by Language/Model/Effort
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
