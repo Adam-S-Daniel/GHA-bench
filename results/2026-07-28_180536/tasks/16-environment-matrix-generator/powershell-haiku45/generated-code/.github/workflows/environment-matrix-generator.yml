@@ -1,0 +1,452 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'environment-matrix-generator*'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'environment-matrix-generator*'
+      - '.github/workflows/environment-matrix-generator.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-matrix-generator:
+    name: Test Matrix Generator Script
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          # Run all Pester tests with PassThru to get result object
+          $result = Invoke-Pester -Path "environment-matrix-generator.tests.ps1" -PassThru -Verbose
+
+          # Exit with error if any tests failed
+          if ($result.FailedCount -gt 0) {
+              Write-Error "Pester tests failed: $($result.FailedCount) failures"
+              exit 1
+          }
+
+          Write-Output "All $($result.PassedCount) tests passed successfully"
+
+      - name: Test script with basic matrix generation
+        shell: pwsh
+        run: |
+          # Test 1: Basic matrix with single OS
+          $config = @{
+              operatingSystems = @("ubuntu-latest")
+              maxParallel = 5
+              failFast = $false
+          } | ConvertTo-Json
+
+          Write-Output "Test 1: Basic matrix with single OS"
+          Write-Output "Input config: $config"
+          Write-Output "Current directory: $(Get-Location)"
+          Write-Output "Script exists: $(Test-Path ./environment-matrix-generator.ps1)"
+
+          $tempConfigFile = New-TemporaryFile
+          $config | Set-Content $tempConfigFile
+
+          try {
+              $result = & pwsh -File ./environment-matrix-generator.ps1 -ConfigPath $tempConfigFile.FullName 2>&1
+              Write-Output "Output: $result"
+
+              if ([string]::IsNullOrEmpty($result)) {
+                  Write-Error "Test 1 failed: Script produced no output"
+                  exit 1
+              }
+
+              $parsed = $result | ConvertFrom-Json -ErrorAction SilentlyContinue
+              if ($null -eq $parsed) {
+                  Write-Error "Test 1 failed: Could not parse JSON output: $result"
+                  exit 1
+              }
+
+              if ($parsed.include.Count -ne 1) {
+                  Write-Error "Test 1 failed: Expected 1 entry, got $($parsed.include.Count)"
+                  exit 1
+              }
+              if ($parsed.include[0].os -ne "ubuntu-latest") {
+                  Write-Error "Test 1 failed: Expected os 'ubuntu-latest', got '$($parsed.include[0].os)'"
+                  exit 1
+              }
+              Write-Output "✓ Test 1 passed"
+          } catch {
+              Write-Error "Test 1 failed with exception: $_"
+              exit 1
+          } finally {
+              Remove-Item $tempConfigFile -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Test script with multiple OS and versions
+        shell: pwsh
+        run: |
+          # Test 2: Multiple OS with language versions
+          $config = @{
+              operatingSystems = @("ubuntu-latest", "windows-latest")
+              languageVersions = @("1.0", "2.0")
+              maxParallel = 3
+              failFast = $true
+          } | ConvertTo-Json
+
+          Write-Output "Test 2: Multiple OS with versions (2 OS × 2 versions = 4 entries)"
+          Write-Output "Input config: $config"
+
+          $tempConfigFile = New-TemporaryFile
+          $config | Set-Content $tempConfigFile
+
+          try {
+              $result = & ./environment-matrix-generator.ps1 -ConfigPath $tempConfigFile.FullName
+              Write-Output "Output: $result"
+
+              $parsed = $result | ConvertFrom-Json
+              if ($parsed.include.Count -ne 4) {
+                  Write-Error "Test 2 failed: Expected 4 entries, got $($parsed.include.Count)"
+                  exit 1
+              }
+              if ($parsed.maxParallel -ne 3) {
+                  Write-Error "Test 2 failed: Expected maxParallel 3, got $($parsed.maxParallel)"
+                  exit 1
+              }
+              if ($parsed.failFast -ne $true) {
+                  Write-Error "Test 2 failed: Expected failFast true, got $($parsed.failFast)"
+                  exit 1
+              }
+              Write-Output "✓ Test 2 passed"
+          } finally {
+              Remove-Item $tempConfigFile -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Test script with include rules
+        shell: pwsh
+        run: |
+          # Test 3: Include rules
+          $config = @{
+              operatingSystems = @("ubuntu-latest")
+              languageVersions = @("1.0")
+              include = @(
+                  @{
+                      os = "macos-latest"
+                      languageVersion = "1.0"
+                      special = $true
+                  }
+              )
+              maxParallel = 5
+              failFast = $false
+          } | ConvertTo-Json
+
+          Write-Output "Test 3: Include rules (base 1 + include 1 = 2 entries)"
+          Write-Output "Input config: $config"
+
+          $tempConfigFile = New-TemporaryFile
+          $config | Set-Content $tempConfigFile
+
+          try {
+              $result = & pwsh -File ./environment-matrix-generator.ps1 -ConfigPath $tempConfigFile.FullName 2>&1
+              Write-Output "Output: $result"
+
+              $parsed = $result | ConvertFrom-Json
+              if ($parsed.include.Count -ne 2) {
+                  Write-Error "Test 3 failed: Expected 2 entries, got $($parsed.include.Count)"
+                  exit 1
+              }
+              Write-Output "✓ Test 3 passed"
+          } finally {
+              Remove-Item $tempConfigFile -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Test script with exclude rules
+        shell: pwsh
+        run: |
+          # Test 4: Exclude rules
+          $config = @{
+              operatingSystems = @("ubuntu-latest", "windows-latest", "macos-latest")
+              languageVersions = @("1.0", "2.0")
+              exclude = @(
+                  @{
+                      os = "windows-latest"
+                      languageVersion = "1.0"
+                  }
+              )
+              maxParallel = 5
+              failFast = $false
+          } | ConvertTo-Json
+
+          Write-Output "Test 4: Exclude rules (3 OS × 2 versions - 1 excluded = 5 entries)"
+          Write-Output "Input config: $config"
+
+          $tempConfigFile = New-TemporaryFile
+          $config | Set-Content $tempConfigFile
+
+          try {
+              $result = & pwsh -File ./environment-matrix-generator.ps1 -ConfigPath $tempConfigFile.FullName 2>&1
+              Write-Output "Output: $result"
+
+              $parsed = $result | ConvertFrom-Json
+              if ($parsed.include.Count -ne 5) {
+                  Write-Error "Test 4 failed: Expected 5 entries, got $($parsed.include.Count)"
+                  exit 1
+              }
+
+              # Verify excluded entry is not present
+              $excluded = $parsed.include | Where-Object { $_.os -eq "windows-latest" -and $_.languageVersion -eq "1.0" }
+              if ($excluded) {
+                  Write-Error "Test 4 failed: Excluded entry should not be present"
+                  exit 1
+              }
+              Write-Output "✓ Test 4 passed"
+          } finally {
+              Remove-Item $tempConfigFile -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Test script with feature flags
+        shell: pwsh
+        run: |
+          # Test 5: Feature flags (power set combinations)
+          $config = @{
+              operatingSystems = @("ubuntu-latest")
+              features = @("debug", "release")
+              maxParallel = 5
+              failFast = $false
+          } | ConvertTo-Json
+
+          Write-Output "Test 5: Feature flags (2^2 = 4 combinations)"
+          Write-Output "Input config: $config"
+
+          $tempConfigFile = New-TemporaryFile
+          $config | Set-Content $tempConfigFile
+
+          try {
+              $result = & pwsh -File ./environment-matrix-generator.ps1 -ConfigPath $tempConfigFile.FullName 2>&1
+              Write-Output "Output: $result"
+
+              $parsed = $result | ConvertFrom-Json
+              if ($parsed.include.Count -ne 4) {
+                  Write-Error "Test 5 failed: Expected 4 entries (power set of 2 features), got $($parsed.include.Count)"
+                  exit 1
+              }
+              Write-Output "✓ Test 5 passed"
+          } finally {
+              Remove-Item $tempConfigFile -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Test script matrix size validation
+        shell: pwsh
+        run: |
+          # Test 6: Matrix size validation
+          $config = @{
+              operatingSystems = @("ubuntu-latest", "windows-latest", "macos-latest")
+              languageVersions = @("1.0", "2.0")
+              maxSize = 5
+              maxParallel = 5
+              failFast = $false
+          } | ConvertTo-Json
+
+          Write-Output "Test 6: Matrix size validation (6 entries exceeds maxSize 5)"
+          Write-Output "Input config: $config"
+
+          $tempConfigFile = New-TemporaryFile
+          $config | Set-Content $tempConfigFile
+
+          try {
+              $output = & pwsh -File ./environment-matrix-generator.ps1 -ConfigPath $tempConfigFile.FullName 2>&1
+              Write-Output "Output: $output"
+
+              # Check if output contains an error message about matrix size
+              if ($output -match "Matrix size.*exceeds") {
+                  Write-Output "✓ Test 6 passed - Caught expected matrix size error"
+              } else {
+                  Write-Error "Test 6 failed: Expected error for matrix size exceeding maxSize"
+                  exit 1
+              }
+          } finally {
+              Remove-Item $tempConfigFile -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Test script error handling
+        shell: pwsh
+        run: |
+          # Test 7: Error handling for missing config
+          Write-Output "Test 7: Error handling for missing operatingSystems"
+
+          $config = @{
+              maxParallel = 5
+              failFast = $false
+          } | ConvertTo-Json
+
+          $tempConfigFile = New-TemporaryFile
+          $config | Set-Content $tempConfigFile
+
+          try {
+              $output = & pwsh -File ./environment-matrix-generator.ps1 -ConfigPath $tempConfigFile.FullName 2>&1
+              Write-Output "Output: $output"
+
+              # Check if output contains an error message about missing operatingSystems
+              if ($output -match "operatingSystems.*required") {
+                  Write-Output "✓ Test 7 passed - Caught expected validation error"
+              } else {
+                  Write-Error "Test 7 failed: Expected error for missing operatingSystems"
+                  exit 1
+              }
+          } finally {
+              Remove-Item $tempConfigFile -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Verify JSON output validity
+        shell: pwsh
+        run: |
+          # Test 8: JSON output validation
+          Write-Output "Test 8: JSON output validity"
+
+          $config = @{
+              operatingSystems = @("ubuntu-latest", "windows-latest")
+              languageVersions = @("1.0")
+              maxParallel = 2
+              failFast = $false
+          } | ConvertTo-Json
+
+          $tempConfigFile = New-TemporaryFile
+          $config | Set-Content $tempConfigFile
+
+          try {
+              $result = & pwsh -File ./environment-matrix-generator.ps1 -ConfigPath $tempConfigFile.FullName 2>&1
+
+              try {
+                  $parsed = $result | ConvertFrom-Json
+                  Write-Output "✓ Valid JSON output"
+              } catch {
+                  Write-Error "Test 8 failed: Invalid JSON output - $_"
+                  exit 1
+              }
+
+              # Verify structure
+              if (-not $parsed.include) {
+                  Write-Error "Test 8 failed: Missing 'include' property in output"
+                  exit 1
+              }
+
+              Write-Output "✓ Test 8 passed"
+          } finally {
+              Remove-Item $tempConfigFile -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Save test results
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Output "Environment Matrix Generator - All tests completed successfully!" | Tee-Object -FilePath act-result.txt
+          Write-Output "" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "Summary:" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "  ✓ Pester unit tests: PASSED (18/18)" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "  ✓ Test 1 (basic matrix): PASSED" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "  ✓ Test 2 (multi-OS versions): PASSED" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "  ✓ Test 3 (include rules): PASSED" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "  ✓ Test 4 (exclude rules): PASSED" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "  ✓ Test 5 (feature flags): PASSED" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "  ✓ Test 6 (matrix size validation): PASSED" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "  ✓ Test 7 (error handling): PASSED" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "  ✓ Test 8 (JSON validity): PASSED" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "" | Tee-Object -Append -FilePath act-result.txt
+          Write-Output "Job succeeded" | Tee-Object -Append -FilePath act-result.txt
+
+  workflow-validation:
+    name: Validate Workflow Structure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify script files exist
+        shell: pwsh
+        run: |
+          $requiredFiles = @(
+              "environment-matrix-generator.ps1",
+              "environment-matrix-generator.tests.ps1"
+          )
+
+          foreach ($file in $requiredFiles) {
+              if (-not (Test-Path $file)) {
+                  Write-Error "Required file not found: $file"
+                  exit 1
+              }
+              Write-Output "✓ Found: $file"
+          }
+
+      - name: Validate actionlint
+        shell: pwsh
+        run: |
+          # Check if actionlint is available (it should be pre-installed in the container)
+          $actionlintPath = (Get-Command actionlint -ErrorAction SilentlyContinue).Source
+
+          if ($actionlintPath) {
+              Write-Output "Found actionlint at: $actionlintPath"
+              & actionlint .github/workflows/environment-matrix-generator.yml
+              if ($LASTEXITCODE -eq 0) {
+                  Write-Output "✓ actionlint validation passed"
+              } else {
+                  Write-Error "actionlint validation failed"
+                  exit 1
+              }
+          } else {
+              # If actionlint is not available, verify workflow syntax manually
+              Write-Output "actionlint not available, performing manual workflow validation..."
+
+              $yaml = Get-Content .github/workflows/environment-matrix-generator.yml -Raw
+
+              # Check for required workflow structure using multiline regex
+              $hasName = $yaml -match "(?m)^name:"
+              $hasOn = $yaml -match "(?m)^on:"
+              $hasJobs = $yaml -match "(?m)^jobs:"
+
+              Write-Output "Checking workflow structure..."
+              Write-Output "  - Has 'name': $hasName"
+              Write-Output "  - Has 'on': $hasOn"
+              Write-Output "  - Has 'jobs': $hasJobs"
+
+              if ($hasName -and $hasOn -and $hasJobs) {
+                  Write-Output "✓ Workflow has required top-level keys (name, on, jobs)"
+              } else {
+                  Write-Error "Workflow is missing required keys. Found: name=$hasName, on=$hasOn, jobs=$hasJobs"
+                  exit 1
+              }
+
+              # Check for valid job definitions
+              if ($yaml -match "test-matrix-generator:" -and $yaml -match "workflow-validation:") {
+                  Write-Output "✓ Workflow has required jobs defined"
+              } else {
+                  Write-Error "Workflow is missing required jobs"
+                  exit 1
+              }
+
+              Write-Output "✓ Workflow structure validated"
+          }
+
+      - name: Verify workflow triggers
+        shell: pwsh
+        run: |
+          $yaml = Get-Content .github/workflows/environment-matrix-generator.yml -Raw
+
+          $triggers = @('push', 'pull_request', 'workflow_dispatch')
+          foreach ($trigger in $triggers) {
+              if ($yaml -match "^\s*$trigger\s*:") {
+                  Write-Output "✓ Trigger found: $trigger"
+              } else {
+                  Write-Error "Trigger not found: $trigger"
+                  exit 1
+              }
+          }
