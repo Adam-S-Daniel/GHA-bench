@@ -1,7 +1,7 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-28 04:46:54 PM ET — 7/8 runs completed, 1 remaining; total cost $4.38; total agent time 50.4 min.
-**Claude Code versions used:** v2.1.220 (7 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
+**Last updated:** 2026-07-28 04:55:19 PM ET — 8/8 runs completed, 0 remaining; total cost $4.90; total agent time 59.7 min.
+**Claude Code versions used:** v2.1.220 (8 runs). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
 
@@ -67,10 +67,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | haiku45-200k-na | B+ (6.8min) | A+ ($0.53) | — | — |
-| powershell | haiku45-200k-na | A+ (6.4min) | B+ ($0.60) | — | — |
-| default | haiku45-200k-na | C- (7.5min) | B+ ($0.60) | — | — |
-| typescript-bun | haiku45-200k-na | D- (8.1min) | D- ($0.79) | — | — |
+| bash | haiku45-200k-na | A- (6.8min) | A+ ($0.53) | — | — |
+| powershell | haiku45-200k-na | A+ (6.4min) | C- ($0.60) | — | — |
+| default | haiku45-200k-na | C+ (7.5min) | C- ($0.60) | — | — |
+| typescript-bun | haiku45-200k-na | D- (8.7min) | D- ($0.64) | — | — |
 
 
 <details>
@@ -78,10 +78,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| powershell | haiku45-200k-na | A+ (6.4min) | B+ ($0.60) | — | — |
-| bash | haiku45-200k-na | B+ (6.8min) | A+ ($0.53) | — | — |
-| default | haiku45-200k-na | C- (7.5min) | B+ ($0.60) | — | — |
-| typescript-bun | haiku45-200k-na | D- (8.1min) | D- ($0.79) | — | — |
+| powershell | haiku45-200k-na | A+ (6.4min) | C- ($0.60) | — | — |
+| bash | haiku45-200k-na | A- (6.8min) | A+ ($0.53) | — | — |
+| default | haiku45-200k-na | C+ (7.5min) | C- ($0.60) | — | — |
+| typescript-bun | haiku45-200k-na | D- (8.7min) | D- ($0.64) | — | — |
 
 </details>
 
@@ -90,10 +90,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | haiku45-200k-na | B+ (6.8min) | A+ ($0.53) | — | — |
-| powershell | haiku45-200k-na | A+ (6.4min) | B+ ($0.60) | — | — |
-| default | haiku45-200k-na | C- (7.5min) | B+ ($0.60) | — | — |
-| typescript-bun | haiku45-200k-na | D- (8.1min) | D- ($0.79) | — | — |
+| bash | haiku45-200k-na | A- (6.8min) | A+ ($0.53) | — | — |
+| powershell | haiku45-200k-na | A+ (6.4min) | C- ($0.60) | — | — |
+| default | haiku45-200k-na | C+ (7.5min) | C- ($0.60) | — | — |
+| typescript-bun | haiku45-200k-na | D- (8.7min) | D- ($0.64) | — | — |
 
 </details>
 
@@ -102,10 +102,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | haiku45-200k-na | B+ (6.8min) | A+ ($0.53) | — | — |
-| powershell | haiku45-200k-na | A+ (6.4min) | B+ ($0.60) | — | — |
-| default | haiku45-200k-na | C- (7.5min) | B+ ($0.60) | — | — |
-| typescript-bun | haiku45-200k-na | D- (8.1min) | D- ($0.79) | — | — |
+| bash | haiku45-200k-na | A- (6.8min) | A+ ($0.53) | — | — |
+| powershell | haiku45-200k-na | A+ (6.4min) | C- ($0.60) | — | — |
+| default | haiku45-200k-na | C+ (7.5min) | C- ($0.60) | — | — |
+| typescript-bun | haiku45-200k-na | D- (8.7min) | D- ($0.64) | — | — |
 
 </details>
 
@@ -114,15 +114,12 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Duration | Cost | Tests Quality | Workflow Craft |
 |----------|-------|----------|------|-----------|-------------|
-| bash | haiku45-200k-na | B+ (6.8min) | A+ ($0.53) | — | — |
-| powershell | haiku45-200k-na | A+ (6.4min) | B+ ($0.60) | — | — |
-| default | haiku45-200k-na | C- (7.5min) | B+ ($0.60) | — | — |
-| typescript-bun | haiku45-200k-na | D- (8.1min) | D- ($0.79) | — | — |
+| bash | haiku45-200k-na | A- (6.8min) | A+ ($0.53) | — | — |
+| powershell | haiku45-200k-na | A+ (6.4min) | C- ($0.60) | — | — |
+| default | haiku45-200k-na | C+ (7.5min) | C- ($0.60) | — | — |
+| typescript-bun | haiku45-200k-na | D- (8.7min) | D- ($0.64) | — | — |
 
 </details>
-
-- **Estimated time remaining:** 7.2min
-- **Estimated total cost:** $5.01
 
 ## Comparison by Language/Model/Effort
 *See [Notes](#notes) for scoring rubric and CLI version legend.*
@@ -132,7 +129,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | haiku45-200k-na | 2 | 6.8min | 7.7min | 6.1min | 6.5 | 57 | $0.53 | $1.06 | — | — |
 | default | haiku45-200k-na | 2 | 7.5min | 8.5min | 7.0min | 5.5 | 52 | $0.60 | $1.21 | — | — |
 | powershell | haiku45-200k-na | 2 | 6.4min | 8.7min | 2.4min | 2.5 | 48 | $0.60 | $1.33 | — | — |
-| typescript-bun | haiku45-200k-na | 1 | 8.1min | 8.1min | 3.9min | 4.0 | 74 | $0.79 | $0.79 | — | — |
+| typescript-bun | haiku45-200k-na | 2 | 8.7min | 9.4min | 1.6min | 3.5 | 60 | $0.64 | $1.30 | — | — |
 
 
 <details>
@@ -143,7 +140,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | haiku45-200k-na | 2 | 6.8min | 7.7min | 6.1min | 6.5 | 57 | $0.53 | $1.06 | — | — |
 | powershell | haiku45-200k-na | 2 | 6.4min | 8.7min | 2.4min | 2.5 | 48 | $0.60 | $1.33 | — | — |
 | default | haiku45-200k-na | 2 | 7.5min | 8.5min | 7.0min | 5.5 | 52 | $0.60 | $1.21 | — | — |
-| typescript-bun | haiku45-200k-na | 1 | 8.1min | 8.1min | 3.9min | 4.0 | 74 | $0.79 | $0.79 | — | — |
+| typescript-bun | haiku45-200k-na | 2 | 8.7min | 9.4min | 1.6min | 3.5 | 60 | $0.64 | $1.30 | — | — |
 
 </details>
 
@@ -155,7 +152,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | haiku45-200k-na | 2 | 6.4min | 8.7min | 2.4min | 2.5 | 48 | $0.60 | $1.33 | — | — |
 | bash | haiku45-200k-na | 2 | 6.8min | 7.7min | 6.1min | 6.5 | 57 | $0.53 | $1.06 | — | — |
 | default | haiku45-200k-na | 2 | 7.5min | 8.5min | 7.0min | 5.5 | 52 | $0.60 | $1.21 | — | — |
-| typescript-bun | haiku45-200k-na | 1 | 8.1min | 8.1min | 3.9min | 4.0 | 74 | $0.79 | $0.79 | — | — |
+| typescript-bun | haiku45-200k-na | 2 | 8.7min | 9.4min | 1.6min | 3.5 | 60 | $0.64 | $1.30 | — | — |
 
 </details>
 
@@ -164,8 +161,8 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
+| typescript-bun | haiku45-200k-na | 2 | 8.7min | 9.4min | 1.6min | 3.5 | 60 | $0.64 | $1.30 | — | — |
 | powershell | haiku45-200k-na | 2 | 6.4min | 8.7min | 2.4min | 2.5 | 48 | $0.60 | $1.33 | — | — |
-| typescript-bun | haiku45-200k-na | 1 | 8.1min | 8.1min | 3.9min | 4.0 | 74 | $0.79 | $0.79 | — | — |
 | bash | haiku45-200k-na | 2 | 6.8min | 7.7min | 6.1min | 6.5 | 57 | $0.53 | $1.06 | — | — |
 | default | haiku45-200k-na | 2 | 7.5min | 8.5min | 7.0min | 5.5 | 52 | $0.60 | $1.21 | — | — |
 
@@ -177,7 +174,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Language | Model | Runs | Geo Duration | Max Duration | Geo Duration Net of Traps | Avg Errors | Geo Turns | Geo Cost | Total Cost | Avg Tests Quality | Avg Workflow Craft |
 |----------|-------|------|--------------|--------------|---------------------------|------------|-----------|----------|------------|---------------|-----------------|
 | powershell | haiku45-200k-na | 2 | 6.4min | 8.7min | 2.4min | 2.5 | 48 | $0.60 | $1.33 | — | — |
-| typescript-bun | haiku45-200k-na | 1 | 8.1min | 8.1min | 3.9min | 4.0 | 74 | $0.79 | $0.79 | — | — |
+| typescript-bun | haiku45-200k-na | 2 | 8.7min | 9.4min | 1.6min | 3.5 | 60 | $0.64 | $1.30 | — | — |
 | default | haiku45-200k-na | 2 | 7.5min | 8.5min | 7.0min | 5.5 | 52 | $0.60 | $1.21 | — | — |
 | bash | haiku45-200k-na | 2 | 6.8min | 7.7min | 6.1min | 6.5 | 57 | $0.53 | $1.06 | — | — |
 
@@ -191,7 +188,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | powershell | haiku45-200k-na | 2 | 6.4min | 8.7min | 2.4min | 2.5 | 48 | $0.60 | $1.33 | — | — |
 | default | haiku45-200k-na | 2 | 7.5min | 8.5min | 7.0min | 5.5 | 52 | $0.60 | $1.21 | — | — |
 | bash | haiku45-200k-na | 2 | 6.8min | 7.7min | 6.1min | 6.5 | 57 | $0.53 | $1.06 | — | — |
-| typescript-bun | haiku45-200k-na | 1 | 8.1min | 8.1min | 3.9min | 4.0 | 74 | $0.79 | $0.79 | — | — |
+| typescript-bun | haiku45-200k-na | 2 | 8.7min | 9.4min | 1.6min | 3.5 | 60 | $0.64 | $1.30 | — | — |
 
 </details>
 
@@ -203,7 +200,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | haiku45-200k-na | 2 | 6.8min | 7.7min | 6.1min | 6.5 | 57 | $0.53 | $1.06 | — | — |
 | default | haiku45-200k-na | 2 | 7.5min | 8.5min | 7.0min | 5.5 | 52 | $0.60 | $1.21 | — | — |
 | powershell | haiku45-200k-na | 2 | 6.4min | 8.7min | 2.4min | 2.5 | 48 | $0.60 | $1.33 | — | — |
-| typescript-bun | haiku45-200k-na | 1 | 8.1min | 8.1min | 3.9min | 4.0 | 74 | $0.79 | $0.79 | — | — |
+| typescript-bun | haiku45-200k-na | 2 | 8.7min | 9.4min | 1.6min | 3.5 | 60 | $0.64 | $1.30 | — | — |
 
 </details>
 
@@ -215,7 +212,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | bash | haiku45-200k-na | 2 | 6.8min | 7.7min | 6.1min | 6.5 | 57 | $0.53 | $1.06 | — | — |
 | default | haiku45-200k-na | 2 | 7.5min | 8.5min | 7.0min | 5.5 | 52 | $0.60 | $1.21 | — | — |
 | powershell | haiku45-200k-na | 2 | 6.4min | 8.7min | 2.4min | 2.5 | 48 | $0.60 | $1.33 | — | — |
-| typescript-bun | haiku45-200k-na | 1 | 8.1min | 8.1min | 3.9min | 4.0 | 74 | $0.79 | $0.79 | — | — |
+| typescript-bun | haiku45-200k-na | 2 | 8.7min | 9.4min | 1.6min | 3.5 | 60 | $0.64 | $1.30 | — | — |
 
 </details>
 
@@ -225,13 +222,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.3min | 8.6% | $0.45 | 10.37% |
-| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 2.0min | 4.0% | $0.20 | 4.47% |
-| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.0min | 7.9% | $0.38 | 8.74% |
-| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.0min | 2.0% | $0.10 | 2.23% |
-| act-push-debug-loops | default | haiku45-200k-na-cli2.1.220 | 2 | 1.0min | 1.9% | $0.08 | 1.84% |
-| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.2min | 2.3% | $0.11 | 2.60% |
-| fixture-rework | bash | haiku45-200k-na-cli2.1.220 | 1 | 1.7min | 3.3% | $0.12 | 2.70% |
+| fixture-rework | bash | haiku45-200k-na-cli2.1.220 | 1 | 1.7min | 2.8% | $0.12 | 2.41% |
+| fixture-rework | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 6.7min | 11.2% | $0.37 | 7.51% |
+| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.3min | 7.3% | $0.45 | 9.28% |
+| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 2.0min | 3.3% | $0.20 | 4.00% |
+| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.0min | 6.7% | $0.38 | 7.82% |
+| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.0min | 1.7% | $0.10 | 2.00% |
+| act-push-debug-loops | default | haiku45-200k-na-cli2.1.220 | 2 | 1.0min | 1.6% | $0.08 | 1.65% |
+| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.220 | 2 | 3.2min | 5.4% | $0.23 | 4.63% |
 
 
 <details>
@@ -239,13 +237,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| act-push-debug-loops | default | haiku45-200k-na-cli2.1.220 | 2 | 1.0min | 1.9% | $0.08 | 1.84% |
-| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.0min | 2.0% | $0.10 | 2.23% |
-| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.2min | 2.3% | $0.11 | 2.60% |
-| fixture-rework | bash | haiku45-200k-na-cli2.1.220 | 1 | 1.7min | 3.3% | $0.12 | 2.70% |
-| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 2.0min | 4.0% | $0.20 | 4.47% |
-| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.0min | 7.9% | $0.38 | 8.74% |
-| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.3min | 8.6% | $0.45 | 10.37% |
+| act-push-debug-loops | default | haiku45-200k-na-cli2.1.220 | 2 | 1.0min | 1.6% | $0.08 | 1.65% |
+| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.0min | 1.7% | $0.10 | 2.00% |
+| fixture-rework | bash | haiku45-200k-na-cli2.1.220 | 1 | 1.7min | 2.8% | $0.12 | 2.41% |
+| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 2.0min | 3.3% | $0.20 | 4.00% |
+| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.220 | 2 | 3.2min | 5.4% | $0.23 | 4.63% |
+| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.0min | 6.7% | $0.38 | 7.82% |
+| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.3min | 7.3% | $0.45 | 9.28% |
+| fixture-rework | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 6.7min | 11.2% | $0.37 | 7.51% |
 
 </details>
 
@@ -254,13 +253,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| act-push-debug-loops | default | haiku45-200k-na-cli2.1.220 | 2 | 1.0min | 1.9% | $0.08 | 1.84% |
-| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.0min | 2.0% | $0.10 | 2.23% |
-| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.2min | 2.3% | $0.11 | 2.60% |
-| fixture-rework | bash | haiku45-200k-na-cli2.1.220 | 1 | 1.7min | 3.3% | $0.12 | 2.70% |
-| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 2.0min | 4.0% | $0.20 | 4.47% |
-| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.0min | 7.9% | $0.38 | 8.74% |
-| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.3min | 8.6% | $0.45 | 10.37% |
+| act-push-debug-loops | default | haiku45-200k-na-cli2.1.220 | 2 | 1.0min | 1.6% | $0.08 | 1.65% |
+| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.0min | 1.7% | $0.10 | 2.00% |
+| fixture-rework | bash | haiku45-200k-na-cli2.1.220 | 1 | 1.7min | 2.8% | $0.12 | 2.41% |
+| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 2.0min | 3.3% | $0.20 | 4.00% |
+| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.220 | 2 | 3.2min | 5.4% | $0.23 | 4.63% |
+| fixture-rework | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 6.7min | 11.2% | $0.37 | 7.51% |
+| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.0min | 6.7% | $0.38 | 7.82% |
+| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.3min | 7.3% | $0.45 | 9.28% |
 
 </details>
 
@@ -269,13 +269,14 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Trap | Language | Model | Fell In | Time Lost | % of Time | $ Lost | % of $ |
 |------|------|-------|---------|-----------|-----------|--------|--------|
-| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 2.0min | 4.0% | $0.20 | 4.47% |
-| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.0min | 2.0% | $0.10 | 2.23% |
-| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.2min | 2.3% | $0.11 | 2.60% |
-| fixture-rework | bash | haiku45-200k-na-cli2.1.220 | 1 | 1.7min | 3.3% | $0.12 | 2.70% |
-| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.3min | 8.6% | $0.45 | 10.37% |
-| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.0min | 7.9% | $0.38 | 8.74% |
-| act-push-debug-loops | default | haiku45-200k-na-cli2.1.220 | 2 | 1.0min | 1.9% | $0.08 | 1.84% |
+| fixture-rework | bash | haiku45-200k-na-cli2.1.220 | 1 | 1.7min | 2.8% | $0.12 | 2.41% |
+| fixture-rework | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 6.7min | 11.2% | $0.37 | 7.51% |
+| repeated-test-reruns | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 2.0min | 3.3% | $0.20 | 4.00% |
+| actionlint-fix-cycles | typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 1.0min | 1.7% | $0.10 | 2.00% |
+| repeated-test-reruns | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.3min | 7.3% | $0.45 | 9.28% |
+| actionlint-fix-cycles | powershell | haiku45-200k-na-cli2.1.220 | 2 | 4.0min | 6.7% | $0.38 | 7.82% |
+| act-push-debug-loops | default | haiku45-200k-na-cli2.1.220 | 2 | 1.0min | 1.6% | $0.08 | 1.65% |
+| act-push-debug-loops | typescript-bun | haiku45-200k-na-cli2.1.220 | 2 | 3.2min | 5.4% | $0.23 | 4.63% |
 
 </details>
 
@@ -299,10 +300,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| bash | haiku45-200k-na-cli2.1.220 | 2 | 1 | 1.7min | 3.3% | $0.12 | 2.70% |
-| default | haiku45-200k-na-cli2.1.220 | 2 | 2 | 1.0min | 1.9% | $0.08 | 1.84% |
-| powershell | haiku45-200k-na-cli2.1.220 | 2 | 4 | 8.3min | 16.6% | $0.84 | 19.11% |
-| typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 3 | 4.2min | 8.3% | $0.41 | 9.29% |
+| bash | haiku45-200k-na-cli2.1.220 | 2 | 1 | 1.7min | 2.8% | $0.12 | 2.41% |
+| default | haiku45-200k-na-cli2.1.220 | 2 | 2 | 1.0min | 1.6% | $0.08 | 1.65% |
+| powershell | haiku45-200k-na-cli2.1.220 | 2 | 4 | 8.3min | 14.0% | $0.84 | 17.09% |
+| typescript-bun | haiku45-200k-na-cli2.1.220 | 2 | 5 | 12.9min | 21.6% | $0.89 | 18.13% |
 
 
 <details>
@@ -310,10 +311,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| default | haiku45-200k-na-cli2.1.220 | 2 | 2 | 1.0min | 1.9% | $0.08 | 1.84% |
-| bash | haiku45-200k-na-cli2.1.220 | 2 | 1 | 1.7min | 3.3% | $0.12 | 2.70% |
-| typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 3 | 4.2min | 8.3% | $0.41 | 9.29% |
-| powershell | haiku45-200k-na-cli2.1.220 | 2 | 4 | 8.3min | 16.6% | $0.84 | 19.11% |
+| default | haiku45-200k-na-cli2.1.220 | 2 | 2 | 1.0min | 1.6% | $0.08 | 1.65% |
+| bash | haiku45-200k-na-cli2.1.220 | 2 | 1 | 1.7min | 2.8% | $0.12 | 2.41% |
+| powershell | haiku45-200k-na-cli2.1.220 | 2 | 4 | 8.3min | 14.0% | $0.84 | 17.09% |
+| typescript-bun | haiku45-200k-na-cli2.1.220 | 2 | 5 | 12.9min | 21.6% | $0.89 | 18.13% |
 
 </details>
 
@@ -322,10 +323,10 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 
 | Language | Model | Runs | Traps | Time Lost | % of Time | $ Lost | % of $ |
 |------|-------|------|-------|-----------|-----------|--------|--------|
-| default | haiku45-200k-na-cli2.1.220 | 2 | 2 | 1.0min | 1.9% | $0.08 | 1.84% |
-| bash | haiku45-200k-na-cli2.1.220 | 2 | 1 | 1.7min | 3.3% | $0.12 | 2.70% |
-| typescript-bun | haiku45-200k-na-cli2.1.220 | 1 | 3 | 4.2min | 8.3% | $0.41 | 9.29% |
-| powershell | haiku45-200k-na-cli2.1.220 | 2 | 4 | 8.3min | 16.6% | $0.84 | 19.11% |
+| default | haiku45-200k-na-cli2.1.220 | 2 | 2 | 1.0min | 1.6% | $0.08 | 1.65% |
+| bash | haiku45-200k-na-cli2.1.220 | 2 | 1 | 1.7min | 2.8% | $0.12 | 2.41% |
+| powershell | haiku45-200k-na-cli2.1.220 | 2 | 4 | 8.3min | 14.0% | $0.84 | 17.09% |
+| typescript-bun | haiku45-200k-na-cli2.1.220 | 2 | 5 | 12.9min | 21.6% | $0.89 | 18.13% |
 
 </details>
 
@@ -334,7 +335,7 @@ Every Duration figure in this report derives from `timing.grand_total_duration_m
 | Status | Runs | $ Saved | % of $ |
 |--------|------|---------|--------|
 | Full hit (100%) | 0 | $0.00 | 0.00% |
-| Partial | 6 | $0.13 | 2.88% |
+| Partial | 7 | $0.15 | 3.00% |
 | Miss | 1 | $0.00 | 0.00% |
 
 ## Test Quality Evaluation
@@ -348,7 +349,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | bash | haiku45-200k-na | 25.0 | 16.0 | 0.6 | 0.22 |
 | default | haiku45-200k-na | 15.5 | 25.5 | 1.6 | 0.73 |
 | powershell | haiku45-200k-na | 20.5 | 32.0 | 1.6 | 1.49 |
-| typescript-bun | haiku45-200k-na | 19.0 | 27.0 | 1.4 | 0.62 |
+| typescript-bun | haiku45-200k-na | 24.0 | 40.0 | 1.7 | 1.47 |
 
 
 <details>
@@ -357,8 +358,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
 | bash | haiku45-200k-na | 25.0 | 16.0 | 0.6 | 0.22 |
+| typescript-bun | haiku45-200k-na | 24.0 | 40.0 | 1.7 | 1.47 |
 | powershell | haiku45-200k-na | 20.5 | 32.0 | 1.6 | 1.49 |
-| typescript-bun | haiku45-200k-na | 19.0 | 27.0 | 1.4 | 0.62 |
 | default | haiku45-200k-na | 15.5 | 25.5 | 1.6 | 0.73 |
 
 </details>
@@ -368,8 +369,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
+| typescript-bun | haiku45-200k-na | 24.0 | 40.0 | 1.7 | 1.47 |
 | powershell | haiku45-200k-na | 20.5 | 32.0 | 1.6 | 1.49 |
-| typescript-bun | haiku45-200k-na | 19.0 | 27.0 | 1.4 | 0.62 |
 | default | haiku45-200k-na | 15.5 | 25.5 | 1.6 | 0.73 |
 | bash | haiku45-200k-na | 25.0 | 16.0 | 0.6 | 0.22 |
 
@@ -381,8 +382,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Language | Model | Avg Tests | Avg Assertions | Avg Assert/Test | Avg Test:Code Ratio |
 |------|-------|-----------|----------------|-----------------|---------------------|
 | powershell | haiku45-200k-na | 20.5 | 32.0 | 1.6 | 1.49 |
+| typescript-bun | haiku45-200k-na | 24.0 | 40.0 | 1.7 | 1.47 |
 | default | haiku45-200k-na | 15.5 | 25.5 | 1.6 | 0.73 |
-| typescript-bun | haiku45-200k-na | 19.0 | 27.0 | 1.4 | 0.62 |
 | bash | haiku45-200k-na | 25.0 | 16.0 | 0.6 | 0.22 |
 
 </details>
@@ -400,6 +401,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Environment Matrix Generator | bash | haiku45-200k-na | 30 | 7 | 0.2 | 216 | 492 | 0.44 |
 | Environment Matrix Generator | default | haiku45-200k-na | 14 | 25 | 1.8 | 257 | 345 | 0.74 |
 | Environment Matrix Generator | powershell | haiku45-200k-na | 18 | 33 | 1.8 | 291 | 147 | 1.98 |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 29 | 53 | 1.8 | 411 | 178 | 2.31 |
 
 </details>
 
@@ -412,6 +414,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Environment Matrix Generator | bash | haiku45-200k-na | 7.7min | 62 | 6 | $0.55 | — | bash | ok |
 | Environment Matrix Generator | default | haiku45-200k-na | 8.5min | 51 | 4 | $0.59 | — | python | ok |
 | Environment Matrix Generator | powershell | haiku45-200k-na | 4.7min | 34 | 2 | $0.39 | — | powershell | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 9.4min | 48 | 3 | $0.52 | — | typescript | ok |
 | Semantic Version Bumper | bash | haiku45-200k-na | 6.0min | 53 | 7 | $0.51 | — | bash | ok |
 | Semantic Version Bumper | default | haiku45-200k-na | 6.7min | 54 | 7 | $0.62 | — | python | ok |
 | Semantic Version Bumper | powershell | haiku45-200k-na | 8.7min | 69 | 3 | $0.94 | — | powershell | ok |
@@ -425,6 +428,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Environment Matrix Generator | powershell | haiku45-200k-na | 4.7min | 34 | 2 | $0.39 | — | powershell | ok |
 | Semantic Version Bumper | bash | haiku45-200k-na | 6.0min | 53 | 7 | $0.51 | — | bash | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 9.4min | 48 | 3 | $0.52 | — | typescript | ok |
 | Environment Matrix Generator | bash | haiku45-200k-na | 7.7min | 62 | 6 | $0.55 | — | bash | ok |
 | Environment Matrix Generator | default | haiku45-200k-na | 8.5min | 51 | 4 | $0.59 | — | python | ok |
 | Semantic Version Bumper | default | haiku45-200k-na | 6.7min | 54 | 7 | $0.62 | — | python | ok |
@@ -445,6 +449,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Semantic Version Bumper | typescript-bun | haiku45-200k-na | 8.1min | 74 | 4 | $0.79 | — | typescript | ok |
 | Environment Matrix Generator | default | haiku45-200k-na | 8.5min | 51 | 4 | $0.59 | — | python | ok |
 | Semantic Version Bumper | powershell | haiku45-200k-na | 8.7min | 69 | 3 | $0.94 | — | powershell | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 9.4min | 48 | 3 | $0.52 | — | typescript | ok |
 
 </details>
 
@@ -455,6 +460,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Environment Matrix Generator | powershell | haiku45-200k-na | 4.7min | 34 | 2 | $0.39 | — | powershell | ok |
 | Semantic Version Bumper | powershell | haiku45-200k-na | 8.7min | 69 | 3 | $0.94 | — | powershell | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 9.4min | 48 | 3 | $0.52 | — | typescript | ok |
 | Semantic Version Bumper | typescript-bun | haiku45-200k-na | 8.1min | 74 | 4 | $0.79 | — | typescript | ok |
 | Environment Matrix Generator | default | haiku45-200k-na | 8.5min | 51 | 4 | $0.59 | — | python | ok |
 | Environment Matrix Generator | bash | haiku45-200k-na | 7.7min | 62 | 6 | $0.55 | — | bash | ok |
@@ -469,6 +475,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Task | Language | Model | Duration | Turns | Errors | Cost | Tests Quality | Chosen | Status |
 |------|----------|-------|----------|-------|--------|------|-----------|--------|--------|
 | Environment Matrix Generator | powershell | haiku45-200k-na | 4.7min | 34 | 2 | $0.39 | — | powershell | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 9.4min | 48 | 3 | $0.52 | — | typescript | ok |
 | Environment Matrix Generator | default | haiku45-200k-na | 8.5min | 51 | 4 | $0.59 | — | python | ok |
 | Semantic Version Bumper | bash | haiku45-200k-na | 6.0min | 53 | 7 | $0.51 | — | bash | ok |
 | Semantic Version Bumper | default | haiku45-200k-na | 6.7min | 54 | 7 | $0.62 | — | python | ok |
@@ -490,6 +497,7 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 | Environment Matrix Generator | bash | haiku45-200k-na | 7.7min | 62 | 6 | $0.55 | — | bash | ok |
 | Environment Matrix Generator | default | haiku45-200k-na | 8.5min | 51 | 4 | $0.59 | — | python | ok |
 | Environment Matrix Generator | powershell | haiku45-200k-na | 4.7min | 34 | 2 | $0.39 | — | powershell | ok |
+| Environment Matrix Generator | typescript-bun | haiku45-200k-na | 9.4min | 48 | 3 | $0.52 | — | typescript | ok |
 
 </details>
 
@@ -497,8 +505,8 @@ Automated analysis of test files: test count, assertion count, and test-to-code 
 
 ### Tiers
 
-- **Duration bands:** **A+** ≤1.02×, **A** ≤1.04×, **A-** ≤1.06×, **B+** ≤1.08×, **B** ≤1.10×, **B-** ≤1.13×, **C+** ≤1.15×, **C** ≤1.17×, **C-** ≤1.19×, **D+** ≤1.22×, **D** ≤1.24×, **D-** ≤1.27×, **F** >1.27×
-- **Cost bands:** **A+** ≤1.03×, **A** ≤1.07×, **A-** ≤1.10×, **B+** ≤1.14×, **B** ≤1.18×, **B-** ≤1.22×, **C+** ≤1.26×, **C** ≤1.30×, **C-** ≤1.35×, **D+** ≤1.39×, **D** ≤1.44×, **D-** ≤1.49×, **F** >1.49×
+- **Duration bands:** **A+** ≤1.03×, **A** ≤1.05×, **A-** ≤1.08×, **B+** ≤1.11×, **B** ≤1.14×, **B-** ≤1.17×, **C+** ≤1.20×, **C** ≤1.23×, **C-** ≤1.26×, **D+** ≤1.30×, **D** ≤1.33×, **D-** ≤1.37×, **F** >1.37×
+- **Cost bands:** **A+** ≤1.02×, **A** ≤1.03×, **A-** ≤1.05×, **B+** ≤1.06×, **B** ≤1.08×, **B-** ≤1.10×, **C+** ≤1.12×, **C** ≤1.13×, **C-** ≤1.15×, **D+** ≤1.17×, **D** ≤1.19×, **D-** ≤1.21×, **F** >1.21×
 
 *Tests/Workflow Craft bands are absolute Overall score bands:* **A+** ≥4.7, **A** ≥4.4, **A-** ≥4.1, **B+** ≥3.8, **B** ≥3.5, **B-** ≥3.2, **C+** ≥2.9, **C** ≥2.6, **C-** ≥2.3, **D+** ≥2.0, **D** ≥1.7, **D-** ≥1.4, **F** <1.4, `—` = no data.*
 
