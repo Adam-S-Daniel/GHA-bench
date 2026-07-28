@@ -1,6 +1,6 @@
 # Benchmark Results: Language Comparison
 
-**Last updated:** 2026-07-28 10:33:47 AM ET — 1/8 runs completed, 7 remaining; total cost $0.55; total agent time 8.2 min.
+**Last updated:** 2026-07-28 12:20:49 PM ET — 1/8 runs completed, 7 remaining; total cost $0.55; total agent time 8.2 min.
 **Claude Code versions used:** v2.1.132 (1 run). Each link goes to a per-version snapshot of the system prompt, default-tool descriptions, and the chronological Anthropic changelog up to that version. Regenerate with `python3 version_docs.py`.
 
 ## Table of Contents
