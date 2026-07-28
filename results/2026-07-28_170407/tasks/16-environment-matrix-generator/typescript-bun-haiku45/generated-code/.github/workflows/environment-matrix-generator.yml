@@ -1,0 +1,67 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Run unit tests
+        run: bun test matrix.test.ts cli.test.ts
+
+      - name: Test matrix generation
+        run: |
+          cat > /tmp/test-config.json << 'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"],
+            "nodeVersion": ["18", "20"],
+            "maxParallel": 4,
+            "failFast": false
+          }
+          EOF
+          bun run cli.ts /tmp/test-config.json
+
+      - name: Test matrix with exclude rules
+        run: |
+          cat > /tmp/exclude-config.json << 'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"],
+            "nodeVersion": ["18", "20"],
+            "excludeRules": [
+              { "os": "macos-latest", "nodeVersion": "18" }
+            ]
+          }
+          EOF
+          bun run cli.ts /tmp/exclude-config.json
+
+      - name: Test matrix size validation
+        run: |
+          cat > /tmp/oversized.json << 'EOF'
+          {
+            "os": ["ubuntu-latest"],
+            "nodeVersion": ["18"],
+            "maxSize": 0
+          }
+          EOF
+          if bun run cli.ts /tmp/oversized.json; then
+            echo "Should have failed validation"
+            exit 1
+          fi
+          echo "Validation correctly rejected oversized matrix"
