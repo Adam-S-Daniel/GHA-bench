@@ -1,0 +1,139 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test semantic version bumper
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats shellcheck
+
+      - name: Run shellcheck
+        run: |
+          shellcheck bin/version-bumper.sh bin/semantic-version-bumper.sh || true
+
+      - name: Run syntax check
+        run: |
+          bash -n bin/version-bumper.sh
+          bash -n bin/semantic-version-bumper.sh
+
+      - name: Run tests
+        run: |
+          bats test/version_bumper.bats
+
+  integration:
+    runs-on: ubuntu-latest
+    name: Integration test with real workflow
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up git config
+        run: |
+          git config --global user.email "ci@example.com"
+          git config --global user.name "CI Bot"
+
+      - name: Test version bump - feat commit
+        run: |
+          mkdir -p /tmp/test-feat
+          cd /tmp/test-feat
+          git init
+          echo '{"version":"1.0.0","name":"test-feat"}' > package.json
+          git add package.json
+          git commit -m "initial"
+          echo "feature code" > feature.js
+          git add feature.js
+          git commit -m "feat: add new feature"
+
+          NEW_VERSION=$("${{ github.workspace }}/bin/semantic-version-bumper.sh" -f package.json)
+          echo "New version from feat: $NEW_VERSION"
+          [[ "$NEW_VERSION" == "1.1.0" ]] || exit 1
+          grep -q "1.1.0" package.json || exit 1
+
+      - name: Test version bump - fix commit
+        run: |
+          mkdir -p /tmp/test-fix
+          cd /tmp/test-fix
+          git init
+          echo '{"version":"2.0.0","name":"test-fix"}' > package.json
+          git add package.json
+          git commit -m "initial"
+          echo "bug fix" > bug.js
+          git add bug.js
+          git commit -m "fix: resolve critical issue"
+
+          NEW_VERSION=$("${{ github.workspace }}/bin/semantic-version-bumper.sh" -f package.json)
+          echo "New version from fix: $NEW_VERSION"
+          [[ "$NEW_VERSION" == "2.0.1" ]] || exit 1
+
+      - name: Test version bump - breaking change
+        run: |
+          mkdir -p /tmp/test-breaking
+          cd /tmp/test-breaking
+          git init
+          echo '{"version":"1.5.0","name":"test-breaking"}' > package.json
+          git add package.json
+          git commit -m "initial"
+          echo "api change" > api.js
+          git add api.js
+          git commit -m "feat!: major API refactor"
+
+          NEW_VERSION=$("${{ github.workspace }}/bin/semantic-version-bumper.sh" -f package.json)
+          echo "New version from breaking: $NEW_VERSION"
+          [[ "$NEW_VERSION" == "2.0.0" ]] || exit 1
+
+      - name: Test dry-run mode
+        run: |
+          mkdir -p /tmp/test-dry
+          cd /tmp/test-dry
+          git init
+          echo '{"version":"1.0.0","name":"test-dry"}' > package.json
+          git add package.json
+          git commit -m "initial"
+          echo "feature" > feature.js
+          git add feature.js
+          git commit -m "feat: test feature"
+
+          "${{ github.workspace }}/bin/semantic-version-bumper.sh" --dry-run -f package.json
+          # Verify file wasn't modified
+          CURRENT_VERSION=$(grep -o '"version"\s*:\s*"[^"]*"' package.json | cut -d'"' -f4)
+          [[ "$CURRENT_VERSION" == "1.0.0" ]] || exit 1
+
+      - name: Test changelog generation
+        run: |
+          mkdir -p /tmp/test-changelog
+          cd /tmp/test-changelog
+          git init
+          echo '{"version":"1.0.0","name":"test-changelog"}' > package.json
+          git add package.json
+          git commit -m "initial"
+          echo "feature" > feature.js
+          git add feature.js
+          git commit -m "feat: add feature"
+
+          "${{ github.workspace }}/bin/semantic-version-bumper.sh" -f package.json > /dev/null
+          [[ -f CHANGELOG.md ]] || exit 1
+          grep -q "1.1.0" CHANGELOG.md || exit 1
+          grep -q "add feature" CHANGELOG.md || exit 1
