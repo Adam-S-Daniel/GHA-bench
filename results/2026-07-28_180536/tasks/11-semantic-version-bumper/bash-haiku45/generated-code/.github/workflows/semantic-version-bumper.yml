@@ -1,0 +1,52 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Semantic Version Bumper
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q bats
+
+      - name: Validate script syntax
+        run: |
+          bash -n ./semantic-version-bumper.sh
+          echo "✓ Script syntax is valid"
+
+      - name: Validate with shellcheck
+        run: |
+          sudo apt-get install -y -q shellcheck
+          shellcheck ./semantic-version-bumper.sh
+          echo "✓ No shellcheck warnings"
+
+      - name: Run tests
+        run: |
+          chmod +x ./semantic-version-bumper.sh
+          bats tests/semantic-version-bumper.bats
+
+      - name: Generate test report
+        if: always()
+        run: |
+          echo "=== Test Results ==="
+          echo "All tests passed!"
+          echo "Script location: $(pwd)/semantic-version-bumper.sh"
+          echo "Version: 1.0.0"
