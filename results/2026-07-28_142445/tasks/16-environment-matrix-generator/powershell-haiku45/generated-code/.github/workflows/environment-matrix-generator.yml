@@ -1,0 +1,86 @@
+name: Environment Matrix Generator Tests
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'src/**'
+      - 'tests/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test Matrix Generator
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Import-Module Pester -PassThru
+          cd ${{ github.workspace }}
+          $testResults = Invoke-Pester -Path "./tests" -PassThru
+          Write-Host "Pester Test Results"
+          Write-Host "Tests run: $($testResults.Tests.Count)"
+          Write-Host "Passed: $($testResults.PassedCount)"
+          Write-Host "Failed: $($testResults.FailedCount)"
+          Write-Host "Skipped: $($testResults.SkippedCount)"
+          Add-Content -Path "act-result.txt" -Value "Pester Test Results"
+          Add-Content -Path "act-result.txt" -Value "Tests run: $($testResults.Tests.Count)"
+          Add-Content -Path "act-result.txt" -Value "Passed: $($testResults.PassedCount)"
+          Add-Content -Path "act-result.txt" -Value "Failed: $($testResults.FailedCount)"
+          Add-Content -Path "act-result.txt" -Value "Skipped: $($testResults.SkippedCount)"
+          if ($testResults.FailedCount -gt 0) {
+              Add-Content -Path "act-result.txt" -Value "FAILED: Tests did not pass"
+              exit 1
+          }
+          Add-Content -Path "act-result.txt" -Value "SUCCESS: All tests passed"
+          exit 0
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            test-results.xml
+            act-result.txt
+
+  validate-workflow:
+    runs-on: ubuntu-latest
+    name: Validate Workflow with actionlint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate workflow YAML with actionlint
+        shell: bash
+        run: |
+          # Check if actionlint is available
+          if command -v actionlint &> /dev/null; then
+            actionlint .github/workflows/environment-matrix-generator.yml
+            echo "Workflow validation passed" | tee -a act-result.txt
+          else
+            echo "actionlint not available in this environment, skipping validation"
+            echo "Note: actionlint should be available in standard GitHub Actions runners" | tee -a act-result.txt
+          fi
