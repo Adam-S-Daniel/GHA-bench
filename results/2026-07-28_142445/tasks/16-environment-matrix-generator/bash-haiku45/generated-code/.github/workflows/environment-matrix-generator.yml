@@ -1,0 +1,178 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'matrix-generator.sh'
+      - 'test-matrix-generator.bats'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'matrix-generator.sh'
+      - 'test-matrix-generator.bats'
+      - '.github/workflows/environment-matrix-generator.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  test:
+    name: Run Matrix Generator Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y jq bats
+
+      - name: Verify script syntax
+        run: bash -n matrix-generator.sh
+
+      - name: Verify script with shellcheck
+        run: |
+          apt-get install -y shellcheck
+          shellcheck matrix-generator.sh
+
+      - name: Run bats tests
+        run: bats test-matrix-generator.bats
+
+      - name: Test simple matrix generation
+        run: |
+          mkdir -p /tmp/test-configs
+          cat > /tmp/test-configs/simple.json <<'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"],
+            "node": ["18", "20"],
+            "include": [],
+            "exclude": []
+          }
+          EOF
+          output=$(./matrix-generator.sh /tmp/test-configs/simple.json)
+          echo "Generated matrix:"
+          echo "$output" | jq .
+          # Verify it has 4 combinations
+          count=$(echo "$output" | jq '.include | length')
+          if [ "$count" -eq 4 ]; then
+            echo "✓ Simple matrix has correct number of combinations"
+          else
+            echo "✗ Expected 4 combinations, got $count"
+            exit 1
+          fi
+
+      - name: Test matrix with exclude rules
+        run: |
+          cat > /tmp/test-configs/with-exclude.json <<'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"],
+            "node": ["18", "20"],
+            "include": [],
+            "exclude": [{"os": "macos-latest", "node": "18"}]
+          }
+          EOF
+          output=$(./matrix-generator.sh /tmp/test-configs/with-exclude.json)
+          echo "Generated matrix with exclusions:"
+          echo "$output" | jq .
+          # Verify macos-18 is not present
+          found=$(echo "$output" | jq '.include[] | select(.os=="macos-latest" and .node=="18") | length')
+          if [ -z "$found" ] || [ "$found" -eq 0 ]; then
+            echo "✓ Exclude rules working correctly"
+          else
+            echo "✗ Excluded combination found in matrix"
+            exit 1
+          fi
+
+      - name: Test matrix with include rules
+        run: |
+          cat > /tmp/test-configs/with-include.json <<'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"],
+            "node": ["18", "20"],
+            "include": [{"os": "windows-latest", "node": "20"}],
+            "exclude": []
+          }
+          EOF
+          output=$(./matrix-generator.sh /tmp/test-configs/with-include.json)
+          echo "Generated matrix with inclusions:"
+          echo "$output" | jq .
+          # Verify windows-20 is present
+          found=$(echo "$output" | jq '.include[] | select(.os=="windows-latest" and .node=="20")')
+          if [ -n "$found" ]; then
+            echo "✓ Include rules working correctly"
+          else
+            echo "✗ Included combination not found in matrix"
+            exit 1
+          fi
+
+      - name: Test strategy options
+        run: |
+          cat > /tmp/test-configs/with-strategy.json <<'EOF'
+          {
+            "os": ["ubuntu-latest"],
+            "node": ["18"],
+            "include": [],
+            "exclude": [],
+            "max-parallel": 2,
+            "fail-fast": false
+          }
+          EOF
+          output=$(./matrix-generator.sh /tmp/test-configs/with-strategy.json)
+          echo "Generated matrix with strategy:"
+          echo "$output" | jq .
+          # Verify strategy options
+          max_parallel=$(echo "$output" | jq '.strategy."max-parallel"')
+          fail_fast=$(echo "$output" | jq '.strategy."fail-fast"')
+          if [ "$max_parallel" -eq 2 ] && [ "$fail_fast" = "false" ]; then
+            echo "✓ Strategy options preserved correctly"
+          else
+            echo "✗ Strategy options not set correctly"
+            exit 1
+          fi
+
+      - name: Test matrix size validation
+        run: |
+          cat > /tmp/test-configs/oversized.json <<'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest", "windows-latest", "ubuntu-20.04"],
+            "node": ["14", "16", "18", "20"],
+            "python": ["3.8", "3.9", "3.10", "3.11"],
+            "include": [],
+            "exclude": []
+          }
+          EOF
+          # Should fail with small max-size (matrix has 64 combinations)
+          if ./matrix-generator.sh /tmp/test-configs/oversized.json --max-size 50 2>&1 | grep -q "exceeds maximum"; then
+            echo "✓ Matrix size validation working"
+          else
+            echo "✗ Matrix size validation not working"
+            exit 1
+          fi
+
+      - name: Test error handling
+        run: |
+          # Test missing file error
+          if ./matrix-generator.sh /nonexistent/file.json 2>&1 | grep -q "not found"; then
+            echo "✓ Missing file error handling works"
+          else
+            echo "✗ Missing file error not detected"
+            exit 1
+          fi
+          # Test invalid JSON error
+          echo "{ invalid json" > /tmp/test-configs/bad.json
+          if ./matrix-generator.sh /tmp/test-configs/bad.json 2>&1 | grep -q "Invalid JSON"; then
+            echo "✓ Invalid JSON error handling works"
+          else
+            echo "✗ Invalid JSON error not detected"
+            exit 1
+          fi
