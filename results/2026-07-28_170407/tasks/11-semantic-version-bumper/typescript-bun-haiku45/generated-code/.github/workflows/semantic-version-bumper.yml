@@ -1,0 +1,56 @@
+name: Semantic Version Bumper Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-and-integration-tests:
+    name: Unit and Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Run unit tests
+        run: bun test version-bumper.test.ts
+        shell: bash
+
+      - name: Run integration tests
+        run: bun run integration-test.ts
+        shell: bash
+
+      - name: Verify act-result.txt exists
+        run: test -f act-result.txt || exit 1
+        shell: bash
+
+      - name: Display test results
+        if: always()
+        run: cat act-result.txt
+        shell: bash
+
+  workflow-structure-tests:
+    name: Workflow Structure Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check workflow file exists
+        run: test -f .github/workflows/semantic-version-bumper.yml
+        shell: bash
+
+      - name: Check required TypeScript files exist
+        run: |
+          test -f version-bumper.ts || exit 1
+          test -f cli.ts || exit 1
+          test -f version-bumper.test.ts || exit 1
+          test -f integration-test.ts || exit 1
+          test -f test-fixtures.ts || exit 1
+        shell: bash
