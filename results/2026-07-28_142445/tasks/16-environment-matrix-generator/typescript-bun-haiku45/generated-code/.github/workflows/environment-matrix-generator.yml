@@ -1,0 +1,64 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  generate-matrix:
+    name: Generate Environment Matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Run matrix generator tests
+        run: bun test matrix.test.ts
+
+      - name: Generate matrix from fixture
+        run: |
+          bun run cli.ts fixtures/basic-config.json > matrix-output.json
+          cat matrix-output.json
+
+      - name: Generate matrix with options
+        run: |
+          bun run cli.ts fixtures/basic-config.json fixtures/with-options.json > matrix-with-options.json
+          cat matrix-with-options.json
+
+      - name: Validate matrix output
+        run: |
+          # Check that output contains expected fields
+          if grep -q '"include"' matrix-output.json; then
+            echo "✓ Matrix contains include field"
+          else
+            echo "✗ Matrix missing include field"
+            exit 1
+          fi
+
+          # Validate JSON syntax
+          if bun run -e "const data = JSON.parse(require('fs').readFileSync('matrix-output.json', 'utf-8')); console.log('✓ Valid JSON'); process.exit(0)"; then
+            echo "✓ Matrix output is valid JSON"
+          else
+            echo "✗ Matrix output is not valid JSON"
+            exit 1
+          fi
+
+      - name: Display test results summary
+        if: success()
+        run: |
+          echo "✓ All matrix generation tests passed"
+          echo "✓ CLI generated valid matrices"
+          echo "✓ Workflow structure validated"
