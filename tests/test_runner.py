@@ -12,7 +12,71 @@ import pytest
 from runner import (
     TASKS, PROMPT_TEMPLATES, select_tasks, _metrics_valid,
     effort_capable_models, _group_summary,
+    INHERITED_SESSION_ENV_VARS, cell_env, detect_execution_environment,
 )
+
+
+class TestDetectExecutionEnvironment:
+    """Cloud runs must be labeled, never silently pooled with laptop runs."""
+
+    def test_laptop_shell(self):
+        assert detect_execution_environment({"PATH": "/usr/bin"}) == "local"
+
+    def test_cloud_sandbox(self):
+        assert detect_execution_environment(
+            {"CLAUDE_CODE_REMOTE": "true"}) == "claude-code-web"
+
+    def test_container_id_marker(self):
+        assert detect_execution_environment(
+            {"CLAUDE_CODE_CONTAINER_ID": "container_abc"}) == "claude-code-web"
+
+    def test_empty_marker_is_not_cloud(self):
+        assert detect_execution_environment({"CLAUDE_CODE_REMOTE": ""}) == "local"
+
+
+class TestCellEnv:
+    """A cell's `claude -p` must not inherit the launching session's settings."""
+
+    def test_strips_parent_session_vars(self):
+        base = {"PATH": "/usr/bin", "CLAUDE_CODE_SESSION_ID": "abc",
+                "CLAUDE_EFFORT": "max", "MAX_THINKING_TOKENS": "31999"}
+        env = cell_env(base, is_root=False)
+        assert env == {"PATH": "/usr/bin"}
+
+    def test_keeps_auth_and_proxy_vars(self):
+        base = {"ANTHROPIC_BASE_URL": "https://example.com",
+                "CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR": "4",
+                "HTTPS_PROXY": "http://127.0.0.1:1234",
+                "CLAUDECODE": "1"}
+        env = cell_env(base, is_root=False)
+        assert env["ANTHROPIC_BASE_URL"] == "https://example.com"
+        assert env["CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR"] == "4"
+        assert env["HTTPS_PROXY"] == "http://127.0.0.1:1234"
+        assert "CLAUDECODE" not in env
+
+    def test_sets_is_sandbox_as_root(self):
+        # --dangerously-skip-permissions refuses to start as root without this.
+        assert cell_env({}, is_root=True)["IS_SANDBOX"] == "1"
+
+    def test_no_is_sandbox_when_not_root(self):
+        assert "IS_SANDBOX" not in cell_env({}, is_root=False)
+
+    def test_non_canonical_is_sandbox_is_overwritten(self):
+        # The cloud sandbox exports IS_SANDBOX=yes; the CLI only honours "1".
+        assert cell_env({"IS_SANDBOX": "yes"}, is_root=True)["IS_SANDBOX"] == "1"
+
+    def test_does_not_mutate_caller_env(self):
+        base = {"CLAUDE_EFFORT": "max"}
+        cell_env(base, is_root=True)
+        assert base == {"CLAUDE_EFFORT": "max"}
+
+    def test_effort_and_mode_vars_are_scrubbed_before_the_cell_sets_its_own(self):
+        # run_single_task layers CLAUDE_CODE_EFFORT_LEVEL / _USE_POWERSHELL_TOOL
+        # on top of cell_env(), so both must be scrubbed first or an ambient
+        # value would survive into cells that did not ask for it.
+        for var in ("CLAUDE_CODE_EFFORT_LEVEL", "CLAUDE_CODE_WORKFLOWS",
+                    "CLAUDE_CODE_USE_POWERSHELL_TOOL"):
+            assert var in INHERITED_SESSION_ENV_VARS
 
 
 class TestMetricsValid:

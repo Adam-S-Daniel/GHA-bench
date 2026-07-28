@@ -387,9 +387,80 @@ INCREMENTAL_PREFIX = "Incremental benchmark results:"
 SKIP_DIRS = {"node_modules", "__pycache__", ".pytest_cache", ".mypy_cache", "obj", "bin"}
 
 
+# Environment variables a *parent* Claude Code session exports that would change
+# how a benchmark cell behaves if the cell inherited them. They only exist when
+# runner.py is launched from inside a Claude Code session — which is exactly the
+# Claude-Code-on-the-web case (see run-benchmark-web.sh) — and each one is a
+# silent confounder: CLAUDE_EFFORT/MAX_THINKING_TOKENS would override the cell's
+# `--effort`, CLAUDE_CODE_SESSION_ID would stamp every cell with the parent's
+# session id, CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH would cap the cell's
+# subagents, and the nested-session markers change the CLI's own tool surface
+# (an unscrubbed cell was measured at 40 tools vs 30 scrubbed). Scrubbed before
+# the cell's own mode/effort variables are applied.
+INHERITED_SESSION_ENV_VARS = (
+    "CLAUDECODE",
+    "CLAUDE_AFTER_LAST_COMPACT",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE",
+    "CLAUDE_AUTO_BACKGROUND_TASKS",
+    "CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD",
+    "CLAUDE_ADDITIONAL_DIRECTORIES",
+    "CLAUDE_CODE_CHILD_SESSION",
+    "CLAUDE_CODE_DEBUG",
+    "CLAUDE_CODE_DIAGNOSTICS_FILE",
+    "CLAUDE_CODE_EFFORT_LEVEL",
+    "CLAUDE_CODE_ENTRYPOINT",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH",
+    "CLAUDE_CODE_REMOTE",
+    "CLAUDE_CODE_REMOTE_SESSION_ID",
+    "CLAUDE_CODE_SESSION_ID",
+    "CLAUDE_CODE_SYNC_SKILLS",
+    "CLAUDE_CODE_TEE_SDK_STDOUT",
+    "CLAUDE_CODE_USE_POWERSHELL_TOOL",
+    "CLAUDE_CODE_WORKFLOWS",
+    "CLAUDE_EFFORT",
+    "CLAUDE_ENABLE_STREAM_WATCHDOG",
+    "CLAUDE_PID",
+    "MAX_THINKING_TOKENS",
+)
+
+# Markers a Claude Code cloud sandbox sets and a laptop does not.
+CLOUD_ENV_MARKERS = ("CLAUDE_CODE_REMOTE", "CLAUDE_CODE_CONTAINER_ID",
+                     "CLAUDE_CODE_REMOTE_SESSION_ID")
+
+
 def log(msg: str) -> None:
     """Print progress to stderr."""
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", file=sys.stderr, flush=True)
+
+
+def detect_execution_environment(env: dict | None = None) -> str:
+    """Where this runner is executing: 'claude-code-web' or 'local'.
+
+    Recorded in system_info so a cloud run is never silently pooled with laptop
+    runs — the two have different CPU/IO budgets and a different CLI tool
+    surface, which is a real comparability caveat (see AGENTS.md).
+    """
+    env = os.environ if env is None else env
+    return "claude-code-web" if any(env.get(k) for k in CLOUD_ENV_MARKERS) else "local"
+
+
+def cell_env(base_env: dict, *, is_root: bool | None = None) -> dict:
+    """Environment for one benchmark cell's `claude -p` subprocess.
+
+    Drops the parent session's variables (see INHERITED_SESSION_ENV_VARS) and,
+    when running as root, sets IS_SANDBOX=1 — `--dangerously-skip-permissions`
+    refuses to start as root without it, and a cloud sandbox is always root.
+    The value is forced rather than defaulted: the sandbox already exports
+    IS_SANDBOX=yes, which the CLI does not accept (only "1" is honoured), so a
+    setdefault here would leave every cell failing to start.
+    Callers layer their own mode/effort variables on top of the result.
+    """
+    if is_root is None:
+        is_root = getattr(os, "geteuid", lambda: 1)() == 0
+    env = {k: v for k, v in base_env.items() if k not in INHERITED_SESSION_ENV_VARS}
+    if is_root:
+        env["IS_SANDBOX"] = "1"
+    return env
 
 
 def effort_capable_models(selected_models: list[tuple[str, str]]) -> list[str]:
@@ -950,8 +1021,11 @@ def run_single_task(
     timestamp_start = datetime.now(timezone.utc).isoformat()
     wall_start = time.time()
 
-    # Ensure tools are on PATH for the agent subprocess
-    env = os.environ.copy()
+    # Ensure tools are on PATH for the agent subprocess. cell_env() also strips
+    # the parent Claude Code session's variables (a no-op on a laptop shell,
+    # load-bearing when the runner is launched from a cloud session) and enables
+    # the root sandbox escape hatch that --dangerously-skip-permissions needs.
+    env = cell_env(os.environ)
     local_bin = Path.home() / ".local" / "bin"
     if local_bin.exists():
         env["PATH"] = f"{local_bin}:{env.get('PATH', '')}"
@@ -1162,6 +1236,12 @@ def run_single_task(
             "permission_mode": parsed.get("init_data", {}).get("permission_mode", ""),
             "output_style": parsed.get("init_data", {}).get("output_style", ""),
             "tools_available_count": len(parsed.get("init_data", {}).get("tools_available", [])),
+            # Names, not just the count: the CLI tool surface differs between a
+            # laptop and a Claude-Code-on-the-web sandbox (deferred tools behind
+            # ToolSearch, cloud-only tools), which is the main comparability
+            # caveat for cloud runs. Recording it makes that auditable per cell.
+            "tools_available": parsed.get("init_data", {}).get("tools_available", []),
+            "skills_available_count": len(parsed.get("init_data", {}).get("skills_available", [])),
             "mcp_servers": parsed.get("init_data", {}).get("mcp_servers", []),
             "permission_denials": parsed.get("result_meta", {}).get("permission_denials", []),
         },
@@ -1333,7 +1413,7 @@ def probe_model_metadata(model_id: str) -> dict:
         result = subprocess.run(
             ["claude", "-p", "say ok", "--model", model_id,
              "--output-format", "stream-json", "--dangerously-skip-permissions"],
-            capture_output=True, text=True, timeout=60,
+            capture_output=True, text=True, timeout=60, env=cell_env(os.environ),
         )
         init_event = {}
         result_event = {}
@@ -1376,6 +1456,7 @@ def get_system_info() -> dict:
     """Capture system environment info for reproducibility."""
     info = {
         "platform": sys.platform,
+        "execution_environment": detect_execution_environment(),
         "python_version": sys.version,
         "hostname": "",
         "uname": "",
@@ -1405,6 +1486,15 @@ def get_system_info() -> dict:
             info[f"{tool}_version"] = r.stdout.strip().split("\n")[0]
         except Exception:
             info[f"{tool}_version"] = "not found"
+    # `docker --version` reports the client even when no daemon is listening —
+    # the default state of a cloud sandbox, where act (and every v3+ task) then
+    # fails. Record whether the daemon actually answered.
+    try:
+        r = subprocess.run(["docker", "info", "--format", "{{.ServerVersion}}"],
+                           capture_output=True, text=True, timeout=20)
+        info["docker_daemon"] = r.stdout.strip() if r.returncode == 0 else "not running"
+    except Exception:
+        info["docker_daemon"] = "not running"
     return info
 
 
