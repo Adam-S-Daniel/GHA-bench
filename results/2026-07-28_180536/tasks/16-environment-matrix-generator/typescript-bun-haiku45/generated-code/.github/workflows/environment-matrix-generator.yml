@@ -1,0 +1,107 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'matrix.ts'
+      - 'cli.ts'
+      - 'matrix.test.ts'
+      - 'example-config.json'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      config:
+        description: 'Matrix configuration (JSON)'
+        required: false
+        default: '{"os":["ubuntu-latest"],"node":["20"]}'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Run unit tests
+        run: bun test
+
+      - name: Generate matrix from default config
+        id: matrix-default
+        run: |
+          bun run cli.ts --config example-config.json > matrix-output.json
+          {
+            echo "result<<EOF"
+            cat matrix-output.json
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Verify matrix JSON
+        run: |
+          echo "Generated matrix:"
+          bun -e "console.log(JSON.stringify(JSON.parse(await Bun.file('matrix-output.json').text()), null, 2))"
+
+      - name: Generate matrix with custom config
+        id: matrix-custom
+        run: |
+          CUSTOM_CONFIG='{"os":["ubuntu-latest","windows-latest"],"node":["18","20","22"],"exclude":[{"os":"windows-latest","node":"18"}],"maxParallel":4,"failFast":true,"maxSize":100}'
+          bun run cli.ts --config "$CUSTOM_CONFIG" > custom-matrix.json
+          echo "Combinations count: $(bun -e "const json = JSON.parse(await Bun.file('custom-matrix.json').text()); console.log(json.include.length)")"
+
+      - name: Test matrix size validation
+        id: matrix-size-test
+        run: |
+          LARGE_CONFIG='{"os":["ubuntu-latest","windows-latest","macos-latest","macos-12","macos-13","macos-14"],"node":["16","17","18","19","20"],"maxSize":20}'
+          if bun run cli.ts --config "$LARGE_CONFIG" 2>&1 | grep -q "exceeds maximum"; then
+            echo "Matrix size validation working correctly"
+            echo "validation_passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Matrix size validation failed"
+            exit 1
+          fi
+
+  demonstrate-matrix:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> "$GITHUB_PATH"
+
+      - name: Demonstrate matrix usage with manual strategy
+        run: |
+          echo "Demonstrating matrix strategy with the generated matrix"
+          bun run cli.ts --config example-config.json | bun -e "
+            const matrix = JSON.parse(await Bun.stdin.text());
+            console.log('Generated matrix can be used in GitHub Actions strategy:');
+            console.log('strategy:');
+            console.log('  matrix:');
+            console.log('    include:');
+            matrix.include.forEach(combo => {
+              const indent = '      ';
+              console.log(indent + '- os: ' + combo.os);
+              console.log(indent + '  node: ' + combo.node);
+            });
+            if (matrix['max-parallel']) {
+              console.log('  max-parallel: ' + matrix['max-parallel']);
+            }
+            if (matrix['fail-fast'] !== undefined) {
+              console.log('  fail-fast: ' + matrix['fail-fast']);
+            }
+          "
