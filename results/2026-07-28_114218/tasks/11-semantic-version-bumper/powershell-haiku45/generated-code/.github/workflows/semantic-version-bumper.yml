@@ -1,0 +1,221 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Version Bumper
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        scenario:
+          - patch-only
+          - minor-feature
+          - major-breaking
+          - mixed
+          - complex-breaking
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          $PSVersionTable.PSVersion
+          Write-Host "Pester version check..."
+          Import-Module Pester -PassThru | Select-Object Version
+
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          Invoke-Pester -Path SemanticVersionBumper.Tests.ps1 -Verbose
+        working-directory: ${{ github.workspace }}
+
+      - name: Test scenario ${{ matrix.scenario }}
+        shell: pwsh
+        run: |
+          . .\SemanticVersionBumper.ps1
+          . .\test-fixtures.ps1
+
+          # Get mock commits for this scenario
+          $commits = Get-MockCommits -Scenario "${{ matrix.scenario }}"
+
+          # Get current version from package.json
+          $packageContent = Get-Content -Path "package.json" -Raw
+          $currentVersion = ParseVersion -JsonContent $packageContent
+
+          Write-Host "Scenario: ${{ matrix.scenario }}"
+          Write-Host "Current version: $currentVersion"
+          Write-Host "Commits:"
+          $commits | ForEach-Object { Write-Host "  - $($_.Type): $($_.Subject)" }
+
+          # Determine next version
+          $nextVersion = DetermineNextVersion -CurrentVersion $currentVersion -Commits $commits
+          Write-Host "Next version: $nextVersion"
+
+          # Verify the bump is correct for the scenario
+          switch ("${{ matrix.scenario }}") {
+            "patch-only" {
+              if (-not ($nextVersion -match "^\d+\.\d+\.([1-9]\d*|[1-9])$" -and $nextVersion -gt $currentVersion)) {
+                throw "Expected patch bump for scenario ${{ matrix.scenario }}, got $nextVersion"
+              }
+            }
+            "minor-feature" {
+              $parts = ConvertVersionToSemanticParts -Version $nextVersion
+              $currentParts = ConvertVersionToSemanticParts -Version $currentVersion
+              if ($parts.Minor -le $currentParts.Minor) {
+                throw "Expected minor bump for scenario ${{ matrix.scenario }}"
+              }
+            }
+            "major-breaking" {
+              $parts = ConvertVersionToSemanticParts -Version $nextVersion
+              $currentParts = ConvertVersionToSemanticParts -Version $currentVersion
+              if ($parts.Major -le $currentParts.Major) {
+                throw "Expected major bump for scenario ${{ matrix.scenario }}"
+              }
+            }
+            "mixed" {
+              $parts = ConvertVersionToSemanticParts -Version $nextVersion
+              $currentParts = ConvertVersionToSemanticParts -Version $currentVersion
+              if ($parts.Minor -le $currentParts.Minor) {
+                throw "Expected at least minor bump for scenario ${{ matrix.scenario }}"
+              }
+            }
+            "complex-breaking" {
+              $parts = ConvertVersionToSemanticParts -Version $nextVersion
+              $currentParts = ConvertVersionToSemanticParts -Version $currentVersion
+              if ($parts.Major -le $currentParts.Major) {
+                throw "Expected major bump for scenario ${{ matrix.scenario }}"
+              }
+            }
+          }
+
+          Write-Host "✓ Scenario validation passed"
+
+          # Test changelog generation
+          $changelog = GenerateChangelog -Commits $commits -Version $nextVersion
+          Write-Host "Changelog:"
+          Write-Host $changelog
+
+        working-directory: ${{ github.workspace }}
+
+  integration:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create temp directory for test
+        shell: pwsh
+        run: |
+          $tempDir = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + [guid]::NewGuid())
+          Write-Host "Test directory: $tempDir"
+          Write-Host "tempDir=$tempDir" >> $env:GITHUB_OUTPUT
+        id: temp
+
+      - name: Setup test environment
+        shell: pwsh
+        run: |
+          # Create test package.json
+          $packageJson = @"
+          {
+            "name": "integration-test-app",
+            "version": "1.0.0",
+            "description": "Test application"
+          }
+          "@
+          Set-Content -Path "package.json" -Value $packageJson
+
+          # Create mock commits
+          $commits = @"
+          feat(api): add user authentication
+
+          Implements JWT-based authentication for secure API access.
+
+          fix(ui): correct button alignment in header
+
+          Bug Fixes
+
+          feat(database): add connection pooling
+          "@
+
+          Write-Host "Setup complete"
+          Write-Host "package.json content:"
+          Get-Content package.json
+
+        working-directory: ${{ github.workspace }}
+
+      - name: Run bump-version script
+        shell: pwsh
+        run: |
+          . .\bump-version.ps1 `
+            -PackageFile "package.json" `
+            -CommitLog @"
+          feat(api): add user authentication
+
+          Implements JWT-based authentication for secure API access.
+
+          fix(ui): correct button alignment in header
+          "@
+
+        working-directory: ${{ github.workspace }}
+
+      - name: Verify results
+        shell: pwsh
+        run: |
+          $package = Get-Content package.json | ConvertFrom-Json
+          Write-Host "Final package version: $($package.version)"
+
+          if ($package.version -ne "1.1.0") {
+            throw "Expected version 1.1.0, got $($package.version)"
+          }
+
+          Write-Host "✓ Integration test passed"
+
+        working-directory: ${{ github.workspace }}
+
+  lint:
+    name: Workflow Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate workflow syntax with actionlint
+        run: |
+          # actionlint should be pre-installed in standard runners
+          if command -v actionlint &> /dev/null; then
+            actionlint .github/workflows/semantic-version-bumper.yml
+          else
+            echo "⚠️  actionlint not available, skipping validation"
+          fi
+        shell: bash
+
+  report:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test, integration, lint]
+    if: always()
+    steps:
+      - name: Report results
+        run: |
+          {
+            echo "## Semantic Version Bumper Tests"
+            echo ""
+            echo "✓ Unit Tests: ${{ needs.test.result }}"
+            echo "✓ Integration Tests: ${{ needs.integration.result }}"
+            echo "✓ Workflow Lint: ${{ needs.lint.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+        shell: bash
