@@ -1,0 +1,184 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - matrix-generator.sh
+      - tests/**
+      - .github/workflows/environment-matrix-generator.yml
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - matrix-generator.sh
+      - tests/**
+      - .github/workflows/environment-matrix-generator.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Matrix Generator
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y jq shellcheck python3
+
+          # Install bats from source if not available
+          if ! which bats > /dev/null 2>&1; then
+            apt-get install -y npm
+            npm install -g bats
+          fi
+
+      - name: Run shellcheck
+        run: |
+          shellcheck matrix-generator.sh
+
+      - name: Verify bash syntax
+        run: |
+          bash -n matrix-generator.sh
+
+      - name: Run unit tests with bats
+        run: |
+          bats tests/test_matrix_generator.bats
+
+      - name: Test basic matrix generation
+        run: |
+          # Test: Simple OS matrix
+          cat > /tmp/os-matrix.json << 'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"]
+          }
+          EOF
+          OUTPUT=$(./matrix-generator.sh /tmp/os-matrix.json)
+          echo "OS Matrix: $OUTPUT"
+          echo "$OUTPUT" | jq .matrix.os | grep -q "ubuntu-latest"
+          echo "$OUTPUT" | jq .matrix.os | grep -q "macos-latest"
+
+      - name: Test language versions matrix
+        run: |
+          # Test: Multiple dimensions
+          cat > /tmp/lang-matrix.json << 'EOF'
+          {
+            "language": ["python", "node"],
+            "version": ["1.0", "2.0", "3.0"]
+          }
+          EOF
+          OUTPUT=$(./matrix-generator.sh /tmp/lang-matrix.json)
+          echo "Language Matrix: $OUTPUT"
+          echo "$OUTPUT" | jq .matrix.language | grep -q "python"
+          echo "$OUTPUT" | jq .matrix.version | grep -q "2.0"
+
+      - name: Test include/exclude rules
+        run: |
+          # Test: Include/exclude combinations
+          cat > /tmp/complex-matrix.json << 'EOF'
+          {
+            "os": ["ubuntu-latest", "windows-latest"],
+            "version": ["1.0", "2.0"],
+            "include": [
+              {"os": "macos-latest", "version": "1.0"}
+            ],
+            "exclude": [
+              {"os": "windows-latest", "version": "1.0"}
+            ]
+          }
+          EOF
+          OUTPUT=$(./matrix-generator.sh /tmp/complex-matrix.json)
+          echo "Complex Matrix: $OUTPUT"
+          echo "$OUTPUT" | jq .include | grep -q "macos-latest"
+          echo "$OUTPUT" | jq .exclude | grep -q "windows-latest"
+
+      - name: Test fail-fast configuration
+        run: |
+          # Test: Strategy configuration
+          cat > /tmp/strategy-matrix.json << 'EOF'
+          {
+            "os": ["ubuntu-latest"],
+            "version": ["1.0"],
+            "strategy": {
+              "fail-fast": true,
+              "max-parallel": 4
+            }
+          }
+          EOF
+          OUTPUT=$(./matrix-generator.sh /tmp/strategy-matrix.json)
+          echo "Strategy Matrix: $OUTPUT"
+          echo "$OUTPUT" | jq '.matrix["fail-fast"]' | grep -q "true"
+          echo "$OUTPUT" | jq '.matrix["max-parallel"]' | grep -q "4"
+
+      - name: Test maximum size validation
+        run: |
+          # Test: Should fail when exceeds max size
+          cat > /tmp/large-matrix.json << 'EOF'
+          {
+            "max_matrix_size": 10,
+            "os": ["ubuntu", "macos", "windows"],
+            "version": ["1", "2", "3", "4"]
+          }
+          EOF
+          if ./matrix-generator.sh /tmp/large-matrix.json 2>&1 | grep -q "exceed"; then
+            echo "✓ Correctly rejected oversized matrix"
+          else
+            exit 1
+          fi
+
+      - name: Test invalid JSON handling
+        run: |
+          # Test: Should error on invalid JSON
+          echo "{ invalid json" > /tmp/bad.json
+          if ./matrix-generator.sh /tmp/bad.json 2>&1 | grep -q "JSON"; then
+            echo "✓ Correctly handled invalid JSON"
+          else
+            exit 1
+          fi
+
+      - name: Test missing file handling
+        run: |
+          # Test: Should error on missing file
+          if ./matrix-generator.sh /nonexistent/file.json 2>&1 | grep -q "not found"; then
+            echo "✓ Correctly handled missing file"
+          else
+            exit 1
+          fi
+
+      - name: Verify output is valid JSON
+        run: |
+          # Test: All outputs must be valid JSON
+          cat > /tmp/final-matrix.json << 'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"],
+            "python": ["3.9", "3.10", "3.11"]
+          }
+          EOF
+          OUTPUT=$(./matrix-generator.sh /tmp/final-matrix.json)
+          echo "$OUTPUT" | jq . > /dev/null
+          echo "✓ Output is valid JSON"
+
+  test-via-act:
+    name: Test via act (CI simulation)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify script is present and executable
+        run: |
+          [ -x ./matrix-generator.sh ]
+          echo "✓ Script is executable"
+
+      - name: Verify test suite is present
+        run: |
+          [ -f ./tests/test_matrix_generator.bats ]
+          echo "✓ Test suite found"
