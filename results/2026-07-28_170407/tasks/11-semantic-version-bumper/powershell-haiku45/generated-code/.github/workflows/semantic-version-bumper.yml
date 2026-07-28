@@ -1,0 +1,173 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Semantic Version Bumper
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Write-Host "Running Pester tests..."
+          $result = Invoke-Pester -Path "SemanticVersionBumper.Tests.ps1" -PassThru
+
+          if ($result.FailedCount -gt 0) {
+              Write-Host "Tests failed: $($result.FailedCount) failures"
+              exit 1
+          }
+
+          Write-Host "All tests passed: $($result.PassedCount) tests"
+          exit 0
+
+  test-version-bumping:
+    name: Test Version Bumping E2E
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create mock version file
+        shell: pwsh
+        run: |
+          @{version = "1.0.0"} | ConvertTo-Json | Set-Content -Path "test-version.json"
+          Write-Host "Created test-version.json:"
+          Get-Content "test-version.json"
+
+      - name: Test version bump with mock commits
+        shell: pwsh
+        run: |
+          . ./SemanticVersionBumper.ps1
+
+          $commits = @(
+              [PSCustomObject]@{ Type = "feat"; Message = "feat: add new endpoint"; Hash = "abc1234" }
+              [PSCustomObject]@{ Type = "fix"; Message = "fix: resolve timeout"; Hash = "def5678" }
+          )
+
+          $newVersion = Process-VersionFile -Path "test-version.json" -CommitLog $commits
+          Write-Host "New version: $newVersion"
+
+          if ($newVersion -ne "1.1.0") {
+              Write-Host "Expected version 1.1.0 but got $newVersion"
+              exit 1
+          }
+
+          Write-Host "Version bump test passed"
+
+  test-changelog-generation:
+    name: Test Changelog Generation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate changelog from mock commits
+        shell: pwsh
+        run: |
+          . ./SemanticVersionBumper.ps1
+
+          $commits = @(
+              [PSCustomObject]@{ Type = "feat"; Message = "add user dashboard"; Hash = "feat001" }
+              [PSCustomObject]@{ Type = "feat"; Message = "implement filtering"; Hash = "feat002" }
+              [PSCustomObject]@{ Type = "fix"; Message = "fix memory leak"; Hash = "fix001" }
+              [PSCustomObject]@{ Type = "perf"; Message = "optimize queries"; Hash = "perf001" }
+          )
+
+          $changelog = Build-Changelog -Commits $commits -NewVersion "2.0.0"
+          Write-Host "Generated Changelog:"
+          Write-Host $changelog
+
+          if ($changelog -notmatch "2.0.0") {
+              Write-Host "Changelog missing version"
+              exit 1
+          }
+
+          if ($changelog -notmatch "Features") {
+              Write-Host "Changelog missing Features section"
+              exit 1
+          }
+
+          if ($changelog -notmatch "Fixes") {
+              Write-Host "Changelog missing Fixes section"
+              exit 1
+          }
+
+          Write-Host "Changelog generation test passed"
+
+  test-mock-fixtures:
+    name: Test Mock Fixtures
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate mock commits
+        shell: pwsh
+        run: |
+          . ./SemanticVersionBumper.ps1
+
+          $commits = New-MockCommitLog -Count 10
+          Write-Host "Generated $($commits.Count) mock commits"
+
+          if ($commits.Count -ne 10) {
+              Write-Host "Expected 10 commits but got $($commits.Count)"
+              exit 1
+          }
+
+          $commits | ForEach-Object {
+              Write-Host "- $($_.Type): $($_.Message)"
+          }
+
+          Write-Host "Mock fixture test passed"
+
+  test-breaking-changes:
+    name: Test Breaking Change Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create version file for breaking change test
+        shell: pwsh
+        run: |
+          @{version = "2.5.3"} | ConvertTo-Json | Set-Content -Path "breaking-test.json"
+
+      - name: Test major version bump on breaking change
+        shell: pwsh
+        run: |
+          . ./SemanticVersionBumper.ps1
+
+          $commits = @(
+              [PSCustomObject]@{ Type = "feat"; Message = "feat!: redesign API"; Hash = "major001" }
+          )
+
+          $newVersion = Process-VersionFile -Path "breaking-test.json" -CommitLog $commits
+          Write-Host "New version after breaking change: $newVersion"
+
+          if ($newVersion -ne "3.0.0") {
+              Write-Host "Expected major bump to 3.0.0 but got $newVersion"
+              exit 1
+          }
+
+          Write-Host "Breaking change detection test passed"
