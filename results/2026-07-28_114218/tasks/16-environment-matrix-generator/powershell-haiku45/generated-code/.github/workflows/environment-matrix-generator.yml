@@ -1,0 +1,220 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '**.ps1'
+      - '**.json'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  test-matrix-generation:
+    name: Generate and Validate Matrices
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Matrix Generator tests
+        shell: pwsh
+        run: |
+          Write-Output "Running matrix generator tests..."
+          Invoke-Pester Invoke-MatrixGenerator.Tests.ps1 -PassThru
+
+      - name: Test simple matrix generation
+        shell: pwsh
+        run: |
+          Write-Output "Generating simple matrix..."
+          ./Generate-Matrix.ps1 -ConfigFile matrix-config-simple.json -OutputFile matrix-output-simple.json
+          $matrix = Get-Content matrix-output-simple.json | ConvertFrom-Json
+          Write-Output "Generated $($matrix.include.Count) combinations"
+          if ($matrix.include.Count -ne 6) {
+            throw "Expected 6 combinations, got $($matrix.include.Count)"
+          }
+
+      - name: Test advanced matrix generation
+        shell: pwsh
+        run: |
+          Write-Output "Generating advanced matrix with include/exclude rules..."
+          ./Generate-Matrix.ps1 -ConfigFile matrix-config-advanced.json -OutputFile matrix-output-advanced.json
+          $matrix = Get-Content matrix-output-advanced.json | ConvertFrom-Json
+          Write-Output "Generated $($matrix.include.Count) combinations with $($matrix.exclude.Count) exclusions"
+          if ($matrix."max-parallel" -ne 4) {
+            throw "Expected max-parallel=4, got $($matrix.'max-parallel')"
+          }
+
+      - name: Validate matrix size limits
+        shell: pwsh
+        run: |
+          Write-Output "Testing matrix size validation..."
+          $config = @{
+              os = @("ubuntu", "windows")
+              version = @("1.0", "2.0", "3.0", "4.0", "5.0")
+              maxSize = 8
+          } | ConvertTo-Json
+          $config | Out-File -FilePath test-oversized.json
+
+          $errorThrown = $false
+          try {
+              ./Generate-Matrix.ps1 -ConfigFile test-oversized.json 2>&1
+          } catch {
+              $errorThrown = $true
+          }
+
+          if (-not $errorThrown) {
+              # Try with direct PowerShell invocation
+              powershell {
+                  . $PSScriptRoot/Invoke-MatrixGenerator.ps1
+                  $cfg = Get-Content test-oversized.json | ConvertFrom-Json -AsHashtable
+                  try {
+                      Invoke-MatrixGenerator -Configuration $cfg
+                      throw "Expected error but got success"
+                  } catch {
+                      if ($_.Exception.Message -notmatch "exceeds maximum") {
+                          throw $_
+                      }
+                      Write-Output "Correctly rejected oversized matrix"
+                  }
+              }
+          }
+
+      - name: Verify generated output files
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem matrix-output-*.json -ErrorAction SilentlyContinue
+          if ($files) {
+              Write-Output "Generated $($files.Count) output files:"
+              foreach ($file in $files) {
+                  Write-Output "  - $($file.Name)"
+              }
+          } else {
+              Write-Output "No output files generated"
+          }
+
+  test-workflow-structure:
+    name: Validate Workflow Files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate workflow with actionlint
+        shell: bash
+        run: |
+          # Check if actionlint is available
+          if command -v actionlint &> /dev/null; then
+            echo "Running actionlint on workflow files..."
+            actionlint .github/workflows/*.yml || exit 1
+          else
+            echo "actionlint not found, skipping validation"
+          fi
+
+      - name: Verify script files exist
+        shell: pwsh
+        run: |
+          $requiredFiles = @(
+              'Invoke-MatrixGenerator.ps1',
+              'Generate-Matrix.ps1',
+              'Invoke-MatrixGenerator.Tests.ps1',
+              'matrix-config-simple.json',
+              'matrix-config-advanced.json'
+          )
+
+          foreach ($file in $requiredFiles) {
+              if (-not (Test-Path $file)) {
+                  throw "Required file not found: $file"
+              }
+              Write-Output "✓ Found: $file"
+          }
+
+      - name: Verify workflow references correct paths
+        shell: pwsh
+        run: |
+          $workflowPath = '.github/workflows/environment-matrix-generator.yml'
+          $workflowContent = Get-Content $workflowPath -Raw
+
+          # Check for references to key scripts
+          if ($workflowContent -notmatch 'Invoke-MatrixGenerator\.Tests\.ps1') {
+              throw "Workflow does not reference test file"
+          }
+
+          if ($workflowContent -notmatch 'Generate-Matrix\.ps1') {
+              throw "Workflow does not reference matrix generator script"
+          }
+
+          Write-Output "✓ Workflow correctly references script files"
+
+  integration-test:
+    name: Integration Test via Act
+    runs-on: ubuntu-latest
+    needs: [test-matrix-generation, test-workflow-structure]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run all Pester tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester Invoke-MatrixGenerator.Tests.ps1 -PassThru
+
+          if ($result.FailedCount -gt 0) {
+              Write-Output "❌ $($result.FailedCount) tests failed"
+              exit 1
+          }
+
+          Write-Output "✓ All $($result.PassedCount) tests passed"
+
+      - name: Generate matrices for real-world scenarios
+        shell: pwsh
+        run: |
+          $scenarios = @(
+              @{
+                  name = "Node.js with multiple versions"
+                  config = @{
+                      os = @("ubuntu-latest", "windows-latest")
+                      version = @("16", "18", "20")
+                  }
+              },
+              @{
+                  name = "Python with features"
+                  config = @{
+                      os = @("ubuntu-latest")
+                      version = @("3.10", "3.11", "3.12")
+                      features = @("minimal", "full")
+                  }
+              }
+          )
+
+          foreach ($scenario in $scenarios) {
+              Write-Output "Testing scenario: $($scenario.name)"
+              $config = $scenario.config | ConvertTo-Json
+              $config | Out-File -FilePath "scenario-$($scenario.name).json"
+
+              $result = & {
+                  . ./Invoke-MatrixGenerator.ps1
+                  Invoke-MatrixGenerator -Configuration $scenario.config
+              }
+
+              $matrix = $result | ConvertFrom-Json
+              Write-Output "  Generated $($matrix.include.Count) combinations"
+
+              if ($matrix.include.Count -eq 0) {
+                  throw "No combinations generated for scenario: $($scenario.name)"
+              }
+          }
