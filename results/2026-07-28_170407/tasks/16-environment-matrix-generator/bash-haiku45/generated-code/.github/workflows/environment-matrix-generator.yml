@@ -1,0 +1,131 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'matrix-generator.sh'
+      - 'tests/**'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'matrix-generator.sh'
+      - 'tests/**'
+      - '.github/workflows/environment-matrix-generator.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  test:
+    name: Test matrix generator
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update || true
+          apt-get install -y jq git curl wget xz-utils 2>/dev/null || true
+
+          # Install bats-core
+          mkdir -p /tmp/bats-install
+          cd /tmp/bats-install
+          git clone --depth 1 https://github.com/bats-core/bats-core.git
+          cd bats-core
+          ./install.sh /usr/local
+
+          # Install shellcheck
+          cd /tmp
+          SHELLCHECK_URL="https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz"
+          curl -fsSL "$SHELLCHECK_URL" -o shellcheck.tar.xz
+          tar -xf shellcheck.tar.xz
+          cp shellcheck-v0.9.0/shellcheck /usr/local/bin/
+
+          echo "✓ Dependencies installed"
+          bats --version
+          shellcheck --version
+          jq --version
+
+      - name: Run shellcheck
+        run: shellcheck matrix-generator.sh
+
+      - name: Run syntax check
+        run: bash -n matrix-generator.sh
+
+      - name: Run unit tests
+        run: bats tests/test_matrix_generator.bats -v
+
+  demo:
+    name: Demo matrix generation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Test basic matrix generation
+        run: |
+          cat > /tmp/basic-config.json <<'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"],
+            "node_version": ["18", "20"],
+            "fail_fast": true,
+            "max_parallel": 5
+          }
+          EOF
+
+          echo "=== Basic Matrix Generation ==="
+          ./matrix-generator.sh /tmp/basic-config.json | jq .
+
+      - name: Test with include/exclude
+        run: |
+          cat > /tmp/advanced-config.json <<'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"],
+            "python_version": ["3.9", "3.11"],
+            "include": [
+              { "os": "windows-latest", "python_version": "3.11" }
+            ],
+            "exclude": [
+              { "os": "macos-latest", "python_version": "3.9" }
+            ],
+            "max_parallel": 10,
+            "fail_fast": false,
+            "max_matrix_size": 50
+          }
+          EOF
+
+          echo "=== Advanced Matrix with Include/Exclude ==="
+          ./matrix-generator.sh /tmp/advanced-config.json | jq .
+
+      - name: Test matrix size validation
+        run: |
+          cat > /tmp/size-check-config.json <<'EOF'
+          {
+            "os": ["ubuntu-latest", "macos-latest"],
+            "version": ["1", "2", "3"],
+            "max_matrix_size": 100
+          }
+          EOF
+
+          echo "=== Matrix Size Validation (Should Pass) ==="
+          ./matrix-generator.sh /tmp/size-check-config.json | jq .
+          echo "✓ Matrix within size limits"
