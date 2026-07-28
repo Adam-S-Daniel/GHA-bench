@@ -1,0 +1,199 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'matrix.ts'
+      - 'matrix.test.ts'
+      - 'package.json'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test Matrix Generator
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit tests
+        run: bun test
+
+      - name: Test with simple config
+        run: |
+          mkdir -p test-output
+          bun matrix.ts fixtures/simple-config.json > test-output/simple-result.json
+          echo "Simple config test passed"
+          cat test-output/simple-result.json
+
+      - name: Test with advanced config
+        run: |
+          bun matrix.ts fixtures/advanced-config.json > test-output/advanced-result.json
+          echo "Advanced config test passed"
+          cat test-output/advanced-result.json
+
+      - name: Run fixture validation tests
+        run: |
+          chmod +x test-fixtures.sh
+          ./test-fixtures.sh
+
+      - name: Validate matrix structure
+        run: |
+          bun << 'EOF'
+          import { loadConfigAndGenerate } from "./matrix.ts";
+
+          const result = await loadConfigAndGenerate("fixtures/simple-config.json");
+
+          // Validate structure
+          if (!result.matrix || !Array.isArray(result.matrix.include)) {
+            throw new Error("Invalid matrix structure: missing matrix.include array");
+          }
+
+          if (result.matrix.include.length !== 4) {
+            throw new Error(`Expected 4 combinations, got ${result.matrix.include.length}`);
+          }
+
+          console.log("✓ Matrix structure validation passed");
+          console.log(`✓ Generated ${result.matrix.include.length} combinations`);
+          EOF
+
+      - name: Test error handling
+        run: |
+          bun << 'EOF'
+          import { generateMatrix } from "./matrix.ts";
+
+          try {
+            generateMatrix({
+              os: ["ubuntu"],
+              languages: ["python"],
+              maxSize: 0
+            });
+            throw new Error("Should have raised error for exceeding maxSize");
+          } catch (e) {
+            if (e instanceof Error && e.message.includes("Matrix size")) {
+              console.log("✓ Error handling test passed");
+            } else {
+              throw e;
+            }
+          }
+          EOF
+
+      - name: Validate JSON output
+        run: |
+          python3 << 'EOF'
+          import json
+
+          # Validate simple config output
+          with open('test-output/simple-result.json', 'r') as f:
+              data = json.load(f)
+              assert 'matrix' in data, "Missing 'matrix' key"
+              assert 'include' in data['matrix'], "Missing 'include' key"
+              assert len(data['matrix']['include']) == 4, f"Expected 4 items, got {len(data['matrix']['include'])}"
+
+          # Validate advanced config output
+          with open('test-output/advanced-result.json', 'r') as f:
+              data = json.load(f)
+              assert 'matrix' in data, "Missing 'matrix' key"
+              assert 'include' in data['matrix'], "Missing 'include' key"
+              assert 'exclude' in data['matrix'], "Missing 'exclude' key"
+              assert data['maxParallel'] == 5, f"Expected maxParallel=5, got {data.get('maxParallel')}"
+              assert data['failFast'] == False, f"Expected failFast=False, got {data.get('failFast')}"
+
+          print("✓ JSON output validation passed")
+          EOF
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build Matrix Generator
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Build script
+        run: bun build --target bun matrix.ts --outfile matrix.bundle.js
+
+      - name: Verify build artifact
+        run: |
+          test -f matrix.bundle.js && echo "✓ Build artifact created" || exit 1
+
+  integration:
+    runs-on: ubuntu-latest
+    name: Integration Test
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Create temporary test config
+        run: |
+          mkdir -p /tmp/matrix-test
+          cat > /tmp/matrix-test/config.json << 'JSON'
+          {
+            "os": ["ubuntu-latest", "windows-latest"],
+            "languages": ["typescript", "rust"],
+            "features": ["minimal"],
+            "maxParallel": 3,
+            "failFast": true,
+            "maxSize": 100
+          }
+          JSON
+
+      - name: Generate and test matrix
+        run: |
+          bun matrix.ts /tmp/matrix-test/config.json > /tmp/matrix-test/output.json
+
+          # Verify the output contains expected combinations
+          python3 << 'EOF'
+          import json
+
+          with open('/tmp/matrix-test/output.json', 'r') as f:
+              result = json.load(f)
+
+          combos = result['matrix']['include']
+
+          # Should have 2 os × 2 languages × 1 feature = 4 combinations
+          assert len(combos) == 4, f"Expected 4 combos, got {len(combos)}"
+
+          # Verify maxParallel and failFast
+          assert result['maxParallel'] == 3
+          assert result['failFast'] == True
+
+          # Check for expected values in combinations
+          os_values = {c['os'] for c in combos}
+          lang_values = {c['language'] for c in combos}
+          feat_values = {c['feature'] for c in combos}
+
+          assert os_values == {'ubuntu-latest', 'windows-latest'}
+          assert lang_values == {'typescript', 'rust'}
+          assert feat_values == {'minimal'}
+
+          print(f"✓ Integration test passed: {len(combos)} combinations generated")
+          print(f"  OS values: {sorted(os_values)}")
+          print(f"  Languages: {sorted(lang_values)}")
+          print(f"  Features: {sorted(feat_values)}")
+          EOF
