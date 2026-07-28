@@ -1,0 +1,100 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      version_file:
+        description: 'Path to version file (package.json or VERSION)'
+        required: false
+        default: 'package.json'
+      dry_run:
+        description: 'Dry run (no changes)'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  version-bump:
+    name: Detect Version and Generate Changelog
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup script environment
+        run: |
+          chmod +x "${{ github.workspace }}/version-bumper.sh"
+
+      - name: Parse current version
+        id: parse
+        run: |
+          VERSION_FILE="${{ inputs.version_file || 'package.json' }}"
+          if [ ! -f "$VERSION_FILE" ]; then
+            echo "Creating default VERSION file..."
+            echo "1.0.0" > VERSION
+            VERSION_FILE="VERSION"
+          fi
+          CURRENT_VERSION=$("${{ github.workspace }}/version-bumper.sh" --parse-version "$VERSION_FILE" || echo "1.0.0")
+          {
+            echo "current_version=$CURRENT_VERSION"
+            echo "version_file=$VERSION_FILE"
+          } >> "$GITHUB_OUTPUT"
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: Determine next version
+        id: bump
+        run: |
+          cd "${{ github.workspace }}"
+          VERSION_FILE="${{ steps.parse.outputs.version_file }}"
+          NEW_VERSION=$("${{ github.workspace }}/version-bumper.sh" --next-version "$VERSION_FILE")
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Next version: $NEW_VERSION"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          cd "${{ github.workspace }}"
+          CHANGELOG=$("${{ github.workspace }}/version-bumper.sh" --changelog-from-commits)
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update version file (dry-run)
+        if: ${{ inputs.dry_run == 'true' }}
+        run: |
+          echo "DRY RUN: Would update ${{ steps.parse.outputs.version_file }} to ${{ steps.bump.outputs.new_version }}"
+          echo "Changelog:"
+          echo "${{ steps.changelog.outputs.changelog }}"
+
+      - name: Update version file
+        if: ${{ inputs.dry_run == 'false' && github.event_name == 'workflow_dispatch' }}
+        run: |
+          "${{ github.workspace }}/version-bumper.sh" --update-version "${{ steps.parse.outputs.version_file }}" "${{ steps.bump.outputs.new_version }}"
+          echo "Updated ${{ steps.parse.outputs.version_file }} to ${{ steps.bump.outputs.new_version }}"
+
+      - name: Display results
+        run: |
+          echo "=== Version Bump Summary ==="
+          echo "Current version: ${{ steps.parse.outputs.current_version }}"
+          echo "New version: ${{ steps.bump.outputs.new_version }}"
+          echo ""
+          echo "=== Changelog ==="
+          echo "${{ steps.changelog.outputs.changelog }}"
