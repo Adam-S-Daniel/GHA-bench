@@ -1,0 +1,148 @@
+name: Semantic Version Bumper CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test semantic version bumper
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y bats
+
+      - name: Run bats tests
+        run: |
+          chmod +x bin/semantic-version-bumper.sh
+          bats tests/semantic-version-bumper.bats
+
+      - name: Validate script with shellcheck
+        run: |
+          apt-get install -y shellcheck
+          shellcheck bin/semantic-version-bumper.sh
+
+      - name: Validate syntax with bash -n
+        run: |
+          bash -n bin/semantic-version-bumper.sh
+
+  integration:
+    runs-on: ubuntu-latest
+    name: Integration tests with git repository
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y bats git
+
+      - name: Setup git identity
+        run: |
+          git config --global user.email "test@example.com"
+          git config --global user.name "Test User"
+
+      - name: Test version bumping with patch
+        run: |
+          chmod +x bin/semantic-version-bumper.sh
+          TEMP_DIR=$(mktemp -d)
+          cd "$TEMP_DIR"
+
+          # Initialize git repo
+          git init
+
+          # Create initial version file
+          echo "1.0.0" > VERSION
+          git add VERSION
+          git commit -m "Initial release"
+          git tag v1.0.0
+
+          # Add a fix commit
+          echo "fix applied" > fix.txt
+          git add fix.txt
+          git commit -m "fix: resolve critical issue"
+
+          # Test version bumping
+          NEW_VERSION=$(cd "$TEMP_DIR" && "$GITHUB_WORKSPACE"/bin/semantic-version-bumper.sh --determine-bump "$TEMP_DIR" "1.0.0")
+          if [ "$NEW_VERSION" != "1.0.1" ]; then
+            echo "Expected 1.0.1, got $NEW_VERSION"
+            exit 1
+          fi
+
+          rm -rf "$TEMP_DIR"
+
+      - name: Test version bumping with minor
+        run: |
+          chmod +x bin/semantic-version-bumper.sh
+          TEMP_DIR=$(mktemp -d)
+          cd "$TEMP_DIR"
+
+          # Initialize git repo
+          git init
+
+          # Create initial version file
+          echo "2.0.0" > VERSION
+          git add VERSION
+          git commit -m "Initial release"
+          git tag v2.0.0
+
+          # Add a feature commit
+          echo "new feature" > feature.txt
+          git add feature.txt
+          git commit -m "feat: add new capability"
+
+          # Test version bumping
+          NEW_VERSION=$(cd "$TEMP_DIR" && "$GITHUB_WORKSPACE"/bin/semantic-version-bumper.sh --determine-bump "$TEMP_DIR" "2.0.0")
+          if [ "$NEW_VERSION" != "2.1.0" ]; then
+            echo "Expected 2.1.0, got $NEW_VERSION"
+            exit 1
+          fi
+
+          rm -rf "$TEMP_DIR"
+
+      - name: Test version bumping with major (breaking change)
+        run: |
+          chmod +x bin/semantic-version-bumper.sh
+          TEMP_DIR=$(mktemp -d)
+          cd "$TEMP_DIR"
+
+          # Initialize git repo
+          git init
+
+          # Create initial version file
+          echo "1.5.0" > VERSION
+          git add VERSION
+          git commit -m "Initial release"
+          git tag v1.5.0
+
+          # Add a breaking change commit
+          echo "breaking change" > breaking.txt
+          git add breaking.txt
+          git commit -m "feat!: redesign API"
+
+          # Test version bumping
+          NEW_VERSION=$(cd "$TEMP_DIR" && "$GITHUB_WORKSPACE"/bin/semantic-version-bumper.sh --determine-bump "$TEMP_DIR" "1.5.0")
+          if [ "$NEW_VERSION" != "2.0.0" ]; then
+            echo "Expected 2.0.0, got $NEW_VERSION"
+            exit 1
+          fi
+
+          rm -rf "$TEMP_DIR"
