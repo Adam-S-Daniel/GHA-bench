@@ -267,6 +267,22 @@ stamps every cell with the parent's session id, `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_
 caps the cell's subagents, and the nested-session markers change the CLI's tool
 surface (measured: 40 tools unscrubbed vs 30 scrubbed).
 
+### What still does not work in a cloud session
+
+Two post-run steps are blocked by the sandbox's egress policy, not by the
+harness. Both are laptop-only for now; do not try to route around the policy.
+
+- **`version_docs.py`** builds each run's `claude-code-<version>.md` from a
+  tree listing at `api.github.com`, which the policy answers with 403 (the
+  `raw.githubusercontent.com` changelog fetch works fine). A cloud run's
+  results.md will link a per-version doc that does not exist until someone
+  regenerates from a laptop.
+- **The Gemini half of the judge panel.** `test_quality.py --llm-judge
+  --deliverable-judge` works with `--judges haiku45` (the `claude-cli`
+  provider), but the `agy` CLI behind `gemini31pro` is not installed in the
+  sandbox and `gemini-api` needs `GEMINI_API_KEY`. Score a cloud run with the
+  single-judge form, or run the panel later from a laptop.
+
 ### Comparability caveats — do not pool cloud and laptop cells blindly
 
 `system_info.execution_environment` (`claude-code-web` vs `local`) is recorded in
