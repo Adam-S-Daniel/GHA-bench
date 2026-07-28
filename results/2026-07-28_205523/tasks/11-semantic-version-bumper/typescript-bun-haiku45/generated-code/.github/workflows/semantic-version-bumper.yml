@@ -1,0 +1,85 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test
+
+  bump-version:
+    name: Bump Version
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Get last tag
+        id: last-tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Run version bumper
+        id: bump
+        run: |
+          bun run src/index.ts --package-json package.json --changelog CHANGELOG.md --last-tag "${{ steps.last-tag.outputs.tag }}" > version.txt 2>&1 || true
+          NEW_VERSION=$(tail -n 1 version.txt)
+          echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Version: ${NEW_VERSION}"
+
+      - name: Display results
+        run: |
+          echo "New version: ${{ steps.bump.outputs.version }}"
+          if [ -f CHANGELOG.md ]; then
+            echo "=== CHANGELOG.md ==="
+            head -n 20 CHANGELOG.md
+          fi
+          if [ -f version.txt ]; then
+            echo "=== Version Output ==="
+            cat version.txt
+          fi
+
+      - name: Show changelog
+        if: always()
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            echo "CHANGELOG.md generated:"
+            head -n 30 CHANGELOG.md
+          else
+            echo "No CHANGELOG.md generated"
+          fi
