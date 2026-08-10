@@ -8,13 +8,41 @@
 > Edit only below the `## Repo-specific additions` header.
 > Everything above it will be overwritten on the next sync.
 
-## General guidelines
+This block is deliberately short. It carries the things that are **specific to
+this account and learned the hard way** — incidents, fleet policy, machine
+layout. It does not restate general engineering practice, and it does not
+describe anything you can learn by reading the repo. Depth lives in each repo's
+`docs/` and in the skills registry; follow the pointers when the work touches
+that area.
 
-- Read existing code before modifying it. Understand the patterns already in use.
-- Keep changes minimal and focused — fix what was asked, nothing more.
-- Do not add speculative features, premature abstractions, or unused helpers.
-- Prefer editing existing files over creating new ones.
-- Never commit secrets, credentials, or .env files.
+## Working in these repos
+
+- Fix what was asked. No speculative features, premature abstractions, or
+  unused helpers.
+- Prefer editing an existing file over creating a new one.
+- Every public interface change updates the corresponding tests.
+- Run the existing test suite before calling a task complete, and say plainly
+  what you ran. New behaviour gets a test; a bug fix gets a regression test.
+- Tests must be deterministic — no sleeps, no network, no reliance on
+  wall-clock time.
+
+## Finding your unknowns
+
+Output quality on a non-trivial task is bounded by how well the ambiguities got
+resolved — and most of them surface *during* implementation, not before it. So
+treat unknown-hunting as part of the work, not a phase that ends at the plan:
+
+- Before building: name what you don't know. Prefer a reference in **code** — an
+  existing implementation to mirror, a failing test, a rubric, an HTML mockup —
+  over a prose description of the same thing.
+- While building: keep a running note of decisions that departed from the plan
+  and edge cases you hit. Surface them; don't silently absorb them.
+- After building: be able to explain what changed and why it is correct.
+
+The full workflow (blind-spot pass, self-interview, implementation notes,
+post-hoc explainer) is the **`finding-unknowns`** skill in the registry. Reach
+for it on unfamiliar code, a new domain, or anything with subjective acceptance
+criteria.
 
 ## Workstation layout
 
@@ -26,19 +54,17 @@ Repo locations are host-specific — match the convention of the machine you're 
   assume existing repos live there rather than under the user profile
   (`C:\Users\<user>\...`).
 
-## Code quality
-
-- Follow the idioms and style already established in this repo.
-- Write code that is clear enough to not need comments; add comments only when intent is non-obvious.
-- Avoid introducing new dependencies unless strictly necessary.
-- Every public interface change should include corresponding test updates.
-
 ## Security
 
-- Validate all external input (user input, API responses, file contents).
-- Never construct SQL, shell commands, or HTML by string concatenation with untrusted data.
-- Use parameterized queries, shell arrays, and context-aware escaping respectively.
-- Do not disable TLS verification, authentication, or CSRF protection.
+Standard practice applies without being restated here. These are the ones with
+teeth in this account:
+
+- Validate anything that crosses a trust boundary — user input, API responses,
+  file contents.
+- Never build SQL, shell commands, or HTML by string-concatenating untrusted
+  data. Use parameterized queries, shell arrays, and context-aware escaping.
+- Never commit secrets, credentials, or `.env` files.
+- Never disable TLS verification, authentication, or CSRF protection.
 
 ## Data exposure in CI and public repos
 
@@ -93,11 +119,20 @@ Fleet repos enforce PR-only default branches via ruleset, managed as code in
   cms-platform-managed repos (outside the fleet ruleset) use it by their own
   design.
 
-## Testing
+## Dependency updates
 
-- Run the existing test suite before considering a task complete.
-- New behavior requires new tests; bug fixes require regression tests.
-- Tests should be deterministic — no sleeping, no network calls, no reliance on wall-clock time.
+Dependabot runs with a **minimum package age** (`cooldown`) so an unattended
+merge still gets a cooling-off period: `default-days: 7`, `semver-major-days: 30`.
+Two things about that setting are easy to get wrong:
+
+- It applies to **version** updates only. A security advisory bypasses cooldown
+  entirely and opens immediately — the wait never delays a vulnerability fix.
+- An unset `cooldown` is **not** "no wait": GitHub applies an implicit 3-day
+  minimum age to version updates. Writing 7 is a raise from 3, not from zero.
+
+`semver-minor-days` / `semver-patch-days` are deliberately left undefined —
+they fall back to `default-days`, and spelling them out only invites drift.
+Pinning and bumping third-party action SHAs is the `pin-actions-to-sha` skill.
 
 ## Subagent delegation (model routing)
 
@@ -106,20 +141,22 @@ Fleet repos enforce PR-only default branches via ruleset, managed as code in
   Claude Code; skip if the harness has no subagent support).
 - Route by mechanicalness: smallest model (haiku-class) for exactly-specified
   edits — pin bumps, renames, config/doc tweaks; mid-tier (sonnet-class) for
-  normal implementation from a clear spec.
+  normal implementation from a clear spec. Escalate rather than ship a wrong
+  diff when the task is genuinely subtle (cross-repo invariants, race
+  conditions).
 - The main loop keeps root-cause investigation, architectural decisions,
   writing the spec, and review of the subagent's diff before commit.
-- Escalate the model rather than ship a wrong diff when the task is genuinely
-  subtle (cross-repo invariants, race conditions).
+- Delegated work is done when a **verifier exits 0**, not when the report reads
+  as finished. Name the exact command in the spec and require its exit code
+  back. A subagent that cannot run it reports BLOCKED; a count that disagrees
+  with the spec's stated expectation is a stop-and-report condition, never a
+  rounding difference.
 - Don't assume the subagent sees this file: general-purpose and custom
   subagents receive the full memory hierarchy (imports included), but
   Explore/Plan-type agents and SDK harnesses with `settingSources: []` skip
   repo guidance entirely. Restate load-bearing constraints (style, test
   command, invariants) in the delegation prompt, and don't hand
   guidance-sensitive work to agents that won't see it.
-- Give the subagent a precise spec — files, exact changes, house style, the
-  test command to run. Subagent output is gated by the same test/CI proof as
-  any other change.
 
 ## Skills ecosystem
 
@@ -135,7 +172,8 @@ Fleet repos enforce PR-only default branches via ruleset, managed as code in
   known Claude Code limitation (see agentskills' `docs/decisions/0001`) — so
   don't assume bundle skills are available there.
 - New reusable skills graduate **into** the registry (sensitive ones into
-  `agentskills-private`) rather than living on in a consumer repo.
+  `agentskills-private`) rather than living on in a consumer repo. A long skill
+  splits across files rather than growing into one wall of text.
 
 ## Git practices
 
@@ -305,184 +343,76 @@ model A vs model B), and treat cross-environment deltas as unvalidated.
 
 ## Architecture
 
+Key files, trap-detector patterns, and LLM-vs-structural discrepancy handling
+→ [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Combined-report layout
+invariants, judge auditing, and reporting internals →
+[`docs/REPORTING.md`](docs/REPORTING.md). Read the relevant doc before
+touching `runner.py`, `generate_results.py`, `combine_results.py`,
+`test_quality.py`, `judge_audit.py`, or `judge_consistency_report.py`.
+
 ### Key files
 
-- `models.py` — single source of truth for model IDs and token pricing. Update here when Anthropic changes prices.
-- `runner.py` — benchmark harness. Runs agents via `claude -p`, collects metrics, pushes results. Imports from `models.py` and `generate_results.py`. Robustness invariants added 2026-06:
-  - **Single-runner lock.** On startup it takes an exclusive non-blocking `flock` on `<repo>/.runner.lock` (`acquire_single_runner_lock`); a second runner exits(2) rather than execute cells concurrently — concurrent cells compete for CPU/Docker/pwsh and confound each other's timing/cost. (Released automatically on exit.)
-  - **Resume validity.** `--resume` skips a cell only when its `metrics.json` is non-empty + parseable (`_metrics_valid`), so a write interrupted by a crash/teardown is re-run rather than skipped forever, leaving a hole.
-  - **Honest push logging + commit-per-cell.** The `PeriodicPusher` thread commits+pushes `results/` **once per newly-completed cell** (wakes every `PUSH_CHECK_INTERVAL`s, commits only when `run_count` increased) — one commit per result, each pushed immediately. `git_push_results` checks the push exit code and logs an explicit WARNING on failure instead of always printing "Pushed results".
-- `generate_results.py` — generates `results.md` reports and updates `README.md`. Can run standalone: `python3 generate_results.py --all`. Each results.md opens with a "Claude Code versions used" line linking to the per-version docs (see `version_docs.py`).
-- `combine_results.py` — produces cross-run combined reports `results/results_<dirA>__<dirB>[__<dirC>...].md`. Same table layout as per-run reports plus a CLI Version Legend; uses `judge_consistency_report.py` for the JCS section and `conclusions_report.py` for the Opus-max Conclusions prose. Standalone: `python3 combine_results.py <dirA> <dirB> [<dirC> ...]`.
-- `recover_cost.py` — report-time-only floor recovery of a timed-out cell's spend from its partial `cli-output.json` event stream (SIGKILLed cells never emit the CLI's final cost record). Input/cache-read/cache-write tokens are exact per-message usage; output tokens are a conservative estimate from visible content plus thinking-token telemetry. Joins **Total Cost only** in `generate_results.py`/`combine_results.py` — never `geo_cost`/`geo_turns`, since a systematically-low floor would bias a ratio statistic.
-- `monitor.py` — read-only **live** dashboard for an in-flight run. Groups completed cells by `variant` and prints per-variant run-health (duration, cost, turns, errors, actionlint, test-exec time), structural code metrics (impl files/lines, workflow files/lines, total lines — all non-LLM), structural test metrics (test files/lines, tests, assertions, assertions/test, test:code ratio — all non-LLM), and live-detected traps. The head-to-head is **automatic and always strongest-vs-strongest**: `strongest_model_short` (ranked by `model_power` — family, then version, then 1m>200k context) picks the most powerful model+version in *this* run and in the *previous report* (auto-detected: newest run with a `summary.json` older than this one), then matches them by task+language at each shared effort. It also breaks the comparison down **per scripting language** and flags languages whose deltas differ significantly (≥1.5σ and ≥25 pts) from the cross-language mean. Override the auto-pick with `--baseline DIR` (which prior run; `none` to skip) and/or `--pair RUNVAR=BASEVAR` (exact variant pairing); for full cross-model rollups use `combine_results.py` post-run. On Claude-subscription auth it also prints the **weekly subscription allowance** via `GET /api/oauth/usage` (the endpoint behind the CLI's `/usage`): five-hour + weekly limits from the `limits[]` array, annotating which weekly cap an Opus run draws from, plus `extra_usage`. It reads the OAuth token from `~/.claude/.credentials.json`, never logs it, degrades gracefully (skipped when there are no OAuth creds — e.g. API-key auth has no weekly cap — or on HTTP error), and can be disabled with `--no-usage`. `--total N` enables a pace-based ETA (a floor — later tranches run slower); `--watch SECS` refreshes. Pure logic (`aggregate`, `match_pairs`, `group_by_variant`, `model_power`, `strongest_model_short`, `flag_outliers`, `format_usage`) is unit-tested in `tests/test_monitor.py`; the `fetch_usage` network call and the structural/trap helpers (which reuse `test_quality.compute_structural_metrics` and `generate_results._detect_traps`) are best-effort and not unit-tested. Distinct from `watchdog.sh` (process supervision) and `generate_results.py` (post-run report).
-- `test_quality.py` — test + deliverable quality evaluation. Structural metrics (always) + panel-of-judges LLM evaluation (`--llm-judge` for test-quality judge, `--deliverable-judge` for workflow+scripts judge). `compute_structural_metrics` returns `impl_lines`, `test_lines`, `workflow_lines`, and **`code_lines` = impl + test + workflow** (the authored-code total). The reports' Failed-Runs "Lines" column and the monitor's "total" now use `code_lines`, NOT the runner's `code_metrics.total_lines` (a whole-dir count that also includes fixtures, README, helper scripts, and the `act-result.txt` log). None of these line counts feed any quality score — those come from the LLM panel (which reads the code) + the structural test:code ratio (`test_lines/impl_lines`). The default panel is Haiku 4.5 + Gemini 3.1 Pro (configured in the module-level `JUDGES` dict). Each judge writes its own per-run cache file; `load_panel_scores(variant_dir, kind)` reads them and returns a mean-aggregated score dict for the reporting layer. Legacy single-Sonnet `*-llm.json` caches still read for backward compat. Imported by `generate_results.py` for the "Test Quality Evaluation" section.
-- `llm_providers.py` — pluggable LLM provider abstraction for evaluation tasks (see "Adding LLM providers" below). Currently registered: `claude-cli` (pre-authenticated Claude Code CLI), `agy` (pre-authenticated Antigravity CLI — the Gemini path the `gemini31pro` judge uses; `agy -p` prints the response text directly, default model `Gemini 3.1 Pro (High)`), `gemini-api` (google-genai SDK, requires `GEMINI_API_KEY` and a paid-tier Google AI Studio account). The `gemini-cli` provider was **removed 2026-06-26** — per Google, *"On June 18, 2026, Gemini CLI and Gemini Code Assist IDE extensions will stop serving requests for Google AI Pro and Ultra, as well as those using it free of charge using Gemini Code Assist for individuals."* (https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/); `agy` is its successor. See the removal note in `llm_providers.py`.
-- `version_docs.py` — for each unique Claude Code version observed in a run dir's `metrics.json` files, writes `claude-code-<version>.md` with the full system prompt (concatenated from `Piebald-AI/claude-code-system-prompts` at tag `v<version>`), every default-tool description sorted alphabetically, and the slice of `anthropics/claude-code` `CHANGELOG.md` from the lowest CC version observed in any benchmark in this repo through that version. Standalone: `python3 version_docs.py [<run-dir>]`. Caches upstream content under `.cache/cc-versions/` (gitignored). Output files are referenced by name in each `results.md`'s prominent "Claude Code versions used" line.
-- `benchmark-instructions-v*.md` — per-version specs given to agents during runs.
-- `Dockerfile.act` — custom act container image with pwsh + Pester pre-installed. Build with `docker build -t act-ubuntu-pwsh:latest -f Dockerfile.act .`. Runner.py auto-detects it and injects `.actrc` into workspaces.
-- `run-benchmark-web.sh` — provisioning + launcher for a **Claude Code on the web** cloud session (see "Running on Claude Code on the web"). Idempotent; `--setup-only` provisions without running. All other arguments pass through to `runner.py`.
-- `run-fresh-matrix-*.sh` — per-campaign wrapper scripts that drive multiple sequential `runner.py` invocations (one per model-effort combo) into a single results dir using `--resume`. Use when the matrix needs more than one effort level; `runner.py` accepts a single `--effort` per invocation by design. See `run-fresh-matrix-2026-05-06.sh` for the canonical 8-invocation full-matrix template.
-- `run-opus48-resume.sh` + `run-opus48-supervisor.sh` — the **resilient** per-campaign runner for the opus-4.8 (1M) campaign (run dir `2026-06-26_103905`; 7 tasks × 5 languages × 4 efforts medium/high/xhigh/ultracode = 140 cells). `run-opus48-resume.sh` runs all four tranches with `--resume` (re-runnable; skips valid cells). `run-opus48-supervisor.sh` is the entry point — launch via `setsid bash run-opus48-supervisor.sh` so it survives a session teardown; it restarts the resume worker whenever the runner dies, until all 140 cells are done. It takes an `flock` on `.supervisor.lock` (and `runner.py` on `.runner.lock`) so no two runners ever run concurrently. This pattern supersedes a plain one-shot launcher for multi-day runs that must survive crashes/reboots; pair it with `monitor.py` for live status (the supervisor and runner never need git for monitoring).
-- `skills/` — agent skills following [agentskills.io](https://agentskills.io/specification) spec.
+The purpose of every top-level file (`models.py`, `runner.py`,
+`generate_results.py`, `combine_results.py`, `recover_cost.py`, `monitor.py`,
+`test_quality.py`, `llm_providers.py`, `version_docs.py`, the
+`run-opus48-*`/`run-fresh-matrix-*` wrapper scripts, `skills/`) → read
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before touching any of them.
 
 ### Adding new trap detectors
 
-See the docstring on `_detect_traps()` in `generate_results.py`. Each trap needs:
-a kebab-case name, detection logic over bash_cmds/console/metrics, a time estimate,
-and an entry in `trap_applicable_mode` if mode-specific.
+What a new trap detector needs (kebab-case name, detection logic, time
+estimate, mode entry) → read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+before adding one.
 
 ### LLM vs structural discrepancy checks
 
-After every report generation (`python3 generate_results.py --all`), check the
-"LLM vs Structural Discrepancies" section in each `results.md`. Discrepancies
-are auto-classified by `_find_discrepancies()` in `generate_results.py`:
-
-- **counter-gap**: structural metrics are implausibly low (e.g. 0 tests or 0
-  assertions while LLM scores high). This means `test_quality.py` is missing a
-  test pattern. **Fix the counter** — read the generated test files to identify
-  the pattern the counter doesn't recognize, add it to the appropriate
-  `_count_*()` function and the detection/classification patterns, add unit
-  tests, and regenerate. Counter-gap discrepancies should not persist across PRs.
-- **qualitative**: structural metrics look reasonable but the LLM disagrees on
-  quality. The report includes the LLM's justification (from the `summary`
-  field in `test-quality-llm.json`). These are expected and acceptable — review
-  the justification to confirm it's coherent, then leave them.
-
-If a **new counter-gap** appears after changing `test_quality.py`, it's a
-regression. Fix it before merging.
+How `counter-gap` vs `qualitative` discrepancies are classified and which one
+requires a fix before merging → read
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) after every
+`generate_results.py --all` run.
 
 ### Combined-report invariants (`combine_results.py`)
 
-The combined report (e.g. `results/results_<dirA>__<dirB>.md`) pools
-runs across multiple source directories. A few layout invariants must
-hold — changes here have broken the generated markdown before, so
-`tests/test_combine_results.py` guards them:
-
-- **No duplicate `(language, variant_disp)` rows in Tiers or
-  Comparison.** `aggregate_rows` groups by `(_disp_mode(language_mode),
-  derived_label)` — `_disp_mode` collapses `powershell-tool` into
-  `powershell` so the two pool into one column (#30; they are
-  replicates in this WSL environment). `derived_label` is
-  `<name-version>-<context>-<effort>` built by `_derived_label(m)`
-  (name+version from `model_short` with the `-1m`/`-200k` suffix
-  stripped and the legacy `opus`/`sonnet`→`opus46`/`sonnet46` rename;
-  context from the **recorded** `contextWindow` in
-  `model_usage_detail`, NOT the model_short suffix; effort from
-  `effort_level` or, when null, `na` for Haiku / `high`-or-`medium`-
-  by-CC-version for legacy Opus/Sonnet — see `derive_effort`). This
-  grouping is injective per language mode, so the invariant still
-  holds. CLI versions pool into one row; `cli_versions` retains the
-  per-CLI breakdown for the legend. Because context comes from the
-  recorded window, a mislabeled `opus47-200k` cell that actually ran
-  at 1M pools into `opus47-1m-medium`, while genuine-200k `opus47`
-  cells form a separate `opus47-200k-medium` row.
-- **CLI Version Legend schema.** Exactly one CLI version per row.
-  Columns: `Variant label | CLI version | Tasks | Languages`. `Tasks`
-  and `Languages` each hold either `All` (pair covered every task /
-  every language observed in the report) or a comma-sorted subset.
-  The plural header `CLI version(s)` and comma-joined version cells
-  are the old layout — do not reintroduce.
-- **Section order in the body:** Scoring → Conclusions → **Judge
-  Consistency Summary** → Tiers → Comparison → Per-Run → Notes. JCS
-  is a top-level `##`, not a `### ` under Notes, because readers
-  benefit from the panel-health verdict before they consume
-  rankings.
-- **Quality-score lookup key.** The per-variant score bucket is keyed
-  by `(_disp_mode(language_mode), _derived_label(m))` — the display
-  mode + CLI-less derived label, so quality-score pooling matches the
-  duration/cost pooling in `aggregate_rows` exactly (including the
-  `powershell` + `powershell-tool` collapse). Aggregate lookups therefore use
-  `r["variant"]` (the derived label), NOT `r["variant_with_cli"]`.
-  (Panel JSONs are still retrieved by the on-disk path
-  `(source_run_dir, task_id, original_subdir)` where `original_subdir`
-  comes from `_path_label` = RAW model_short + effort — retrieval is
-  unaffected; only which aggregate row a score rolls up into changed.)
-  Watch for the failure mode where a pooled row's Avg Tests Quality /
-  Workflow Craft renders `—` or reflects only one context variant when
-  it should be the mean across the whole derived-label pool.
+The layout invariants `tests/test_combine_results.py` guards (no duplicate
+rows, the CLI Version Legend schema, section order, the quality-score lookup
+key) → read [`docs/REPORTING.md`](docs/REPORTING.md) before changing
+`combine_results.py`.
 
 ### Where the Conclusions prose lives
 
-The max-effort Opus `## Conclusions` block is produced **only for
-the combined cross-run report** (`combine_results.py`), not for
-per-run `results.md` files. `generate_results.py` still invokes the
-JCS Summary LLM call (cheap) but passes `speed_cost_input=None` so
-`conclusions_report.generate_conclusions_from_inputs` short-circuits
-the Conclusions call. Reasoning: comparing a single run directory
-against itself doesn't surface tradeoffs worth ~$1 of max-effort
-tokens per regen — the Conclusions prose only reads as useful when
-multiple run dirs are being compared.
-
-If you need per-run prose for some new purpose, plumb through a
-separate prompt; do not re-enable the merged Conclusions call at the
-single-run site.
+Why the max-effort Opus Conclusions block only runs for combined reports, not
+per-run `results.md` → read [`docs/REPORTING.md`](docs/REPORTING.md) before
+re-enabling it at the single-run site.
 
 ### Judge rationale audit (`judge_audit.py`)
 
-The combined report includes a `## Judge Audit Outcomes` section
-that lists every run where the panel judges span ≥ 4 points on a
-1–5 scale (i.e. Haiku = 1, Gemini = 5). For each flagged row the
-audit scans each judge's rationale for concrete file-existence
-claims (see `MISSING_PHRASES` + file-extension regex) and resolves
-them against the run's `generated-code/` tree. Drop rule:
-
-- One judge contradicted → drop that judge's score; panel mean
-  becomes the other judge's number.
-- Both contradicted → drop both; panel mean becomes `—` and the
-  row is excluded from aggregates.
-- Neither contradicted → keep both.
-
-Verdicts persist as `judge-audit-<kind>.json` next to each run's
-judge caches. `test_quality.load_panel_scores` consumes the verdict
-automatically, so the Tiers / Comparison / LLM-as-Judge tables
-above honor the audit with no extra plumbing.
+The drop rule for judges that span ≥ 4 points and how `judge-audit-<kind>.json`
+verdicts feed back into `test_quality.load_panel_scores` → read
+[`docs/REPORTING.md`](docs/REPORTING.md) before touching `judge_audit.py`.
 
 ### Per-judge prompt addendums
 
-`JUDGES[...]` in `test_quality.py` accepts a `prompt_addendum_tests`
-key. The test-quality evaluator appends it to the shared rubric for
-that judge alone, so a model-specific steer (e.g. Haiku's
-missing-file sanity note) doesn't drag the other judges along.
-`python3 test_quality.py --rejudge haiku45 <run_dir>` refreshes
-only that judge's cache — handy after tweaking its addendum.
+How `prompt_addendum_tests` scopes a judge-specific rubric steer, and how to
+refresh a single judge's cache with `--rejudge` → read
+[`docs/REPORTING.md`](docs/REPORTING.md) before editing `JUDGES[...]` in
+`test_quality.py`.
 
 ### Combined-report parity with per-run reports
 
-Per-run `results.md` carries three top-level sections the combined
-report does not yet replicate in full:
-
-| Per-run section                  | Combined report status |
-|----------------------------------|------------------------|
-| `## Failed / Timed-Out Runs`     | Ported (2026-04-21)    |
-| `## Test Quality Evaluation`     | Partial — structural metrics + panel LLM-as-Judge table ported; Correlation and LLM-vs-Structural Discrepancies sub-tables still absent |
-| `## Savings Analysis` (Trap / Cache savings) | **Not yet ported.** Depends on per-run `_detect_traps` output + prompt-cache telemetry that aren't currently threaded into `combine_results.py`. Readers needing savings data should drop into the per-run `results.md` for now. |
-
-When porting the remaining bits, factor the section builders out of
-`generate_results.py` into module-level helpers so both entry
-points share a single implementation — the duplication we'd
-otherwise accrue would drift the two reports out of sync.
+Which per-run `results.md` sections the combined report has and hasn't yet
+ported, and the DRY rule for porting the rest → read
+[`docs/REPORTING.md`](docs/REPORTING.md) before adding a new per-run section.
 
 ### Judge consistency summary (prompt hygiene)
 
-`JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT` in
-`judge_consistency_report.py` forbids unexplained shorthand. If you
-surface disagreement rows, introduce them with the plain-language gap
-size (e.g. "the widest disagreements — a judge scoring 1 vs 5, a
-4-point gap on a 1–5 scale — include …"). Do not coin abbreviations
-("Span-N", "Δ-N", etc.) that a reader has to decode. Cite specific
-runs as `task-id-name / language / model-variant` (the same triple
-the Per-Run table uses).
-
-Follow-up analyses of flagged disagreement rows live under
-`results/analysis/` as dated standalone markdown files (e.g.
-`judge_disagreement_1-vs-5_2026-04-21.md`). Link them from the JCS
-section when regenerating if they remain relevant.
+The prompt-hygiene rules for `JUDGE_CONSISTENCY_SUMMARY_SYSTEM_PROMPT` (no
+unexplained shorthand, plain-language gap sizes, citation format) → read
+[`docs/REPORTING.md`](docs/REPORTING.md) before editing
+`judge_consistency_report.py` or its prompts.
 
 ### Updating model pricing
 
-Edit `models.py`. Check https://docs.anthropic.com/en/docs/about-claude/models and
-https://www.anthropic.com/pricing. Then run `python3 generate_results.py --all`.
+Where to edit and check pricing → read [`docs/REPORTING.md`](docs/REPORTING.md).
 
 ### Regenerating reports
 
@@ -635,3 +565,13 @@ Regenerate after CC version changes:
 ```bash
 python3 version_docs.py        # idempotent across all run dirs
 ```
+
+## Deeper references
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — read when touching
+  `runner.py`, adding a trap detector, or triaging an LLM-vs-structural
+  discrepancy in a generated `results.md`.
+- [`docs/REPORTING.md`](docs/REPORTING.md) — read when changing
+  `combine_results.py`, `judge_audit.py`, `judge_consistency_report.py`,
+  or the per-judge prompt addendums, or when porting a per-run report
+  section into the combined report.

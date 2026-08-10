@@ -1,0 +1,61 @@
+# Dependabot for this repo.
+#
+# Previously this repo pinned third-party GitHub Actions to commit SHAs (per
+# the account-wide SHA-pinning convention) but had no dependabot.yml at all,
+# so those pins had no bump path — they'd sit until someone noticed. This
+# onboards two ecosystems, each landed unattended by
+# .github/workflows/dependabot-auto-merge.yml once CI is green (see that
+# file for why this repo needs a scheduled sweep, not just native
+# auto-merge, to actually land them):
+#   - github-actions: the SHA-pinned third-party actions across
+#     .github/workflows/*.yml.
+#
+# NO `pip` ECOSYSTEM, deliberately: the root pyproject.toml declares only
+# `[tool.pytest.ini_options]` — there is no `[project]` table and no
+# dependency list, so pip would have nothing to resolve or bump. CI installs
+# its one dependency imperatively (`pip install pytest` in ci.yml), which
+# Dependabot cannot see either. Adding the ecosystem today would be inert
+# config that reads as policy. If this repo ever declares real dependencies
+# in pyproject.toml, add a `pip` block with the same cooldown as below —
+# that declaration is the fact this decision turns on.
+#
+# DELIBERATELY NOT ADDED — do not add these later either:
+#   `results/**` contains hundreds of GENERATED BENCHMARK ARTIFACTS —
+#   package.json / requirements*.txt files written by the benchmark's own
+#   task runs (verified: 372 package.json + 93 requirements*.txt under
+#   results/**, none of them real project dependencies). They are output
+#   data, not manifests this repo builds against, and Dependabot has no
+#   `directory:` glob support anyway — pointing an npm/pip ecosystem at any
+#   of them (or, worse, trying to enumerate them) would open bump PRs
+#   against throwaway fixture data from old benchmark runs. If a future
+#   ecosystem block ever needs a `directory:` under results/, stop and
+#   reconsider — that directory is not source.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    # MINIMUM PACKAGE AGE ("cooldown") — how long a release must exist before
+    # Dependabot will even OPEN the PR. Version updates ONLY: security
+    # updates bypass cooldown by GitHub's spec, so an advisory still opens
+    # (and auto-merges) immediately. GitHub's own default is an implicit
+    # 3-day minimum age, so `default-days: 7` here is a deliberate RAISE, not
+    # a floor from zero — it mechanises this account's standing 7-day
+    # cooling-off convention for third-party action SHAs (see
+    # cms-platform/AGENTS.md, "SHA-pin every workflow `uses:`"), matching
+    # cms-platform's own .github/dependabot.yml.
+    #
+    # Majors wait longer (30 days) because a major is the class that has
+    # actually needed reverting elsewhere in this account (cms-platform's
+    # AGENTS.md records setup-node 6->7 needing a revert, and the Decap
+    # bundle bump kept deliberately revertible). 30 days gives upstream room
+    # to yank or patch a bad major while patches/minors keep flowing weekly.
+    #
+    # semver-minor-days / semver-patch-days are deliberately left undefined:
+    # GitHub's documented precedence falls an undefined `semver-*-days` back
+    # to `default-days`, so spelling them out would only invite the two
+    # numbers to drift apart from `default-days` over time.
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
