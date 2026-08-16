@@ -1,0 +1,168 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'Build-Matrix.ps1'
+      - 'Generate-Matrix.ps1'
+      - 'matrix-config.json'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  MATRIX_CONFIG_FILE: matrix-config.json
+  MATRIX_OUTPUT_FILE: matrix-output.json
+
+jobs:
+  test-matrix-generator:
+    runs-on: ubuntu-latest
+    name: Test Build Matrix Generator
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          # Install Pester if needed (usually pre-installed in GitHub Actions)
+          Import-Module Pester -MinimumVersion 5.0 -ErrorAction SilentlyContinue
+
+          # Run all tests
+          $results = Invoke-Pester -Path Build-Matrix.tests.ps1 -PassThru
+
+          # Output summary
+          Write-Output "::group::Test Results"
+          Write-Output "Tests Passed: $($results.PassedCount)"
+          Write-Output "Tests Failed: $($results.FailedCount)"
+          Write-Output "::endgroup::"
+
+          # Exit with error if tests failed
+          if ($results.FailedCount -gt 0) {
+            exit 1
+          }
+
+  generate-matrix:
+    runs-on: ubuntu-latest
+    name: Generate Build Matrix
+    needs: test-matrix-generator
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate matrix from config
+        id: generate
+        shell: pwsh
+        run: |
+          # Read config file and generate matrix
+          $config = Get-Content $env:MATRIX_CONFIG_FILE | ConvertFrom-Json
+
+          . ./Build-Matrix.ps1
+
+          # Generate matrix
+          $matrix = Build-Matrix -Config $config
+          $matrixJson = $matrix | ConvertTo-Json -Depth 10
+
+          # Output for GitHub Actions (using heredoc for multiline)
+          $delimiter = "EOF_MATRIX_$(Get-Random)"
+          Write-Output "matrix<<$delimiter" >> $env:GITHUB_OUTPUT
+          Write-Output $matrixJson >> $env:GITHUB_OUTPUT
+          Write-Output $delimiter >> $env:GITHUB_OUTPUT
+
+          # Save to file
+          $matrixJson | Out-File -FilePath $env:MATRIX_OUTPUT_FILE -Encoding UTF8
+
+          Write-Output "Matrix generated successfully"
+          Write-Output "::group::Generated Matrix"
+          Write-Output $matrixJson
+          Write-Output "::endgroup::"
+
+      - name: Validate matrix JSON
+        shell: pwsh
+        run: |
+          $matrixJson = Get-Content $env:MATRIX_OUTPUT_FILE
+
+          # Parse JSON to validate
+          $matrix = $matrixJson | ConvertFrom-Json
+
+          # Validate required properties
+          if (-not $matrix.include) {
+            Write-Error "Matrix is missing 'include' property"
+            exit 1
+          }
+
+          if (-not $matrix.exclude) {
+            Write-Error "Matrix is missing 'exclude' property"
+            exit 1
+          }
+
+          Write-Output "Matrix validation passed"
+          Write-Output "Matrix size: $($matrix.include.Count) entries"
+
+      - name: Upload matrix artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: matrix-output
+          path: ${{ env.MATRIX_OUTPUT_FILE }}
+
+  verify-workflow-structure:
+    runs-on: ubuntu-latest
+    name: Verify Workflow Structure
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify script files exist
+        shell: pwsh
+        run: |
+          $files = @(
+            'Build-Matrix.ps1',
+            'Generate-Matrix.ps1',
+            'Build-Matrix.tests.ps1',
+            'matrix-config.json',
+            '.github/workflows/environment-matrix-generator.yml'
+          )
+
+          foreach ($file in $files) {
+            if (Test-Path $file) {
+              Write-Output "✓ $file exists"
+            } else {
+              Write-Error "✗ $file not found"
+              exit 1
+            }
+          }
+
+          Write-Output "All required files present"
+
+      - name: Verify actionlint
+        shell: pwsh
+        run: |
+          # Check if actionlint is available
+          if (-not (Get-Command actionlint -ErrorAction SilentlyContinue)) {
+            Write-Output "Installing actionlint..."
+            # actionlint should be pre-installed in GitHub Actions
+            Write-Output "actionlint is expected to be pre-installed in GitHub Actions"
+            exit 0
+          }
+
+          # Run actionlint on workflow file
+          actionlint .github/workflows/environment-matrix-generator.yml
+          if ($LASTEXITCODE -eq 0) {
+            Write-Output "✓ Workflow passes actionlint validation"
+          } else {
+            Write-Error "✗ Workflow failed actionlint validation"
+            exit 1
+          }

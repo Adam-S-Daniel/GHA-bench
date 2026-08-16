@@ -1,0 +1,185 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit tests
+        run: bun test version-bumper.test.ts
+
+      - name: Run integration tests
+        run: bun test integration.test.ts
+
+  bump-version:
+    name: Bump Semantic Version
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run version bump
+        id: bump
+        run: |
+          bun cli.ts --dry-run > bump-output.txt 2>&1 || true
+          cat bump-output.txt
+          output=$(cat bump-output.txt)
+          echo "output=${output}" >> "$GITHUB_OUTPUT"
+
+      - name: Check if version changed
+        id: check
+        run: |
+          if grep -q "Version bumped:" bump-output.txt; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            version=$(grep "Version bumped:" bump-output.txt | awk '{print $3}')
+            echo "new_version=${version}" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Output version bump summary
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          echo "✓ Version would be bumped to: ${{ steps.check.outputs.new_version }}"
+          echo "Run workflow without --dry-run to apply changes"
+
+  test-scenarios:
+    name: Test Version Bump Scenarios
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        scenario:
+          - patch-bump
+          - minor-bump
+          - major-bump
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Set up test scenario
+        id: setup
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          echo "TEMP_DIR=${TEMP_DIR}" >> "$GITHUB_OUTPUT"
+
+          case "${{ matrix.scenario }}" in
+            patch-bump)
+              echo '{"name":"test","version":"1.0.0"}' > "${TEMP_DIR}/package.json"
+              echo "COMMITS=fix: resolve bug" >> "$GITHUB_ENV"
+              echo "EXPECTED=1.0.1" >> "$GITHUB_ENV"
+              ;;
+            minor-bump)
+              echo '{"name":"test","version":"1.0.0"}' > "${TEMP_DIR}/package.json"
+              echo "COMMITS=feat: new feature" >> "$GITHUB_ENV"
+              echo "EXPECTED=1.1.0" >> "$GITHUB_ENV"
+              ;;
+            major-bump)
+              echo '{"name":"test","version":"1.0.0"}' > "${TEMP_DIR}/package.json"
+              echo "COMMITS=feat!: breaking change" >> "$GITHUB_ENV"
+              echo "EXPECTED=2.0.0" >> "$GITHUB_ENV"
+              ;;
+          esac
+
+      - name: Create test version file
+        run: |
+          TEST_FILE="${{ steps.setup.outputs.TEMP_DIR }}/package.json"
+          echo "TEST_FILE=${TEST_FILE}" >> "$GITHUB_ENV"
+          cat "${TEST_FILE}"
+
+      - name: Run test scenario
+        run: |
+          cd /tmp
+          mkdir -p "test-${{ matrix.scenario }}"
+          cd "test-${{ matrix.scenario }}"
+
+          # Create package.json
+          echo '{"name":"test","version":"1.0.0"}' > package.json
+
+          # Initialize git repo
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          git add package.json
+          git commit -m "initial commit"
+
+          # Add test commits
+          case "${{ matrix.scenario }}" in
+            patch-bump)
+              echo "fix: resolve bug" >> file.txt
+              git add file.txt
+              git commit -m "fix: resolve bug"
+              EXPECTED=1.0.1
+              ;;
+            minor-bump)
+              echo "feat: new feature" >> file.txt
+              git add file.txt
+              git commit -m "feat: new feature"
+              EXPECTED=1.1.0
+              ;;
+            major-bump)
+              echo "feat!: breaking change" >> file.txt
+              git add file.txt
+              git commit -m "feat!: breaking change"
+              EXPECTED=2.0.0
+              ;;
+          esac
+
+          # Run version bumper
+          bun "${{ github.workspace }}/cli.ts" --version-file package.json --git-range "HEAD~1..HEAD" > output.txt 2>&1 || true
+          cat output.txt
+
+          # Verify result
+          ACTUAL=$(jq -r '.version' package.json)
+          if [ "${ACTUAL}" = "${EXPECTED}" ]; then
+            echo "✓ Test passed: ${{ matrix.scenario }} (${ACTUAL})"
+          else
+            echo "✗ Test failed: ${{ matrix.scenario }} (expected ${EXPECTED}, got ${ACTUAL})"
+            exit 1
+          fi

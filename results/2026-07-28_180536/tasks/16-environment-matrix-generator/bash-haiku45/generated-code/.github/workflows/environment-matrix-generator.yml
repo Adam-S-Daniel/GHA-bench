@@ -1,0 +1,134 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'matrix-generator.sh'
+      - 'tests/**'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'matrix-generator.sh'
+      - 'tests/**'
+      - '.github/workflows/environment-matrix-generator.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  test:
+    name: Test Matrix Generator
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up environment
+        run: |
+          # Install dependencies
+          apt-get update
+          apt-get install -y bats jq shellcheck
+
+      - name: Validate script syntax
+        run: |
+          bash -n matrix-generator.sh
+          shellcheck matrix-generator.sh
+
+      - name: Run unit tests
+        run: |
+          bats tests/matrix-generator.bats
+
+      - name: Test basic matrix generation
+        run: |
+          # Test simple case
+          result=$(echo '{"os": ["ubuntu-latest"], "node": ["20"]}' | ./matrix-generator.sh)
+          echo "Simple matrix result:"
+          echo "$result" | jq .
+
+          # Validate output is valid JSON
+          echo "$result" | jq empty
+
+      - name: Test complex matrix
+        run: |
+          # Test with multiple configurations - shellcheck: disable=SC2153
+          config='{"os": ["ubuntu-latest", "macos-latest", "windows-latest"], "node": ["18", "20"], "max-parallel": 4, "fail-fast": false, "include": [{"os": "ubuntu-latest", "node": "22", "experimental": true}], "exclude": [{"os": "windows-latest", "node": "18"}]}'
+          matrix_output=$(echo "$config" | ./matrix-generator.sh)
+
+          echo "Complex matrix result:"
+          echo "$matrix_output" | jq .
+
+          # Verify properties
+          max_parallel=$(echo "$matrix_output" | jq '.["max-parallel"]')
+          fail_fast=$(echo "$matrix_output" | jq '.["fail-fast"]')
+          include_count=$(echo "$matrix_output" | jq '.include | length')
+          exclude_count=$(echo "$matrix_output" | jq '.exclude | length')
+
+          echo "max-parallel: $max_parallel (expected: 4)"
+          echo "fail-fast: $fail_fast (expected: false)"
+          echo "include count: $include_count (expected: 7)"
+          echo "exclude count: $exclude_count (expected: 1)"
+
+          [ "$max_parallel" -eq 4 ] || exit 1
+          [ "$fail_fast" = "false" ] || exit 1
+          [ "$include_count" -eq 7 ] || exit 1
+          [ "$exclude_count" -eq 1 ] || exit 1
+
+      - name: Test error handling
+        run: |
+          # Test matrix size validation - shellcheck: disable=SC2153
+          error_config='{"os": ["ubuntu-latest", "macos-latest"], "node": ["18", "20", "22"], "max-size": 5}'
+          set +e
+          error_result=$(echo "$error_config" | ./matrix-generator.sh 2>&1)
+          exit_code=$?
+          set -e
+
+          if [ "$exit_code" -eq 0 ]; then
+            echo "ERROR: Should have failed due to matrix size"
+            exit 1
+          fi
+
+          echo "Error output: $error_result"
+          echo "Matrix size validation passed (correctly failed with exit code $exit_code)"
+
+      - name: Test matrix with empty config
+        run: |
+          result=$(echo '{}' | ./matrix-generator.sh)
+          echo "Empty config result:"
+          echo "$result" | jq .
+
+          # Should be valid JSON with empty include and exclude
+          echo "$result" | jq '.include | length' | grep -q "0"
+          echo "$result" | jq '.exclude | length' | grep -q "0"
+
+  validate:
+    name: Validate Workflow
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate YAML
+        run: |
+          apt-get update
+          apt-get install -y yamllint
+          yamllint .github/workflows/environment-matrix-generator.yml || true
+
+      - name: Validate script file paths
+        run: |
+          # Verify the workflow references existing files
+          test -f matrix-generator.sh || exit 1
+          test -f tests/matrix-generator.bats || exit 1
+          test -f .github/workflows/environment-matrix-generator.yml || exit 1
+          echo "✓ All referenced script files exist"

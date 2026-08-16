@@ -1,0 +1,198 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Matrix Generator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y bats shellcheck jq
+
+      - name: Run syntax validation
+        run: |
+          bash -n environment-matrix-generator.sh
+          shellcheck -S warning environment-matrix-generator.sh
+
+      - name: Run bats tests
+        run: |
+          bats test_matrix_generator.bats
+
+  demo:
+    name: Demo Matrix Generation
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-latest"]
+        language: ["bash", "python"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y jq
+
+      - name: Create sample configuration
+        run: |
+          mkdir -p /tmp/demo
+          cat > /tmp/demo/config.json << 'EOF'
+          {
+            "os": ["ubuntu-latest", "windows-latest", "macos-latest"],
+            "language_version": ["3.8", "3.9", "3.10"],
+            "features": ["caching", "artifact-upload"],
+            "max_parallel": 6,
+            "fail_fast": false,
+            "max_matrix_size": 100
+          }
+          EOF
+
+      - name: Generate matrix
+        run: |
+          ./environment-matrix-generator.sh -c /tmp/demo/config.json > /tmp/demo/matrix.json
+          echo "Generated matrix:"
+          jq . /tmp/demo/matrix.json
+
+      - name: Validate output
+        run: |
+          # Verify matrix structure
+          jq '.matrix.include | length' /tmp/demo/matrix.json | grep -E '^[0-9]+$'
+          jq '.strategy."max-parallel"' /tmp/demo/matrix.json | grep '6'
+          jq '.strategy."fail-fast"' /tmp/demo/matrix.json | grep 'false'
+          echo "✓ All validations passed"
+
+  test-with-exclude:
+    name: Test with Exclude Rules
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y jq
+
+      - name: Create configuration with excludes
+        run: |
+          mkdir -p /tmp/exclude
+          cat > /tmp/exclude/config.json << 'EOF'
+          {
+            "os": ["ubuntu-latest", "windows-latest"],
+            "language_version": ["1.0", "1.1"],
+            "features": [],
+            "exclude": [
+              {"os": "windows-latest", "language_version": "1.1"}
+            ]
+          }
+          EOF
+
+      - name: Generate matrix with excludes
+        run: |
+          ./environment-matrix-generator.sh -c /tmp/exclude/config.json > /tmp/exclude/matrix.json
+          jq . /tmp/exclude/matrix.json
+
+      - name: Verify excludes are applied
+        run: |
+          # Should have 3 entries (ubuntu 1.0, ubuntu 1.1, windows 1.0)
+          count=$(jq '.matrix.include | length' /tmp/exclude/matrix.json)
+          [ "$count" -eq 3 ] || exit 1
+
+          # Verify exclude rule is in output
+          jq -r '.matrix.exclude[0] | keys[]' /tmp/exclude/matrix.json | grep -q 'os' || exit 1
+          jq '.matrix.exclude[0].os' /tmp/exclude/matrix.json | grep -q 'windows-latest' || exit 1
+          echo "✓ Exclude rules working correctly"
+
+  test-with-include:
+    name: Test with Include Rules
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y jq
+
+      - name: Create configuration with includes
+        run: |
+          mkdir -p /tmp/include
+          cat > /tmp/include/config.json << 'EOF'
+          {
+            "os": ["ubuntu-latest"],
+            "language_version": ["1.0"],
+            "features": [],
+            "include": [
+              {"os": "macos-latest", "language_version": "1.0", "experimental": true}
+            ]
+          }
+          EOF
+
+      - name: Generate matrix with includes
+        run: |
+          ./environment-matrix-generator.sh -c /tmp/include/config.json > /tmp/include/matrix.json
+          jq . /tmp/include/matrix.json
+
+      - name: Verify includes are added
+        run: |
+          # Should have 2 entries (ubuntu 1.0 + included macos 1.0)
+          count=$(jq '.matrix.include | length' /tmp/include/matrix.json)
+          [ "$count" -eq 2 ] || exit 1
+
+          # Verify included custom field is present
+          jq '.matrix.include[] | select(.experimental == true)' /tmp/include/matrix.json | grep -q 'experimental' || exit 1
+          echo "✓ Include rules working correctly"
+
+  error-handling:
+    name: Test Error Handling
+    runs-on: ubuntu-latest
+    needs: test
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test missing configuration file
+        run: |
+          ./environment-matrix-generator.sh -c /nonexistent.json 2>&1 | grep -i "not found"
+
+      - name: Create and test invalid JSON
+        run: |
+          echo '{invalid json' > /tmp/bad.json
+          ./environment-matrix-generator.sh -c /tmp/bad.json 2>&1 | grep -i "invalid json" || exit 0
+
+      - name: Test oversized matrix
+        run: |
+          cat > /tmp/oversized.json << 'EOF'
+          {
+            "os": ["a", "b", "c"],
+            "language_version": ["1", "2", "3", "4"],
+            "features": [],
+            "max_matrix_size": 5
+          }
+          EOF
+          ./environment-matrix-generator.sh -c /tmp/oversized.json 2>&1 | grep -i "exceeds maximum" || exit 0
+

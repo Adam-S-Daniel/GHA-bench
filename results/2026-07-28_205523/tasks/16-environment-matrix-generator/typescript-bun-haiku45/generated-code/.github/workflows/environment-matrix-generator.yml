@@ -1,0 +1,176 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * 1"
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  test:
+    name: Test Matrix Generator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit tests
+        run: bun test
+
+      - name: Generate matrix from basic fixture
+        run: bun run src/generator.ts fixtures/basic.json > /tmp/basic-output.json
+        working-directory: ${{ github.workspace }}
+
+      - name: Validate basic fixture output
+        run: |
+          OUTPUT=$(cat /tmp/basic-output.json)
+          echo "Basic matrix output:"
+          echo "$OUTPUT" | jq .
+
+          # Verify structure
+          echo "$OUTPUT" | jq -e '.matrix' > /dev/null || exit 1
+          echo "$OUTPUT" | jq -e '.matrix.include' > /dev/null || exit 1
+
+          # Verify size (2 OS * 2 versions = 4 combinations)
+          COUNT=$(echo "$OUTPUT" | jq '.matrix.include | length')
+          if [ "$COUNT" -ne 4 ]; then
+            echo "Error: Expected 4 combinations, got $COUNT"
+            exit 1
+          fi
+          echo "✓ Basic fixture validation passed"
+
+      - name: Generate matrix from excludes fixture
+        run: bun run src/generator.ts fixtures/with-excludes.json > /tmp/excludes-output.json
+        working-directory: ${{ github.workspace }}
+
+      - name: Validate excludes fixture output
+        run: |
+          OUTPUT=$(cat /tmp/excludes-output.json)
+          echo "Excludes matrix output:"
+          echo "$OUTPUT" | jq .
+
+          # Verify exclude rules are present
+          echo "$OUTPUT" | jq -e '.matrix.exclude' > /dev/null || exit 1
+
+          # Verify strategy configuration
+          FAIL_FAST=$(echo "$OUTPUT" | jq '.strategy."fail-fast"')
+          MAX_PARALLEL=$(echo "$OUTPUT" | jq '.strategy."max-parallel"')
+
+          if [ "$FAIL_FAST" != "false" ]; then
+            echo "Error: Expected fail-fast=false, got $FAIL_FAST"
+            exit 1
+          fi
+
+          if [ "$MAX_PARALLEL" -ne 3 ]; then
+            echo "Error: Expected max-parallel=3, got $MAX_PARALLEL"
+            exit 1
+          fi
+
+          # Verify size: 3 OS * 3 versions - 2 excludes = 7
+          COUNT=$(echo "$OUTPUT" | jq '.matrix.include | length')
+          if [ "$COUNT" -ne 7 ]; then
+            echo "Error: Expected 7 combinations, got $COUNT"
+            exit 1
+          fi
+          echo "✓ Excludes fixture validation passed"
+
+      - name: Generate matrix from complex fixture
+        run: bun run src/generator.ts fixtures/complex.json > /tmp/complex-output.json
+        working-directory: ${{ github.workspace }}
+
+      - name: Validate complex fixture output
+        run: |
+          OUTPUT=$(cat /tmp/complex-output.json)
+          echo "Complex matrix output:"
+          echo "$OUTPUT" | jq .
+
+          # Verify include rules are present
+          echo "$OUTPUT" | jq -e '.matrix.include' > /dev/null || exit 1
+
+          # Verify that custom include is present
+          SPECIAL=$(echo "$OUTPUT" | jq '.matrix.include[] | select(.special == true) | .os')
+          if [ "$SPECIAL" != '"macos-latest"' ]; then
+            echo "Error: Expected special include with macos-latest"
+            exit 1
+          fi
+
+          # Verify max-parallel is set
+          MAX_PARALLEL=$(echo "$OUTPUT" | jq '.strategy."max-parallel"')
+          if [ "$MAX_PARALLEL" -ne 4 ]; then
+            echo "Error: Expected max-parallel=4, got $MAX_PARALLEL"
+            exit 1
+          fi
+          echo "✓ Complex fixture validation passed"
+
+      - name: Test error handling - invalid fixture
+        run: |
+          # Create an invalid fixture (empty os)
+          echo '{"os": [], "nodeVersion": ["18"]}' > /tmp/invalid.json
+
+          if bun run src/generator.ts /tmp/invalid.json > /dev/null 2>&1; then
+            echo "Error: Expected script to fail with empty dimension"
+            exit 1
+          fi
+          echo "✓ Error handling validation passed"
+
+      - name: Test with custom dimensions
+        run: |
+          # Create a fixture with custom dimensions
+          echo '{
+            "os": ["ubuntu-latest"],
+            "pythonVersion": ["3.9", "3.10", "3.11"]
+          }' > /tmp/python.json
+
+          OUTPUT=$(bun run src/generator.ts /tmp/python.json)
+          COUNT=$(echo "$OUTPUT" | jq '.matrix.include | length')
+
+          if [ "$COUNT" -ne 3 ]; then
+            echo "Error: Expected 3 combinations with Python versions, got $COUNT"
+            exit 1
+          fi
+          echo "✓ Custom dimensions validation passed"
+
+  validate:
+    name: Validate workflow structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate workflow YAML structure
+        run: |
+          # Validate that workflow file exists and is valid YAML
+          if [ ! -f ".github/workflows/environment-matrix-generator.yml" ]; then
+            echo "Error: Workflow file not found"
+            exit 1
+          fi
+
+          # Check that workflow references correct script
+          if ! grep -q "src/generator.ts" .github/workflows/environment-matrix-generator.yml; then
+            echo "Error: Workflow doesn't reference src/generator.ts"
+            exit 1
+          fi
+
+          # Check that necessary fixtures are referenced
+          if ! grep -q "fixtures/basic.json" .github/workflows/environment-matrix-generator.yml; then
+            echo "Error: Workflow doesn't reference test fixtures"
+            exit 1
+          fi
+
+          echo "✓ Workflow structure validation passed"

@@ -1,0 +1,100 @@
+name: Build Matrix Generator Tests
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Build Matrix Generator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y jq bats
+
+      - name: Run shellcheck validation
+        run: |
+          apt-get install -y shellcheck
+          shellcheck src/matrix-generator.sh
+
+      - name: Run bash syntax check
+        run: |
+          bash -n src/matrix-generator.sh
+
+      - name: Run bats tests
+        run: |
+          bats tests/test_matrix_generator.bats
+
+      - name: Test matrix generation with minimal config
+        run: |
+          echo "=== Minimal Config Test ==="
+          src/matrix-generator.sh fixtures/minimal-config.json | jq .
+
+      - name: Test matrix generation with multi-os config
+        run: |
+          echo "=== Multi-OS Config Test ==="
+          src/matrix-generator.sh fixtures/multi-os-config.json | jq .
+
+      - name: Test matrix with max-parallel strategy
+        run: |
+          echo "=== Max-Parallel Strategy Test ==="
+          src/matrix-generator.sh fixtures/config-with-max-parallel.json | jq .
+
+      - name: Test matrix with includes
+        run: |
+          echo "=== Include Rules Test ==="
+          src/matrix-generator.sh fixtures/config-with-includes.json | jq .
+
+      - name: Test matrix with excludes
+        run: |
+          echo "=== Exclude Rules Test ==="
+          src/matrix-generator.sh fixtures/config-with-excludes.json | jq .
+
+      - name: Test matrix with fail-fast config
+        run: |
+          echo "=== Fail-Fast Config Test ==="
+          src/matrix-generator.sh fixtures/config-with-fail-fast.json | jq .
+
+      - name: Test error handling with invalid JSON
+        run: |
+          echo "=== Invalid JSON Test ==="
+          if src/matrix-generator.sh fixtures/invalid.json; then
+            echo "ERROR: Should have failed with invalid JSON"
+            exit 1
+          else
+            echo "✓ Correctly rejected invalid JSON"
+          fi
+
+      - name: Test matrix size validation
+        run: |
+          echo "=== Matrix Size Validation Test ==="
+          src/matrix-generator.sh fixtures/large-config.json | jq .
+
+  actionlint:
+    name: Validate Workflow Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run actionlint
+        run: |
+          bash -c 'curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- latest /tmp'
+          /tmp/actionlint .github/workflows/environment-matrix-generator.yml

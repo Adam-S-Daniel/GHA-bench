@@ -1,0 +1,117 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TEST_FIXTURE_DIR: test-fixtures
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install bats-core
+        run: |
+          apt-get update
+          apt-get install -y bats
+
+      - name: Install shellcheck
+        run: apt-get install -y shellcheck
+
+      - name: Validate script syntax
+        run: bash -n semver-bumper.sh
+
+      - name: Run shellcheck
+        run: shellcheck semver-bumper.sh
+
+      - name: Run bats tests
+        run: bats tests/version_bumper.bats
+
+  demo:
+    name: Demo Semantic Version Bumping
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create demo project
+        run: |
+          mkdir -p demo-project
+          cd demo-project
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          echo '{"name": "demo", "version": "1.0.0"}' > package.json
+          git add package.json
+          git commit -m "Initial commit"
+
+      - name: Add feature commit
+        working-directory: demo-project
+        run: |
+          echo "feature code" > feature.js
+          git add feature.js
+          git commit -m "feat: add new dashboard feature"
+
+      - name: Add fix commit
+        working-directory: demo-project
+        run: |
+          echo "fix code" > fix.js
+          git add fix.js
+          git commit -m "fix: handle edge case in validator"
+
+      - name: Parse current version
+        working-directory: demo-project
+        run: |
+          VERSION=$(bash ../semver-bumper.sh parse-version)
+          echo "Current version: ${VERSION}"
+          echo "CURRENT_VERSION=${VERSION}" >> "$GITHUB_ENV"
+
+      - name: Calculate next version
+        working-directory: demo-project
+        run: |
+          NEXT_VERSION=$(bash ../semver-bumper.sh calculate-next-version "${{ env.CURRENT_VERSION }}")
+          echo "Next version: ${NEXT_VERSION}"
+          echo "NEXT_VERSION=${NEXT_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Update version files
+        working-directory: demo-project
+        run: |
+          bash ../semver-bumper.sh update-version package.json "${{ env.NEXT_VERSION }}"
+          echo "Updated package.json version to ${{ env.NEXT_VERSION }}"
+
+      - name: Generate changelog
+        working-directory: demo-project
+        run: |
+          bash ../semver-bumper.sh generate-changelog "${{ env.CURRENT_VERSION }}" "${{ env.NEXT_VERSION }}" > CHANGELOG_ENTRY.md
+          echo "=== Generated Changelog ==="
+          cat CHANGELOG_ENTRY.md
+
+      - name: Verify version update
+        working-directory: demo-project
+        run: |
+          grep -q '"version": "${{ env.NEXT_VERSION }}"' package.json
+          echo "✓ Version successfully updated to ${{ env.NEXT_VERSION }}"
+
+      - name: Output results
+        if: always()
+        working-directory: demo-project
+        run: |
+          echo "=== Final State ==="
+          echo "Current version: ${{ env.CURRENT_VERSION }}"
+          echo "Next version: ${{ env.NEXT_VERSION }}"
+          cat package.json

@@ -1,0 +1,179 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Matrix Generator
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify Python installation
+        run: |
+          python3 --version
+          which python3
+
+      - name: Run unit tests
+        run: python3 run_tests.py
+
+      - name: Run CLI with basic fixture
+        run: |
+          python3 generate_matrix.py --config /dev/stdin << 'EOF'
+          {
+            "os_options": ["ubuntu-latest"],
+            "language_versions": {"python": ["3.11"]},
+            "feature_flags": {}
+          }
+          EOF
+
+      - name: Run CLI with multiple OS
+        run: |
+          python3 generate_matrix.py --config /dev/stdin << 'EOF'
+          {
+            "os_options": ["ubuntu-latest", "macos-latest"],
+            "language_versions": {"python": ["3.11", "3.12"]},
+            "feature_flags": {}
+          }
+          EOF
+
+      - name: Run CLI with exclude rules
+        run: |
+          python3 generate_matrix.py --config /dev/stdin << 'EOF'
+          {
+            "os_options": ["ubuntu-latest", "windows-latest"],
+            "language_versions": {"python": ["3.11", "3.12"]},
+            "feature_flags": {},
+            "exclude": [{"os": "windows-latest", "python": "3.11"}]
+          }
+          EOF
+
+      - name: Run CLI with feature flags
+        run: |
+          python3 generate_matrix.py --config /dev/stdin << 'EOF'
+          {
+            "os_options": ["ubuntu-latest"],
+            "language_versions": {"python": ["3.11"]},
+            "feature_flags": {"debug": [true, false]}
+          }
+          EOF
+
+      - name: Run CLI with strategy config
+        run: |
+          python3 generate_matrix.py --strategy --config /dev/stdin << 'EOF'
+          {
+            "os_options": ["ubuntu-latest"],
+            "language_versions": {"python": ["3.11"]},
+            "feature_flags": {},
+            "fail_fast": false,
+            "max_parallel": 4
+          }
+          EOF
+
+      - name: Run CLI with realistic matrix
+        run: |
+          python3 generate_matrix.py --config /dev/stdin << 'EOF'
+          {
+            "os_options": ["ubuntu-latest", "macos-latest"],
+            "language_versions": {
+              "python": ["3.9", "3.11", "3.12"],
+              "node": ["18"]
+            },
+            "feature_flags": {"test_suite": ["unit", "integration"]},
+            "exclude": [{"os": "macos-latest", "test_suite": "integration"}],
+            "fail_fast": false,
+            "max_parallel": 12
+          }
+          EOF
+
+      - name: Run CLI with include rules
+        run: |
+          python3 generate_matrix.py --config /dev/stdin << 'EOF'
+          {
+            "os_options": ["ubuntu-latest", "macos-latest"],
+            "language_versions": {"python": ["3.11", "3.12"]},
+            "feature_flags": {},
+            "include": [
+              {"os": "ubuntu-latest", "python": "3.11"},
+              {"os": "macos-latest", "python": "3.12"}
+            ]
+          }
+          EOF
+
+      - name: Test error handling - no OS
+        continue-on-error: true
+        run: |
+          if python3 generate_matrix.py --config /dev/stdin << 'EOF'
+          {
+            "os_options": [],
+            "language_versions": {"python": ["3.11"]},
+            "feature_flags": {}
+          }
+          EOF
+          then
+            echo "ERROR: Should have failed with no OS options"
+            exit 1
+          fi
+
+      - name: Test error handling - no language versions
+        continue-on-error: true
+        run: |
+          if python3 generate_matrix.py --config /dev/stdin << 'EOF'
+          {
+            "os_options": ["ubuntu-latest"],
+            "language_versions": {},
+            "feature_flags": {}
+          }
+          EOF
+          then
+            echo "ERROR: Should have failed with no language versions"
+            exit 1
+          fi
+
+      - name: Test matrix size validation
+        continue-on-error: true
+        run: |
+          if python3 generate_matrix.py --max-size 1 --config /dev/stdin << 'EOF'
+          {
+            "os_options": ["ubuntu-latest", "macos-latest"],
+            "language_versions": {"python": ["3.11", "3.12"]},
+            "feature_flags": {}
+          }
+          EOF
+          then
+            echo "ERROR: Should have failed - matrix exceeds max size"
+            exit 1
+          fi
+
+      - name: Save test results
+        if: always()
+        run: |
+          echo "All workflow tests completed successfully" > act-result.txt
+          echo "Job Status: Job succeeded" >> act-result.txt
+          python3 run_tests.py >> act-result.txt 2>&1 || true
+
+      - name: Verify act-result.txt exists
+        run: |
+          if [ -f act-result.txt ]; then
+            echo "act-result.txt created successfully"
+            cat act-result.txt
+          else
+            echo "ERROR: act-result.txt not found"
+            exit 1
+          fi

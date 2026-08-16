@@ -1,0 +1,93 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bump-version:
+    name: Bump Semantic Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Determine version bump
+        id: version
+        run: |
+          node bump-version.js package.json HEAD~10..HEAD > version-output.txt 2>&1
+          cat version-output.txt
+
+      - name: Display results
+        if: always()
+        run: |
+          echo "=== Version Bump Results ==="
+          if [ -f version-output.txt ]; then
+            cat version-output.txt
+          else
+            echo "No output file generated"
+          fi
+
+      - name: Check version file
+        run: |
+          echo "=== Current package.json ==="
+          head -10 package.json
+
+  workflow-validation:
+    name: Validate Workflow Structure
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check workflow files exist
+        run: |
+          test -f .github/workflows/semantic-version-bumper.yml || exit 1
+          echo "✓ Workflow file exists"
+
+      - name: Check version bumper script exists
+        run: |
+          test -f bump-version.js || exit 1
+          test -f version-bumper.js || exit 1
+          echo "✓ Script files exist"
+
+      - name: Check package.json exists
+        run: |
+          test -f package.json || exit 1
+          echo "✓ package.json exists"
+
+      - name: Validate workflow syntax
+        run: |
+          if command -v actionlint &> /dev/null; then
+            actionlint .github/workflows/semantic-version-bumper.yml || exit 1
+            echo "✓ Workflow passed actionlint validation"
+          else
+            echo "⚠ actionlint not available, skipping validation"
+          fi

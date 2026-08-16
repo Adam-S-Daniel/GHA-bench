@@ -1,0 +1,202 @@
+name: Environment Matrix Generator Tests
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - 'src/**'
+      - 'Tests/**'
+      - '.github/workflows/environment-matrix-generator.yml'
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - 'src/**'
+      - 'Tests/**'
+      - '.github/workflows/environment-matrix-generator.yml'
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Matrix Generator
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test-case: "basic-matrix"
+          - test-case: "include-exclude"
+          - test-case: "features-flags"
+          - test-case: "size-validation"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          # Install Pester if needed (already in pwsh container)
+          if (-not (Get-Module -ListAvailable Pester)) {
+            Install-Module -Name Pester -Force -SkipPublisherCheck
+          }
+
+          # Run tests with verbose output
+          $result = Invoke-Pester -Path "Tests/New-EnvironmentMatrix.Tests.ps1" -PassThru
+
+          # Exit with error code if tests failed
+          if ($result.FailedCount -gt 0) {
+            Write-Error "Pester tests failed: $($result.FailedCount) failures"
+            exit 1
+          }
+
+          Write-Output "All tests passed: $($result.PassedCount) tests"
+
+  integration-test:
+    name: Integration Test - Matrix Generation
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test basic matrix generation
+        shell: pwsh
+        run: |
+          . ./src/New-EnvironmentMatrix.ps1
+
+          # Test case 1: Basic 2x2 matrix
+          $config = @{
+              os = @("ubuntu-latest", "windows-latest")
+              language = @("3.10", "3.11")
+          }
+
+          $matrix = New-EnvironmentMatrix -Config $config
+          Write-Output "Generated matrix with $($matrix.include.Count) combinations"
+
+          if ($matrix.include.Count -ne 4) {
+              throw "Expected 4 combinations, got $($matrix.include.Count)"
+          }
+
+          # Test case 2: JSON output
+          $jsonMatrix = New-EnvironmentMatrix -Config $config -AsJson
+          $parsed = $jsonMatrix | ConvertFrom-Json
+          Write-Output "JSON output validated: $($parsed.include.Count) combinations"
+
+          # Test case 3: With include rules
+          $config2 = @{
+              os = @("ubuntu-latest")
+              language = @("3.10")
+              include = @(
+                  @{ os = "macos-latest"; language = "3.9" }
+              )
+          }
+
+          $matrix2 = New-EnvironmentMatrix -Config $config2
+          if ($matrix2.include.Count -ne 2) {
+              throw "Expected 2 combinations with include, got $($matrix2.include.Count)"
+          }
+
+          # Test case 4: With exclude rules
+          $config3 = @{
+              os = @("ubuntu-latest", "windows-latest")
+              language = @("3.10", "3.11")
+              exclude = @(
+                  @{ os = "windows-latest"; language = "3.10" }
+              )
+          }
+
+          $matrix3 = New-EnvironmentMatrix -Config $config3
+          if ($matrix3.include.Count -ne 3) {
+              throw "Expected 3 combinations after exclusion, got $($matrix3.include.Count)"
+          }
+
+          Write-Output "Integration tests passed"
+
+      - name: Test max-parallel and fail-fast
+        shell: pwsh
+        run: |
+          . ./src/New-EnvironmentMatrix.ps1
+
+          $config = @{
+              os = @("ubuntu-latest")
+              language = @("3.10")
+              maxParallel = 5
+              failFast = $true
+          }
+
+          $matrix = New-EnvironmentMatrix -Config $config
+
+          if ($matrix.'max-parallel' -ne 5) {
+              throw "max-parallel not set correctly"
+          }
+
+          if ($matrix.'fail-fast' -ne $true) {
+              throw "fail-fast not set correctly"
+          }
+
+          Write-Output "Settings validation passed"
+
+      - name: Test matrix size validation
+        shell: pwsh
+        run: |
+          . ./src/New-EnvironmentMatrix.ps1
+
+          # This should succeed (within limit)
+          $config = @{
+              os = @("ubuntu-latest", "windows-latest")
+              language = @("3.10", "3.11")
+              maxSize = 10
+          }
+
+          $matrix = New-EnvironmentMatrix -Config $config
+          Write-Output "Matrix within size limit: $($matrix.include.Count) combinations"
+
+          # This should fail (exceeds limit)
+          $config2 = @{
+              os = @("ubuntu-latest", "windows-latest", "macos-latest")
+              language = @("3.10", "3.11", "3.12", "3.9", "3.8", "3.7", "3.6")
+              maxSize = 10
+          }
+
+          try {
+              $matrix2 = New-EnvironmentMatrix -Config $config2
+              throw "Should have raised an error for exceeding maxSize"
+          } catch {
+              if ($_ -match "exceeds maximum") {
+                  Write-Output "Size validation working correctly"
+              } else {
+                  throw $_
+              }
+          }
+
+      - name: Test feature flags
+        shell: pwsh
+        run: |
+          . ./src/New-EnvironmentMatrix.ps1
+
+          $config = @{
+              os = @("ubuntu-latest")
+              language = @("3.10")
+              features = @("flag1", "flag2")
+          }
+
+          $matrix = New-EnvironmentMatrix -Config $config
+
+          $features = $matrix.include[0].features
+          if ($features -ne "flag1,flag2") {
+              throw "Features not set correctly: $features"
+          }
+
+          Write-Output "Feature flags test passed"

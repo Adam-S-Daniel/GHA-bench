@@ -1,0 +1,115 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (no actual changes)'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          $testResults = Invoke-Pester -Path tests/semver-bumper.Tests.ps1 -PassThru
+          if ($testResults.FailedCount -gt 0) {
+            Write-Error "Tests failed: $($testResults.FailedCount) failures"
+            exit 1
+          }
+          Write-Host "All $($testResults.PassedCount) tests passed"
+
+  bump-version:
+    name: Bump Semantic Version
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up git config
+        shell: pwsh
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Run semantic version bump
+        id: semver
+        shell: pwsh
+        run: |
+          & ./src/run-semantic-bump.ps1 -VersionFilePath package.json -ChangelogFilePath CHANGELOG.md
+
+      - name: Display results
+        shell: pwsh
+        run: |
+          Write-Host "Current version: ${{ steps.semver.outputs.current_version }}"
+          Write-Host "Next version: ${{ steps.semver.outputs.next_version }}"
+
+  workflow-validation:
+    name: Validate Workflow Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate workflow YAML
+        shell: pwsh
+        run: |
+          $workflowPath = ".github/workflows/semantic-version-bumper.yml"
+          if (-not (Test-Path $workflowPath)) {
+            Write-Error "Workflow file not found: $workflowPath"
+            exit 1
+          }
+          Write-Host "Workflow file exists: $workflowPath"
+
+      - name: Check script references
+        shell: pwsh
+        run: |
+          $scripts = @(
+            "src/semver-bumper.ps1",
+            "src/run-semantic-bump.ps1"
+          )
+          foreach ($script in $scripts) {
+            if (-not (Test-Path $script)) {
+              Write-Error "Script not found: $script"
+              exit 1
+            }
+            Write-Host "Script exists: $script"
+          }
+
+      - name: Verify test fixtures
+        shell: pwsh
+        run: |
+          $fixtures = @(
+            "fixtures/test-cases.ps1"
+          )
+          foreach ($fixture in $fixtures) {
+            if (-not (Test-Path $fixture)) {
+              Write-Error "Fixture not found: $fixture"
+              exit 1
+            }
+            Write-Host "Fixture exists: $fixture"
+          }

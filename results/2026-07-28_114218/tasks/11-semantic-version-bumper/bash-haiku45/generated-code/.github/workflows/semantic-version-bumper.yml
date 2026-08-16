@@ -1,0 +1,174 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      version_file:
+        description: 'Version file to update (package.json or version.txt)'
+        required: false
+        default: 'package.json'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run semantic version bumper tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          npm install -g bats
+          apt-get update && apt-get install -y shellcheck
+
+      - name: Validate script syntax
+        run: |
+          bash -n semantic_version_bumper.sh
+          shellcheck semantic_version_bumper.sh || exit 1
+
+      - name: Run unit tests with bats
+        run: |
+          bats test_semantic_version_bumper.bats
+
+      - name: Create test fixtures directory
+        run: mkdir -p test-fixtures
+
+      - name: Setup patch bump fixture
+        run: |
+          mkdir -p test-fixtures/patch-bump
+          cd test-fixtures/patch-bump
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          echo '{"version": "1.0.0"}' > package.json
+          git add package.json
+          git commit -m "initial: setup version"
+          git tag v1.0.0
+          git commit --allow-empty -m "fix: resolve critical bug"
+
+      - name: Setup minor bump fixture
+        run: |
+          mkdir -p test-fixtures/minor-bump
+          cd test-fixtures/minor-bump
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          echo '{"version": "2.0.0"}' > package.json
+          git add package.json
+          git commit -m "initial: setup version"
+          git tag v2.0.0
+          git commit --allow-empty -m "feat: add user authentication"
+
+      - name: Setup major bump fixture
+        run: |
+          mkdir -p test-fixtures/major-bump
+          cd test-fixtures/major-bump
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          echo '{"version": "1.5.0"}' > package.json
+          git add package.json
+          git commit -m "initial: setup version"
+          git tag v1.5.0
+          git commit --allow-empty -m "refactor: redesign API"
+          git commit --allow-empty -m "BREAKING CHANGE: old API endpoints removed"
+
+      - name: Test patch bump scenario
+        run: |
+          cd test-fixtures/patch-bump
+          result=$(/bin/bash ../../semantic_version_bumper.sh package.json | head -1)
+          echo "Patch bump result: $result"
+          if [ "$result" != "1.0.1" ]; then
+            echo "FAIL: Expected 1.0.1, got $result"
+            exit 1
+          fi
+          echo "PASS: Patch bump test"
+
+      - name: Test minor bump scenario
+        run: |
+          cd test-fixtures/minor-bump
+          result=$(/bin/bash ../../semantic_version_bumper.sh package.json | head -1)
+          echo "Minor bump result: $result"
+          if [ "$result" != "2.1.0" ]; then
+            echo "FAIL: Expected 2.1.0, got $result"
+            exit 1
+          fi
+          echo "PASS: Minor bump test"
+
+      - name: Test major bump scenario
+        run: |
+          cd test-fixtures/major-bump
+          result=$(/bin/bash ../../semantic_version_bumper.sh package.json | head -1)
+          echo "Major bump result: $result"
+          if [ "$result" != "2.0.0" ]; then
+            echo "FAIL: Expected 2.0.0, got $result"
+            exit 1
+          fi
+          echo "PASS: Major bump test"
+
+      - name: Test version.txt file format
+        run: |
+          mkdir -p test-fixtures/version-txt
+          cd test-fixtures/version-txt
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          echo "3.2.1" > version.txt
+          git add version.txt
+          git commit -m "initial: setup version"
+          git tag v3.2.1
+          git commit --allow-empty -m "fix: update dependencies"
+
+          result=$(/bin/bash ../../semantic_version_bumper.sh version.txt | head -1)
+          echo "Version.txt bump result: $result"
+          if [ "$result" != "3.2.2" ]; then
+            echo "FAIL: Expected 3.2.2, got $result"
+            exit 1
+          fi
+          echo "PASS: Version.txt format test"
+
+      - name: Test changelog generation
+        run: |
+          mkdir -p test-fixtures/changelog
+          cd test-fixtures/changelog
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          echo '{"version": "1.0.0"}' > package.json
+          git add package.json
+          git commit -m "initial: setup"
+          git tag v1.0.0
+          git commit --allow-empty -m "feat: add login feature"
+          git commit --allow-empty -m "fix: resolve session timeout"
+
+          output=$(/bin/bash ../../semantic_version_bumper.sh package.json)
+          if ! echo "$output" | grep -q "add login feature"; then
+            echo "FAIL: Changelog missing feature"
+            exit 1
+          fi
+          if ! echo "$output" | grep -q "resolve session timeout"; then
+            echo "FAIL: Changelog missing fix"
+            exit 1
+          fi
+          echo "PASS: Changelog generation test"
+
+      - name: Print summary
+        if: always()
+        run: |
+          echo "=== Test Summary ==="
+          echo "Job Status: SUCCESS"
+          echo "All tests passed"

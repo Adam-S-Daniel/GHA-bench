@@ -1,0 +1,116 @@
+name: Semantic Version Bumper
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-bump:
+    name: Test and Bump Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PowerShell
+        shell: pwsh
+        run: |
+          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
+          Write-Host "Pester version: $(Get-Module -Name Pester -ListAvailable | Select-Object -ExpandProperty Version)"
+
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          $result = Invoke-Pester -Path ./Semantic-Version-Bumper.Tests.ps1 -PassThru
+          if ($result.FailedCount -gt 0) {
+            Write-Error "Tests failed: $($result.FailedCount) failures"
+            exit 1
+          }
+          Write-Output "All tests passed: $($result.PassedCount) tests"
+
+      - name: Create test fixtures for workflow test
+        shell: pwsh
+        run: |
+          # Create a sample package.json
+          $packageJson = @{
+              version = "1.0.0"
+              name = "semantic-version-bumper"
+              description = "PowerShell semantic version bumper"
+          } | ConvertTo-Json
+          Set-Content -Path ./package.json -Value $packageJson -Encoding UTF8
+
+          # Create sample commit log with conventional commits
+          $commits = @(
+              "feat: add new dashboard widget",
+              "fix: resolve memory leak in version parser",
+              "docs: update README with examples"
+          ) -join "`n"
+          Set-Content -Path ./commits.log -Value $commits -Encoding UTF8
+          Write-Output "Test fixtures created"
+          Get-Content ./package.json
+          Get-Content ./commits.log
+
+      - name: Run semantic version bump
+        shell: pwsh
+        run: |
+          . ./Semantic-Version-Bumper.ps1
+          $result = Invoke-SemanticVersionBump -VersionFilePath ./package.json -CommitLogPath ./commits.log
+          Write-Output "Old Version: $($result.OldVersion)"
+          Write-Output "New Version: $($result.NewVersion)"
+          Write-Output "Bump Type: $($result.BumpType)"
+          Write-Output "Changelog:"
+          Write-Output $result.Changelog
+
+          # Verify the bump was correct
+          if ($result.NewVersion -ne "1.1.0") {
+            Write-Error "Expected version 1.1.0 but got $($result.NewVersion)"
+            exit 1
+          }
+          if ($result.BumpType -ne "minor") {
+            Write-Error "Expected bump type 'minor' but got $($result.BumpType)"
+            exit 1
+          }
+          Write-Output "Version bump verification passed"
+
+      - name: Verify updated version file
+        shell: pwsh
+        run: |
+          $content = Get-Content -Path ./package.json | ConvertFrom-Json
+          Write-Output "Version in package.json: $($content.version)"
+          if ($content.version -ne "1.1.0") {
+            Write-Error "Expected version 1.1.0 in package.json but got $($content.version)"
+            exit 1
+          }
+          Write-Output "Version file verification passed"
+
+      - name: Save workflow test results
+        if: always()
+        shell: pwsh
+        run: |
+          @{
+              timestamp = Get-Date -Format 'o'
+              status = "workflow-test-completed"
+              package_version = (Get-Content -Path ./package.json | ConvertFrom-Json).version
+          } | ConvertTo-Json | Set-Content -Path ./workflow-result.json
+          Get-Content ./workflow-result.json
+
+  actionlint:
+    name: Validate Workflow YAML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate workflow syntax with actionlint
+        run: |
+          # Install actionlint
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          # Validate this workflow file
+          ./actionlint -color .github/workflows/semantic-version-bumper.yml

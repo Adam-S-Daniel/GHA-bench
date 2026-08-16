@@ -1,0 +1,226 @@
+name: Environment Matrix Generator
+
+on:
+  push:
+    paths:
+      - '.github/workflows/environment-matrix-generator.yml'
+      - 'matrix_generator.py'
+      - 'test_matrix_generator.py'
+  pull_request:
+    paths:
+      - '.github/workflows/environment-matrix-generator.yml'
+      - 'matrix_generator.py'
+      - 'test_matrix_generator.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test_and_generate:
+    name: Test and Generate Matrix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --break-system-packages pytest
+          echo "✓ Dependencies installed"
+
+      - name: Run unit tests
+        run: |
+          python3 -m pytest test_matrix_generator.py -v --tb=short
+          echo "✓ All tests passed"
+
+      - name: Test basic matrix generation
+        run: |
+          python3 -c "
+          from matrix_generator import MatrixConfig, generate_matrix
+          import json
+
+          config = MatrixConfig(
+            os_options=['ubuntu-latest', 'macos-latest'],
+            language_versions={'python': ['3.11', '3.12']},
+            feature_flags={'debug': False}
+          )
+          matrix = generate_matrix(config)
+          print('Generated matrix:')
+          print(json.dumps(matrix, indent=2))
+          assert len(matrix['include']) == 4
+          assert matrix['fail-fast'] is True
+          print('✓ Basic matrix test passed')
+          "
+
+      - name: Test matrix with constraints
+        run: |
+          python3 -c "
+          from matrix_generator import MatrixConfig, generate_matrix
+
+          config = MatrixConfig(
+            os_options=['ubuntu-latest', 'macos-latest', 'windows-latest'],
+            language_versions={'python': ['3.11', '3.12', '3.13']},
+            feature_flags={},
+            max_parallel=5,
+            fail_fast=False
+          )
+          matrix = generate_matrix(config)
+          print('Matrix with max_parallel=5:')
+          print(f'  Items: {len(matrix[\"include\"])}')
+          print(f'  Fail-fast: {matrix[\"fail-fast\"]}')
+          assert len(matrix['include']) <= 5
+          assert matrix['fail-fast'] is False
+          print('✓ Constraint test passed')
+          "
+
+      - name: Test matrix with exclude rules
+        run: |
+          python3 -c "
+          from matrix_generator import MatrixConfig, generate_matrix
+
+          config = MatrixConfig(
+            os_options=['ubuntu-latest', 'macos-latest'],
+            language_versions={'python': ['3.11', '3.12']},
+            feature_flags={},
+            exclude=[{'os': 'macos-latest', 'python': '3.12'}]
+          )
+          matrix = generate_matrix(config)
+          print('Matrix with exclusions:')
+          print(f'  Items: {len(matrix[\"include\"])}')
+          excluded = any(
+            item['os'] == 'macos-latest' and item['python'] == '3.12'
+            for item in matrix['include']
+          )
+          assert not excluded
+          assert len(matrix['include']) == 3
+          print('✓ Exclude rules test passed')
+          "
+
+      - name: Test matrix with include rules
+        run: |
+          python3 -c "
+          from matrix_generator import MatrixConfig, generate_matrix
+
+          config = MatrixConfig(
+            os_options=['ubuntu-latest'],
+            language_versions={'python': ['3.11']},
+            feature_flags={},
+            include=[
+              {'os': 'ubuntu-latest', 'python': '3.11', 'coverage': True}
+            ]
+          )
+          matrix = generate_matrix(config)
+          print('Matrix with includes:')
+          print(f'  Items: {len(matrix[\"include\"])}')
+          has_coverage = any(
+            item.get('coverage') is True
+            for item in matrix['include']
+          )
+          assert has_coverage
+          print('✓ Include rules test passed')
+          "
+
+      - name: Test error handling - empty config
+        run: |
+          python3 -c "
+          from matrix_generator import MatrixConfig, generate_matrix, MatrixGenerationError
+          import sys
+
+          try:
+            config = MatrixConfig(
+              os_options=[],
+              language_versions={},
+              feature_flags={}
+            )
+            generate_matrix(config)
+            print('✗ Should have raised an error')
+            sys.exit(1)
+          except MatrixGenerationError as e:
+            print(f'✓ Correctly caught error: {e}')
+          "
+
+      - name: Test error handling - matrix exceeds max size
+        run: |
+          python3 -c "
+          from matrix_generator import MatrixConfig, generate_matrix, MatrixGenerationError
+          import sys
+
+          try:
+            config = MatrixConfig(
+              os_options=['ubuntu-latest', 'macos-latest'],
+              language_versions={'python': ['3.11', '3.12', '3.13', '3.14']},
+              feature_flags={},
+              max_size=3
+            )
+            generate_matrix(config)
+            print('✗ Should have raised an error')
+            sys.exit(1)
+          except MatrixGenerationError as e:
+            print(f'✓ Correctly caught size error: {e}')
+          "
+
+      - name: Generate example matrix output
+        run: |
+          python3 -c "
+          from matrix_generator import MatrixConfig, generate_matrix
+          import json
+
+          config = MatrixConfig(
+            os_options=['ubuntu-latest', 'macos-latest'],
+            language_versions={
+              'python': ['3.11', '3.12'],
+              'node': ['18', '20']
+            },
+            feature_flags={'experimental': False},
+            exclude=[{'os': 'macos-latest', 'node': '18'}],
+            max_parallel=0,
+            fail_fast=False
+          )
+          matrix = generate_matrix(config)
+          print('Example matrix output:')
+          print(json.dumps(matrix, indent=2))
+          " > matrix_output.json
+
+      - name: Upload matrix output as artifact
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: matrix-output
+          path: matrix_output.json
+          retention-days: 30
+
+  verify_structure:
+    name: Verify Workflow Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify script files exist
+        run: |
+          test -f matrix_generator.py && echo "✓ matrix_generator.py exists" || exit 1
+          test -f test_matrix_generator.py && echo "✓ test_matrix_generator.py exists" || exit 1
+          echo "✓ All required files present"
+
+      - name: Validate YAML structure with basic syntax
+        run: |
+          # Use grep and basic bash to validate YAML structure
+          echo "Checking workflow YAML structure..."
+          grep -q "name: Environment Matrix Generator" .github/workflows/environment-matrix-generator.yml || exit 1
+          grep -q "jobs:" .github/workflows/environment-matrix-generator.yml || exit 1
+          grep -q "test_and_generate:" .github/workflows/environment-matrix-generator.yml || exit 1
+          grep -q "verify_structure:" .github/workflows/environment-matrix-generator.yml || exit 1
+          echo "✓ Workflow YAML structure is valid"
+
+      - name: Validate with actionlint
+        if: always()
+        continue-on-error: true
+        run: |
+          if command -v actionlint &> /dev/null; then
+            actionlint .github/workflows/environment-matrix-generator.yml
+            echo "✓ actionlint validation passed"
+          else
+            echo "ℹ actionlint not available in container; skipping"
+          fi

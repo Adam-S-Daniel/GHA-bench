@@ -307,6 +307,69 @@ Rationale: "mode" is ambiguous with agent-approval-modes and execution modes;
 - **Standard language set is `default,powershell,bash,typescript-bun` (4 modes).** Drop `powershell-tool`: under WSL it is functionally identical to `powershell` (same prompt body, same pwsh), so it adds a redundant cell per task without a distinct signal.
 - **Post a live status heartbeat during runs.** Roughly every 30 minutes while a run is in flight, relay the full `python3 monitor.py --total <N>` report (run-health + structural metrics + head-to-head) so progress, pace/ETA, and any emerging failures are visible without waiting for completion.
 
+## Running on Claude Code on the web
+
+The benchmark can run inside a Claude Code on the web cloud session instead of a
+laptop/WSL box. `./run-benchmark-web.sh [--setup-only] [runner.py args...]`
+provisions the sandbox and hands off to `runner.py`; it is idempotent, so
+re-running after a session restart only fixes what is missing.
+
+What is different from a laptop, and how each difference is handled:
+
+| Difference | Handling |
+|---|---|
+| Docker CLI present, **daemon not running** (no init system) — `act` and every v3+ task fail | `run-benchmark-web.sh` starts `dockerd` and waits for the socket |
+| Session runs as **root**, and `claude --dangerously-skip-permissions` refuses to start as root | `cell_env()` sets `IS_SANDBOX=1`. The sandbox already exports `IS_SANDBOX=yes`, which the CLI does **not** honour — only `"1"` works, so the value is forced, not defaulted |
+| All egress goes through a **TLS-terminating proxy**; containers trust neither its CA nor reach its 127.0.0.1 address | act's runner image is built on a base that installs the proxy CA; `~/.config/act/actrc` adds `--network host` plus the proxy env |
+| That proxy answers **plain HTTP with 405** | The CA base layer rewrites every apt source to `https://`, and the image build passes `https_proxy` only (never `http_proxy`) |
+| `api.github.com` is **blocked** by egress policy, so "latest release" installers fail | actionlint/shellcheck/act are pinned to exact release URLs at the top of the script |
+| act ≥ 0.2.8x **force-pulls** the runner image, which exists only locally | `--pull=false` in `~/.config/act/actrc` |
+| pwsh, Pester, act, actionlint, shellcheck, bats absent (node and bun are present) | installed by the script; pwsh comes from the Microsoft apt repo for the sandbox's own Ubuntu version |
+| runner.py is launched **from inside a Claude Code session**, so cells would inherit the parent's session env | `cell_env()` scrubs `INHERITED_SESSION_ENV_VARS` before each cell |
+| Sessions are **ephemeral** (reclaimed after inactivity) | `runner.py` already commits+pushes `results/` per completed cell; resume with `--resume <run-dir>` |
+
+The env scrub is load-bearing, not hygiene. An inherited `CLAUDE_EFFORT` /
+`MAX_THINKING_TOKENS` overrides the cell's own effort, `CLAUDE_CODE_SESSION_ID`
+stamps every cell with the parent's session id, `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`
+caps the cell's subagents, and the nested-session markers change the CLI's tool
+surface (measured: 40 tools unscrubbed vs 30 scrubbed).
+
+### What still does not work in a cloud session
+
+Two post-run steps are blocked by the sandbox's egress policy, not by the
+harness. Both are laptop-only for now; do not try to route around the policy.
+
+- **`version_docs.py`** builds each run's `claude-code-<version>.md` from a
+  tree listing at `api.github.com`, which the policy answers with 403 (the
+  `raw.githubusercontent.com` changelog fetch works fine). A cloud run's
+  results.md will link a per-version doc that does not exist until someone
+  regenerates from a laptop.
+- **The Gemini half of the judge panel.** `test_quality.py --llm-judge
+  --deliverable-judge` works with `--judges haiku45` (the `claude-cli`
+  provider), but the `agy` CLI behind `gemini31pro` is not installed in the
+  sandbox and `gemini-api` needs `GEMINI_API_KEY`. Score a cloud run with the
+  single-judge form, or run the panel later from a laptop.
+
+### Comparability caveats — do not pool cloud and laptop cells blindly
+
+`system_info.execution_environment` (`claude-code-web` vs `local`) is recorded in
+every run manifest, and each cell's `session.tools_available` now records the
+tool-surface *names* (not just the count). Before comparing a cloud run against a
+laptop baseline, check both:
+
+- **Tool surface.** Cloud cells run under the deferred-tool regime — `Glob`,
+  `Grep` and `TodoWrite` are behind `ToolSearch`, and cloud-only tools
+  (`Workflow`, `Task*`, `Cron*`, `SendUserFile`, …) are offered instead. That is
+  a different agent, not just a different machine.
+- **Machine size.** 4 CPUs / 15 GB and a shared writable disk allowance, versus
+  whatever the laptop had. Durations are not comparable; `act` container startup
+  in particular is disk-bound.
+- **Cost/wall-clock.** Unchanged per cell, but a cloud session is reclaimed after
+  inactivity, so long campaigns need the resume loop rather than one long run.
+
+Use cloud runs to compare *within* a cloud campaign (language A vs language B,
+model A vs model B), and treat cross-environment deltas as unvalidated.
+
 ## Architecture
 
 Key files, trap-detector patterns, and LLM-vs-structural discrepancy handling
@@ -425,7 +488,30 @@ See the docstring in `llm_providers.py` for a complete example skeleton.
 7. If you changed architecture or findings, update this file (`AGENTS.md`).
 8. If you added files or moved things, update the Files table in `README.md`.
 
-## Current state (2026-06-28)
+## Current state (2026-07-28)
+
+### Claude Code on the web — proved out, not a dataset (2026-07-28)
+
+`results/2026-07-28_114218/` was produced entirely inside a Claude Code on the
+web cloud session via `run-benchmark-web.sh`: haiku45 × 2 tasks (11, 16) × the
+standard 4 languages = 8 cells on CC 2.1.220. 8/8 succeeded, actionlint 8/8, an
+`act-result.txt` in 8/8, 0 permission denials, $4.55 and 58.5 min of agent time.
+It exists to prove the cloud path end to end — dockerd started by hand, act
+executing workflows in the custom pwsh/Pester image through the egress proxy,
+bun and pwsh cells passing, and the `--resume` loop skipping completed cells
+(tasks 11 and 16 were two separate invocations into one run dir).
+
+Against the matched laptop cells in `results/2026-05-06_173435/` (same tasks,
+languages and model) the aggregate is close — 58.5 min / $4.55 in the cloud vs
+58.6 min / $4.25 on the laptop — but that comparison is confounded by CC version
+(2.1.220 vs 2.1.131/132) on top of the environment, and n=8. It says "the cloud
+sandbox is not obviously slower", nothing stronger.
+
+Treat it as infrastructure validation, **not** a dataset: one model, two tasks,
+and the cloud tool surface described above. It is deliberately absent from the
+README's Benchmark Runs table and "Latest results" pointer, which stay on the
+last full campaign; regenerate them (`python3 generate_results.py --all`) only
+when a real cloud campaign lands.
 
 ### opus-4.8 (1M) campaign — COMPLETE; canonical dataset (2026-06)
 
