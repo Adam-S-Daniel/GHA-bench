@@ -1,1 +1,2 @@
-See [AGENTS.md](AGENTS.md) for all instructions, rules, and project context.
+<!-- Managed by _agent-guidance: bridges Claude Code (which reads CLAUDE.md) to AGENTS.md. -->
+@AGENTS.md
