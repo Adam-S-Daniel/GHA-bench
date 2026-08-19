@@ -445,6 +445,43 @@ Rationale: "mode" is ambiguous with agent-approval-modes and execution modes;
 - **Standard language set is `default,powershell,bash,typescript-bun` (4 modes).** Drop `powershell-tool`: under WSL it is functionally identical to `powershell` (same prompt body, same pwsh), so it adds a redundant cell per task without a distinct signal.
 - **Post a live status heartbeat during runs.** Roughly every 30 minutes while a run is in flight, relay the full `python3 monitor.py --total <N>` report (run-health + structural metrics + head-to-head) so progress, pace/ETA, and any emerging failures are visible without waiting for completion.
 
+## Never run the benchmark from an ephemeral session in this repo
+
+This repo carries a `skills.lock`, so the fleet's `skills-bootstrap`
+SessionStart hook installs the `adam` skill bundle into `$HOME/.claude/skills`
+at the start of every **ephemeral** session opened here (cloud/web session, CI
+runner, container). `runner.py` builds each cell's environment with
+`env = os.environ.copy()` and never overrides `HOME`, so a benchmark cell reads
+that same `$HOME/.claude/skills`. Anything the hook installed is therefore
+visible to the agent under measurement.
+
+That is fine today and is not a reason to drop the lock: benchmark runs happen
+on `ZENDA`, a durable machine, where the hook's surface guard makes it a no-op
+(`skills: skipped — durable session`) and nothing is installed. The hazard is
+specific and future-dated:
+
+- **Do not launch `runner.py` from a Claude Code cloud/web session, a GitHub
+  Actions runner, or any container whose session started in this repo.** The
+  hook will have fired first, and every cell in that run sees 8 skills that
+  cells in every archived run did not. The benchmark's whole value is
+  cross-run comparability (`combine_results.py` pools four campaigns), and an
+  uncontrolled skill set in `$HOME` is a silent between-run variable that no
+  `metrics.json` field records.
+- **This is the open design question in PR #44** ("Run the benchmark on Claude
+  Code on the web"), whose `cell_env()` already scrubs the launching session's
+  Claude environment — nested-session markers, `CLAUDE_CODE_SESSION_ID`,
+  effort variables — precisely because inheriting them changes what the agent
+  under test can do. `$HOME/.claude/skills` is the same class of leak and is
+  **not** currently scrubbed. If that PR proceeds, either point cells at an
+  isolated `HOME` or record the ambient `~/.claude/skills` listing into
+  `metrics.json` so a contaminated cell is identifiable after the fact. Do not
+  merge a cloud-run mode that leaves it unaddressed and unrecorded.
+
+The reason the lock stays anyway: the repo is also where ordinary maintenance
+sessions live — reports, judges, docs, CI — and those are the sessions the
+bundle exists to help. The instrument is protected by not running it from an
+ephemeral session, which was already true for other reasons.
+
 ## Architecture
 
 Key files, trap-detector patterns, and LLM-vs-structural discrepancy handling
