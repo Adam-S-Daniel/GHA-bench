@@ -1,5 +1,39 @@
 name: CI
 
+# PRECONDITION (repo-settings/fleet.yml) -- READ BEFORE ADDING A TRIGGER OR A
+# `concurrency` BLOCK BELOW.
+#
+# This workflow carries `workflow_dispatch:`, an event that can re-fire on a head SHA
+# that push/pull_request already covered. #53 landed that trigger on the argument that
+# `Adam-S-Daniel/GHA-bench` is listed in repo-settings' fleet.yml with NO `overrides`,
+# so it inherits `defaults.ruleset.required_status_checks: []`. That is true today. It
+# is also a fact about ANOTHER REPO'S config: a two-line `overrides:` block added there
+# changes it, and nothing in this repo watches that file or would notice. The sibling
+# entry `Adam-S-Daniel/agentskills` already carries exactly such an override
+# (`required_status_checks: ["pytest-windows"]`), so this is a routine edit, not a
+# hypothetical one.
+#
+# WHAT BREAKS ON THAT DAY: `CI / test` becomes a REQUIRED context produced by a
+# re-fireable event. GitHub then picks NON-DETERMINISTICALLY between a cancelled run and
+# a successful one for the same context + SHA, and when cancelled wins the merge API
+# returns `405 Required status check "CI / test" is cancelled` -- which nothing
+# overrides: not native auto-merge, not an explicit merge call, not a nudge bot. The PR
+# reads all-green and simply never lands. That future is anticipated in this very repo:
+# dependabot-auto-merge.yml's header says twice that its `--auto` attempt "starts working
+# for free the day this repo's ruleset grows a required check".
+#
+# WHAT KEEPS IT SAFE ANYWAY -- do not undo this: a same-SHA burst only leaves a cancelled
+# run behind when a `concurrency` group cancels one. This workflow declares NO
+# `concurrency` at workflow level and none on any job, so every duplicate runs to
+# completion and GitHub only ever has successes to choose from. That holds whether or not
+# a required check exists, which is why it -- and not the fleet.yml fact -- is what is
+# enforced. `cancel-in-progress: false` is NOT a substitute: GitHub still keeps only the
+# in-progress run plus the LATEST pending one and cancels the other duplicates.
+#
+# Locked by tests/test_ci_workflow.py, which parses this file (never line-scans it) and
+# asserts both the no-concurrency property and the exact trigger set named above, so a
+# new trigger cannot be added without someone landing back on this comment.
+
 on:
   push:
     branches: [main]
@@ -7,11 +41,9 @@ on:
     branches: [main]
   # Hand-trigger, so this lane can be re-verified without inventing a commit: with
   # only push/pull_request, confirming "does CI pass now?" after a fix requires
-  # pushing something, and there is not always something to push. Safe to add an
-  # event that can re-fire on a head SHA here because repo-settings' fleet.yml gives
-  # Adam-S-Daniel/GHA-bench no override and it inherits `required_status_checks: []`
-  # -- this job publishes no required context, so it cannot leave a cancelled run
-  # shadowing a success and hard-blocking the merge (the 405 "... is cancelled" trap).
+  # pushing something, and there is not always something to push. See the
+  # PRECONDITION block above for why an event that can re-fire on one SHA is safe
+  # here, and for what has to be re-checked if that ever stops being true.
   workflow_dispatch:
 
 jobs:
@@ -26,7 +58,12 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install pytest
+        # pyyaml is test-only: tests/test_ci_workflow.py PARSES this file to lock the
+        # no-`concurrency` invariant the PRECONDITION block above depends on, and a
+        # line scan reads clean on a key it cannot see. Dropping it here does not skip
+        # that guard -- the module raises at collection and this step's own lane goes
+        # red -- but restore the package rather than the guard.
+        run: pip install pytest pyyaml
 
       - name: Run unit tests
         run: python -m pytest tests/ -v
