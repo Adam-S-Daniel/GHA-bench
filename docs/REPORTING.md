@@ -62,9 +62,13 @@ hold — changes here have broken the generated markdown before, so
 not the combined cross-run report.** The merged max-effort Opus
 Conclusions call was dropped in `195502a2` (2026-04-24, "drop LLM
 Conclusions entirely (#12)") and
-`conclusions_report.generate_conclusions_from_inputs` now hard-codes
-`out["conclusions"] = None` and discards its `speed_cost_input`
-argument (`_ = speed_cost_input`, kept only for call-site compat).
+`conclusions_report.generate_conclusions_from_inputs` now initialises
+its return dict as `out: dict = {"conclusions": None,
+"judge_consistency_summary": None}` and never reassigns the
+`conclusions` key, and it discards its `speed_cost_input` argument
+(`_ = speed_cost_input`, kept only for call-site compat). There is no
+`out["conclusions"] = ...` statement anywhere to find and delete --
+the value comes from that dict literal.
 The one LLM call that survives is the Judge Consistency Summary.
 
 This paragraph used to say the block was combined-report-only, which
