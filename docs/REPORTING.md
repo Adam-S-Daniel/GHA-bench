@@ -83,9 +83,12 @@ Re-enabling it is therefore NOT a matter of passing
 `speed_cost_input` from a call site — the prompt dispatch itself has
 to come back in `conclusions_report.py`. Budget for it: the retired
 call ran at `SUMMARY_MODEL`/`SUMMARY_EFFORT` (max-effort Opus), on
-the order of $1 per regeneration. `tests/test_conclusions_report.py`
-pins the current behaviour, so a re-enable will fail that test until
-this section is updated with it.
+the order of $1 per regeneration — an estimate inherited from the
+prose this section corrects, not a measured cost. The only hard
+figure in code is the per-call ceiling `SUMMARY_MAX_BUDGET_USD =
+5.00`. `tests/test_conclusions_report.py` pins the current
+behaviour, so a re-enable will fail that test until this section is
+updated with it.
 
 ### Judge rationale audit (`judge_audit.py`)
 

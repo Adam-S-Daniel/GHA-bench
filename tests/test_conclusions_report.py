@@ -21,6 +21,28 @@ import conclusions_report
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
+def _if_body_lines(fn: ast.AST) -> set[int]:
+    """Line numbers sitting in the BODY of some `if` within `fn`.
+
+    Deliberately ignores `.orelse`. An `else:` branch hanging off
+    `if <conclusions entry>:` runs precisely when that entry is falsy, which
+    is the render-it-anyway bug this detector exists to catch -- so counting
+    `.orelse` as "guarded" would green-light exactly the wrong shape. Telling
+    a safe `else:` from an unsafe one needs the guard condition's polarity,
+    not just the append's position, which is dataflow analysis this pin does
+    not need. The detector therefore stays narrow: an `else:` append trips it,
+    and a human looks at the inverted guard. That is the intended outcome.
+    """
+    lines: set[int] = set()
+    for node in ast.walk(fn):
+        if isinstance(node, ast.If):
+            for stmt in node.body:
+                for inner in ast.walk(stmt):
+                    if hasattr(inner, "lineno"):
+                        lines.add(inner.lineno)
+    return lines
+
+
 class TestConclusionsDisabled:
     """`conclusions` is always None, whatever the caller passes."""
 
@@ -96,22 +118,20 @@ class TestReportsCarryNoConclusionsHeading:
     )
     def test_conclusions_block_is_guarded_by_a_falsy_entry(self, module_name, builder):
         """Both generators still carry the dead `## Conclusions` scaffolding.
-        Parse the builder's AST (never a regex over source) and assert the
-        heading is only ever appended inside an `if`, so a None entry from
-        `generate_conclusions_from_inputs` renders nothing."""
+        Parse the builder's AST (never a regex over source) and assert every
+        `## Conclusions` literal sits in the BODY of an `if` -- the positive-
+        guard shape both generators use today, under which a None entry from
+        `generate_conclusions_from_inputs` renders nothing.
+
+        This asserts POSITION only. It does not check that the guard's
+        condition is the conclusions entry, and it deliberately does not
+        accept an `else:` branch -- see `_if_body_lines`."""
         tree = ast.parse((REPO_ROOT / f"{module_name}.py").read_text(encoding="utf-8"))
         fn = next(n for n in ast.walk(tree)
                   if isinstance(n, ast.FunctionDef) and n.name == builder)
 
-        # Collect every `## Conclusions` string literal and the set of line
-        # numbers that sit inside some `if` body within this builder.
-        guarded_lines: set[int] = set()
-        for node in ast.walk(fn):
-            if isinstance(node, ast.If):
-                for stmt in node.body:
-                    for inner in ast.walk(stmt):
-                        if hasattr(inner, "lineno"):
-                            guarded_lines.add(inner.lineno)
+        # Line numbers sitting in some `if` body within this builder.
+        guarded_lines = _if_body_lines(fn)
 
         heading_lines = [
             node.lineno for node in ast.walk(fn)
@@ -125,6 +145,68 @@ class TestReportsCarryNoConclusionsHeading:
             "paragraph in docs/REPORTING.md together."
         )
         assert all(ln in guarded_lines for ln in heading_lines), (
-            f"{module_name}.{builder} appends '## Conclusions' unconditionally; "
-            "it must stay behind a truthiness check on the (always-None) entry."
+            f"{module_name}.{builder} appends '## Conclusions' outside an `if` "
+            "body; it must stay behind a truthiness check on the (always-None) "
+            "entry. An `else:` branch also trips this on purpose -- it would "
+            "render the heading exactly when the entry is falsy. If you moved "
+            "the append deliberately, re-read `_if_body_lines` before relaxing "
+            "this."
         )
+
+
+class TestGuardDetectorScope:
+    """Pins exactly what `_if_body_lines` counts.
+
+    `test_conclusions_block_is_guarded_by_a_falsy_entry` reads narrowly on
+    purpose: it accepts an append in an `if` body and nothing else. These
+    tests fix that boundary against synthetic sources, so a later "the
+    docstring says guarded, `else:` is guarded too" change has to delete an
+    explicit assertion rather than quietly widen a walk.
+    """
+
+    @staticmethod
+    def _fn(src: str) -> ast.AST:
+        return next(n for n in ast.walk(ast.parse(src))
+                    if isinstance(n, ast.FunctionDef))
+
+    @staticmethod
+    def _heading_lines(fn: ast.AST) -> set[int]:
+        return {n.lineno for n in ast.walk(fn)
+                if isinstance(n, ast.Constant)
+                and isinstance(n.value, str)
+                and n.value.strip() == "## Conclusions"}
+
+    def test_append_in_an_if_body_counts_as_guarded(self):
+        """The shape both generators actually use today."""
+        fn = self._fn(
+            "def build(conclusions, lines):\n"
+            "    if conclusions:\n"
+            "        lines.append('## Conclusions')\n"
+        )
+        headings = self._heading_lines(fn)
+        assert headings
+        assert headings <= _if_body_lines(fn)
+
+    def test_append_in_an_else_branch_does_not_count_as_guarded(self):
+        """An `else:` off `if conclusions:` emits the heading precisely when
+        the entry is falsy -- i.e. always, today. The detector must not bless
+        it, even though the append is lexically inside an `if` statement."""
+        fn = self._fn(
+            "def build(conclusions, lines):\n"
+            "    if conclusions:\n"
+            "        pass\n"
+            "    else:\n"
+            "        lines.append('## Conclusions')\n"
+        )
+        headings = self._heading_lines(fn)
+        assert headings
+        assert not (headings & _if_body_lines(fn))
+
+    def test_unconditional_append_does_not_count_as_guarded(self):
+        fn = self._fn(
+            "def build(conclusions, lines):\n"
+            "    lines.append('## Conclusions')\n"
+        )
+        headings = self._heading_lines(fn)
+        assert headings
+        assert not (headings & _if_body_lines(fn))
