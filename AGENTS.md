@@ -666,11 +666,13 @@ rows, the CLI Version Legend schema, section order, the quality-score lookup
 key) → read [`docs/REPORTING.md`](docs/REPORTING.md) before changing
 `combine_results.py`.
 
-### Where the Conclusions prose lives
+### The Conclusions prose is disabled for every caller
 
-Why the max-effort Opus Conclusions block only runs for combined reports, not
-per-run `results.md` → read [`docs/REPORTING.md`](docs/REPORTING.md) before
-re-enabling it at the single-run site.
+No report emits `## Conclusions` — the merged max-effort Opus call was dropped
+in 2026-04 and `generate_conclusions_from_inputs` discards `speed_cost_input`.
+Dead scaffolding survives in both generators → read
+[`docs/REPORTING.md`](docs/REPORTING.md) before trying to re-enable it from a
+call site.
 
 ### Judge rationale audit (`judge_audit.py`)
 
