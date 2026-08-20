@@ -31,11 +31,17 @@ hold — changes here have broken the generated markdown before, so
   every language observed in the report) or a comma-sorted subset.
   The plural header `CLI version(s)` and comma-joined version cells
   are the old layout — do not reintroduce.
-- **Section order in the body:** Scoring → Conclusions → **Judge
-  Consistency Summary** → Tiers → Comparison → Per-Run → Notes. JCS
-  is a top-level `##`, not a `### ` under Notes, because readers
-  benefit from the panel-health verdict before they consume
-  rankings.
+- **Section order in the body:** Scoring → **Judge Consistency
+  Summary** → Judge Audit Outcomes → Tiers → Failed / Timed-Out Runs
+  → Comparison → Test Quality Evaluation → Per-Run → Notes. JCS is a
+  top-level `##`, not a `### ` under Notes, because readers benefit
+  from the panel-health verdict before they consume rankings. (A
+  `%%%CONCLUSIONS_SECTION%%%` marker sits between Scoring and JCS but
+  always expands to nothing — see "The Conclusions prose is disabled
+  for EVERY caller" below.) Only the JCS-above-Tiers half of this
+  order is test-guarded today
+  (`test_judge_consistency_summary_renders_above_tiers`); the rest is
+  convention.
 - **Quality-score lookup key.** The per-variant score bucket is keyed
   by `(_disp_mode(language_mode), _derived_label(m))` — the display
   mode + CLI-less derived label, so quality-score pooling matches the
@@ -50,21 +56,36 @@ hold — changes here have broken the generated markdown before, so
   Workflow Craft renders `—` or reflects only one context variant when
   it should be the mean across the whole derived-label pool.
 
-### Where the Conclusions prose lives
+### The Conclusions prose is disabled for EVERY caller
 
-The max-effort Opus `## Conclusions` block is produced **only for
-the combined cross-run report** (`combine_results.py`), not for
-per-run `results.md` files. `generate_results.py` still invokes the
-JCS Summary LLM call (cheap) but passes `speed_cost_input=None` so
-`conclusions_report.generate_conclusions_from_inputs` short-circuits
-the Conclusions call. Reasoning: comparing a single run directory
-against itself doesn't surface tradeoffs worth ~$1 of max-effort
-tokens per regen — the Conclusions prose only reads as useful when
-multiple run dirs are being compared.
+**No report emits `## Conclusions` — not the per-run `results.md`,
+not the combined cross-run report.** The merged max-effort Opus
+Conclusions call was dropped in `195502a2` (2026-04-24, "drop LLM
+Conclusions entirely (#12)") and
+`conclusions_report.generate_conclusions_from_inputs` now hard-codes
+`out["conclusions"] = None` and discards its `speed_cost_input`
+argument (`_ = speed_cost_input`, kept only for call-site compat).
+The one LLM call that survives is the Judge Consistency Summary.
 
-If you need per-run prose for some new purpose, plumb through a
-separate prompt; do not re-enable the merged Conclusions call at the
-single-run site.
+This paragraph used to say the block was combined-report-only, which
+made the doc read as a scoping decision rather than a removal. It was
+wrong for four months: zero of the generated reports under `results/`
+contain a `## Conclusions` heading.
+
+Both generators still carry the dead scaffolding — a
+`conclusions_block` list and a `%%%CONCLUSIONS_SECTION%%%` marker
+(`generate_results.py`, `combine_results.py`). It renders as nothing
+(an empty block contributes no lines, so no stray marker leaks into
+the markdown), so the scaffolding is harmless, but do not read its
+presence as evidence the section is live.
+
+Re-enabling it is therefore NOT a matter of passing
+`speed_cost_input` from a call site — the prompt dispatch itself has
+to come back in `conclusions_report.py`. Budget for it: the retired
+call ran at `SUMMARY_MODEL`/`SUMMARY_EFFORT` (max-effort Opus), on
+the order of $1 per regeneration. `tests/test_conclusions_report.py`
+pins the current behaviour, so a re-enable will fail that test until
+this section is updated with it.
 
 ### Judge rationale audit (`judge_audit.py`)
 
