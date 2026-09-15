@@ -2,12 +2,14 @@
 
 Why this file exists: #53 added `workflow_dispatch:` to ci.yml -- an event that can
 re-fire on a head SHA that push/pull_request already covered. Its safety argument was
-that this repo publishes no REQUIRED status context, which is true, but which is a fact
-about repo-settings' fleet.yml: another repo, editable without anything here noticing,
-and one whose sibling entry for `Adam-S-Daniel/agentskills` already carries exactly the
-`required_status_checks` override that would flip it. That argument was recorded only in
-a workflow comment and in the commit message, with NOTHING enforcing it -- an
-unenforced, point-in-time assertion about somebody else's config.
+that this repo publishes no REQUIRED status context -- a fact about repo-settings'
+fleet.yml: another repo, editable without anything here noticing, and one whose sibling
+entry for `Adam-S-Daniel/agentskills` already carried exactly the `required_status_checks`
+override that would flip it. cms-platform#437
+(https://github.com/Adam-S-Daniel/cms-platform/issues/437) is that flip: it decides
+`test` becomes a REQUIRED context for this repo. #53's argument was recorded only in a
+workflow comment and in the commit message, with NOTHING enforcing it -- an unenforced,
+point-in-time assertion about somebody else's config.
 
 These tests are the enforcement, and they deliberately lock the property that holds
 WHETHER OR NOT a required check ever appears, rather than re-asserting the fleet.yml
@@ -17,16 +19,19 @@ a cancelled run and a successful one for the same context + SHA, and when cancel
 the merge API returns `405 Required status check "<ctx>" is cancelled` -- which nothing
 overrides, so the PR reads all-green and never lands. `cancel-in-progress: false` is not
 a substitute; GitHub keeps the in-progress run plus only the LATEST pending one and
-cancels the other duplicates.
+cancels the other duplicates. With cms-platform#437 applied, this lock stops being
+precautionary and becomes load-bearing: `CI / test` is the required context these tests
+were written to keep safe, not a hypothetical one.
 
-Deliberately NOT asserted here: that repo-settings' fleet.yml still gives this repo no
-required check. That file is in a different, private repo; a CI runner checking out
+Deliberately NOT asserted here: what repo-settings' fleet.yml actually sets for this repo
+at any given moment. That file is in a different, private repo; a CI runner checking out
 GHA-bench will never have it, so the assertion would be permanently skipped in the one
 place that gates merges -- a guard that silently examines nothing. Locally its path is
 host-specific (repos live under `/home/user/<repo>` here and `D:\\repos\\<owner>\\<repo>`
 on ZENDA), and a local clone can be stale, so a green assert against it would be a FALSE
 clearance rather than no clearance. Cross-repo enforcement belongs in repo-settings; the
-in-file precondition plus this no-concurrency lock is the right stopping point here.
+in-file precondition plus this no-concurrency lock is the right stopping point here,
+whichever day cms-platform#437's fleet.yml change actually lands.
 
 Parsed with PyYAML, never regex- or line-scanned: a scan reads clean on a `concurrency:`
 key it cannot see -- inside a quoted block, or behind a YAML anchor, which GitHub enabled
