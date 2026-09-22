@@ -195,7 +195,7 @@ that same `$HOME/.claude/skills`. Anything the hook installed is therefore
 visible to the agent under measurement.
 
 That is fine today and is not a reason to drop the lock: benchmark runs happen
-on `ZENDA`, a durable machine, where the hook's surface guard makes it a no-op
+on the operator's durable workstation, where the hook's surface guard makes it a no-op
 (`skills: skipped — durable session`) and nothing is installed. The hazard is
 specific and future-dated:
 
