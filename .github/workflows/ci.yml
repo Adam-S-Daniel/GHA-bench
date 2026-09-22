@@ -6,10 +6,13 @@ name: CI
 # This workflow carries `workflow_dispatch:`, an event that can re-fire on a head SHA
 # that push/pull_request already covered. #53 landed that trigger on the argument that
 # `Adam-S-Daniel/GHA-bench` is listed in repo-settings' fleet.yml with NO `overrides`,
-# so it inherits `defaults.ruleset.required_status_checks: []`. That is true today. It
-# is also a fact about ANOTHER REPO'S config: a two-line `overrides:` block added there
-# changes it, and nothing in this repo watches that file or would notice. The sibling
-# entry `Adam-S-Daniel/agentskills` already carries exactly such an override
+# so it inherits `defaults.ruleset.required_status_checks: []`. That was the state of
+# play when #53 landed; it no longer is the plan. cms-platform#437
+# (https://github.com/Adam-S-Daniel/cms-platform/issues/437) decides that fleet.yml gets
+# an `overrides:` block for this repo declaring `required_status_checks: [test]`, so
+# `CI / test` becomes a REQUIRED context from the day that change is applied there --
+# another repo, edited without anything here noticing. The sibling entry
+# `Adam-S-Daniel/agentskills` already carries exactly such an override
 # (`required_status_checks: ["pytest-windows"]`), so this is a routine edit, not a
 # hypothetical one.
 #
@@ -18,9 +21,10 @@ name: CI
 # a successful one for the same context + SHA, and when cancelled wins the merge API
 # returns `405 Required status check "CI / test" is cancelled` -- which nothing
 # overrides: not native auto-merge, not an explicit merge call, not a nudge bot. The PR
-# reads all-green and simply never lands. That future is anticipated in this very repo:
-# dependabot-auto-merge.yml's header says twice that its `--auto` attempt "starts working
-# for free the day this repo's ruleset grows a required check".
+# reads all-green and simply never lands. That future is tracked in cms-platform#437
+# (https://github.com/Adam-S-Daniel/cms-platform/issues/437) -- see that issue's decision
+# for why dependabot-auto-merge.yml's `auto-merge` job no longer attempts a merge at all,
+# leaving job `sweep`'s own CI-based gate as this repo's only unattended merge path.
 #
 # WHAT KEEPS IT SAFE ANYWAY -- do not undo this: a same-SHA burst only leaves a cancelled
 # run behind when a `concurrency` group cancels one. This workflow declares NO
@@ -29,6 +33,11 @@ name: CI
 # a required check exists, which is why it -- and not the fleet.yml fact -- is what is
 # enforced. `cancel-in-progress: false` is NOT a substitute: GitHub still keeps only the
 # in-progress run plus the LATEST pending one and cancels the other duplicates.
+#
+# The one residual this doesn't close: a HUMAN cancelling a dispatched run on a PR head
+# still leaves that required context sitting at `cancelled` until someone re-runs it or
+# pushes a new commit -- no concurrency group did that, a person did, and only a fresh
+# run clears it.
 #
 # Locked by tests/test_ci_workflow.py, which parses this file (never line-scans it) and
 # asserts both the no-concurrency property and the exact trigger set named above, so a
