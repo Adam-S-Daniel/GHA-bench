@@ -28,7 +28,7 @@ at any given moment. That file is in a different, private repo; a CI runner chec
 GHA-bench will never have it, so the assertion would be permanently skipped in the one
 place that gates merges -- a guard that silently examines nothing. Locally its path is
 host-specific (repos live under `/home/user/<repo>` here and `D:\\repos\\<owner>\\<repo>`
-on ZENDA), and a local clone can be stale, so a green assert against it would be a FALSE
+on BOXY), and a local clone can be stale, so a green assert against it would be a FALSE
 clearance rather than no clearance. Cross-repo enforcement belongs in repo-settings; the
 in-file precondition plus this no-concurrency lock is the right stopping point here,
 whichever day cms-platform#437's fleet.yml change actually lands.
