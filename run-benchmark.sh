@@ -106,9 +106,13 @@ if ! command -v act &>/dev/null; then
 fi
 echo "act: $(act --version 2>&1)"
 
-# Configure act to use medium-sized runner image
+# Configure act to use medium-sized runner image, pinned to a dated tag +
+# digest (not the floating act-latest, which adopts a new build the day it's
+# pushed) per the fleet's 7-day cooling-off policy. To move it, pick a dated
+# tag at least 7 days old from https://hub.docker.com/r/catthehacker/ubuntu/tags
+# and read its digest from the Docker Hub tags API for that tag.
 mkdir -p ~/.config/act
-echo '-P ubuntu-latest=catthehacker/ubuntu:act-latest' > ~/.config/act/actrc
+echo '-P ubuntu-latest=catthehacker/ubuntu:act-latest-20260815@sha256:c58e2b364da03b0c804c7d660f2ecbedf2f221a382b9baa0b344b0144780ff43' > ~/.config/act/actrc
 
 # Verify Docker is available (required by act)
 if command -v docker &>/dev/null && docker info &>/dev/null; then
