@@ -4,26 +4,54 @@
 # Build:  docker build -t act-ubuntu-pwsh:latest -f Dockerfile.act .
 # Use:    act push -P ubuntu-latest=act-ubuntu-pwsh:latest
 # Or:     echo '-P ubuntu-latest=act-ubuntu-pwsh:latest' > .actrc
+#
+# Every pin below follows the fleet's 7-day cooling-off policy: the newest
+# release/build that is at least 7 days old, never a floating tag. To move a
+# pin, confirm the newer version has cleared 7 days, then update the
+# tag/digest/version string together with its comment.
 
-FROM catthehacker/ubuntu:act-latest
+# Pinned to the dated 2026-08-15 build + digest, not the floating act-latest
+# (which adopts a new build the day it's pushed). Verified 2026-09-24 via
+# https://hub.docker.com/v2/repositories/catthehacker/ubuntu/tags/act-latest-20260815 —
+# Ubuntu 24.04 (same digest as act-24.04). To move it, pick a dated tag at
+# least 7 days old from https://hub.docker.com/r/catthehacker/ubuntu/tags and
+# read its digest from that same tags API.
+FROM catthehacker/ubuntu:act-latest-20260815@sha256:c58e2b364da03b0c804c7d660f2ecbedf2f221a382b9baa0b344b0144780ff43
 
-# Install PowerShell from Microsoft's APT repo
+# Install PowerShell from Microsoft's APT repo, pinned to 7.6.6-1.deb
+# (7.6.6 released 2026-09-08, well past cooling-off; confirmed present in the
+# ubuntu/24.04/prod feed as of 2026-09-24). The base image is Ubuntu 24.04,
+# so the packages-microsoft-prod.deb config must come from the ubuntu/24.04
+# path, not 22.04 — using the wrong release's repo previously worked by
+# accident (APT doesn't validate the release match) but drifted from the
+# base image. To move this pin, check
+# https://packages.microsoft.com/ubuntu/24.04/prod/dists/noble/main/binary-amd64/Packages.gz
+# for a `Version:` at least 7 days newer than the current pin.
 RUN apt-get update -qq \
     && apt-get install -y -qq wget apt-transport-https software-properties-common \
-    && wget -q "https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb" \
+    && wget -q "https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb" \
     && dpkg -i packages-microsoft-prod.deb \
     && apt-get update -qq \
-    && apt-get install -y -qq powershell \
+    && apt-get install -y -qq powershell=7.6.6-1.deb \
     && rm -f packages-microsoft-prod.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Pester 5 (PowerShell testing framework, pre-installed on GitHub runners)
+# Install Pester 5.9.1 (PowerShell testing framework, pre-installed on GitHub
+# runners). Pinned to the 5.x line because that's what GitHub-hosted runners
+# ship, not the newer 6.x line; 5.9.1 is the newest 5.x release (2026-08-11,
+# past cooling-off as of 2026-09-24). To move this pin, check
+# https://www.powershellgallery.com/packages/Pester for a newer 5.x version
+# at least 7 days old.
 RUN pwsh -NoProfile -Command " \
     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted; \
-    Install-Module -Name Pester -MinimumVersion 5.0 -Force -Scope AllUsers; \
+    Install-Module -Name Pester -RequiredVersion 5.9.1 -Force -Scope AllUsers; \
     Get-Module -ListAvailable Pester | Select-Object -Property Name,Version"
 
-# Verify installation
+# Verify installation, including that the pinned Pester version actually landed.
 RUN pwsh --version \
-    && pwsh -NoProfile -Command "Import-Module Pester; Write-Host 'Pester OK'"
+    && pwsh -NoProfile -Command " \
+    Import-Module Pester; \
+    \$v = (Get-Module Pester).Version; \
+    if (\$v -ne [Version]'5.9.1') { throw ('Pester version mismatch: ' + \$v) }; \
+    Write-Host ('Pester OK (' + \$v + ')')"
