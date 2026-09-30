@@ -1,6 +1,7 @@
 <!-- BEGIN MANAGED SECTION — DO NOT EDIT ABOVE "## Repo-specific additions" -->
 <!-- Source: _agent-guidance -->
 <!-- Sections: none -->
+<!-- Mode: stub -->
 
 # AGENTS.md
 
@@ -8,178 +9,83 @@
 > Edit only below the `## Repo-specific additions` header.
 > Everything above it will be overwritten on the next sync.
 
-This block is deliberately short. It carries the things that are **specific to
-this account and learned the hard way** — incidents, fleet policy, machine
-layout. It does not restate general engineering practice, and it does not
-describe anything you can learn by reading the repo. Depth lives in each repo's
-`docs/` and in the skills registry; follow the pointers when the work touches
-that area.
+## Fleet guidance is delivered once per session — not by this file
 
-## Working in these repos
+The account's full guidance — incidents, fleet policy, machine layout, the
+traps that cost real outages — is installed into **user memory**
+(`~/.claude/CLAUDE.md`) by the `fleet-memory` SessionStart hook, so it is
+loaded **once per session** no matter how many repos are attached. It used to
+be inlined here in every repo, which meant a session with 19 repos open
+carried 19 identical copies: 332.3k tokens of a 1M window, measured
+2026-08-29.
 
-- Fix what was asked. No speculative features, premature abstractions, or
-  unused helpers.
-- Prefer editing an existing file over creating a new one.
-- Every public interface change updates the corresponding tests.
-- Run the existing test suite before calling a task complete, and say plainly
-  what you ran. New behaviour gets a test; a bug fix gets a regression test.
-- Tests must be deterministic — no sleeps, no network, no reliance on
-  wall-clock time.
+**Check the session-start verdict before you rely on it.** The hook prints one
+line:
 
-## Finding your unknowns
+- `fleet-guidance: installed (v<id>, <n> bytes)` or `fleet-guidance: current` —
+  the full guidance is in context. Use it.
+- `fleet-guidance: DEGRADED — <reason>` — it is **not** in context. You have
+  only what is below. Read `agents-md/base.md` in the `_agent-guidance`
+  checkout (or on GitHub) before non-trivial work, and say in your reply that
+  you were running degraded.
+- `fleet-guidance: skipped (FLEET_GUIDANCE_SKIP set)` — also not in context,
+  but by the machine owner's deliberate choice, not a fault. User memory is
+  GLOBAL on a durable machine, so the guidance would otherwise load in every
+  unrelated project on that box; `FLEET_GUIDANCE_SKIP` opts out and removes any
+  block an earlier session installed. Read `agents-md/base.md` the same way you
+  would when degraded — just don't report it as a problem or try to "fix" it.
 
-Output quality on a non-trivial task is bounded by how well the ambiguities got
-resolved — and most of them surface *during* implementation, not before it. So
-treat unknown-hunting as part of the work, not a phase that ends at the plan:
+No verdict at all means the hook never ran — treat that as DEGRADED.
 
-- Before building: name what you don't know. Prefer a reference in **code** — an
-  existing implementation to mirror, a failing test, a rubric, an HTML mockup —
-  over a prose description of the same thing.
-- While building: keep a running note of decisions that departed from the plan
-  and edge cases you hit. Surface them; don't silently absorb them.
-- After building: be able to explain what changed and why it is correct.
+## Codex reads the same block, from `~/.codex/AGENTS.md`
 
-The full workflow (blind-spot pass, self-interview, implementation notes,
-post-hoc explainer) is the **`finding-unknowns`** skill in the registry. Reach
-for it on unfamiliar code, a new domain, or anything with subjective acceptance
-criteria.
+The hook writes the same block to `~/.codex/AGENTS.md` whenever `~/.codex`
+exists — Codex's global **user** instructions, outside its 32 KiB
+`project_doc_max_bytes` project-doc budget. Register it once per machine with
+`scripts/register-codex-hook.sh` from an `_agent-guidance` checkout, then
+trust it in `/hooks`. `codex debug prompt-input` shows exactly what a session
+loaded; no `fleet-guidance:` line there means DEGRADED.
 
-## Workstation layout
+For Codex Cloud, use **Manual** environment setup with persistent
+`CODEX_HOME=/opt/codex`. Preserve the repository's dependency setup and run
+`bash .claude/hooks/fleet-memory.sh --codex-cloud` in both setup and
+maintenance; reset the cache for the first verification. Fresh setup and
+cached maintenance were verified in the `_agent-guidance` environment. See
+[`docs/codex-cloud.md`](https://github.com/Adam-S-Daniel/_agent-guidance/blob/main/docs/codex-cloud.md).
+If the Cloud shell has no `codex debug prompt-input`, the saved task response's
+raw initial instruction envelope is the echo-free proof of model-visible
+delivery.
 
-Repo locations are host-specific — match the convention of the machine you're on
-(on Windows, check `$env:COMPUTERNAME`).
+## The floor: rules that hold even when the guidance did not load
 
-- **`ZENDA`** (Windows): local clones live under `D:\repos\<github-owner-or-org>\<repo>`
-  (for example `D:\repos\adam-s-daniel\wsl-automation`). Clone new repos there, and
-  assume existing repos live there rather than under the user profile
-  (`C:\Users\<user>\...`).
+These are the ones with teeth. They are restated here, deliberately, because a
+session that lost the guidance must not also lose these.
 
-## Security
-
-Standard practice applies without being restated here. These are the ones with
-teeth in this account:
-
-- Validate anything that crosses a trust boundary — user input, API responses,
-  file contents.
-- Never build SQL, shell commands, or HTML by string-concatenating untrusted
-  data. Use parameterized queries, shell arrays, and context-aware escaping.
-- Never commit secrets, credentials, or `.env` files.
-- Never disable TLS verification, authentication, or CSRF protection.
-
-## Data exposure in CI and public repos
-
-Treat CI run logs, job summaries, artifacts, workflow run pages, and git history
-as **public** on a public repo. (Real incident: a workflow printed the owner's
-email addresses and their correspondents' into a public Actions log.)
-
-- **Never print personal or sensitive data to a log** — no emails, contacts,
-  names, IDs, mailbox sizes/counts, tokens, or anything "useful to an attacker or
-  scammer." Deliver sensitive results out-of-band (e.g. email the account itself,
-  write to a private store) and log only a non-identifying status line.
-- **Don't interpolate `${{ inputs.* }}` / `${{ github.event.* }}` into a `run:`
-  block** — the rendered command is echoed to the log. Read inputs from
-  `$GITHUB_EVENT_PATH` inside the script and `::add-mask::` sensitive values
-  before use. `::add-mask::` only scrubs the log *stream*, not other surfaces.
-- **Put sensitive config in secrets, not plaintext inputs or `vars`.** Only
-  secret *values* are masked in logs.
-- **Sanitize error output** — never dump an API/HTTP response body on failure (it
-  can quote personal data); reduce it to a status code + machine error type, and
-  keep the data-bearing serialization/call inside the try/catch.
-- **Least privilege:** set `permissions:` to the minimum (usually
-  `contents: read`) and require approval for outside-collaborator fork PRs.
-- **Test fixtures use reserved `example.com` / `example.net` domains only** —
-  never a real address; fixtures get committed and logged.
-
-### git history & metadata
-- **Sanitize before the first commit.** Fixing the current file does not remove
-  data from history. If sensitive data was committed, rewrite history to drop the
-  commits, delete every ref that points at them (branches, tags, **PRs**), and
-  force-push. GitHub garbage-collects unreachable objects on its own schedule
-  (days to weeks) — until then they remain reachable *by SHA* — and you can ask
-  GitHub Support to expedite for a public repo. (This is the deliberate exception
-  to "don't force-push"; it is a security remediation.)
-- **Commit with the GitHub `…@users.noreply.github.com` identity** on public
-  repos so a real email is not baked into commit author/committer metadata.
-
-## Automation vs branch protection
-
-Fleet repos enforce PR-only default branches via ruleset, managed as code in
-`repo-settings` (see its ADR 0001). Design automation accordingly:
-
-- Never design a bot that pushes to a protected default branch ad hoc — the
-  push is rejected (GH013), even from the repo's own workflows.
-- Generated data (badges, run summaries, reports, dashboards) belongs on a
-  dedicated unprotected results branch (e.g. skills-evals' `eval-results`);
-  consumers read from that branch and treat its content as untrusted.
-- The rare bot that genuinely must write to a default branch needs a ruleset
-  bypass actor declared in repo-settings' `fleet.yml` — never a hand-granted
-  UI bypass (the drift report flags those). The AGENTS.md sync App is the
-  standing example.
-- PR + auto-merge is not a sanctioned bot-write path for fleet repos; the
-  cms-platform-managed repos (outside the fleet ruleset) use it by their own
-  design.
-
-## Dependency updates
-
-Dependabot runs with a **minimum package age** (`cooldown`) so an unattended
-merge still gets a cooling-off period: `default-days: 7`, `semver-major-days: 30`.
-Two things about that setting are easy to get wrong:
-
-- It applies to **version** updates only. A security advisory bypasses cooldown
-  entirely and opens immediately — the wait never delays a vulnerability fix.
-- An unset `cooldown` is **not** "no wait": GitHub applies an implicit 3-day
-  minimum age to version updates. Writing 7 is a raise from 3, not from zero.
-
-`semver-minor-days` / `semver-patch-days` are deliberately left undefined —
-they fall back to `default-days`, and spelling them out only invites drift.
-Pinning and bumping third-party action SHAs is the `pin-actions-to-sha` skill.
-
-## Subagent delegation (model routing)
-
-- Don't write code in the main loop: run the implementation in a subagent on an
-  appropriately lower-power model (e.g. the Agent tool's `model` override in
-  Claude Code; skip if the harness has no subagent support).
-- Route by mechanicalness: smallest model (haiku-class) for exactly-specified
-  edits — pin bumps, renames, config/doc tweaks; mid-tier (sonnet-class) for
-  normal implementation from a clear spec. Escalate rather than ship a wrong
-  diff when the task is genuinely subtle (cross-repo invariants, race
-  conditions).
-- The main loop keeps root-cause investigation, architectural decisions,
-  writing the spec, and review of the subagent's diff before commit.
-- Delegated work is done when a **verifier exits 0**, not when the report reads
-  as finished. Name the exact command in the spec and require its exit code
-  back. A subagent that cannot run it reports BLOCKED; a count that disagrees
-  with the spec's stated expectation is a stop-and-report condition, never a
-  rounding difference.
-- Don't assume the subagent sees this file: general-purpose and custom
-  subagents receive the full memory hierarchy (imports included), but
-  Explore/Plan-type agents and SDK harnesses with `settingSources: []` skip
-  repo guidance entirely. Restate load-bearing constraints (style, test
-  command, invariants) in the delegation prompt, and don't hand
-  guidance-sensitive work to agents that won't see it.
-
-## Skills ecosystem
-
-- The canonical skills registry is `github.com/Adam-S-Daniel/agentskills`,
-  organized as three bundle plugins — `adam` (general-purpose, cloud-safe;
-  default-on), `adam-local` (machine-bound), and `fastmail` — each holding
-  `skills/<skill>/` directories.
-- In Claude Code with the marketplace installed, invoke a skill as
-  `/adam:<skill>` (e.g. `/adam:pin-actions-to-sha`).
-- Local machines get the marketplace plus per-agent symlinks via that repo's
-  `setup.sh`.
-- Cloud sessions currently get **no** plugins from repo-declared settings — a
-  known Claude Code limitation (see agentskills' `docs/decisions/0001`) — so
-  don't assume bundle skills are available there.
-- New reusable skills graduate **into** the registry (sensitive ones into
-  `agentskills-private`) rather than living on in a consumer repo. A long skill
-  splits across files rather than growing into one wall of text.
-
-## Git practices
-
-- Write concise commit messages that explain *why*, not just *what*.
-- One logical change per commit.
-- Do not amend published commits or force-push shared branches.
+- **Branch protection is real.** Fleet repos are PR-only on their default
+  branch; a direct push is rejected (GH013), even from the repo's own
+  workflows. Never design a bot that pushes to a protected default branch.
+- **Every `uses:` is pinned to a full 40-character commit SHA, with no
+  trailing version comment.** The one carve-out is a ref into this account's
+  own `cms-platform`, which stays on its release tag.
+- **Never commit secrets or `.env` files, and never print personal data to a
+  CI log** — logs, artifacts and git history on a public repo are public.
+- **A successful `git push` does not mean your commit exists.** A refused
+  pre-commit hook still lets the push report success. Verify with
+  `git merge-base --is-ancestor <sha> origin/<branch>` — it is the only check
+  that names both the commit and the ref.
+- **"The watch finished" is not "CI passed."** Read the parsed conclusions;
+  never infer pass/fail from a watch command's exit code.
+- **A GitHub 404 means "not authorized", not "not there."** Never report a
+  repo, PR or branch as gone on a 404 alone.
+- **The fleet spans TWO owners** — `Adam-S-Daniel` and `jodidaniel`. A query
+  scoped to one returns a plausible, complete-shaped, wrong answer.
+- **Anything you name gets its link** — what you hand over, what you are
+  waiting on, and what you cite as already done.
+- **Merge with a merge commit** (`gh pr merge --merge`); do not amend
+  published commits or force-push shared branches.
+- **Keep this file under 32 KiB.** Codex truncates project instructions at
+  that byte silently; the sync warns and the drift report flags
+  `codex-truncated`.
 
 <!-- END MANAGED SECTION -->
 ## Repo-specific additions
@@ -340,6 +246,42 @@ laptop baseline, check both:
 
 Use cloud runs to compare *within* a cloud campaign (language A vs language B,
 model A vs model B), and treat cross-environment deltas as unvalidated.
+## Never run the benchmark from an ephemeral session in this repo
+
+This repo carries a `skills.lock`, so the fleet's `skills-bootstrap`
+SessionStart hook installs the `adam` skill bundle into `$HOME/.claude/skills`
+at the start of every **ephemeral** session opened here (cloud/web session, CI
+runner, container). `runner.py` builds each cell's environment with
+`env = os.environ.copy()` and never overrides `HOME`, so a benchmark cell reads
+that same `$HOME/.claude/skills`. Anything the hook installed is therefore
+visible to the agent under measurement.
+
+That is fine today and is not a reason to drop the lock: benchmark runs happen
+on a durable machine, where the hook's surface guard makes it a no-op
+(`skills: skipped — durable session`) and nothing is installed. The hazard is
+specific and future-dated:
+
+- **Do not launch `runner.py` from a Claude Code cloud/web session, a GitHub
+  Actions runner, or any container whose session started in this repo.** The
+  hook will have fired first, and every cell in that run sees 8 skills that
+  cells in every archived run did not. The benchmark's whole value is
+  cross-run comparability (`combine_results.py` pools four campaigns), and an
+  uncontrolled skill set in `$HOME` is a silent between-run variable that no
+  `metrics.json` field records.
+- **This is the open design question in PR #44** ("Run the benchmark on Claude
+  Code on the web"), whose `cell_env()` already scrubs the launching session's
+  Claude environment — nested-session markers, `CLAUDE_CODE_SESSION_ID`,
+  effort variables — precisely because inheriting them changes what the agent
+  under test can do. `$HOME/.claude/skills` is the same class of leak and is
+  **not** currently scrubbed. If that PR proceeds, either point cells at an
+  isolated `HOME` or record the ambient `~/.claude/skills` listing into
+  `metrics.json` so a contaminated cell is identifiable after the fact. Do not
+  merge a cloud-run mode that leaves it unaddressed and unrecorded.
+
+The reason the lock stays anyway: the repo is also where ordinary maintenance
+sessions live — reports, judges, docs, CI — and those are the sessions the
+bundle exists to help. The instrument is protected by not running it from an
+ephemeral session, which was already true for other reasons.
 
 ## Architecture
 
@@ -378,11 +320,13 @@ rows, the CLI Version Legend schema, section order, the quality-score lookup
 key) → read [`docs/REPORTING.md`](docs/REPORTING.md) before changing
 `combine_results.py`.
 
-### Where the Conclusions prose lives
+### The Conclusions prose is disabled for every caller
 
-Why the max-effort Opus Conclusions block only runs for combined reports, not
-per-run `results.md` → read [`docs/REPORTING.md`](docs/REPORTING.md) before
-re-enabling it at the single-run site.
+No report emits `## Conclusions` — the merged max-effort Opus call was dropped
+in 2026-04 and `generate_conclusions_from_inputs` discards `speed_cost_input`.
+Dead scaffolding survives in both generators → read
+[`docs/REPORTING.md`](docs/REPORTING.md) before trying to re-enable it from a
+call site.
 
 ### Judge rationale audit (`judge_audit.py`)
 
