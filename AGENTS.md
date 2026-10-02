@@ -251,6 +251,22 @@ requires a fix before merging → read
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) after every
 `generate_results.py --all` run.
 
+### The act runner environment
+
+Why a bare `act push` fails at "Set up job" (the local-only runner image needs
+`--pull=false`), `.actrc` precedence, what the image does and does not
+pre-install, and the per-language harness gotchas (Pester discovery scope,
+StrictMode leaks, bats `grep -v`, Bun's 5-second timeout) → read
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before diagnosing a cell that
+failed its first act run, or before changing the `.actrc` injection in
+`runner.py`.
+
+### Removed PostToolUse hooks
+
+The syntax-check hooks were inert in every run and were removed in PR #35; see
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). There is no Hook Savings
+statistic to look for.
+
 ### Combined-report invariants (`combine_results.py`)
 
 The layout invariants `tests/test_combine_results.py` guards (no duplicate
