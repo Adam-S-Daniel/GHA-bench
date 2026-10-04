@@ -202,12 +202,17 @@ esac
 
 GIT_STUB = """#!/usr/bin/env bash
 set -u
+printf '%s\\n' "$*" >> "$FIXTURES/git-calls.log"
 cmd="${1:-}"
 case "$cmd" in
   fetch)
     exit 0
     ;;
   diff)
+    if [ -f "$FIXTURES/diff-fails" ]; then
+      echo "fatal: bad revision" >&2
+      exit 128
+    fi
     if [ -f "$FIXTURES/diff.txt" ]; then
       cat "$FIXTURES/diff.txt"
     else
@@ -283,6 +288,13 @@ def _run_sweep(tmp_path, fixtures_dir, pr_numbers, self_workflow="Dependabot aut
     calls_log = fixtures_dir / "calls.log"
     calls = calls_log.read_text(encoding="utf-8") if calls_log.exists() else ""
     return result, calls
+
+
+def _git_diff_calls(fixtures_dir):
+    """argv (split on whitespace) of every `git diff` the stubbed git received."""
+    log = fixtures_dir / "git-calls.log"
+    lines = log.read_text(encoding="utf-8").splitlines() if log.exists() else []
+    return [line.split() for line in lines if line.split()[:1] == ["diff"]]
 
 
 def _merge_calls(calls):
@@ -475,11 +487,14 @@ def test_sweep_case_g_refreshes_a_behind_pr_with_unchanged_head(tmp_path):
 #
 # AGENTS.md ("Never fix agent-generated code") forbids patching anything in
 # workspaces/ or results/*/generated-code/, and .github/dependabot.yml calls
-# results/** output data, not source. Dependabot SECURITY updates still open
-# PRs against those manifests (GHA-bench#92 and #93 bump lockfiles inside
-# results/2026-05-06_173435/), and the manifest allowlist alone accepted them.
+# results/** output data, not source. Dependabot SECURITY updates opened PRs
+# against those manifests (GHA-bench#92 bumped a package-lock.json and #93 a
+# package.json inside results/2026-05-06_173435/), and the manifest allowlist
+# alone accepted them.
 # Both jobs now share one inlined `classify_path` function between BEGIN/END
-# marker comments; these tests lock the two copies together and execute them.
+# marker comments; these tests lock the two copies together, execute them, and
+# check that each job runs `git diff --no-renames` and fails closed when the
+# diff fails or lists nothing.
 # --------------------------------------------------------------------------
 
 AUTO_MERGE_PATHS_STEP_NAME = "Verify only manifest paths changed"
@@ -584,22 +599,32 @@ def test_classifier_executes_on_sample_paths(job_name, tmp_path):
     assert got == CLASSIFIER_CASES
 
 
-def _run_auto_merge_paths_step(tmp_path, changed_paths):
-    """Execute the real `auto-merge` path-check step against a stubbed git."""
+def _auto_merge_paths_step():
+    job = _job(_load_workflow(), "auto-merge")
+    for step in job.get("steps") or []:
+        if isinstance(step, dict) and step.get("name") == AUTO_MERGE_PATHS_STEP_NAME:
+            return step
+    raise AssertionError(f"`auto-merge` job has no step named {AUTO_MERGE_PATHS_STEP_NAME!r}.")
+
+
+def _run_auto_merge_paths_step(tmp_path, changed_paths, diff_fails=False):
+    """Execute the real `auto-merge` path-check step against a stubbed git.
+
+    Returns (result, GITHUB_OUTPUT contents, argv of each `git diff` call).
+    """
     _require("bash")
-    script = _step_run("auto-merge", AUTO_MERGE_PATHS_STEP_NAME)
-    # The step reads two `${{ }}` expressions that only Actions can render;
-    # substitute fixed values, and fail loudly if they are not there to replace.
-    for expr, value in (
-        ("${{ github.event.pull_request.base.ref }}", "main"),
-        ("${{ github.event.pull_request.head.sha }}", "f" * 40),
-    ):
-        assert expr in script, f"expected {expr!r} in the `auto-merge` path-check step."
-        script = script.replace(expr, value)
-    assert "${{" not in script, "unrendered expression left in the `auto-merge` path-check step."
+    step = _auto_merge_paths_step()
+    script = step.get("run")
+    assert isinstance(script, str) and script.strip()
+    assert "${{" not in script, "the `auto-merge` path-check step interpolates an expression into `run:`."
+    # Event data arrives through the step's `env:`; supply test values for it.
+    step_env = step.get("env") or {}
+    assert set(step_env) == {"BASE_REF", "HEAD_SHA"}, f"unexpected step env: {sorted(step_env)}"
 
     fixtures_dir = _prepare_fixtures_dir(tmp_path)
     (fixtures_dir / "diff.txt").write_text("".join(f"{p}\n" for p in changed_paths), encoding="utf-8")
+    if diff_fails:
+        (fixtures_dir / "diff-fails").write_text("", encoding="utf-8")
     output_file = tmp_path / "github_output"
     output_file.write_text("", encoding="utf-8")
     bin_dir = _write_stub_bin(tmp_path)
@@ -608,16 +633,40 @@ def _run_auto_merge_paths_step(tmp_path, changed_paths):
     env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
     env["FIXTURES"] = str(fixtures_dir)
     env["GITHUB_OUTPUT"] = str(output_file)
+    env["BASE_REF"] = "main"
+    env["HEAD_SHA"] = "f" * 40
     result = subprocess.run(
         ["bash", "-c", script], cwd=tmp_path, env=env, capture_output=True, text=True, timeout=30
     )
-    return result, output_file.read_text(encoding="utf-8")
+    return result, output_file.read_text(encoding="utf-8"), _git_diff_calls(fixtures_dir)
 
 
 def test_auto_merge_marks_root_manifest_safe(tmp_path):
-    result, outputs = _run_auto_merge_paths_step(tmp_path, ["package.json"])
+    result, outputs, _ = _run_auto_merge_paths_step(tmp_path, ["package.json"])
     assert result.returncode == 0, result.stdout + result.stderr
     assert outputs.splitlines() == ["safe=true"]
+
+
+def test_auto_merge_diff_disables_rename_detection(tmp_path):
+    """A rename out of results/ must list its source path, not just its destination."""
+    result, _, diff_calls = _run_auto_merge_paths_step(tmp_path, ["package.json"])
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert len(diff_calls) == 1, f"expected one git diff call, got {diff_calls!r}"
+    assert "--no-renames" in diff_calls[0], diff_calls[0]
+
+
+def test_auto_merge_failed_diff_is_not_safe(tmp_path):
+    result, outputs, _ = _run_auto_merge_paths_step(tmp_path, ["package.json"], diff_fails=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert outputs.splitlines() == ["safe=false"]
+    assert "failed, so the changed paths are unknown" in result.stdout
+
+
+def test_auto_merge_empty_diff_is_not_safe(tmp_path):
+    result, outputs, _ = _run_auto_merge_paths_step(tmp_path, [])
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert outputs.splitlines() == ["safe=false"]
+    assert "lists no changed files" in result.stdout
 
 
 @pytest.mark.parametrize(
@@ -628,7 +677,7 @@ def test_auto_merge_marks_root_manifest_safe(tmp_path):
     ],
 )
 def test_auto_merge_marks_benchmark_output_unsafe(tmp_path, path):
-    result, outputs = _run_auto_merge_paths_step(tmp_path, ["package.json", path])
+    result, outputs, _ = _run_auto_merge_paths_step(tmp_path, ["package.json", path])
     assert result.returncode == 0, result.stdout + result.stderr
     assert outputs.splitlines() == ["safe=false"]
     assert "benchmark output under results/ or workspaces/" in result.stdout
@@ -686,3 +735,74 @@ def test_sweep_still_merges_a_manifest_whose_path_merely_mentions_results(tmp_pa
     assert result.returncode == 0, result.stdout + result.stderr
     assert len(_merge_calls(calls)) == 1, f"expected one merge attempt, got: {calls!r}"
     assert "merged=1 updated=0 skipped=0 blocked=0 failed=0" in result.stdout
+
+
+def _clean_sweep_fixture(fixtures_dir, number, head_char):
+    _write_pr_fixture(
+        fixtures_dir,
+        number,
+        {
+            "number": number,
+            "baseRefName": "main",
+            "headRefOid": head_char * 40,
+            "mergeable": "MERGEABLE",
+            "mergeStateStatus": "CLEAN",
+            "statusCheckRollup": [
+                {"workflowName": "CI", "name": "test", "conclusion": "SUCCESS"},
+            ],
+        },
+    )
+
+
+def test_sweep_diff_disables_rename_detection(tmp_path):
+    fixtures_dir = _prepare_fixtures_dir(tmp_path)
+    _clean_sweep_fixture(fixtures_dir, 210, "a")
+
+    result, _calls = _run_sweep(tmp_path, fixtures_dir, [210])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    diff_calls = _git_diff_calls(fixtures_dir)
+    assert len(diff_calls) == 1, f"expected one git diff call, got {diff_calls!r}"
+    assert "--no-renames" in diff_calls[0], diff_calls[0]
+
+
+def test_sweep_skips_when_git_diff_fails(tmp_path):
+    fixtures_dir = _prepare_fixtures_dir(tmp_path)
+    (fixtures_dir / "diff-fails").write_text("", encoding="utf-8")
+    _clean_sweep_fixture(fixtures_dir, 211, "b")
+
+    result, calls = _run_sweep(tmp_path, fixtures_dir, [211])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not _merge_calls(calls), f"expected no merge attempt, got: {calls!r}"
+    assert "skip #211 — git diff against main failed" in result.stdout
+    assert "merged=0 updated=0 skipped=1 blocked=0 failed=0" in result.stdout
+
+
+def test_sweep_skips_when_diff_lists_no_files(tmp_path):
+    fixtures_dir = _prepare_fixtures_dir(tmp_path)
+    (fixtures_dir / "diff.txt").write_text("", encoding="utf-8")
+    _clean_sweep_fixture(fixtures_dir, 212, "c")
+
+    result, calls = _run_sweep(tmp_path, fixtures_dir, [212])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not _merge_calls(calls), f"expected no merge attempt, got: {calls!r}"
+    assert "skip #212 — diff against main lists no changed files" in result.stdout
+    assert "merged=0 updated=0 skipped=1 blocked=0 failed=0" in result.stdout
+
+
+def test_no_run_block_interpolates_event_or_input_data():
+    """Event and input data reach a `run:` script only through `env:`.
+
+    An expression rendered into the script text is echoed to the public log
+    and parsed as shell; read through `env:` and quoted, it is only data.
+    """
+    doc = _load_workflow()
+    offenders = []
+    for job_name, job in (doc.get("jobs") or {}).items():
+        for step in (job or {}).get("steps") or []:
+            run = step.get("run") if isinstance(step, dict) else None
+            if isinstance(run, str) and ("${{ github.event." in run or "${{ inputs." in run):
+                offenders.append(f"{job_name} / {step.get('name')}")
+    assert not offenders, f"`run:` blocks interpolating event/input data: {offenders}"

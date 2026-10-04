@@ -50,7 +50,8 @@
 # updates opened PRs against them (GHA-bench#92, #93) before dependabot.yml
 # gained its results/ suppression entries, and the manifest arms alone would
 # wave such a PR through as an ordinary bump. This arm is the backstop if
-# one ever opens again.
+# one ever opens again. Both jobs also fail closed: a `git diff` that fails
+# or lists no files is never treated as safe.
 name: Dependabot auto-merge
 run-name: >-
   ${{
@@ -85,7 +86,11 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch base ref
-        run: git fetch origin "${{ github.event.pull_request.base.ref }}"
+        # Event data reaches `run:` only through `env:`, never interpolated
+        # into the script text (the rendered command is echoed to the log).
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: git fetch origin "$BASE_REF"
 
       - name: Get Dependabot metadata
         # Validates the PR genuinely came from Dependabot (defence in depth —
@@ -103,10 +108,13 @@ jobs:
         # workflow header). Inline port of cms-platform's
         # scripts/check-dependabot-manifest-paths.sh; keep the classifier
         # block identical to the one in job `sweep` below.
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          BASE="origin/${{ github.event.pull_request.base.ref }}"
-          HEAD="${{ github.event.pull_request.head.sha }}"
+          BASE="origin/${BASE_REF}"
+          HEAD="${HEAD_SHA}"
 
           # BEGIN dependabot-path-classifier
           # Prints one class for a changed path: `benchmark-output`,
@@ -127,7 +135,24 @@ jobs:
 
           # --no-renames: a rename out of results/ would otherwise list only
           # its destination, hiding the benchmark-output source path.
-          mapfile -t CHANGED < <(git diff --no-renames --name-only "$BASE"..."$HEAD")
+          # Capture before splitting: `mapfile < <(git diff ...)` drops a
+          # failed diff's exit status even under `set -euo pipefail`, and the
+          # resulting empty list used to read as "nothing unsafe changed".
+          # A failed diff or an empty file list is never safe.
+          if ! DIFF_OUT=$(git diff --no-renames --name-only "$BASE"..."$HEAD"); then
+            echo "::error::git diff ${BASE}...${HEAD} failed, so the changed paths are unknown; refusing to treat this PR as safe."
+            echo "safe=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=()
+          if [ -n "$DIFF_OUT" ]; then
+            mapfile -t CHANGED <<<"$DIFF_OUT"
+          fi
+          if [ "${#CHANGED[@]}" -eq 0 ]; then
+            echo "::error::git diff ${BASE}...${HEAD} lists no changed files; a Dependabot PR that changes nothing is not safe to merge."
+            echo "safe=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           echo "Files changed (${BASE}...${HEAD}):"
           printf '  %s\n' "${CHANGED[@]}"
 
@@ -156,7 +181,7 @@ jobs:
         if: steps.paths.outputs.safe == 'false'
         run: |
           gh pr merge --disable-auto "$PR_URL" || true
-          echo "::error::PR touches benchmark output under results/ or workspaces/, or paths outside the dependency-manifest allowlist (see the per-file errors above); auto-merge disabled."
+          echo "::error::PR failed the path check: benchmark output under results/ or workspaces/, a path outside the dependency-manifest allowlist, or a diff that failed or was empty (see the errors above); auto-merge disabled."
           exit 1
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
@@ -351,9 +376,25 @@ jobs:
             # Re-run the SAME inline classifier as job `auto-merge` above
             # (classify_path, defined once before this loop). Benchmark
             # output is reported separately so the skip names its reason.
+            # Capture before splitting, for the reason job `auto-merge`
+            # gives: a failed diff must not become an empty, "clean" list.
+            if ! DIFF_OUT=$(git diff --no-renames --name-only "origin/${base}...dependabot-sweep/pr-${num}"); then
+              echo "::warning::skip #${num} — git diff against ${base} failed, so its changed paths are unknown; leaving for human review"
+              SKIPPED=$((SKIPPED + 1))
+              continue
+            fi
+            CHANGED=()
+            if [ -n "$DIFF_OUT" ]; then
+              mapfile -t CHANGED <<<"$DIFF_OUT"
+            fi
+            if [ "${#CHANGED[@]}" -eq 0 ]; then
+              echo "::warning::skip #${num} — diff against ${base} lists no changed files; a Dependabot PR that changes nothing is left for human review"
+              SKIPPED=$((SKIPPED + 1))
+              continue
+            fi
+
             REJECT=0
             BENCH=0
-            mapfile -t CHANGED < <(git diff --no-renames --name-only "origin/${base}...dependabot-sweep/pr-${num}")
             for f in "${CHANGED[@]}"; do
               case "$(classify_path "$f")" in
                 manifest) ;;
