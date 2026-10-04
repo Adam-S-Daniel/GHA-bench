@@ -36,8 +36,21 @@
 # are ported from cms-platform's dependabot-auto-merge.yml +
 # scripts/check-dependabot-manifest-paths.sh. This repo has no shared
 # scripts/ directory, so the allowlist is INLINED in both jobs below rather
-# than factored into a script — keep the two copies in lockstep if you
-# change it.
+# than factored into a script, as a `classify_path` function between
+# `# BEGIN dependabot-path-classifier` / `# END dependabot-path-classifier`
+# markers. The two copies must stay byte-identical (after indentation);
+# tests/test_dependabot_auto_merge.py asserts that and executes the function.
+#
+# One arm is REPO-SPECIFIC and has no counterpart in cms-platform's script:
+# any path under `results/` or `workspaces/` is rejected BEFORE the manifest
+# allowlist is consulted. Those trees hold benchmark output — hundreds of
+# agent-written package.json / requirements*.txt files — which AGENTS.md
+# forbids patching ("Never fix agent-generated code") and which
+# .github/dependabot.yml calls output data, not source. Dependabot SECURITY
+# updates opened PRs against them (GHA-bench#92, #93) before dependabot.yml
+# gained its results/ suppression entries, and the manifest arms alone would
+# wave such a PR through as an ordinary bump. This arm is the backstop if
+# one ever opens again.
 name: Dependabot auto-merge
 run-name: >-
   ${{
@@ -85,26 +98,47 @@ jobs:
         # Path allowlist: dependency manifests/lockfiles (any directory) plus
         # workflow YAML. Dependabot never touches anything else, so a diff
         # outside this list means either a misconfiguration or a tampered
-        # branch — either way, refuse to auto-merge. Inline port of
-        # cms-platform's scripts/check-dependabot-manifest-paths.sh; keep in
-        # lockstep with the identical block in job `sweep` below.
+        # branch — either way, refuse to auto-merge. Benchmark output under
+        # results/ or workspaces/ is refused first, manifest or not (see the
+        # workflow header). Inline port of cms-platform's
+        # scripts/check-dependabot-manifest-paths.sh; keep the classifier
+        # block identical to the one in job `sweep` below.
         run: |
           set -euo pipefail
           BASE="origin/${{ github.event.pull_request.base.ref }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
 
-          mapfile -t CHANGED < <(git diff --name-only "$BASE"..."$HEAD")
+          # BEGIN dependabot-path-classifier
+          # Prints one class for a changed path: `benchmark-output`,
+          # `manifest`, or `other`. `case` takes the FIRST matching arm, so
+          # the results/ + workspaces/ arm must stay above the manifest arms.
+          classify_path() {
+            case "$1" in
+              results/*|workspaces/*) printf '%s\n' benchmark-output ;;
+              package.json|*/package.json|package-lock.json|*/package-lock.json) printf '%s\n' manifest ;;
+              Gemfile|*/Gemfile|Gemfile.lock|*/Gemfile.lock) printf '%s\n' manifest ;;
+              pyproject.toml|*/pyproject.toml|poetry.lock|*/poetry.lock) printf '%s\n' manifest ;;
+              requirements*.txt|*/requirements*.txt) printf '%s\n' manifest ;;
+              .github/workflows/*.yml|.github/workflows/*.yaml) printf '%s\n' manifest ;;
+              *) printf '%s\n' other ;;
+            esac
+          }
+          # END dependabot-path-classifier
+
+          # --no-renames: a rename out of results/ would otherwise list only
+          # its destination, hiding the benchmark-output source path.
+          mapfile -t CHANGED < <(git diff --no-renames --name-only "$BASE"..."$HEAD")
           echo "Files changed (${BASE}...${HEAD}):"
           printf '  %s\n' "${CHANGED[@]}"
 
           REJECT=0
           for f in "${CHANGED[@]}"; do
-            case "$f" in
-              package.json|*/package.json|package-lock.json|*/package-lock.json) ;;
-              Gemfile|*/Gemfile|Gemfile.lock|*/Gemfile.lock) ;;
-              pyproject.toml|*/pyproject.toml|poetry.lock|*/poetry.lock) ;;
-              requirements*.txt|*/requirements*.txt) ;;
-              .github/workflows/*.yml|.github/workflows/*.yaml) ;;
+            case "$(classify_path "$f")" in
+              manifest) ;;
+              benchmark-output)
+                echo "::error file=$f::Dependabot PR touches benchmark output under results/ or workspaces/, which this repo never patches (AGENTS.md: never fix agent-generated code): $f"
+                REJECT=1
+                ;;
               *)
                 echo "::error file=$f::Dependabot PR touches non-manifest path: $f"
                 REJECT=1
@@ -122,7 +156,7 @@ jobs:
         if: steps.paths.outputs.safe == 'false'
         run: |
           gh pr merge --disable-auto "$PR_URL" || true
-          echo "::error::PR touches paths outside the dependency-manifest allowlist; auto-merge disabled."
+          echo "::error::PR touches benchmark output under results/ or workspaces/, or paths outside the dependency-manifest allowlist (see the per-file errors above); auto-merge disabled."
           exit 1
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
@@ -238,6 +272,25 @@ jobs:
             BLOCKED_CAUSE="the base branch policy refused the merge, and its pull_request rule does not set require_extra_approval_for_unattributed_changes -- so look instead for a required review, a required status check that nothing reports, or a second ruleset on this branch (GitHub enforces the union)."
           }
 
+          # The SAME classifier as job `auto-merge` above -- keep the two
+          # blocks identical (tests/test_dependabot_auto_merge.py checks).
+          # BEGIN dependabot-path-classifier
+          # Prints one class for a changed path: `benchmark-output`,
+          # `manifest`, or `other`. `case` takes the FIRST matching arm, so
+          # the results/ + workspaces/ arm must stay above the manifest arms.
+          classify_path() {
+            case "$1" in
+              results/*|workspaces/*) printf '%s\n' benchmark-output ;;
+              package.json|*/package.json|package-lock.json|*/package-lock.json) printf '%s\n' manifest ;;
+              Gemfile|*/Gemfile|Gemfile.lock|*/Gemfile.lock) printf '%s\n' manifest ;;
+              pyproject.toml|*/pyproject.toml|poetry.lock|*/poetry.lock) printf '%s\n' manifest ;;
+              requirements*.txt|*/requirements*.txt) printf '%s\n' manifest ;;
+              .github/workflows/*.yml|.github/workflows/*.yaml) printf '%s\n' manifest ;;
+              *) printf '%s\n' other ;;
+            esac
+          }
+          # END dependabot-path-classifier
+
           for num in "${PR_NUMBERS[@]}"; do
             pr_json=$(gh pr view "$num" --json number,baseRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup)
             mergeable=$(jq -r '.mergeable' <<<"$pr_json")
@@ -295,23 +348,30 @@ jobs:
               continue
             fi
 
-            # Re-run the SAME inline manifest-path allowlist as job
-            # `auto-merge` above — keep the two blocks in lockstep.
+            # Re-run the SAME inline classifier as job `auto-merge` above
+            # (classify_path, defined once before this loop). Benchmark
+            # output is reported separately so the skip names its reason.
             REJECT=0
-            mapfile -t CHANGED < <(git diff --name-only "origin/${base}...dependabot-sweep/pr-${num}")
+            BENCH=0
+            mapfile -t CHANGED < <(git diff --no-renames --name-only "origin/${base}...dependabot-sweep/pr-${num}")
             for f in "${CHANGED[@]}"; do
-              case "$f" in
-                package.json|*/package.json|package-lock.json|*/package-lock.json) ;;
-                Gemfile|*/Gemfile|Gemfile.lock|*/Gemfile.lock) ;;
-                pyproject.toml|*/pyproject.toml|poetry.lock|*/poetry.lock) ;;
-                requirements*.txt|*/requirements*.txt) ;;
-                .github/workflows/*.yml|.github/workflows/*.yaml) ;;
+              case "$(classify_path "$f")" in
+                manifest) ;;
+                benchmark-output)
+                  echo "::warning::#${num} touches benchmark output on re-check: $f"
+                  BENCH=1
+                  ;;
                 *)
                   echo "::warning::#${num} touches non-manifest path on re-check: $f"
                   REJECT=1
                   ;;
               esac
             done
+            if [ "$BENCH" = "1" ]; then
+              echo "::warning::skip #${num} — diff touches benchmark output under results/ or workspaces/, which this repo never patches (AGENTS.md: never fix agent-generated code); leaving for human review"
+              SKIPPED=$((SKIPPED + 1))
+              continue
+            fi
             if [ "$REJECT" = "1" ]; then
               echo "::warning::skip #${num} — diff touches a non-manifest path on re-check; leaving for human review"
               SKIPPED=$((SKIPPED + 1))
