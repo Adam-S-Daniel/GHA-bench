@@ -19,17 +19,33 @@
 # in pyproject.toml, add a `pip` block with the same cooldown as below —
 # that declaration is the fact this decision turns on.
 #
-# DELIBERATELY NOT ADDED — do not add these later either:
-#   `results/**` contains hundreds of GENERATED BENCHMARK ARTIFACTS —
-#   package.json / requirements*.txt files written by the benchmark's own
-#   task runs (verified: 372 package.json + 93 requirements*.txt under
-#   results/**, none of them real project dependencies). They are output
-#   data, not manifests this repo builds against, and Dependabot has no
-#   `directory:` glob support anyway — pointing an npm/pip ecosystem at any
-#   of them (or, worse, trying to enumerate them) would open bump PRs
-#   against throwaway fixture data from old benchmark runs. If a future
-#   ecosystem block ever needs a `directory:` under results/, stop and
-#   reconsider — that directory is not source.
+# `results/**` IS NOT SOURCE, and the only entries that name it SUPPRESS:
+#   it contains hundreds of GENERATED BENCHMARK ARTIFACTS — manifests written
+#   by the benchmark's own task runs (verified 2026-10-04: 372 package.json,
+#   117 bun.lock, 93 requirements*.txt, plus setup.py / pyproject.toml /
+#   *.csproj / global.json, every one under results/*/tasks/*/*/generated-code/). They are
+#   output data, not dependencies this repo builds against, and AGENTS.md
+#   forbids patching them ("Never fix agent-generated code").
+#
+#   Leaving them unconfigured did NOT keep Dependabot away. Version updates
+#   only scan what an `updates:` entry names, but SECURITY updates act on
+#   every alert the dependency graph raises, configured or not — GHA-bench#92
+#   and #93 were security-update PRs bumping lockfiles inside
+#   results/2026-05-06_173435/. So the entries at the bottom of this
+#   file cover `/results/**/*` for each ecosystem present there, and exist
+#   only to say no:
+#     - `open-pull-requests-limit: 0` stops VERSION updates for them
+#       (security updates are exempt from this limit by GitHub's spec);
+#     - `ignore: [{dependency-name: "*"}]` is what stops SECURITY updates —
+#       `ignore` is one of the options GitHub applies to security updates
+#       too, and a security update only reads an entry whose `directories`
+#       match the manifest's location and that sets no `target-branch`.
+#   Never raise that limit, narrow that ignore (a `versions:` or
+#   `update-types:` key would let updates back through), or add a
+#   `target-branch` to them. Alerts are still raised; only PRs are stopped.
+#   tests/test_dependabot_config.py pins all of this. The scheduled sweep in
+#   dependabot-auto-merge.yml also refuses any PR touching results/ or
+#   workspaces/, as a backstop if one opens anyway.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -55,8 +71,8 @@ updates:
     # github-actions block is a schema validation error ("...cooldown' is
     # not supported for the package ecosystem 'github-actions'") that takes
     # the WHOLE `updates[]` entry out of service, not a silently-ignored
-    # key — and since this is the only entry in this file, that means no
-    # updates run at all. dependabot/dependabot-core#14628 is the open
+    # key — and since this is the only entry here that updates anything
+    # (the others below only suppress), that means no updates run at all. dependabot/dependabot-core#14628 is the open
     # upstream request to add the support; until it lands, this stays flat.
     cooldown:
       default-days: 7
@@ -70,3 +86,54 @@ updates:
       # instead of sitting behind the third-party wait
       # (https://github.com/Adam-S-Daniel/cms-platform/issues/424).
       exclude: ["Adam-S-Daniel/cms-platform/*"]
+
+  # --- SUPPRESSION ONLY: benchmark output under results/ (see header) ---
+  # One entry per ecosystem with manifests under results/. Each matches every
+  # directory below results/ and ignores every dependency, so neither version
+  # nor security updates open a PR there. `schedule` is required by the
+  # schema; with the limit at 0 its value only sets how often a no-op
+  # version-update job runs.
+  - package-ecosystem: npm
+    directories:
+      - "/results/**/*"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
+
+  - package-ecosystem: bun
+    directories:
+      - "/results/**/*"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
+
+  - package-ecosystem: pip
+    directories:
+      - "/results/**/*"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
+
+  - package-ecosystem: nuget
+    directories:
+      - "/results/**/*"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
+
+  - package-ecosystem: dotnet-sdk
+    directories:
+      - "/results/**/*"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0
+    ignore:
+      - dependency-name: "*"
