@@ -208,6 +208,22 @@ case "$cmd" in
   fetch)
     exit 0
     ;;
+  rev-parse)
+    # The fetched PR ref resolves to the fixture's headRefOid unless a test
+    # overrides it with rev-parse-<N>.txt or makes rev-parse fail.
+    ref="${!#}"
+    n="${ref#refs/remotes/dependabot-sweep/pr-}"
+    n="${n%%^*}"
+    if [ -f "$FIXTURES/rev-parse-fails" ]; then
+      exit 128
+    fi
+    if [ -f "$FIXTURES/rev-parse-$n.txt" ]; then
+      cat "$FIXTURES/rev-parse-$n.txt"
+    else
+      jq -r '.headRefOid' "$FIXTURES/pr-$n.json"
+    fi
+    exit 0
+    ;;
   diff)
     if [ -f "$FIXTURES/diff-fails" ]; then
       echo "fatal: bad revision" >&2
@@ -599,6 +615,21 @@ def test_classifier_executes_on_sample_paths(job_name, tmp_path):
     assert got == CLASSIFIER_CASES
 
 
+# What each job must diff: the three-dot range, rename detection off, names only.
+AUTO_MERGE_DIFF_ARGV = ["diff", "--no-renames", "--name-only", "origin/main..." + "f" * 40]
+SWEEP_DIFF_ARGV = ["diff", "--no-renames", "--name-only", "origin/main...dependabot-sweep/pr-210"]
+BENCH_PATH = "results/2026-05-06_173435/tasks/x/generated-code/package-lock.json"
+MIXED_DIFFS = [
+    ["package.json", BENCH_PATH],
+    [BENCH_PATH, "package.json"],
+    ["package.json", BENCH_PATH, "requirements.txt"],
+    ["package.json", "src/app.py"],
+    ["src/app.py", "package.json"],
+    ["package.json", "src/app.py", "requirements.txt"],
+]
+DISABLE_STEP_NAME = "Disable auto-merge (path check failed)"
+
+
 def _auto_merge_paths_step():
     job = _job(_load_workflow(), "auto-merge")
     for step in job.get("steps") or []:
@@ -651,8 +682,13 @@ def test_auto_merge_diff_disables_rename_detection(tmp_path):
     """A rename out of results/ must list its source path, not just its destination."""
     result, _, diff_calls = _run_auto_merge_paths_step(tmp_path, ["package.json"])
     assert result.returncode == 0, result.stdout + result.stderr
-    assert len(diff_calls) == 1, f"expected one git diff call, got {diff_calls!r}"
-    assert "--no-renames" in diff_calls[0], diff_calls[0]
+    assert diff_calls == [AUTO_MERGE_DIFF_ARGV], diff_calls
+
+
+def test_auto_merge_path_step_is_strict_bash():
+    """Dropping `set -euo pipefail` would let a failing command pass silently."""
+    lines = [ln.strip() for ln in _auto_merge_paths_step()["run"].splitlines()]
+    assert [ln for ln in lines if ln and not ln.startswith("#")][0] == "set -euo pipefail"
 
 
 def test_auto_merge_failed_diff_is_not_safe(tmp_path):
@@ -761,9 +797,7 @@ def test_sweep_diff_disables_rename_detection(tmp_path):
     result, _calls = _run_sweep(tmp_path, fixtures_dir, [210])
 
     assert result.returncode == 0, result.stdout + result.stderr
-    diff_calls = _git_diff_calls(fixtures_dir)
-    assert len(diff_calls) == 1, f"expected one git diff call, got {diff_calls!r}"
-    assert "--no-renames" in diff_calls[0], diff_calls[0]
+    assert _git_diff_calls(fixtures_dir) == [SWEEP_DIFF_ARGV]
 
 
 def test_sweep_skips_when_git_diff_fails(tmp_path):
@@ -806,3 +840,97 @@ def test_no_run_block_interpolates_event_or_input_data():
             if isinstance(run, str) and ("${{ github.event." in run or "${{ inputs." in run):
                 offenders.append(f"{job_name} / {step.get('name')}")
     assert not offenders, f"`run:` blocks interpolating event/input data: {offenders}"
+
+
+@pytest.mark.parametrize("paths", MIXED_DIFFS)
+def test_sweep_skips_a_mixed_diff_wherever_the_bad_path_sits(tmp_path, paths):
+    """Every changed path is judged: a manifest beside a bad path never earns a merge."""
+    fixtures_dir = _prepare_fixtures_dir(tmp_path)
+    (fixtures_dir / "diff.txt").write_text("".join(f"{p}\n" for p in paths), encoding="utf-8")
+    _clean_sweep_fixture(fixtures_dir, 213, "d")
+
+    result, calls = _run_sweep(tmp_path, fixtures_dir, [213])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not _merge_calls(calls), f"expected no merge attempt, got: {calls!r}"
+    assert "merged=0 updated=0 skipped=1 blocked=0 failed=0" in result.stdout
+
+
+@pytest.mark.parametrize("paths", MIXED_DIFFS[:3])
+def test_auto_merge_marks_a_mixed_diff_unsafe_wherever_the_bad_path_sits(tmp_path, paths):
+    result, outputs, _ = _run_auto_merge_paths_step(tmp_path, paths)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert outputs.splitlines() == ["safe=false"]
+
+
+def test_sweep_merges_a_multi_file_manifest_only_diff(tmp_path):
+    """Control for the mixed-diff tests: three manifest paths do merge."""
+    fixtures_dir = _prepare_fixtures_dir(tmp_path)
+    (fixtures_dir / "diff.txt").write_text(
+        "package.json\npackage-lock.json\nrequirements.txt\n", encoding="utf-8"
+    )
+    _clean_sweep_fixture(fixtures_dir, 214, "e")
+
+    result, calls = _run_sweep(tmp_path, fixtures_dir, [214])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert len(_merge_calls(calls)) == 1, f"expected one merge attempt, got: {calls!r}"
+
+
+def test_sweep_skips_when_fetched_head_differs_from_the_judged_head(tmp_path):
+    """The diff reads the fetched ref; the merge is pinned to headRefOid. They must match."""
+    fixtures_dir = _prepare_fixtures_dir(tmp_path)
+    _clean_sweep_fixture(fixtures_dir, 215, "a")
+    (fixtures_dir / "rev-parse-215.txt").write_text("b" * 40 + "\n", encoding="utf-8")
+
+    result, calls = _run_sweep(tmp_path, fixtures_dir, [215])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not _merge_calls(calls), f"expected no merge attempt, got: {calls!r}"
+    assert "skip #215 — fetched head" in result.stdout
+    assert "merged=0 updated=0 skipped=1 blocked=0 failed=0" in result.stdout
+
+
+def test_sweep_skips_when_the_fetched_head_cannot_be_resolved(tmp_path):
+    fixtures_dir = _prepare_fixtures_dir(tmp_path)
+    _clean_sweep_fixture(fixtures_dir, 216, "a")
+    (fixtures_dir / "rev-parse-fails").write_text("", encoding="utf-8")
+
+    result, calls = _run_sweep(tmp_path, fixtures_dir, [216])
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not _merge_calls(calls), f"expected no merge attempt, got: {calls!r}"
+    assert "skip #216 — fetched head" in result.stdout
+
+
+def _disable_step():
+    job = _job(_load_workflow(), "auto-merge")
+    for step in job.get("steps") or []:
+        if isinstance(step, dict) and step.get("name") == DISABLE_STEP_NAME:
+            return step
+    raise AssertionError(f"`auto-merge` job has no step named {DISABLE_STEP_NAME!r}.")
+
+
+def test_disable_step_fires_only_when_the_path_check_says_unsafe():
+    assert _auto_merge_paths_step().get("id") == "paths"
+    assert _disable_step().get("if") == "steps.paths.outputs.safe == 'false'"
+
+
+def test_disable_step_disables_auto_merge_and_fails_the_job(tmp_path):
+    """Run the real step: it must call `gh pr merge --disable-auto <url>` and exit 1."""
+    _require("bash")
+    step = _disable_step()
+    assert set(step.get("env") or {}) == {"PR_URL", "GH_TOKEN"}
+    fixtures_dir = _prepare_fixtures_dir(tmp_path)
+    bin_dir = _write_stub_bin(tmp_path)
+    env = dict(os.environ)
+    env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
+    env["FIXTURES"] = str(fixtures_dir)
+    env["PR_URL"] = "https://github.com/example/repo/pull/7"
+    env["GH_TOKEN"] = "unused"
+    result = subprocess.run(
+        ["bash", "-c", step["run"]], cwd=tmp_path, env=env, capture_output=True, text=True, timeout=30
+    )
+    assert result.returncode == 1, result.stdout + result.stderr
+    calls = (fixtures_dir / "calls.log").read_text(encoding="utf-8").splitlines()
+    assert calls == ["pr merge --disable-auto https://github.com/example/repo/pull/7"], calls

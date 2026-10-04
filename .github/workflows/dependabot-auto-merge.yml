@@ -373,6 +373,17 @@ jobs:
               continue
             fi
 
+            # The merge below is pinned to head_sha (from `gh pr view`), but
+            # the diff reads the ref fetched just now. If the PR moved in
+            # between, the diff would judge a different commit than the one
+            # merged, so fail closed unless both are the same commit.
+            if ! fetched_sha=$(git rev-parse --verify "refs/remotes/dependabot-sweep/pr-${num}^{commit}") \
+              || [ "$fetched_sha" != "$head_sha" ]; then
+              echo "::warning::skip #${num} — fetched head (${fetched_sha:-unknown}) is not the head its checks judged (${head_sha}); leaving for the next sweep"
+              SKIPPED=$((SKIPPED + 1))
+              continue
+            fi
+
             # Re-run the SAME inline classifier as job `auto-merge` above
             # (classify_path, defined once before this loop). Benchmark
             # output is reported separately so the skip names its reason.
