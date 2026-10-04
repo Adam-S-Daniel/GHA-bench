@@ -58,7 +58,8 @@ Each benchmark version defines a set of scripting tasks, language modes, and mod
 | `Dockerfile.act` | Custom act container with pwsh/Pester pre-installed (v4+) |
 | `tests/` | Unit tests for repo code — run with `python3 -m pytest tests/ -v` |
 | `.github/workflows/ci.yml` | CI workflow — runs tests and import validation on push/PR |
-| `run-benchmark.sh` | One-command launcher with prerequisite checks |
+| `run-benchmark.sh` | One-command launcher with prerequisite checks (laptop / VM) |
+| `run-benchmark-web.sh` | Launcher for [Claude Code on the web](https://claude.ai/code) cloud sessions — starts dockerd, installs the missing toolchain, builds a proxy-aware act image |
 | `results/` | Structured output — metrics.json, generated code, console logs per run |
 | `workspaces/` | Temporary agent working directories (git-ignored) |
 | `AGENTS.md` | Agent instructions ([agents.md spec](https://agents.md)) |
@@ -97,6 +98,25 @@ To resume a crashed/interrupted run:
 ```bash
 ./run-benchmark.sh --resume 2026-04-02_181500
 ```
+
+### On Claude Code on the web
+
+The benchmark can also run inside a [Claude Code on the web](https://claude.ai/code)
+cloud session instead of a laptop. Open a session on this repo and run:
+
+```bash
+./run-benchmark-web.sh --setup-only                                   # provision the sandbox
+./run-benchmark-web.sh --tasks 11 --models haiku45 --modes bash,default
+```
+
+The sandbox has the `claude` CLI, node and bun but no running Docker daemon, no
+pwsh/act/actionlint/shellcheck/bats, and forces all egress through a
+TLS-terminating proxy that containers do not trust. `run-benchmark-web.sh` fixes
+all of that (idempotent), then hands off to `runner.py`. Cloud sessions are
+ephemeral: results are committed and pushed after every cell, so an interrupted
+run resumes with `--resume <run-dir>`. See "Running on Claude Code on the web" in
+[AGENTS.md](AGENTS.md) for the comparability caveats — cloud cells get 4 CPUs and
+a different CLI tool surface, so they are not drop-in comparable with laptop runs.
 
 To watch a run while it is still in progress (read-only live dashboard):
 ```bash
