@@ -979,6 +979,12 @@ class TestJudgePromptAddendum:
             "where file paths are rooted"
         )
 
+    def test_haiku45_pins_haiku_4_5_not_the_alias(self):
+        # The `haiku` alias follows Claude Code's default Haiku model,
+        # which moved to Haiku 5.5 in 2.1.293. The haiku45 key names its
+        # cache files, so it must stay on the model it is named for.
+        assert JUDGES["haiku45"]["model"] == "claude-haiku-4-5"
+
     def test_gemini_has_no_addendum(self):
         # Gemini does not exhibit the same floor-compression pattern,
         # so it must NOT receive the addendum — adding it would change

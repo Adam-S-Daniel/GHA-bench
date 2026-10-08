@@ -387,7 +387,12 @@ DELIVERABLE_JUDGE_CACHE_FILE_LEGACY = "deliverable-quality-llm.json"
 # preference bias documented in the LLM-as-judge research while keeping
 # cost manageable (~$33 for a full campaign re-judge vs ~$30 Sonnet-only).
 JUDGES: dict[str, dict] = {
-    "haiku45":     {"provider": "claude-cli", "model": "haiku",
+    # Pinned to the full id, not the `haiku` alias: Claude Code 2.1.293
+    # made Haiku 5.5 the default Haiku model, so the alias can resolve to a
+    # different model than the one this key, its cache files and the
+    # archived panel scores name (issue #101). A new Haiku judge gets its
+    # own key and cache files.
+    "haiku45":     {"provider": "claude-cli", "model": "claude-haiku-4-5",
                     # Haiku 4.5 has a documented tendency to claim
                     # required files are "missing" when they actually
                     # live one directory down from where it expected
