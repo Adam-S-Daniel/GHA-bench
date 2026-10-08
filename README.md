@@ -53,6 +53,7 @@ Each benchmark version defines a set of scripting tasks, language modes, and mod
 | `judge_consistency_report.py` | Produces the `Judge Consistency` panel summary from per-judge score caches |
 | `conclusions_report.py` | Produces the combined Conclusions prose using a max-effort Claude CLI call |
 | `results/analysis/` | Dated follow-up analyses (e.g. judge-disagreement spot-checks) referenced from the main reports |
+| [docs/combined-report-completeness-audit.md](docs/combined-report-completeness-audit.md) | Report-only parity inventory and pending owner decisions for the combined report |
 | `test_quality.py` | Test quality evaluation — structural metrics + LLM-as-judge |
 | `llm_providers.py` | Pluggable LLM provider abstraction for evaluation tasks |
 | `Dockerfile.act` | Custom act container with pwsh/Pester pre-installed (v4+) |

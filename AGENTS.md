@@ -451,3 +451,8 @@ python3 version_docs.py        # idempotent across all run dirs
   `combine_results.py`, `judge_audit.py`, `judge_consistency_report.py`,
   or the per-judge prompt addendums, or when porting a per-run report
   section into the combined report.
+
+The report-only [October 2026 completeness audit](docs/combined-report-completeness-audit.md)
+records section, column, detail-table, sorted-view, and provenance differences.
+It does not authorize ports; the owner's decisions remain pending in
+[issue #24](https://github.com/Adam-S-Daniel/GHA-bench/issues/24).
